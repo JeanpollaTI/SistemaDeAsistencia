@@ -1,0 +1,376 @@
+/* Horario.css */
+
+/* --- Estilos Generales --- */
+.horario-page {
+  padding: 120px 20px 20px 20px;
+  font-family: "Arial", sans-serif;
+  background-color: #f7f7f7;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.horario-page h2, .anio-input {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 24px;
+  font-weight: bold;
+  border: none;
+  background: transparent;
+}
+
+.anio-input {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* --- Panel de Administración --- */
+.admin-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.btn-add {
+  background-color: #d4af37;
+  color: #fff;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 13px;
+  transition: all 0.3s ease;
+  box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+}
+
+.btn-add:hover:not(:disabled) {
+  background-color: #b8972b;
+  transform: translateY(-1px);
+}
+
+.btn-add.activo {
+  background-color: #f44336; /* Rojo para borrador activo */
+}
+
+.btn-add:disabled {
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* --- Paleta de Colores --- */
+.paleta-colores {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 200px;
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 5px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.color-cuadro {
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+  border-radius: 3px;
+  border: 1px solid #999;
+  transition: transform 0.1s ease;
+}
+
+.color-cuadro:hover {
+  transform: scale(1.1);
+}
+
+/* --- Tabla de Horario --- */
+.horario-table-container {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    margin-bottom: 20px;
+}
+
+.horario-table {
+  width: 100%; 
+  min-width: 1200px;
+  border-collapse: separate;
+  border-spacing: 3px;
+  font-size: 12px;
+  table-layout: fixed;
+  background-color: #fff;
+}
+
+.horario-table th,
+.horario-table td {
+  border: 1px solid #ccc;
+  padding: 4px;
+  text-align: center;
+  vertical-align: middle;
+  color: #000;
+}
+
+.horario-table th {
+  background: linear-gradient(to bottom, #f5d88b, #d4af37);
+  color: #000;
+  font-weight: bold;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.horario-table td:first-child,
+.horario-table td:nth-child(2) {
+  font-weight: bold;
+  color: #000;
+  text-align: left;
+  padding-left: 8px;
+  font-size: 12px;
+  background-color: #f9f9f9;
+  white-space: nowrap;
+}
+
+/* --- Celdas de Hora --- */
+.horas-row-horizontal {
+  display: flex;
+  justify-content: center;
+  gap: 1px;
+  flex-wrap: nowrap;
+}
+
+.hora-box-horizontal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 1px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+  flex-shrink: 0;
+}
+
+.hora-box-horizontal:hover {
+  transform: scale(1.05);
+}
+
+.hora-num {
+  font-weight: bold;
+  font-size: 7px;
+  color: #555;
+  margin-bottom: 1px;
+}
+
+.hora-box-horizontal input {
+  width: 22px;
+  height: 18px;
+  text-align: center;
+  font-size: 8px;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: #fafafa;
+  transition: all 0.2s ease;
+  color: #000;
+}
+
+.hora-box-horizontal input:focus {
+  border-color: #d4af37;
+  box-shadow: 0 0 2px rgba(212, 175, 55, 0.6);
+  outline: none;
+}
+
+.hora-box-horizontal input:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+/* --- Leyenda --- */
+.leyenda {
+  margin-top: 20px;
+  padding: 15px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 1200px;
+  box-sizing: border-box;
+}
+
+.leyenda h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #000;
+}
+
+.leyenda-colores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.leyenda-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-cuadro-leyenda {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  border: 1px solid #999;
+  flex-shrink: 0;
+}
+
+.leyenda-item input {
+  width: 150px;
+  font-size: 12px;
+  padding: 4px 6px;
+  color: #000;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* --- Indicador de Carga Personalizado --- */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+}
+
+.loading-content {
+  text-align: center;
+}
+
+.loading-message {
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.progress-bar-custom {
+  background-color: #e0e0e0;
+  border-radius: 20px;
+  padding: 4px;
+  width: 350px;
+  height: 30px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  background: linear-gradient(45deg, #ffb347, #ffcc33);
+  height: 100%;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.4s ease;
+}
+
+.progress-bar-text {
+  color: white;
+  font-weight: bold;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
+}
+
+/* --- Visor de PDF --- */
+.pdf-viewer-full {
+    position: fixed;
+    top: 60px; /* Ajustar a la altura del navbar */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+}
+
+/* --- Alertas de Notificación --- */
+.alerta {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: bold;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+}
+
+.alerta.success {
+  background-color: #4caf50;
+  box-shadow: 0 4px 10px rgba(76, 175, 80, 0.4);
+}
+
+.alerta.error {
+  background-color: #f44336;
+  box-shadow: 0 4px 10px rgba(244, 67, 54, 0.4);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(100%); }
+}
+
+/* --- Diseño Responsivo --- */
+@media (max-width: 1200px) {
+  .horario-table {
+    font-size: 10px;
+    min-width: 900px;
+  }
+
+  .hora-box-horizontal input {
+    width: 20px;
+    height: 16px;
+  }
+
+  .hora-num {
+    font-size: 6px;
+  }
+
+  .btn-add {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+    .horario-page {
+        padding: 80px 10px 10px 10px;
+    }
+    .horario-table {
+        min-width: 800px;
+    }
+    .admin-panel, .leyenda-colores {
+        flex-direction: column;
+        align-items: stretch;
+        width: 90%;
+    }
+    .leyenda-item input {
+        width: 100%;
+    }
+}

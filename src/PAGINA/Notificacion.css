@@ -1,0 +1,103 @@
+/* ======================================= */
+/* ESTILOS PARA NOTIFICACIÓN Y CONFIRMACIÓN*/
+/* ======================================= */
+
+.notificacion {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  padding: 15px 25px;
+  border-radius: 8px;
+  color: white;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+  z-index: 2000;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+.notificacion.success {
+  background-color: #27ae60;
+}
+
+.notificacion.error {
+  background-color: #d32f2f;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.modal-backdrop-confirm {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1500;
+}
+
+.confirm-modal-content {
+  background-color: #1E222D;
+  color: #E9E9E9;
+  font-family: 'Poppins', sans-serif;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 450px;
+  text-align: center;
+  border-top: 4px solid #b9972b;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.confirm-modal-content h4 {
+  color: #b9972b;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.confirm-modal-content p {
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.confirm-modal-actions .btn {
+  display: inline-block;
+  padding: 0.9rem 1.75rem;
+  border-radius: .5rem;
+  font-weight: 500;
+  transition: .3s;
+  border: none;
+  cursor: pointer;
+  color: white;
+}
+
+.confirm-modal-actions .btn:hover {
+  filter: brightness(0.9);
+  transform: translateY(-2px);
+}
+
+.confirm-modal-actions .btn-danger {
+  background-color: #d32f2f;
+}
+
+.confirm-modal-actions .btn-cancel {
+  background-color: #7f8c8d;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}

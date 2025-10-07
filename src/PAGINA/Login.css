@@ -1,0 +1,70 @@
+/* Centrar el contenedor en la pantalla */
+.login-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Caja del login */
+.login-container {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  color: black; /* letra en negro */
+}
+
+/* Título */
+.login-container h2 {
+  margin-bottom: 1.5rem;
+  color: black; /* título en negro */
+}
+
+/* Inputs */
+.login-container input {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  outline: none;
+  margin-top: 0.25rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  color: black; /* texto del input negro */
+}
+
+/* Inputs al hacer focus */
+.login-container input:focus {
+  border-color: #d4af37; /* dorado */
+  box-shadow: 0 0 4px rgba(212, 175, 55, 0.5);
+}
+
+/* Botón */
+.login-container button {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: none;
+  background-color: #d4af37; /* dorado */
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin-top: 0.75rem; /* espacio entre botones y/o inputs */
+}
+
+/* Hover del botón */
+.login-container button:hover {
+  background-color: #b9972b; /* dorado más oscuro */
+}
+
+/* Mensajes de error */
+.error {
+  color: red;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}

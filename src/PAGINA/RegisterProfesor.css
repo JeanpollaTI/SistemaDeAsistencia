@@ -1,0 +1,163 @@
+/* Fondo centrado con degradado y sombra suave */
+.register-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 3rem 1rem 1rem 1rem;
+  box-sizing: border-box;
+  
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Caja del registro con efecto glassmorphism */
+.register-container {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 2rem 2.5rem;
+  border-radius: 25px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+  color: #222;
+  margin-top: 60px;
+  transition: transform 0.3s ease;
+}
+
+.register-container:hover {
+  transform: translateY(-5px);
+}
+
+/* Título */
+.register-container h2 {
+  font-size: 1.7rem;
+  margin-bottom: 1rem;
+  color: #222;
+  letter-spacing: 0.5px;
+}
+
+/* Sección de la foto de perfil */
+.profile-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.profile-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #d4af37;
+  transition: transform 0.3s ease;
+}
+
+.profile-img:hover {
+  transform: scale(1.05);
+}
+
+.profile-img.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ccc;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1rem;
+  border: 3px solid #d4af37;
+}
+
+/* Botón para subir foto */
+input[type="file"] {
+  display: none;
+}
+
+.upload-label {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: #d4af37;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  transition: background 0.3s ease;
+}
+
+.upload-label:hover {
+  background-color: #b9972b;
+}
+
+/* Formulario */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.register-form label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #222;
+}
+
+.register-form input,
+.register-form select {
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 0.9rem;
+  margin-top: 0.3rem;
+  transition: all 0.2s ease;
+}
+
+.register-form input:focus,
+.register-form select:focus {
+  border-color: #d4af37;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+}
+
+/* Botón enviar */
+.register-form button {
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: none;
+  background-color: #d4af37;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.register-form button:hover {
+  background-color: #b9972b;
+  transform: scale(1.03);
+}
+
+/* Mensajes */
+.message {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #222;
+}
+
+/* Responsive */
+@media screen and (max-width: 480px) {
+  .register-container {
+    max-width: 90%;
+    padding: 1.5rem 1rem;
+  }
+
+  .profile-img {
+    width: 80px;
+    height: 80px;
+  }
+}
