@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // Importamos useLocation
+import { useNavigate, useLocation } from "react-router-dom"; // Se usa useLocation
 import apiClient from './api/apiClient'; 
 import "./Home.css";
 
@@ -8,7 +8,7 @@ const DEFAULT_IMG_PATH = "/uploads/fotos/default.png";
 
 function Home({ user, handleNavClick }) {
   const navigate = useNavigate();
-  const location = useLocation(); // Usamos useLocation para saber la ruta actual
+  const location = useLocation(); // Hook para saber la ruta actual
   const [profesores, setProfesores] = useState([]);
   const [selectedProfesor, setSelectedProfesor] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -23,10 +23,8 @@ function Home({ user, handleNavClick }) {
     "ARTES(MUSICA)", "EDUCACION FISICA",
   ];
 
-  // ... (otros useEffects y funciones de manejo de estado se mantienen) ...
-
   useEffect(() => {
-    // ... (Código de Event Listeners) ...
+    // Código de Event Listeners (se mantiene)
     const navMenu = document.getElementById("nav-menu");
     const navToggle = document.getElementById("nav-toggle");
     const navClose = document.getElementById("nav-close");
@@ -77,21 +75,27 @@ function Home({ user, handleNavClick }) {
     }
     return foto;
   };
+  
+  const handleAsignaturasChange = (materia) => {
+    setAsignaturasSelect((prev) =>
+      prev.includes(materia) ? prev.filter((m) => m !== materia) : [...prev, materia]
+    );
+  };
 
   const guardarAsignaturas = () => { /* ... (función completa) ... */ };
   const handleDeleteClick = () => setConfirmDeleteVisible(true);
   const confirmDelete = () => { /* ... (función completa) ... */ };
   const cancelDelete = () => setConfirmDeleteVisible(false);
-  const handleAsignaturasChange = (materia) => {/* ... (función completa) ... */};
 
   const primerNombre = user?.nombre ? user.nombre.split(" ")[0] : "";
   
-  // ----------------------------------------------------
-  // CORRECCIÓN CLAVE: NO RENDERIZAR SI NO ESTAMOS EN LA RUTA RAÍZ
+  // --------------------------------------------------------------------------
+  // CORRECCIÓN CLAVE: Detiene el renderizado del contenido de Home si la ruta no es /
+  // Esto soluciona la superposición de contenido en /horario
   if (location.pathname !== '/') {
-      return null; // Detiene el renderizado de este componente en /horario
+      return null;
   }
-  // ----------------------------------------------------
+  // --------------------------------------------------------------------------
 
   return (
     <div>
