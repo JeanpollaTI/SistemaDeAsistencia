@@ -128,8 +128,8 @@
   white-space: nowrap;
 }
 
-.horario-table td:first-child,
-.horario-table td:nth-child(2) {
+/* --- AJUSTE PARA COLUMNAS DE PROFESOR Y ASIGNATURAS --- */
+.horario-table td:first-child {
   font-weight: bold;
   color: #000;
   text-align: left;
@@ -137,25 +137,39 @@
   font-size: 12px;
   background-color: #f9f9f9;
   white-space: nowrap;
+  width: 150px; /* Ancho fijo para el profesor */
+}
+
+.horario-table td:nth-child(2) {
+  font-weight: bold;
+  color: #000;
+  text-align: left;
+  padding-left: 8px;
+  font-size: 12px;
+  background-color: #f9f9f9;
+  /* Permite que el texto se divida en varias líneas si es largo */
+  white-space: normal; 
+  width: 220px; /* Más espacio para las asignaturas */
+  vertical-align: top; /* Alinear texto arriba */
 }
 
 /* --- Celdas de Hora --- */
 .horas-row-horizontal {
   display: flex;
   justify-content: flex-start;
-  gap: 3px;
+  gap: 2px; /* Reducimos el espacio entre cuadros */
   flex-wrap: nowrap;
 }
 
+/* --- AJUSTE PARA HACER LOS CUADROS MÁS PEQUEÑOS --- */
 .hora-box-horizontal {
   display: flex;
   flex-direction: column;
   align-items: center;
   cursor: pointer;
   transition: transform 0.1s ease;
-  /* --- ¡LA MAGIA ESTÁ AQUÍ! --- */
-  width: 35px;
-  min-width: 35px;
+  width: 30px; /* Reducimos el ancho */
+  min-width: 30px; /* Reducimos el ancho mínimo */
   flex-shrink: 0;
 }
 
@@ -165,16 +179,16 @@
 
 .hora-num {
   font-weight: bold;
-  font-size: 9px;
+  font-size: 8px; /* Hacemos el número un poco más pequeño */
   color: #555;
   margin-bottom: 2px;
 }
 
 .hora-box-horizontal input {
   width: 100%;
-  height: 22px;
+  height: 20px; /* Reducimos la altura */
   text-align: center;
-  font-size: 10px;
+  font-size: 9px; /* Hacemos la letra un poco más pequeña */
   border: 1px solid #bbb;
   border-radius: 4px;
   padding: 0;
@@ -185,7 +199,7 @@
 }
 
 .horario-table td:nth-child(n+3) {
-    min-width: 270px; /* Ancho mínimo para las columnas de los días */
+    min-width: 240px; /* Ancho mínimo ajustado para las columnas de los días */
 }
 
 
