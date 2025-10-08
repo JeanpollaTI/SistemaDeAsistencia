@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import apiClient from '../api/apiClient';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import "./Horario.css";
+import "./Horario.css?v=2";
 
 // Importa tus logos aquí (asegúrate de que las rutas sean correctas)
 import logoAgs from "./Ags.png";
