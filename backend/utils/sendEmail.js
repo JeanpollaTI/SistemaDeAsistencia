@@ -38,8 +38,13 @@ export const sendEmail = async (to, subject, html, attachments = []) => {
         console.log("Correo enviado via SendGrid API:", info);
         return info;
     } catch (err) {
-        // Los errores de SendGrid son muy detallados y se encuentran en err.response.body
-        console.error("Error enviando correo via SendGrid API:", err.response ? JSON.parse(err.response.body) : err);
+        // --- AJUSTE FINAL AQUÍ ---
+        // Se quita JSON.parse() para evitar el SyntaxError y se imprime el cuerpo del error directamente.
+        console.error(
+            "Error enviando correo via SendGrid API. Detalles:", 
+            err.response && err.response.body ? err.response.body : err // <-- Manejo de error seguro
+        );
+        // -------------------------
         throw new Error("No se pudo enviar el correo");
     }
 };
