@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// 1. CORRECCIÓN DE RUTA: Ajustamos la importación basada en la nueva estructura src/api/
-import apiClient from './api/apiClient'; 
+// 1. CORRECCIÓN DE RUTA: Apunta correctamente a la carpeta api/
+import apiClient from '../api/apiClient'; 
 import "./Home.css";
 
 // Ruta por defecto que existe en el servidor (coincide con el modelo)
