@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// 1. CORRECCIÓN DE RUTA: Apunta correctamente a la carpeta api/
-import apiClient from '../api/apiClient'; 
+import apiClient from './api/apiClient'; 
 import "./Home.css";
 
-// Ruta por defecto que existe en el servidor (coincide con el modelo)
 const DEFAULT_IMG_PATH = "/uploads/fotos/default.png";
 
 function Home({ user, handleNavClick }) {
@@ -24,6 +22,8 @@ function Home({ user, handleNavClick }) {
   ];
 
   useEffect(() => {
+    // ESTOS EVENT LISTENERS DE SCROLL Y MENÚ DEBEN ESTAR EN APP.JS, 
+    // PERO POR AHORA LOS DEJAMOS AQUÍ SI NO CAUSAN PROBLEMAS EN EL SCROLL DE OTRAS PÁGINAS.
     const navMenu = document.getElementById("nav-menu");
     const navToggle = document.getElementById("nav-toggle");
     const navClose = document.getElementById("nav-close");
@@ -49,7 +49,6 @@ function Home({ user, handleNavClick }) {
     const token = localStorage.getItem("token");
     if (!token) return console.error("⚠️ No hay token guardado.");
     
-    // 2. CÓDIGO MÁS LIMPIO: Usando apiClient
     apiClient.get("/auth/profesores", { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => setProfesores(res.data || []))
       .catch((err) => console.error("Error al obtener profesores:", err));
@@ -69,13 +68,10 @@ function Home({ user, handleNavClick }) {
     setAsignaturasSelect([]);
   };
 
-  // 3. URLs CENTRALIZADAS (CORREGIDA): La lógica de la imagen es simplificada
   const profileImgUrl = (foto) => {
-    // Si la foto es la ruta por defecto, concatenamos la URL del servidor.
     if (foto === DEFAULT_IMG_PATH || !foto) {
         return `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}`;
     }
-    // Si no es la ruta por defecto, es la URL completa de Cloudinary y la usamos directamente.
     return foto;
   };
 
@@ -89,7 +85,6 @@ function Home({ user, handleNavClick }) {
     if (!selectedProfesor) return;
     const token = localStorage.getItem("token");
     
-    // 4. MÁS LIMPIO: Solo indicamos el endpoint.
     apiClient.put(`/profesores/${selectedProfesor._id}/asignaturas`, { asignaturas: asignaturasSelect }, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         fetchProfesores();
@@ -104,7 +99,6 @@ function Home({ user, handleNavClick }) {
     if (!selectedProfesor) return;
     const token = localStorage.getItem("token");
     
-    // 5. Y DE NUEVO: Solo el endpoint.
     apiClient.delete(`/profesores/${selectedProfesor._id}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         fetchProfesores();
@@ -119,7 +113,7 @@ function Home({ user, handleNavClick }) {
   
   return (
     <div>
-      {/* HOME */}
+      {/* HOME (ESTO ES LA SECCIÓN QUE APARECE EN LA PÁGINA DE HORARIO) */}
       <section className="home section" id="home">
         <div className="home-container container grid">
           <div className="home-data">
@@ -154,7 +148,6 @@ function Home({ user, handleNavClick }) {
                   <tr key={prof._id}>
                     <td>{prof.nombre}</td>
                     <td>{prof.asignaturas?.join(", ") || "No asignada"}</td>
-                    {/* Aseguramos que 'createdAt' exista antes de usarlo */}
                     <td>{prof.createdAt ? new Date(prof.createdAt).toLocaleDateString() : "N/A"}</td>
                     <td><button className="btn-ver-perfil" onClick={() => openModal(prof)}>Ver perfil</button></td>
                   </tr>
@@ -165,7 +158,7 @@ function Home({ user, handleNavClick }) {
         </section>
       )}
 
-      {/* MODAL PROFESOR */}
+      {/* MODAL PROFESOR (SE MANTIENE EL CÓDIGO DEL MODAL) */}
       {modalVisible && selectedProfesor && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -174,7 +167,6 @@ function Home({ user, handleNavClick }) {
                 src={profileImgUrl(selectedProfesor.foto)} 
                 alt={selectedProfesor.nombre} 
                 className="profile-img-modal" 
-                // Añadimos un manejo de error en caso de que la URL de Cloudinary falle
                 onError={(e) => { e.target.onerror = null; e.target.src = `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}` }}
             />
             <h3>{selectedProfesor.nombre}</h3>
@@ -186,7 +178,7 @@ function Home({ user, handleNavClick }) {
                 <p><b>Sexo:</b> {selectedProfesor.sexo}</p>
             </div>
 
-            <p className="asignaturas-title"><b>Asignaturas:</b></p>
+            <p className ="asignaturas-title"><b>Asignaturas:</b></p>
             <div className="checkbox-group">
               {materias.map((m) => (
                 <label key={m} className="checkbox-label">

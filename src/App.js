@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
-// 1. CORRECCIÓN DE RUTA: Apunta directamente a ./api/apiClient
 import apiClient from './api/apiClient';
 import Home from "./Home";
 import Login from "./PAGINA/Login";
@@ -85,14 +84,11 @@ function App() {
         : []),
     ];
 
-    // --------------------------------------------------------------------------
-    // 2. LÓGICA DE IMAGEN CORREGIDA PARA CLOUDINARY
+    // LÓGICA DE IMAGEN CORREGIDA PARA CLOUDINARY
     const profileImgUrl = 
       user?.foto && user.foto !== DEFAULT_IMG_PATH
         ? user.foto // Usamos la URL completa de Cloudinary
         : `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}`; // Concatenamos para la imagen por defecto
-
-    // --------------------------------------------------------------------------
 
     return (
       <div className="nav-menu-right">
@@ -133,12 +129,11 @@ function App() {
           {user && (
             <li className="nav-profile">
               <img
-                src={profileImgUrl} // <-- URL corregida aplicada aquí
+                src={profileImgUrl}
                 alt="Perfil"
                 className="profile-img-small"
                 onClick={() => navigate("/perfil")}
                 style={{ cursor: "pointer" }}
-                // Manejo de error para la imagen por defecto o Cloudinary
                 onError={(e) => { e.target.onerror = null; e.target.src = `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}` }} 
               />
             </li>
@@ -159,6 +154,7 @@ function App() {
 
   return (
     <div>
+      {/* EL HEADER SOLO SE RENDERIZA AQUÍ */}
       <header className="header" id="header">
         <nav className="nav container">
           <a href="#home" className="nav-logo" onClick={(e) => handleNavClick(e, "home")}>
@@ -177,6 +173,7 @@ function App() {
 
       <main>
         <Routes>
+          {/* EL CONTENIDO PRINCIPAL DE LA PÁGINA ES HOME, Y SÓLO APARECE EN LA RUTA RAÍZ */}
           <Route path="/" element={<Home user={user} handleNavClick={handleNavClick} />} />
           <Route path="/login" element={user ? <Navigate to="/" /> : <Login onLogin={handleLogin} />} />
           <Route path="/forgot-password" element={user ? <Navigate to="/" /> : <Password />} />
