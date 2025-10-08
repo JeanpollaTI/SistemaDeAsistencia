@@ -40,10 +40,13 @@ const formatDate = (date) => {
 
 // Helper para obtener Public ID de Cloudinary
 const getCloudinaryPublicId = (url) => {
-    if (!url || url.includes("default.png") || !url.includes("cloudinary.com")) return null;
+    // Si no es una URL de Cloudinary o es la ruta por defecto, regresa null
+    if (!url || url.includes("default.png") || !url.includes("cloudinary.com")) return null; 
+    
     const parts = url.split('/');
     const publicIdWithExt = parts[parts.length - 1];
     const publicId = publicIdWithExt.split('.')[0];
+    // Retorna el publicId completo con el folder
     return `sistema-asistencia/fotos-profesores/${publicId}`; 
 };
 

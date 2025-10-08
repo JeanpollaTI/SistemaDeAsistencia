@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 // CORRECCIÓN DE RUTA: Ajustamos la importación.
-// Desde PAGINA/ sale un nivel (..) y entra a api/
+// Desde PAGINA/ salimos un nivel (..) y entramos a api/
 import apiClient from '../api/apiClient';
 import "./Login.css";
 
@@ -62,7 +62,7 @@ function Login({ onLogin }) {
       }
     } catch (err) {
       console.error("Login error:", err);
-      // Con Axios, los errores del backend están en err.response.data
+      // Manejo de errores que vienen del backend
       setError(err.response?.data?.msg || err.response?.data?.error || "Error en el servidor o credenciales incorrectas");
     } finally {
       setLoading(false);

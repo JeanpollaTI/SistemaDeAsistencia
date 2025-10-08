@@ -21,6 +21,7 @@ const AlumnoSchema = new mongoose.Schema({
 });
 
 // Define el esquema para una asignación (Profesor + Asignatura).
+// El _id: false es clave para que no cree un ID redundante para cada asignación.
 const AsignacionSchema = new mongoose.Schema({
   profesor: {
     type: mongoose.Schema.Types.ObjectId,
@@ -52,15 +53,13 @@ const GrupoSchema = new mongoose.Schema(
       type: [AsignacionSchema], // Un array de documentos de Asignacion
       default: [],
     },
-
-    // --- IMPORTANTE ---
-    // Los campos 'criterios' y 'calificaciones' han sido eliminados de este modelo.
-    // Ahora residen en el nuevo modelo 'Calificacion' para permitir que cada
-    // profesor tenga su propio registro de calificaciones por materia.
     
   },
   {
     timestamps: true, // Agrega createdAt y updatedAt automáticamente
+    // Agregamos toJSON y toObject para asegurarnos de que el frontend obtenga los virtuales si existen
+    toJSON: { virtuals: true }, 
+    toObject: { virtuals: true }
   }
 );
 

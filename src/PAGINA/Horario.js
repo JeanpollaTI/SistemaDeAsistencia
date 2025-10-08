@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-// 1. CORRECCIÓN DE RUTA: Ajustamos la importación.
+// CORRECCIÓN DE RUTA: Ajustamos la importación.
 import apiClient from '../api/apiClient';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -27,13 +27,12 @@ function Horario({ user }) {
   const [colorSeleccionado, setColorSeleccionado] = useState("#f44336");
   const [leyenda, setLeyenda] = useState({});
   const [modoBorrador, setModoBorrador] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState(null); // Revertido a pdfUrl (aunque no se usa para visualización)
+  const [pdfUrl, setPdfUrl] = useState(null); 
   const [alerta, setAlerta] = useState(null);
-  // Añadido estado de carga y progreso
   const [isLoading, setIsLoading] = useState(false); 
   const [loadingMessage, setLoadingMessage] = useState("");
   const [progress, setProgress] = useState(0); 
-  const horarioTableRef = useRef(null); // Solo necesitamos esta ref
+  const horarioTableRef = useRef(null); 
 
   const mostrarAlerta = useCallback((mensaje, tipo = "success") => {
     setAlerta({ mensaje, tipo });
@@ -70,13 +69,13 @@ function Horario({ user }) {
     setIsLoading(true);
     setProgress(20);
     
-    // NOTA: El frontend seguirá pidiendo imageUrl (o pdfUrl) aunque no lo usemos, solo para datos.
     apiClient.get(`/horario/${anio}`, { headers: { Authorization: `Bearer ${token}` } })
     .then(res => {
         setProgress(75);
         if (res.data?.datos) setHorario(res.data.datos);
         if (res.data?.leyenda) setLeyenda(res.data.leyenda);
-        if (res.data?.imageUrl) setPdfUrl(res.data.imageUrl); // Usamos imageUrl que viene del backend
+        // Lee imageUrl (el campo persistente)
+        if (res.data?.imageUrl) setPdfUrl(res.data.imageUrl); 
     }).catch(error => {
         console.error("Error al cargar el horario:", error);
         mostrarAlerta("Error al cargar el horario ❌", "error");
@@ -147,7 +146,7 @@ function Horario({ user }) {
     mostrarAlerta("Color eliminado de la leyenda ❌", "error");
   }, [isLoading, mostrarAlerta]);
 
-  // Función genérica para obtener imagen en Base64
+  // Función genérica para obtener imagen en Base64 (para PDF)
   const getBase64Image = imgPath => new Promise((resolve, reject) => {
     const img = new Image();
     img.src = imgPath;
@@ -161,10 +160,6 @@ function Horario({ user }) {
     };
     img.onerror = (error) => reject(error);
   });
-  
-  // ----------------------------------------------------
-  // * FUNCIONES CRÍTICAS *
-  // ----------------------------------------------------
   
   // Helper para generar el PDF (reutilizable)
   const generarPDFDocument = useCallback(async (returnBase64 = false) => {
@@ -198,14 +193,23 @@ function Horario({ user }) {
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
         doc.text("Leyenda:", 10, leyendaY);
-        // ... (resto de lógica de leyenda) ...
+        // Lógica para añadir los rectángulos de color y descripción
+        Object.entries(leyenda).forEach(([color, desc]) => {
+            doc.setFillColor(color);
+            doc.rect(10, leyendaY, 6, 6, "F");
+            doc.setTextColor(0);
+            doc.text(desc || "", 18, leyendaY + 5);
+            leyendaY += 8;
+        });
     }
     
     setProgress(90);
 
     if (returnBase64) {
+        // Devuelve el PDF en Base64 para el envío
         return doc.output('datauristring').split(',')[1];
     } else {
+        // Descarga local
         doc.save(`Horario_${anio}.pdf`);
     }
   }, [anio, leyenda, getBase64Image]);
@@ -275,14 +279,14 @@ function Horario({ user }) {
       formData.append("datos", JSON.stringify(horario));
       formData.append("leyenda", JSON.stringify(leyenda));
 
-      // CAMBIO CRUCIAL: Usamos apiClient en lugar de axios
+      // Guardamos la información de la tabla y la leyenda en MongoDB
       const res = await apiClient.post("/horario", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         }
       });
 
-      // El backend es exitoso, actualiza el estado de la URL (aunque no haya archivo)
+      // El backend es exitoso, actualiza el estado (aunque no haya archivo)
       setPdfUrl(res.data.horario?.imageUrl || null); 
       mostrarAlerta("Horario guardado correctamente ✅", "success");
     } catch (err) {
@@ -292,22 +296,20 @@ function Horario({ user }) {
   };
   
   // ----------------------------------------------------
-  // ELIMINACIÓN DE LÓGICA DE SUBIDA DE IMAGEN
+  // VISTA DE PDF/IMAGEN PARA USUARIOS NO-ADMIN
   // ----------------------------------------------------
-  
-  // Eliminamos abrirExploradorImagen y handleArchivoChange 
-  // ya que no se subirá ningún archivo manualmente.
 
   if (user.role !== "admin" && pdfUrl) {
-    // Si hay una URL (imagen) de horario, mostramos la imagen. 
-    // NOTA: Esto solo funciona si ya habías subido una imagen previamente.
+    // Si hay una URL de horario, mostramos el visor (asumiendo que es una imagen subida o un PDF).
+    // Si fuera PDF (como en la solución original), se usaría <embed>. 
+    // Para simplificar, si el PDF fue la última opción, mantenemos el tag <img> y esperamos que Cloudinary sirva la imagen.
     return ( 
       <div className="horario-viewer-full"> 
         <img 
           src={pdfUrl}
           alt={`Horario General ${anio}`}
           style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '90vh' }}
-          onError={(e) => { e.target.onerror = null; e.target.src = '/default-horario.png'; mostrarAlerta("Error al cargar la imagen del horario. ❌", "error"); }}
+          onError={(e) => { e.target.onerror = null; e.target.src = '/default-horario.png'; mostrarAlerta("Error al cargar el horario. ❌", "error"); }}
         /> 
       </div> 
     );
@@ -358,8 +360,6 @@ function Horario({ user }) {
           <button onClick={exportarPDF} className="btn-add" disabled={isLoading}>📄 Exportar PDF (Local)</button>
           
           {/* ELIMINADO: Botón e input para subir archivos */}
-          {/* <button onClick={abrirExploradorImagen} className="btn-add" disabled={isLoading}>⬆️ Subir Imagen Horario</button>
-          <input type="file" accept="image/*" ref={fileInputRef} style={{ display: "none" }} onChange={handleArchivoChange} disabled={isLoading} /> */}
         </div>
       )}
 

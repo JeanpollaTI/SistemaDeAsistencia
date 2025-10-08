@@ -5,12 +5,11 @@ import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary"; // Cloudinary Storage Engine
 import { v2 as cloudinary } from "cloudinary"; // Cloudinary core library
 import path from "path";
-import fs from "fs"; // Mantenemos fs y path para manejar la ruta por defecto, aunque ya no se usa para uploads.
+import fs from "fs"; // Se mantiene aunque ya no se usa para guardar archivos.
 
 const profesoresRouter = express.Router();
 
 // ----------------- CONFIGURACIÓN CLOUDINARY -----------------
-// Debe estar configurado con las variables de entorno de Render
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -21,7 +20,7 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "sistema-asistencia/fotos-profesores", // Carpeta de destino
+    folder: "sistema-asistencia/fotos-profesores", // Carpeta en Cloudinary
     allowed_formats: ["jpg", "jpeg", "png"],
     transformation: [{ width: 300, height: 300, crop: "fill" }],
   },
@@ -29,7 +28,7 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 // ---------------- Helper para obtener Public ID de Cloudinary ----------------
-// Extrae el ID necesario para borrar el archivo de Cloudinary
+// Función para extraer el ID público con el folder para el borrado
 const getCloudinaryPublicId = (url) => {
     // Si no es una URL de Cloudinary o es la ruta por defecto, regresa null
     if (!url || url.includes("default.png") || !url.includes("cloudinary.com")) return null; 
@@ -39,9 +38,17 @@ const getCloudinaryPublicId = (url) => {
     const publicIdWithExt = parts[parts.length - 1]; 
     const publicId = publicIdWithExt.split('.')[0]; 
     
-    // Retorna el publicId completo con el folder, que es requerido para el borrado
+    // Retorna el publicId completo con el folder
     return `sistema-asistencia/fotos-profesores/${publicId}`; 
 };
+
+// ---------------- Helper para formatear fecha (necesario para GET) ----------------
+const formatDate = (date) => {
+    if (!date) return "N/A";
+    const d = new Date(date);
+    return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+};
+
 
 // ---------------- Obtener todos los profesores (solo admin) ----------------
 profesoresRouter.get("/", authMiddleware, isAdmin, async (req, res) => {
@@ -120,18 +127,18 @@ profesoresRouter.put("/editar-perfil", authMiddleware, upload.single("foto"), as
 
     // LÓGICA CLOUDINARY: Subir y Reemplazar foto
     if (req.file) {
-      // 1. ELIMINAR FOTO ANTIGUA de Cloudinary (CRUCIAL para evitar el crash si no hay foto)
+      // 1. ELIMINAR FOTO ANTIGUA de Cloudinary (CRUCIAL)
       const publicId = getCloudinaryPublicId(user.foto);
-      if (publicId) await cloudinary.uploader.destroy(publicId); // Borrado seguro
+      if (publicId) await cloudinary.uploader.destroy(publicId); 
       
-      // 2. Guardar la nueva URL (req.file.path contiene la URL completa de Cloudinary)
+      // 2. Guardar la nueva URL (req.file.path)
       user.foto = req.file.path;
     }
 
     // Usamos save() para que los triggers y validaciones funcionen
     await user.save();
     
-    // Devolvemos el usuario, excluyendo el password por seguridad (select: false en el modelo)
+    // Devolvemos el usuario sin el password
     const userObject = user.toObject();
     delete userObject.password;
     
@@ -145,16 +152,22 @@ profesoresRouter.put("/editar-perfil", authMiddleware, upload.single("foto"), as
 });
 
 // ---------------- Obtener perfil propio ----------------
-profesoresRouter.get("/mi-perfil", authMiddleware, async (req, res) => {
+router.get("/mi-perfil", authMiddleware, async (req, res) => {
   try {
     // Usamos el middleware para obtener req.user, pero seleccionamos todo excepto el password
     const user = await User.findById(req.user.id).select("-password"); 
-    if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
-    res.json(user);
+    if (!user) return res.status(400).json({ msg: "Usuario no encontrado" });
+    
+    // Formatear la fecha antes de enviar
+    const userObject = user.toObject();
+    // Suponiendo que el modelo tiene 'createdAt' de timestamps:
+    userObject.fechaRegistro = user.createdAt ? formatDate(user.createdAt) : "N/A";
+    
+    res.json(userObject);
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Error al obtener perfil", error: err.message });
   }
 });
 
-export { profesoresRouter };
+export { profesoresRouter};

@@ -17,13 +17,17 @@ const HorarioSchema = new mongoose.Schema(
       type: Object,
       default: {}, // colores o descripciones de asignaturas
     },
-    // CORRECCIÓN CLAVE: Almacenará la URL web completa de la imagen generada.
+    // Este campo ahora almacenará la URL web pública de la imagen o el PDF generado.
     imageUrl: { 
       type: String,
       default: null, // URL de la imagen del horario (Almacena la URL de Cloudinary)
     },
   },
-  { timestamps: true } // createdAt y updatedAt automáticos
+  { 
+    timestamps: true, // Añade createdAt y updatedAt
+    toJSON: { virtuals: true }, // Asegura que los virtuales se incluyan en la respuesta JSON
+    toObject: { virtuals: true }
+  }
 );
 
 // 🔹 Virtual opcional: fecha de creación legible

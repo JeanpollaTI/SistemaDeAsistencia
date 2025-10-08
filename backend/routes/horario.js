@@ -43,6 +43,7 @@ const parseJSON = (input) => {
 // ----------------- CRUD Horario ------------------
 
 // POST: Guardar datos de horario y/o subir imagen (si el frontend la envía)
+// Nota: 'uploadImage.single("imagen")' se mantiene aunque la subida de imagen ya no es obligatoria en este flujo.
 router.post("/", verifyAdmin, uploadImage.single("imagen"), async (req, res) => {
   try {
     const { anio, datos, leyenda } = req.body;
@@ -129,7 +130,6 @@ router.delete("/:anio", verifyAdmin, async (req, res) => {
 router.post("/enviar-correo", verifyAdmin, async (req, res) => {
     try {
         // anio se usa para el nombre del archivo. pdfData es el Base64 generado en el frontend.
-        // horarioData se usa para extraer la lista de nombres de profesores de la tabla.
         const { anio, pdfData, horarioData } = req.body;
         
         if (!pdfData || !horarioData) {
@@ -162,7 +162,7 @@ router.post("/enviar-correo", verifyAdmin, async (req, res) => {
         }];
 
         // Enviar a todos los correos
-        // NOTA: sendEmail debe manejar la recepción de un array de correos.
+        // sendEmail usa SendGrid API (HTTP)
         await sendEmail(
             correosDestino, 
             `Horario General ${anio} - Secundaria N9`,

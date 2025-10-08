@@ -27,6 +27,7 @@ router.post('/enviar-boleta', authMiddleware, async (req, res) => {
     try {
         // --- LA SOLUCIÓN CLAVE: LLAMAR A LA FUNCIÓN DE API DE SENDGRID ---
         // sendEmail maneja el JWT y la conexión HTTP.
+        // NOTA: 'to' puede ser una cadena de correos separada por comas o un array.
         await sendEmail(to, subject, body, attachments);
 
         res.status(200).json({ message: 'Boleta enviada exitosamente por correo.' });
