@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 // 1. IMPORTAMOS apiClient PARA OBTENER LA URL BASE DEL SERVIDOR
-import apiClient from "../api/apiClient";
+import apiClient from '../api/apiClient';
 import "./Perfil.css";
 
 function Perfil({ user, onLogout }) {

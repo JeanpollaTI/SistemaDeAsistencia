@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 // 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro apiClient.
-import apiClient from "../api/apiClient";
+import apiClient from '../api/apiClient';
 import "./EditarPerfil.css";
 
 function EditarPerfil({ user, setUser }) {

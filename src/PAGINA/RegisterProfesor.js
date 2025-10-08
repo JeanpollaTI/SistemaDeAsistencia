@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 // 1. IMPORTAMOS apiClient EN LUGAR DE axios
-import apiClient from "../api/apiClient";
+import apiClient from '../api/apiClient';
 import "./RegisterProfesor.css";
 
 // 2. ELIMINAMOS LA CONSTANTE API_URL, YA NO ES NECESARIA

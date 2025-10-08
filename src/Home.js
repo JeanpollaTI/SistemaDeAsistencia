@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Home.css";
 // 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro nuevo apiClient en lugar de axios directamente.
-import apiClient from "../api/apiClient";
+import apiClient from './api/apiClient';
 
 function Home({ user, handleNavClick }) {
   const navigate = useNavigate();

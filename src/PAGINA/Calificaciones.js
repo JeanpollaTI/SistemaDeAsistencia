@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 // 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro apiClient centralizado.
-import apiClient from '../api/apiClient'; 
+import apiClient from '../api/apiClient';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import './Calificaciones.css'; 

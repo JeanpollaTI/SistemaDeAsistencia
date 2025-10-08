@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 // 1. IMPORTAMOS apiClient PARA LA URL DE LA IMAGEN DEL NAV
-import apiClient from "./api/apiClient";
+import apiClient from './api/apiClient';
 import Home from "./Home";
 import Login from "./PAGINA/Login";
 import RegisterProfesor from "./PAGINA/RegisterProfesor";

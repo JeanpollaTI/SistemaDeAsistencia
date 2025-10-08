@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 // 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro apiClient.
-import apiClient from "../api/apiClient";
+import apiClient from '../api/apiClient';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import "./Horario.css";
