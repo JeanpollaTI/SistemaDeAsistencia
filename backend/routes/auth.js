@@ -2,16 +2,14 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import multer from "multer";
-import { v2 as cloudinary } from "cloudinary";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
+import { v2 as cloudinary } from "cloudinary"; // CLOUDINARY: Para configurar y eliminar
+import { CloudinaryStorage } from "multer-storage-cloudinary"; // CLOUDINARY: Para el storage de Multer
 import crypto from "crypto";
 
 import User from "../models/User.js";
 import { sendEmail } from "../utils/sendEmail.js";
 
 const router = express.Router();
-
-// ... (Toda la configuración de Cloudinary, Middlewares y Helpers se mantiene igual) ...
 
 // ----------------- CONFIGURACIÓN CLOUDINARY -----------------
 cloudinary.config({
@@ -23,7 +21,7 @@ cloudinary.config({
 const storageFotos = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "sistema-asistencia/fotos-profesores",
+    folder: "sistema-asistencia/fotos-profesores", // Carpeta de destino
     allowed_formats: ["jpg", "jpeg", "png"],
   },
 });
@@ -70,9 +68,8 @@ const verifyAdmin = (req, res, next) => {
   });
 };
 
-
 // ----------------- RUTAS DE AUTENTICACIÓN ------------------
-// (Las rutas de Register, Login, Forgot Password y Reset Password se mantienen igual)
+
 // Register
 router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, res) => {
   try {
@@ -93,6 +90,7 @@ router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, re
     console.error('---- ERROR DETALLADO EN REGISTRO ----');
     console.error(err);
     if (req.file) {
+      // Para Cloudinary, el filename es el public_id
       const publicId = req.file.filename;
       await cloudinary.uploader.destroy(publicId);
     }
@@ -163,8 +161,9 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
-
-// ----------------- GESTIÓN DEL PERFIL DEL PROPIO USUARIO -----------------
+// -------------------------------------------------------------
+// ---- ✅ RUTAS AÑADIDAS: GESTIÓN DEL PERFIL DEL PROPIO USUARIO ----
+// -------------------------------------------------------------
 
 // GET: Obtener perfil propio
 router.get("/mi-perfil", verifyToken, async (req, res) => {
@@ -206,6 +205,7 @@ router.put("/editar-perfil", verifyToken, uploadFotos.single("foto"), async (req
     user.edad = edad || user.edad;
     user.sexo = sexo || user.sexo;
 
+    // Si se sube una nueva foto, eliminar la anterior y guardar la nueva
     if (req.file) {
       const publicId = getCloudinaryPublicId(user.foto);
       if (publicId) {
@@ -224,46 +224,8 @@ router.put("/editar-perfil", verifyToken, uploadFotos.single("foto"), async (req
   }
 });
 
-// -------------------------------------------------------------------------
-// ---- ✅ RUTA AÑADIDA: Cambiar la contraseña del usuario logueado ----
-// -------------------------------------------------------------------------
-router.put("/cambiar-password", verifyToken, async (req, res) => {
-    try {
-        const { currentPassword, newPassword } = req.body;
-        const userId = req.user.id;
-
-        if (!currentPassword || !newPassword) {
-            return res.status(400).json({ msg: "Se requiere la contraseña actual y la nueva." });
-        }
-
-        // Buscamos al usuario y nos aseguramos de traer el password para comparar
-        const user = await User.findById(userId).select('+password');
-        if (!user) {
-            return res.status(404).json({ msg: "Usuario no encontrado." });
-        }
-
-        // Comparamos la contraseña actual que nos envía el usuario con la de la BD
-        const isMatch = await bcrypt.compare(currentPassword, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ msg: "La contraseña actual es incorrecta." });
-        }
-
-        // Si es correcta, hasheamos y guardamos la nueva contraseña
-        user.password = await bcrypt.hash(newPassword, 10);
-        await user.save();
-
-        res.json({ msg: "Contraseña actualizada correctamente." });
-
-    } catch (err) {
-        console.error('---- ERROR AL CAMBIAR CONTRASEÑA ----');
-        console.error(err);
-        res.status(500).json({ msg: "Error en el servidor al cambiar la contraseña", error: err.message });
-    }
-});
-
 
 // ---------------- RUTAS DE GESTIÓN DE PROFESORES (SOLO ADMIN) -----------------
-// (Las rutas de gestión de profesores se mantienen igual)
 
 // GET: Todos los profesores
 router.get("/profesores", verifyAdmin, async (req, res) => {
