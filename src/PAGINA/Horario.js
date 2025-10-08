@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 // 1. CORRECCIÓN DE RUTA: Ajustamos la importación.
-import apiClient from '../api/apiClient'; // <- Usamos el cliente configurado
+import apiClient from '../api/apiClient';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import "./Horario.css";
@@ -27,7 +27,7 @@ function Horario({ user }) {
   const [colorSeleccionado, setColorSeleccionado] = useState("#f44336");
   const [leyenda, setLeyenda] = useState({});
   const [modoBorrador, setModoBorrador] = useState(false);
-  const [pdfHorario, setPdfHorario] = useState(null);
+  const [horarioUrl, setHorarioUrl] = useState(null); // Cambiado de pdfHorario a horarioUrl
   const [alerta, setAlerta] = useState(null);
   // Añadido estado de carga y progreso
   const [isLoading, setIsLoading] = useState(false); 
@@ -78,8 +78,8 @@ function Horario({ user }) {
         setProgress(75);
         if (res.data?.datos) setHorario(res.data.datos);
         if (res.data?.leyenda) setLeyenda(res.data.leyenda);
-        // La URL de Cloudinary se carga aquí
-        if (res.data?.pdfUrl) setPdfHorario(res.data.pdfUrl); 
+        // CAMBIADO: Usamos imageUrl
+        if (res.data?.imageUrl) setHorarioUrl(res.data.imageUrl); 
     }).catch(error => {
         console.error("Error al cargar el horario:", error);
         mostrarAlerta("Error al cargar el horario ❌", "error");
@@ -92,7 +92,7 @@ function Horario({ user }) {
   // ----------------------------------------------------
 
 
-  const generarHorarioVacio = () => {
+  const generarHorarioVacio = useCallback(() => {
     if (user.role !== "admin") return;
     const nuevoHorario = {};
     profesores.forEach(prof => {
@@ -105,9 +105,9 @@ function Horario({ user }) {
     });
     setHorario(nuevoHorario);
     mostrarAlerta("Horario limpiado correctamente ✅", "success");
-  };
+  }, [isLoading, profesores, mostrarAlerta]);
 
-  const handleCellChange = (profesor, asignatura, dia, hora, value) => {
+  const handleCellChange = useCallback((profesor, asignatura, dia, hora, value) => {
     if (user.role !== "admin") return;
     setHorario(prev => {
       const profesorHorario = prev[profesor] || {};
@@ -118,9 +118,9 @@ function Horario({ user }) {
         [profesor]: { ...profesorHorario, [clave]: { ...celdaExistente, text: value } }
       };
     });
-  };
+  }, [user.role]);
 
-  const pintarHora = (profesor, asignatura, dia, hora) => {
+  const pintarHora = useCallback((profesor, asignatura, dia, hora) => {
     if (user.role !== "admin") return;
     if (!mostrarPaleta && !modoBorrador) return;
     const nuevoColor = modoBorrador ? "transparent" : colorSeleccionado;
@@ -136,7 +136,7 @@ function Horario({ user }) {
     if (!modoBorrador && !leyenda[colorSeleccionado]) {
       setLeyenda(prev => ({ ...prev, [colorSeleccionado]: "" }));
     }
-  };
+  }, [user.role, mostrarPaleta, modoBorrador, colorSeleccionado, leyenda]);
 
   const handleLeyendaChange = (color, value) => {
     if (user.role !== "admin") return; // Solo admin puede cambiar leyenda
@@ -171,7 +171,7 @@ function Horario({ user }) {
     if (user.role !== "admin") return;
     mostrarAlerta("Generando PDF, esto puede tomar un momento... ⏳", "info");
     
-    // Lógica completa de exportación a PDF (sin cambios significativos en el cuerpo)
+    // Lógica completa de exportación a PDF (se mantiene por si se quiere exportar el diseño)
     try {
         const doc = new jsPDF("landscape");
         const [logoAgsBase64, logoDerBase64] = await Promise.all([ getBase64Image(logoAgs), getBase64Image(logoDerecho) ]);
@@ -192,7 +192,7 @@ function Horario({ user }) {
              return;
         }
         
-        // Uso de html2canvas (la lógica de transformación de inputs a spans se deja en el código anterior si aplica)
+        // Uso de html2canvas 
         const canvas = await html2canvas(tablaElement, { scale: 2, backgroundColor: "#ffffff" });
         const imgData = canvas.toDataURL("image/png");
 
@@ -234,16 +234,17 @@ function Horario({ user }) {
       formData.append("anio", anio);
       formData.append("datos", JSON.stringify(horario));
       formData.append("leyenda", JSON.stringify(leyenda));
+      // NOTA: No subimos ningún archivo aquí, solo los datos de la tabla.
 
-      // 3. CAMBIO CRUCIAL: Usamos apiClient en lugar de axios y ruta completa
+      // CAMBIO CRUCIAL: Usamos apiClient en lugar de axios
       const res = await apiClient.post("/horario", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          // Content-Type: multipart/form-data lo establece FormData automáticamente
         }
       });
 
-      setPdfHorario(res.data.horario?.pdfUrl || null);
+      // Si el backend es exitoso, actualiza la URL por si se subió una imagen antes
+      setHorarioUrl(res.data.horario?.imageUrl || null); // CAMBIADO: pdfUrl a imageUrl
       mostrarAlerta("Horario guardado correctamente ✅", "success");
     } catch (err) {
       console.error(err);
@@ -251,48 +252,53 @@ function Horario({ user }) {
     }
   };
 
-  const abrirExploradorPDF = () => fileInputRef.current.click();
+  const abrirExploradorImagen = () => fileInputRef.current.click(); // Cambiado de PDF a Imagen
 
   const handleArchivoChange = async e => {
     const file = e.target.files[0];
     if (!file) return;
 
+    // VALIDACIÓN CRÍTICA: Asegurar que es una imagen
+    if (!file.type.startsWith('image/')) {
+        return mostrarAlerta("Por favor, selecciona un archivo de imagen (PNG, JPG) ❌", "error");
+    }
+
     const formData = new FormData();
-    formData.append("pdf", file);
+    // CAMBIO CRÍTICO: El backend espera 'imagen' en lugar de 'pdf'
+    formData.append("imagen", file); 
     formData.append("anio", anio);
 
     const token = localStorage.getItem("token");
     try {
-      // 4. CAMBIO CRUCIAL: Usamos apiClient en lugar de axios y ruta completa
+      // CAMBIO CRUCIAL: Usamos apiClient en lugar de axios
       const res = await apiClient.post("/horario", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          // Content-Type: multipart/form-data lo establece FormData automáticamente
         }
       });
       
-      setPdfHorario(res.data.horario?.pdfUrl || null);
-      mostrarAlerta("PDF subido correctamente ✅", "success");
+      // La URL de Cloudinary (imagen) se guarda y se usa para mostrar
+      setHorarioUrl(res.data.horario?.imageUrl || null); // CAMBIADO: pdfUrl a imageUrl
+      mostrarAlerta("Imagen de horario subida correctamente ✅", "success");
     } catch (err) {
       console.error(err);
-      mostrarAlerta("Error al subir PDF ❌", "error");
+      mostrarAlerta("Error al subir imagen ❌", "error");
     }
   };
 
   // ----------------------------------------------------
-  // VISTA DE PDF PARA USUARIOS NO-ADMIN
-  if (user.role !== "admin" && pdfHorario) {
-    // pdfHorario es la URL completa de Cloudinary
-    return (
-      <div className="pdf-viewer-full">
-        <embed
-          src={`${pdfHorario}#toolbar=0&navpanes=0&scrollbar=0`}
-          type="application/pdf"
-          width="100%"
-          height="100%"
-          style={{ border: "none", display: "block" }}
-        />
-      </div>
+  // VISTA DE IMAGEN PARA USUARIOS NO-ADMIN
+  if (user.role !== "admin" && horarioUrl) {
+    // Si hay una URL de horario, mostramos la imagen directamente
+    return ( 
+      <div className="horario-viewer-full"> 
+        <img 
+          src={horarioUrl}
+          alt={`Horario General ${anio}`}
+          style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '90vh' }}
+          onError={(e) => { e.target.onerror = null; e.target.src = '/default-horario.png'; mostrarAlerta("Error al cargar la imagen del horario. ❌", "error"); }}
+        /> 
+      </div> 
     );
   }
 
@@ -323,8 +329,8 @@ function Horario({ user }) {
           <button onClick={generarHorarioVacio} className="btn-add">Limpiar Horario</button>
           <button onClick={guardarHorario} className="btn-add">💾 Guardar horario</button>
           <button onClick={exportarPDF} className="btn-add">📄 Exportar PDF</button>
-          <button onClick={abrirExploradorPDF} className="btn-add">⬆️ Subir PDF Horario</button>
-          <input type="file" accept="application/pdf" ref={fileInputRef} style={{ display: "none" }} onChange={handleArchivoChange} />
+          <button onClick={abrirExploradorImagen} className="btn-add">⬆️ Subir Imagen Horario</button>
+          <input type="file" accept="image/*" ref={fileInputRef} style={{ display: "none" }} onChange={handleArchivoChange} />
         </div>
       )}
 

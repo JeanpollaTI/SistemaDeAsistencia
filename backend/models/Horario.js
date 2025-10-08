@@ -17,9 +17,10 @@ const HorarioSchema = new mongoose.Schema(
       type: Object,
       default: {}, // colores o descripciones de asignaturas
     },
-    pdfUrl: {
+    // CORRECCIÓN CLAVE: Cambiamos pdfUrl a imageUrl para consistencia
+    imageUrl: { 
       type: String,
-      default: null, // URL del PDF del horario (Almacena la URL de Cloudinary)
+      default: null, // URL de la imagen del horario (Almacena la URL de Cloudinary)
     },
   },
   { timestamps: true } // createdAt y updatedAt automáticos

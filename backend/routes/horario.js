@@ -1,9 +1,10 @@
 import express from "express";
 import multer from "multer";
-import path from "path";
-import fs from "fs"; // Mantenemos fs si aún lo usas en otros lados, pero no para uploads.
-import { CloudinaryStorage } from "multer-storage-cloudinary"; 
 import { v2 as cloudinary } from "cloudinary"; 
+import { CloudinaryStorage } from "multer-storage-cloudinary"; 
+// Ya no necesitamos path ni fs para la manipulación local
+// import path from "path"; 
+// import fs from "fs"; 
 
 import Horario from "../models/Horario.js";
 import { verifyToken, verifyAdmin } from "./auth.js"; // Asegúrate de que los middlewares se importen correctamente
@@ -17,20 +18,21 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Storage de Multer para subir PDFs a Cloudinary
-const storagePdf = new CloudinaryStorage({
+// NUEVO: Storage de Multer para subir IMÁGENES de Horario
+const storageImage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: (req, file) => {
     const anio = req.body.anio || "unknown";
     return {
-        folder: "sistema-asistencia/pdf-horarios", // Carpeta de destino
-        resource_type: "raw", // CRUCIAL para PDFs
-        public_id: `horario_${anio}_${Date.now()}`, // Nombre único
-        allowed_formats: ["pdf"],
+      // Carpeta específica para imágenes de horarios
+      folder: "sistema-asistencia/horarios-imagenes", 
+      resource_type: "image", // CRUCIAL: Cambiado a 'image'
+      public_id: `horario_img_${anio}_${Date.now()}`, 
+      allowed_formats: ["jpg", "png", "jpeg"], // Aceptar formatos de imagen
     };
   },
 });
-const uploadPdf = multer({ storage: storagePdf });
+const uploadImage = multer({ storage: storageImage }); // CAMBIADO: uploadPdf a uploadImage
 
 // Helper
 const parseJSON = (input) => {
@@ -41,35 +43,38 @@ const parseJSON = (input) => {
 
 // ----------------- CRUD Horario ------------------
 
-router.post("/", verifyAdmin, uploadPdf.single("pdf"), async (req, res) => {
+// CAMBIADO: uploadPdf.single("pdf") a uploadImage.single("imagen")
+router.post("/", verifyAdmin, uploadImage.single("imagen"), async (req, res) => {
   try {
     const { anio, datos, leyenda } = req.body;
-    if (!anio) return res.status(400).json({ msg: "Debe especificar el año" });
+    // Debes enviar anio en el body, incluso si subes solo la imagen
+    if (!anio) return res.status(400).json({ msg: "Debe especificar el año" }); 
 
+    // Usamos findOne para evitar duplicados, y luego actualizamos o creamos
     let horario = await Horario.findOne({ anio }) || new Horario({ anio });
     horario.datos = parseJSON(datos);
     horario.leyenda = parseJSON(leyenda);
 
-    // LÓGICA CLOUDINARY: Actualizar/Reemplazar PDF
+    // LÓGICA CLOUDINARY: Actualizar/Reemplazar Imagen
     if (req.file) {
-        // 1. Eliminar PDF antiguo de Cloudinary si existe
-        if (horario.pdfUrl) {
-            // Lógica para extraer el ID público de la URL y borrarlo
-            const parts = horario.pdfUrl.split('/');
+        // 1. Eliminar Imagen antigua de Cloudinary si existe (y no es la ruta por defecto)
+        if (horario.imageUrl) { // CAMBIADO: pdfUrl a imageUrl
+            const parts = horario.imageUrl.split('/');
             const publicIdWithExt = parts[parts.length - 1]; 
             const publicId = publicIdWithExt.split('.')[0]; 
-            const fullPublicId = `sistema-asistencia/pdf-horarios/${publicId}`;
+            const fullPublicId = `sistema-asistencia/horarios-imagenes/${publicId}`;
 
-            // resource_type: 'raw' es necesario para borrar PDFs
-            await cloudinary.uploader.destroy(fullPublicId, { resource_type: 'raw' });
+            // resource_type: 'image' para borrar imágenes
+            await cloudinary.uploader.destroy(fullPublicId, { resource_type: 'image' }); // CAMBIADO: 'raw' a 'image'
         }
         
-        // 2. Guardar la nueva URL (req.file.path)
-        horario.pdfUrl = req.file.path;
+        // 2. Guardar la nueva URL (req.file.path contiene la URL completa de Cloudinary)
+        horario.imageUrl = req.file.path; // CAMBIADO: pdfUrl a imageUrl
     }
 
     await horario.save();
-    res.json({ success: true, horario });
+    // CAMBIADO: pdfUrl a imageUrl en la respuesta
+    res.json({ success: true, horario: { ...horario.toObject(), imageUrl: horario.imageUrl } }); 
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: err.message });
@@ -79,8 +84,9 @@ router.post("/", verifyAdmin, uploadPdf.single("pdf"), async (req, res) => {
 router.get("/:anio", verifyToken, async (req, res) => {
   try {
     const horario = await Horario.findOne({ anio: req.params.anio });
-    if (!horario) return res.json({ datos: {}, leyenda: {}, pdfUrl: null });
-    res.json({ datos: horario.datos, leyenda: horario.leyenda, pdfUrl: horario.pdfUrl || null });
+    // CAMBIADO: pdfUrl a imageUrl
+    if (!horario) return res.json({ datos: {}, leyenda: {}, imageUrl: null }); 
+    res.json({ datos: horario.datos, leyenda: horario.leyenda, imageUrl: horario.imageUrl || null });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message });
@@ -89,7 +95,8 @@ router.get("/:anio", verifyToken, async (req, res) => {
 
 router.get("/", verifyToken, async (req, res) => {
   try {
-    const horarios = await Horario.find().select("anio pdfUrl").sort({ anio: -1 });
+    // CAMBIADO: pdfUrl a imageUrl
+    const horarios = await Horario.find().select("anio imageUrl").sort({ anio: -1 }); 
     res.json(horarios);
   } catch (err) {
     console.error(err);
@@ -102,14 +109,15 @@ router.delete("/:anio", verifyAdmin, async (req, res) => {
     const horario = await Horario.findOne({ anio: req.params.anio });
     if (!horario) return res.status(404).json({ msg: "Horario no encontrado" });
 
-    // LÓGICA CLOUDINARY: Eliminar PDF de la nube
-    if (horario.pdfUrl) {
-        const parts = horario.pdfUrl.split('/');
+    // LÓGICA CLOUDINARY: Eliminar Imagen de la nube
+    if (horario.imageUrl) { // CAMBIADO: pdfUrl a imageUrl
+        const parts = horario.imageUrl.split('/');
         const publicIdWithExt = parts[parts.length - 1]; 
         const publicId = publicIdWithExt.split('.')[0]; 
-        const fullPublicId = `sistema-asistencia/pdf-horarios/${publicId}`;
+        const fullPublicId = `sistema-asistencia/horarios-imagenes/${publicId}`;
 
-        await cloudinary.uploader.destroy(fullPublicId, { resource_type: 'raw' });
+        // resource_type: 'image' para borrar imágenes
+        await cloudinary.uploader.destroy(fullPublicId, { resource_type: 'image' }); 
     }
 
     await Horario.deleteOne({ anio: req.params.anio });
