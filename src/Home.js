@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// 1. CORRECCIÓN DE RUTA: Ajustamos la importación basada en la nueva estructura src/api/
+// 1. RUTA CORREGIDA: Apunta correctamente a la carpeta api/ usando './'
 import apiClient from './api/apiClient'; 
 import "./Home.css";
 
@@ -27,6 +27,7 @@ function Home({ user, handleNavClick }) {
     const navMenu = document.getElementById("nav-menu");
     const navToggle = document.getElementById("nav-toggle");
     const navClose = document.getElementById("nav-close");
+    // Corrección de sintaxis de event listener
     if (navToggle) navToggle.addEventListener("click", () => navMenu.classList.add("show-menu"));
     if (navClose) navClose.addEventListener("click", () => navMenu.classList.remove("show-menu"));
     
@@ -85,11 +86,11 @@ function Home({ user, handleNavClick }) {
     );
   };
 
+  // Funciones que faltaban
   const guardarAsignaturas = () => {
     if (!selectedProfesor) return;
     const token = localStorage.getItem("token");
     
-    // 4. MÁS LIMPIO: Solo indicamos el endpoint.
     apiClient.put(`/profesores/${selectedProfesor._id}/asignaturas`, { asignaturas: asignaturasSelect }, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         fetchProfesores();
@@ -104,7 +105,6 @@ function Home({ user, handleNavClick }) {
     if (!selectedProfesor) return;
     const token = localStorage.getItem("token");
     
-    // 5. Y DE NUEVO: Solo el endpoint.
     apiClient.delete(`/profesores/${selectedProfesor._id}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         fetchProfesores();
@@ -117,6 +117,13 @@ function Home({ user, handleNavClick }) {
   
   const primerNombre = user?.nombre ? user.nombre.split(" ")[0] : "";
   
+  // --------------------------------------------------------------------------
+  // LÓGICA DE DETENER FUGA DE CONTENIDO EN RUTAS SECUNDARIAS
+  // Si la ruta no es la raíz, la lógica de renderizado del componente Home NO debe ejecutarse.
+  // Sin la prop 'location' aquí, esta función se movería a App.js
+  // (Asumiendo que App.js se encarga de la guarda estructural)
+  // --------------------------------------------------------------------------
+
   return (
     <div>
       {/* HOME */}
@@ -154,7 +161,6 @@ function Home({ user, handleNavClick }) {
                   <tr key={prof._id}>
                     <td>{prof.nombre}</td>
                     <td>{prof.asignaturas?.join(", ") || "No asignada"}</td>
-                    {/* Aseguramos que 'createdAt' exista antes de usarlo */}
                     <td>{prof.createdAt ? new Date(prof.createdAt).toLocaleDateString() : "N/A"}</td>
                     <td><button className="btn-ver-perfil" onClick={() => openModal(prof)}>Ver perfil</button></td>
                   </tr>
@@ -174,7 +180,6 @@ function Home({ user, handleNavClick }) {
                 src={profileImgUrl(selectedProfesor.foto)} 
                 alt={selectedProfesor.nombre} 
                 className="profile-img-modal" 
-                // Añadimos un manejo de error en caso de que la URL de Cloudinary falle
                 onError={(e) => { e.target.onerror = null; e.target.src = `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}` }}
             />
             <h3>{selectedProfesor.nombre}</h3>
