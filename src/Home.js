@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Home.css";
-import axios from "axios";
+// 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro nuevo apiClient en lugar de axios directamente.
+import apiClient from "../api/apiClient";
 
 function Home({ user, handleNavClick }) {
   const navigate = useNavigate();
@@ -44,7 +45,8 @@ function Home({ user, handleNavClick }) {
   const fetchProfesores = () => {
     const token = localStorage.getItem("token");
     if (!token) return console.error("⚠️ No hay token guardado.");
-    axios.get("http://localhost:5000/auth/profesores", { headers: { Authorization: `Bearer ${token}` } })
+    // 2. CÓDIGO MÁS LIMPIO: Ya no necesitamos la URL completa.
+    apiClient.get("/auth/profesores", { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => setProfesores(res.data || []))
       .catch((err) => console.error("Error al obtener profesores:", err));
   };
@@ -63,10 +65,12 @@ function Home({ user, handleNavClick }) {
     setAsignaturasSelect([]);
   };
 
+  // 3. URLs CENTRALIZADAS: Esta función ahora usa la URL base de nuestro apiClient.
   const profileImgUrl = (foto) => {
-    if (!foto) return "http://localhost:5000/uploads/fotos/default.png";
+    const baseUrl = apiClient.defaults.baseURL; // Obtenemos la URL base configurada
+    if (!foto) return `${baseUrl}/uploads/fotos/default.png`;
     if (foto.startsWith("http")) return foto;
-    return `http://localhost:5000${foto}`;
+    return `${baseUrl}${foto}`;
   };
 
   const handleAsignaturasChange = (materia) => {
@@ -78,7 +82,8 @@ function Home({ user, handleNavClick }) {
   const guardarAsignaturas = () => {
     if (!selectedProfesor) return;
     const token = localStorage.getItem("token");
-    axios.put(`http://localhost:5000/profesores/${selectedProfesor._id}/asignaturas`, { asignaturas: asignaturasSelect }, { headers: { Authorization: `Bearer ${token}` } })
+    // 4. MÁS LIMPIO: Solo indicamos el endpoint, no la URL completa.
+    apiClient.put(`/profesores/${selectedProfesor._id}/asignaturas`, { asignaturas: asignaturasSelect }, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         fetchProfesores();
         closeModal();
@@ -91,7 +96,8 @@ function Home({ user, handleNavClick }) {
   const confirmDelete = () => {
     if (!selectedProfesor) return;
     const token = localStorage.getItem("token");
-    axios.delete(`http://localhost:5000/profesores/${selectedProfesor._id}`, { headers: { Authorization: `Bearer ${token}` } })
+    // 5. Y DE NUEVO: Solo el endpoint. ¡Así de fácil!
+    apiClient.delete(`/profesores/${selectedProfesor._id}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         fetchProfesores();
         closeModal();
@@ -198,4 +204,3 @@ function Home({ user, handleNavClick }) {
 }
 
 export default Home;
-

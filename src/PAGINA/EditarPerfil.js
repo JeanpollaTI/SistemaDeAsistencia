@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+// 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro apiClient.
+import apiClient from "../api/apiClient";
 import "./EditarPerfil.css";
 
 function EditarPerfil({ user, setUser }) {
@@ -29,11 +30,13 @@ function EditarPerfil({ user, setUser }) {
         celular: user.celular || "",
       });
 
+      // 2. URL DINÁMICA: Usamos la URL base de nuestro apiClient para construir la ruta de la imagen.
+      const baseUrl = apiClient.defaults.baseURL;
       setFotoPreview(
         user.foto && !user.foto.includes("default.png")
           ? user.foto.startsWith("http")
             ? user.foto
-            : `http://localhost:5000${user.foto.startsWith("/") ? "" : "/"}${user.foto}`
+            : `${baseUrl}${user.foto.startsWith("/") ? "" : "/"}${user.foto}`
           : "/default-profile.png"
       );
     }
@@ -70,7 +73,8 @@ function EditarPerfil({ user, setUser }) {
       Object.keys(formData).forEach((key) => data.append(key, formData[key]));
       if (foto) data.append("foto", foto);
 
-      const res = await axios.put("http://localhost:5000/profesores/editar-perfil", data, {
+      // 3. CÓDIGO MÁS LIMPIO: Usamos apiClient y solo el endpoint.
+      const res = await apiClient.put("/profesores/editar-perfil", data, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,

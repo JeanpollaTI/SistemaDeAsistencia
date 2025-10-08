@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+// 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro apiClient.
+import apiClient from "../api/apiClient";
 import "./Password.css";
 
 function Password() {
@@ -18,17 +20,14 @@ function Password() {
     setMessage("");
 
     try {
-      const res = await fetch("http://localhost:5000/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      setMessage(data.message);
-      if (res.ok) setStep(2);
+      // 2. CÓDIGO MÁS LIMPIO: Usamos apiClient y solo el endpoint.
+      const res = await apiClient.post("/auth/forgot-password", { email });
+      setMessage(res.data.message);
+      setStep(2); // Avanza al siguiente paso si la petición es exitosa
     } catch (err) {
       console.error(err);
-      setMessage("Error enviando el correo. Intenta nuevamente.");
+      // Con Axios, los mensajes de error del backend están en err.response.data
+      setMessage(err.response?.data?.message || "Error enviando el correo. Intenta nuevamente.");
     } finally {
       setLoading(false);
     }
@@ -40,27 +39,25 @@ function Password() {
     setMessage("");
 
     try {
-      const res = await fetch("http://localhost:5000/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, token, newPassword }),
+      // 3. CÓDIGO MÁS LIMPIO: Usamos apiClient y solo el endpoint.
+      const res = await apiClient.post("/auth/reset-password", {
+        email,
+        token,
+        newPassword,
       });
-      const data = await res.json();
-      setMessage(data.message);
+      setMessage(res.data.message);
 
-      if (res.ok) {
-        setEmail("");
-        setToken("");
-        setNewPassword("");
-        setStep(1);
-        // Redirigir al login después de 2 segundos
-        setTimeout(() => {
-          navigate("/login");
-        }, 2000);
-      }
+      // Limpiar y redirigir si la contraseña se restableció correctamente
+      setEmail("");
+      setToken("");
+      setNewPassword("");
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+
     } catch (err) {
       console.error(err);
-      setMessage("Error al restablecer la contraseña.");
+      setMessage(err.response?.data?.message || "Error al restablecer la contraseña.");
     } finally {
       setLoading(false);
     }

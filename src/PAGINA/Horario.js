@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import axios from "axios";
+// 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro apiClient.
+import apiClient from "../api/apiClient";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import "./Horario.css";
@@ -49,7 +50,8 @@ function Horario({ user }) {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
-    axios.get("http://localhost:5000/auth/profesores", {
+    // 2. CÓDIGO MÁS LIMPIO: Usando apiClient.
+    apiClient.get("/auth/profesores", {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => {
       if (Array.isArray(res.data)) setProfesores(res.data);
@@ -63,7 +65,8 @@ function Horario({ user }) {
     setIsLoading(true);
     setProgress(20);
     const timer = setTimeout(() => {
-      axios.get(`http://localhost:5000/horario/${anio}`, { headers: { Authorization: `Bearer ${token}` } })
+      // 3. CÓDIGO MÁS LIMPIO: Usando apiClient.
+      apiClient.get(`/horario/${anio}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         setProgress(75);
         if (res.data?.datos) setHorario(res.data.datos);
@@ -155,7 +158,7 @@ function Horario({ user }) {
         const tablaElement = horarioTableRef.current;
         if (!tablaElement) { throw new Error("Tabla de horario no encontrada."); }
         const canvas = await html2canvas(tablaElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true, onclone: (clonedDocument) => {
-            
+          
             clonedDocument.querySelectorAll('.horas-row-horizontal').forEach(row => {
                 row.style.justifyContent = 'space-around';
                 row.style.display = 'flex';
@@ -217,7 +220,8 @@ function Horario({ user }) {
         formData.append("anio", anio);
         formData.append("datos", JSON.stringify(horario));
         formData.append("leyenda", JSON.stringify(leyenda));
-        const res = await axios.post("http://localhost:5000/horario", formData, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, onUploadProgress: (progressEvent) => { const percentCompleted = Math.min(90, Math.round((progressEvent.loaded * 100) / progressEvent.total)); setProgress(percentCompleted); } });
+        // 4. CÓDIGO MÁS LIMPIO: Usando apiClient.
+        const res = await apiClient.post("/horario", formData, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, onUploadProgress: (progressEvent) => { const percentCompleted = Math.min(90, Math.round((progressEvent.loaded * 100) / progressEvent.total)); setProgress(percentCompleted); } });
         setProgress(100);
         setPdfHorario(res.data.horario?.pdfUrl || null);
         mostrarAlerta("Horario guardado correctamente ✅", "success");
@@ -242,7 +246,8 @@ function Horario({ user }) {
         formData.append("pdf", file);
         formData.append("anio", anio);
         const token = localStorage.getItem("token");
-        const res = await axios.post("http://localhost:5000/horario", formData, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }, onUploadProgress: (progressEvent) => { const percentCompleted = Math.min(90, Math.round((progressEvent.loaded * 100) / progressEvent.total)); setProgress(percentCompleted); } });
+        // 5. CÓDIGO MÁS LIMPIO: Usando apiClient.
+        const res = await apiClient.post("/horario", formData, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }, onUploadProgress: (progressEvent) => { const percentCompleted = Math.min(90, Math.round((progressEvent.loaded * 100) / progressEvent.total)); setProgress(percentCompleted); } });
         setProgress(100);
         setPdfHorario(res.data.horario?.pdfUrl || null);
         mostrarAlerta("PDF subido correctamente ✅", "success");
@@ -255,7 +260,9 @@ function Horario({ user }) {
   }, [anio, isLoading, mostrarAlerta]);
 
   if (user.role !== "admin" && pdfHorario) {
-    return ( <div className="pdf-viewer-full"> <embed src={`http://localhost:5000${pdfHorario}#toolbar=0&navpanes=0&scrollbar=0`} type="application/pdf" width="100%" height="100%" style={{ border: "none", display: "block" }} /> </div> );
+    // 6. URL DINÁMICA: Usamos la URL base de apiClient para el visor de PDF.
+    const baseUrl = apiClient.defaults.baseURL;
+    return ( <div className="pdf-viewer-full"> <embed src={`${baseUrl}${pdfHorario}#toolbar=0&navpanes=0&scrollbar=0`} type="application/pdf" width="100%" height="100%" style={{ border: "none", display: "block" }} /> </div> );
   }
 
   return (
@@ -285,4 +292,3 @@ function Horario({ user }) {
 }
 
 export default Horario;
-

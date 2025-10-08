@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro apiClient centralizado.
+import apiClient from '../api/apiClient'; 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import './Calificaciones.css'; 
@@ -48,7 +49,8 @@ function Calificaciones({ user }) {
   useEffect(() => {
     const fetchGrupos = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/grupos?populate=alumnos,profesoresAsignados', getAxiosConfig());
+        // 2. CÓDIGO MÁS LIMPIO: Usando apiClient.
+        const res = await apiClient.get('/grupos?populate=alumnos,profesoresAsignados', getAxiosConfig());
         setGrupos(res.data);
       } catch (err) {
         console.error("Error al cargar grupos:", err);
@@ -71,7 +73,8 @@ function Calificaciones({ user }) {
     setMaterias(materiasAsignadas);
 
     try {
-      const res = await axios.get(`http://localhost:5000/grupos/${grupo._id}/calificaciones-admin`, getAxiosConfig());
+      // 3. CÓDIGO MÁS LIMPIO: Usando apiClient.
+      const res = await apiClient.get(`/grupos/${grupo._id}/calificaciones-admin`, getAxiosConfig());
       setCalificaciones(res.data || {});
     } catch (err) {
       console.error("Error detallado al cargar calificaciones:", err.response || err);
@@ -228,7 +231,8 @@ function Calificaciones({ user }) {
                 pdfData: base64Pdf 
             };
             
-            await axios.post('http://localhost:5000/api/enviar-boleta', payload, getAxiosConfig());
+            // 4. CÓDIGO MÁS LIMPIO: Usando apiClient.
+            await apiClient.post('/api/enviar-boleta', payload, getAxiosConfig());
             mostrarNotificacion(`Boleta enviada a ${recipient} exitosamente.`, 'exito');
         
         } catch (error) {
@@ -308,9 +312,9 @@ function Calificaciones({ user }) {
 
           {modalShare.visible && (
             <ModalShare
-                alumno={modalShare.alumno}
-                onClose={() => setModalShare({ visible: false, alumno: null })}
-                onSend={handleSendPdf}
+                 alumno={modalShare.alumno}
+                 onClose={() => setModalShare({ visible: false, alumno: null })}
+                 onSend={handleSendPdf}
             />
           )}
           
@@ -450,4 +454,3 @@ function ModalShare({ alumno, onClose, onSend }) {
 }
 
 export default Calificaciones;
-

@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+// 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro apiClient.
+import apiClient from "../api/apiClient";
 import "./Login.css";
 
 function Login({ onLogin }) {
@@ -23,22 +25,15 @@ function Login({ onLogin }) {
     try {
       console.log("Enviando login:", { identifier, password });
 
-      const res = await fetch("http://localhost:5000/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          identifier: identifier.toLowerCase(), // normaliza email
-          password,
-        }),
+      // 2. CÓDIGO MÁS LIMPIO: Usamos apiClient y solo el endpoint.
+      // Axios maneja la serialización a JSON automáticamente.
+      const res = await apiClient.post("/auth/login", {
+        identifier: identifier.toLowerCase(), // normaliza email
+        password,
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.msg || data.error || "Error en el login");
-        setLoading(false);
-        return;
-      }
+      // Con Axios, los datos de la respuesta están en res.data
+      const data = res.data;
 
       if (!data.token || !data.user) {
         setError("Login fallido: token no recibido");
@@ -67,7 +62,8 @@ function Login({ onLogin }) {
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError("Error en el servidor");
+      // Con Axios, los errores del backend están en err.response.data
+      setError(err.response?.data?.msg || err.response?.data?.error || "Error en el servidor o credenciales incorrectas");
     } finally {
       setLoading(false);
     }

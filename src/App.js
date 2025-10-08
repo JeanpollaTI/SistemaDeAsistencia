@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+// 1. IMPORTAMOS apiClient PARA LA URL DE LA IMAGEN DEL NAV
+import apiClient from "./api/apiClient";
 import Home from "./Home";
 import Login from "./PAGINA/Login";
 import RegisterProfesor from "./PAGINA/RegisterProfesor";
@@ -73,14 +75,19 @@ function App() {
       // Menú para el rol de administrador
       ...(user?.role === "admin"
         ? [
-           
             { id: "grupo", label: "GRUPOS", path: "/grupo" },
-            // <-- CAMBIO: Orden definido aquí consistentemente -->
             { id: "horario", label: "HORARIO GENERAL", path: "/horario" },
             { id: "calificaciones", label: "CALIFICACIONES", path: "/calificaciones" },
           ]
         : []),
     ];
+
+    // 2. LÓGICA DE IMAGEN DEL NAVBAR ACTUALIZADA
+    const profileImgUrl = user?.foto && !user.foto.includes("default.png")
+      ? user.foto.startsWith("http")
+        ? user.foto
+        : `${apiClient.defaults.baseURL}${user.foto.startsWith("/") ? "" : "/"}${user.foto}`
+      : `${apiClient.defaults.baseURL}/uploads/fotos/default.png`;
 
     return (
       <div className="nav-menu-right">
@@ -121,11 +128,7 @@ function App() {
           {user && (
             <li className="nav-profile">
               <img
-                src={
-                  user.foto
-                    ? `http://localhost:5000${user.foto.startsWith("/") ? "" : "/"}${user.foto}`
-                    : "http://localhost:5000/uploads/fotos/default.png"
-                }
+                src={profileImgUrl} // <-- URL dinámica aplicada aquí
                 alt="Perfil"
                 className="profile-img-small"
                 onClick={() => navigate("/perfil")}
@@ -167,10 +170,10 @@ function App() {
 
       <main>
         <Routes>
-          <Route path="/" element={<Home user={user} onLogout={handleLogout} handleNavClick={handleNavClick} />} />
+          <Route path="/" element={<Home user={user} handleNavClick={handleNavClick} />} />
           <Route path="/login" element={user ? <Navigate to="/" /> : <Login onLogin={handleLogin} />} />
           <Route path="/forgot-password" element={user ? <Navigate to="/" /> : <Password />} />
-          <Route path="/register-profesor" element={user?.role === "admin" ? <RegisterProfesor user={user} onLogout={handleLogout} /> : <Navigate to="/" />} />
+          <Route path="/register-profesor" element={user?.role === "admin" ? <RegisterProfesor /> : <Navigate to="/" />} />
           <Route path="/perfil" element={user ? <Perfil user={user} onLogout={handleLogout} /> : <Navigate to="/login" />} />
           <Route path="/editar-perfil" element={user ? <EditarPerfil user={user} setUser={handleUserUpdate} /> : <Navigate to="/login" />} />
           <Route path="/horario" element={user ? <Horario user={user} /> : <Navigate to="/login" />} />

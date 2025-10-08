@@ -1,15 +1,23 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+// 1. IMPORTAMOS apiClient PARA OBTENER LA URL BASE DEL SERVIDOR
+import apiClient from "../api/apiClient";
 import "./Perfil.css";
 
-function Perfil({ user, setUser, onLogout }) {
+function Perfil({ user, onLogout }) {
   const navigate = useNavigate();
 
   if (!user) return null;
 
-  const profileImgUrl = user.foto
-    ? `http://localhost:5000${user.foto}`
-    : `http://localhost:5000/uploads/fotos/default.png`;
+  // 2. LÓGICA DE IMAGEN ACTUALIZADA
+  // Ahora la URL de la imagen se construye dinámicamente usando la
+  // dirección de nuestro backend (sea localhost o la de Render).
+  const profileImgUrl = user.foto && !user.foto.includes("default.png")
+    ? user.foto.startsWith("http")
+      ? user.foto
+      : `${apiClient.defaults.baseURL}${user.foto.startsWith("/") ? "" : "/"}${user.foto}`
+    : `${apiClient.defaults.baseURL}/uploads/fotos/default.png`;
+
 
   const handleEdit = () => navigate("/editar-perfil");
 

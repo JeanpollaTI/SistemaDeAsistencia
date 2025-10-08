@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+// 1. IMPORTAMOS apiClient EN LUGAR DE axios
+import apiClient from "../api/apiClient";
 import "./RegisterProfesor.css";
 
-const API_URL = "http://localhost:5000/auth";
+// 2. ELIMINAMOS LA CONSTANTE API_URL, YA NO ES NECESARIA
 
 export default function RegisterProfesor() {
   const navigate = useNavigate();
@@ -27,8 +28,9 @@ export default function RegisterProfesor() {
     const storedToken = localStorage.getItem("token");
     if (storedToken) setToken(storedToken);
 
-    axios
-      .get(`${API_URL}/users`, {
+    // 3. ACTUALIZAMOS LA PETICIÓN GET PARA USAR apiClient
+    apiClient
+      .get(`/auth/users`, {
         headers: storedToken ? { Authorization: `Bearer ${storedToken}` } : {},
       })
       .then((res) => {
@@ -66,30 +68,23 @@ export default function RegisterProfesor() {
     try {
       setIsSubmitting(true);
       const formData = new FormData();
-
-      // Forzar rol a admin si es el primer usuario
       const finalForm = { ...form, role: firstAdmin ? "admin" : form.role };
-
-      // Normalizar email y celular
       finalForm.email = finalForm.email.toLowerCase().trim();
       finalForm.celular = finalForm.celular?.trim() || "";
 
-      // Agregar todos los campos a FormData
       Object.keys(finalForm).forEach((key) =>
         formData.append(key, finalForm[key])
       );
       if (foto) formData.append("foto", foto);
 
-      // Headers
       const headers = { "Content-Type": "multipart/form-data" };
       if (token && !firstAdmin) headers.Authorization = `Bearer ${token}`;
 
-      // Petición POST
-      const res = await axios.post(`${API_URL}/register`, formData, { headers });
+      // 4. ACTUALIZAMOS LA PETICIÓN POST PARA USAR apiClient
+      const res = await apiClient.post(`/auth/register`, formData, { headers });
 
       setMsg(res.data.msg || "Usuario registrado correctamente");
 
-      // Reset formulario y foto
       setForm({
         nombre: "",
         edad: "",
@@ -101,7 +96,6 @@ export default function RegisterProfesor() {
       });
       setFoto(null);
 
-      // Redirigir después de 2 segundos
       setTimeout(() => navigate("/"), 2000);
     } catch (err) {
       setMsg(
