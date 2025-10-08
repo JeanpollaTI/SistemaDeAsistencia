@@ -23,7 +23,9 @@ export const sendEmail = async (to, subject, html, attachments = []) => {
     });
 
     const mailOptions = {
-      from: `"Sistema de Asistencia" <${process.env.EMAIL_USER}>`, // Nombre visible
+      // --- CORRECCIÓN IMPORTANTE AQUÍ ---
+      // Usamos una nueva variable de entorno para el remitente
+      from: `"Sistema de Asistencia" <${process.env.EMAIL_FROM}>`,
       to,
       subject,
       html,
