@@ -85,14 +85,11 @@ function App() {
         : []),
     ];
 
-    // --------------------------------------------------------------------------
-    // 2. LÓGICA DE IMAGEN CORREGIDA PARA CLOUDINARY
+    // LÓGICA DE IMAGEN CORREGIDA PARA CLOUDINARY
     const profileImgUrl = 
       user?.foto && user.foto !== DEFAULT_IMG_PATH
         ? user.foto // Usamos la URL completa de Cloudinary
         : `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}`; // Concatenamos para la imagen por defecto
-
-    // --------------------------------------------------------------------------
 
     return (
       <div className="nav-menu-right">
@@ -138,7 +135,6 @@ function App() {
                 className="profile-img-small"
                 onClick={() => navigate("/perfil")}
                 style={{ cursor: "pointer" }}
-                // Manejo de error para la imagen por defecto o Cloudinary
                 onError={(e) => { e.target.onerror = null; e.target.src = `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}` }} 
               />
             </li>
