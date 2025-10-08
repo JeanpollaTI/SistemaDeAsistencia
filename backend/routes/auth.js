@@ -40,7 +40,7 @@ const formatDate = (date) => {
 
 // Helper para obtener Public ID de Cloudinary
 const getCloudinaryPublicId = (url) => {
-    if (!url || url.includes("default.png")) return null;
+    if (!url || url.includes("default.png") || !url.includes("cloudinary.com")) return null;
     const parts = url.split('/');
     const publicIdWithExt = parts[parts.length - 1];
     const publicId = publicIdWithExt.split('.')[0];
@@ -79,7 +79,11 @@ router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, re
     email = email.toLowerCase();
 
     const existingUser = await User.findOne({ $or: [{ email }, { celular }] });
-    if (existingUser) return res.status(400).json({ msg: "Usuario ya existe" });
+    if (existingUser) {
+        // CLOUDINARY CLEANUP: Si el usuario existe, borrar la foto que se subió temporalmente.
+        if (req.file) await cloudinary.uploader.destroy(req.file.filename); 
+        return res.status(400).json({ msg: "Usuario ya existe" });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     // CLOUDINARY: Guarda la URL completa
@@ -91,7 +95,7 @@ router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, re
     res.status(201).json({ msg: "Usuario registrado correctamente", user: newUser });
   } catch (err) {
     console.error(err);
-    // CLOUDINARY: Eliminar foto subida si falla el registro
+    // CLOUDINARY CLEANUP: Borrar la foto si el save a MongoDB falla.
     if (req.file) await cloudinary.uploader.destroy(req.file.filename);
     res.status(500).json({ msg: "Error en el servidor", error: err.message });
   }
@@ -102,8 +106,7 @@ router.post("/login", async (req, res) => {
   try {
     const { identifier, password } = req.body;
     
-    // CORRECCIÓN CRUCIAL: Añadir .select('+password') para forzar a MongoDB a incluir el hash
-    // Esto resuelve el error "Illegal arguments: string_undefined"
+    // CORRECCIÓN CRUCIAL: Añadir .select('+password') para obtener el hash (soluciona Illegal arguments)
     const user = await User.findOne({ $or: [{ email: identifier }, { celular: identifier }] }).select('+password'); 
     
     if (!user) return res.status(400).json({ msg: "Usuario no encontrado" });

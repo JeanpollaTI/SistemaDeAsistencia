@@ -72,7 +72,7 @@ function App() {
         ? [
             { id: "trabajos", label: "TRABAJOS", path: "/trabajos" },
             { id: "grupo", label: "ASISTENCIA", path: "/grupo" },
-            { id: "horario", label: "HORARIO GENERAL", path: "/horario" },
+           
           ]
         : []),
       // Menú para el rol de administrador

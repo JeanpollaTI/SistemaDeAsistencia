@@ -2,37 +2,36 @@ import express from "express";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary"; 
 import { CloudinaryStorage } from "multer-storage-cloudinary"; 
-// Ya no necesitamos path ni fs para la manipulación local
-// import path from "path"; 
-// import fs from "fs"; 
 
 import Horario from "../models/Horario.js";
-import { verifyToken, verifyAdmin } from "./auth.js"; // Asegúrate de que los middlewares se importen correctamente
+import User from "../models/User.js"; // Necesario para buscar profesores
+import { sendEmail } from "../utils/sendEmail.js"; // Necesario para enviar el correo
+import { verifyToken, verifyAdmin } from "./auth.js"; 
 
 const router = express.Router();
 
 // ----------------- CONFIGURACIÓN CLOUDINARY -----------------
+// Cloudinary se configura aquí y es global para todos los routers
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// NUEVO: Storage de Multer para subir IMÁGENES de Horario
+// Storage de Multer para subir IMÁGENES de Horario (Mantenido solo por si es necesario para el frontend)
 const storageImage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: (req, file) => {
     const anio = req.body.anio || "unknown";
     return {
-      // Carpeta específica para imágenes de horarios
       folder: "sistema-asistencia/horarios-imagenes", 
-      resource_type: "image", // CRUCIAL: Cambiado a 'image'
+      resource_type: "image", 
       public_id: `horario_img_${anio}_${Date.now()}`, 
-      allowed_formats: ["jpg", "png", "jpeg"], // Aceptar formatos de imagen
+      allowed_formats: ["jpg", "png", "jpeg"], 
     };
   },
 });
-const uploadImage = multer({ storage: storageImage }); // CAMBIADO: uploadPdf a uploadImage
+const uploadImage = multer({ storage: storageImage }); 
 
 // Helper
 const parseJSON = (input) => {
@@ -43,37 +42,33 @@ const parseJSON = (input) => {
 
 // ----------------- CRUD Horario ------------------
 
-// CAMBIADO: uploadPdf.single("pdf") a uploadImage.single("imagen")
+// POST: Guardar datos de horario y/o subir imagen (si el frontend la envía)
 router.post("/", verifyAdmin, uploadImage.single("imagen"), async (req, res) => {
   try {
     const { anio, datos, leyenda } = req.body;
-    // Debes enviar anio en el body, incluso si subes solo la imagen
     if (!anio) return res.status(400).json({ msg: "Debe especificar el año" }); 
 
-    // Usamos findOne para evitar duplicados, y luego actualizamos o creamos
     let horario = await Horario.findOne({ anio }) || new Horario({ anio });
     horario.datos = parseJSON(datos);
     horario.leyenda = parseJSON(leyenda);
 
     // LÓGICA CLOUDINARY: Actualizar/Reemplazar Imagen
     if (req.file) {
-        // 1. Eliminar Imagen antigua de Cloudinary si existe (y no es la ruta por defecto)
-        if (horario.imageUrl) { // CAMBIADO: pdfUrl a imageUrl
+        // 1. Eliminar Imagen antigua
+        if (horario.imageUrl) { 
             const parts = horario.imageUrl.split('/');
             const publicIdWithExt = parts[parts.length - 1]; 
             const publicId = publicIdWithExt.split('.')[0]; 
             const fullPublicId = `sistema-asistencia/horarios-imagenes/${publicId}`;
 
-            // resource_type: 'image' para borrar imágenes
-            await cloudinary.uploader.destroy(fullPublicId, { resource_type: 'image' }); // CAMBIADO: 'raw' a 'image'
+            await cloudinary.uploader.destroy(fullPublicId, { resource_type: 'image' }); 
         }
         
-        // 2. Guardar la nueva URL (req.file.path contiene la URL completa de Cloudinary)
-        horario.imageUrl = req.file.path; // CAMBIADO: pdfUrl a imageUrl
+        // 2. Guardar la nueva URL
+        horario.imageUrl = req.file.path; 
     }
 
     await horario.save();
-    // CAMBIADO: pdfUrl a imageUrl en la respuesta
     res.json({ success: true, horario: { ...horario.toObject(), imageUrl: horario.imageUrl } }); 
   } catch (err) {
     console.error(err);
@@ -81,10 +76,10 @@ router.post("/", verifyAdmin, uploadImage.single("imagen"), async (req, res) => 
   }
 });
 
+// GET: Horario por año
 router.get("/:anio", verifyToken, async (req, res) => {
   try {
     const horario = await Horario.findOne({ anio: req.params.anio });
-    // CAMBIADO: pdfUrl a imageUrl
     if (!horario) return res.json({ datos: {}, leyenda: {}, imageUrl: null }); 
     res.json({ datos: horario.datos, leyenda: horario.leyenda, imageUrl: horario.imageUrl || null });
   } catch (err) {
@@ -93,9 +88,9 @@ router.get("/:anio", verifyToken, async (req, res) => {
   }
 });
 
+// GET: Todos los años de horario
 router.get("/", verifyToken, async (req, res) => {
   try {
-    // CAMBIADO: pdfUrl a imageUrl
     const horarios = await Horario.find().select("anio imageUrl").sort({ anio: -1 }); 
     res.json(horarios);
   } catch (err) {
@@ -104,19 +99,19 @@ router.get("/", verifyToken, async (req, res) => {
   }
 });
 
+// DELETE: Eliminar horario
 router.delete("/:anio", verifyAdmin, async (req, res) => {
   try {
     const horario = await Horario.findOne({ anio: req.params.anio });
     if (!horario) return res.status(404).json({ msg: "Horario no encontrado" });
 
     // LÓGICA CLOUDINARY: Eliminar Imagen de la nube
-    if (horario.imageUrl) { // CAMBIADO: pdfUrl a imageUrl
+    if (horario.imageUrl) { 
         const parts = horario.imageUrl.split('/');
         const publicIdWithExt = parts[parts.length - 1]; 
         const publicId = publicIdWithExt.split('.')[0]; 
         const fullPublicId = `sistema-asistencia/horarios-imagenes/${publicId}`;
 
-        // resource_type: 'image' para borrar imágenes
         await cloudinary.uploader.destroy(fullPublicId, { resource_type: 'image' }); 
     }
 
@@ -127,5 +122,63 @@ router.delete("/:anio", verifyAdmin, async (req, res) => {
     res.status(500).json({ msg: "Error eliminando horario", error: err.message });
   }
 });
+
+// ----------------- RUTA NUEVA: ENVÍO MASIVO POR CORREO -----------------
+
+// POST: Enviar horario (PDF Base64) por correo a los profesores
+router.post("/enviar-correo", verifyAdmin, async (req, res) => {
+    try {
+        // anio se usa para el nombre del archivo. pdfData es el Base64 generado en el frontend.
+        // horarioData se usa para extraer la lista de nombres de profesores de la tabla.
+        const { anio, pdfData, horarioData } = req.body;
+        
+        if (!pdfData || !horarioData) {
+            return res.status(400).json({ msg: "Faltan datos (PDF o Horario) para el envío." });
+        }
+
+        // 1. EXTRAER CORREOS de los nombres de la tabla
+        // NOTA: Asumimos que horarioData tiene las claves como nombres de profesor
+        const profesorNombres = Object.keys(horarioData); 
+        const profesores = await User.find({ 
+            nombre: { $in: profesorNombres },
+            role: "profesor"
+        }).select("email nombre"); // Solo necesitamos email y nombre
+
+        // Mapeamos los emails de los profesores encontrados
+        const correosDestino = profesores.map(p => p.email);
+        
+        // Manejamos el caso donde no se encuentren correos
+        if (correosDestino.length === 0) {
+            // Devolvemos 200 (OK) con un mensaje informativo para no crashar el frontend
+            return res.status(200).json({ msg: "No se encontraron profesores en el sistema para enviar el horario." });
+        }
+
+        // 2. ADJUNTAR Y ENVIAR
+        const attachment = [{
+            filename: `Horario_General_${anio}.pdf`,
+            content: pdfData, // El contenido PDF en Base64
+            encoding: 'base64', 
+            contentType: 'application/pdf'
+        }];
+
+        // Enviar a todos los correos
+        // NOTA: sendEmail debe manejar la recepción de un array de correos.
+        await sendEmail(
+            correosDestino, 
+            `Horario General ${anio} - Secundaria N9`,
+            `<p>Estimado(a) profesor(a), se adjunta el Horario General correspondiente al año ${anio}.</p>
+             <p>Este es un envío automatizado, por favor no responda a este correo.</p>`,
+            attachment
+        );
+
+        res.json({ success: true, msg: `Horario enviado a ${correosDestino.length} profesores.` });
+
+    } catch (err) {
+        // Si sendEmail falla, capturamos el error
+        console.error("Error al enviar correos masivos:", err);
+        res.status(500).json({ msg: "Error al enviar correos.", error: err.message });
+    }
+});
+
 
 export { router as horarioRouter };
