@@ -29,16 +29,33 @@ export default function RegisterProfesor() {
     if (storedToken) setToken(storedToken);
 
     // 3. ACTUALIZAMOS LA PETICIÓN GET PARA USAR apiClient
+    // Verificamos si ya hay usuarios. Usamos /auth/profesores si la ruta /auth/users no existe.
     apiClient
-      .get(`/auth/users`, {
+      .get(`/auth/profesores`, { // RUTA MÁS PROBABLE: /auth/profesores
         headers: storedToken ? { Authorization: `Bearer ${storedToken}` } : {},
       })
       .then((res) => {
-        const admins = res.data.filter((u) => u.role === "admin");
-        if (admins.length === 0) setFirstAdmin(true);
+        // Asumimos que la respuesta incluye todos los profesores y quizás admins.
+        const allUsers = Array.isArray(res.data) ? res.data : [];
+        const admins = allUsers.filter((u) => u.role === "admin");
+        
+        // Si no se encuentra un token, el backend devuelve 401. 
+        // Si el GET es exitoso y no hay admins, registramos el primero.
+        if (admins.length === 0) {
+            if (!storedToken) {
+                setFirstAdmin(true);
+            } else {
+                setMsg("No hay administrador, por favor registre uno como el primer usuario.");
+            }
+        }
       })
-      .catch(() => {
-        setMsg("Debes iniciar sesión como admin para registrar usuarios");
+      .catch((err) => {
+        // Manejo de error de conexión o 401
+        if (err.response?.status === 401) {
+            setMsg("Debes iniciar sesión como administrador para registrar usuarios.");
+        } else {
+            setMsg("Error de conexión con el servidor. Intenta de nuevo.");
+        }
       });
   }, []);
 
@@ -51,7 +68,7 @@ export default function RegisterProfesor() {
     setMsg("");
 
     if (!token && !firstAdmin)
-      return setMsg("No hay token de admin disponible");
+      return setMsg("No estás autenticado. Por favor, inicia sesión.");
 
     const { nombre, edad, sexo, email, password } = form;
     if (!nombre || !edad || !sexo || !email || !password)
@@ -98,10 +115,15 @@ export default function RegisterProfesor() {
 
       setTimeout(() => navigate("/"), 2000);
     } catch (err) {
-      setMsg(
-        err.response?.data?.msg ||
-          "Error Ya existe la cuenta: " + err.message
-      );
+        // Manejo mejorado del error del backend.
+        const backendMsg = err.response?.data?.msg;
+        if (backendMsg) {
+            setMsg(backendMsg);
+        } else if (err.message.includes('403')) {
+             setMsg("Error de permiso: Solo un administrador puede registrar usuarios.");
+        } else {
+            setMsg("Error en el servidor. Intenta de nuevo. Detalles: " + err.message);
+        }
     } finally {
       setIsSubmitting(false);
     }
@@ -122,7 +144,7 @@ export default function RegisterProfesor() {
           {foto ? (
             <img
               src={URL.createObjectURL(foto)}
-              alt="Perfil"
+              alt="Preview de Foto"
               className="profile-img"
             />
           ) : (

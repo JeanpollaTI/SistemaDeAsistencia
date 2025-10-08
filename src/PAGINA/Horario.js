@@ -50,7 +50,7 @@ function Horario({ user }) {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
-    // 2. CÓDIGO MÁS LIMPIO: Usando apiClient.
+    // CÓDIGO MÁS LIMPIO: Usando apiClient.
     apiClient.get("/auth/profesores", {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => {
@@ -65,13 +65,18 @@ function Horario({ user }) {
     setIsLoading(true);
     setProgress(20);
     const timer = setTimeout(() => {
-      // 3. CÓDIGO MÁS LIMPIO: Usando apiClient.
+      // CÓDIGO MÁS LIMPIO: Usando apiClient.
       apiClient.get(`/horario/${anio}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         setProgress(75);
         if (res.data?.datos) setHorario(res.data.datos);
         if (res.data?.leyenda) setLeyenda(res.data.leyenda);
-        if (res.data?.pdfUrl) setPdfHorario(res.data.pdfUrl);
+        
+        // ----------------------------------------------------
+        // 4. Muestra la URL completa de Cloudinary si existe
+        if (res.data?.pdfUrl) setPdfHorario(res.data.pdfUrl); 
+        // ----------------------------------------------------
+
       }).catch(error => {
         console.error("Error al cargar el horario:", error);
         mostrarAlerta("Error al cargar el horario ❌", "error");
@@ -158,7 +163,7 @@ function Horario({ user }) {
         const tablaElement = horarioTableRef.current;
         if (!tablaElement) { throw new Error("Tabla de horario no encontrada."); }
         const canvas = await html2canvas(tablaElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true, onclone: (clonedDocument) => {
-          
+            
             clonedDocument.querySelectorAll('.horas-row-horizontal').forEach(row => {
                 row.style.justifyContent = 'space-around';
                 row.style.display = 'flex';
@@ -216,20 +221,32 @@ function Horario({ user }) {
     setLoadingMessage("Guardando horario...");
     setProgress(10);
     try {
-        const formData = new FormData();
-        formData.append("anio", anio);
-        formData.append("datos", JSON.stringify(horario));
-        formData.append("leyenda", JSON.stringify(leyenda));
-        // 4. CÓDIGO MÁS LIMPIO: Usando apiClient.
-        const res = await apiClient.post("/horario", formData, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, onUploadProgress: (progressEvent) => { const percentCompleted = Math.min(90, Math.round((progressEvent.loaded * 100) / progressEvent.total)); setProgress(percentCompleted); } });
-        setProgress(100);
-        setPdfHorario(res.data.horario?.pdfUrl || null);
-        mostrarAlerta("Horario guardado correctamente ✅", "success");
+      // Usamos Content-Type: multipart/form-data porque potencialmente subiremos un PDF
+      // En este caso, solo subimos JSON, pero mantenemos FormData
+      const formData = new FormData();
+      formData.append("anio", anio);
+      formData.append("datos", JSON.stringify(horario));
+      formData.append("leyenda", JSON.stringify(leyenda));
+      
+      const res = await apiClient.post("/horario", formData, { 
+        headers: { 
+          Authorization: `Bearer ${token}` 
+          // NOTA: No necesitamos Content-Type aquí, FormData lo establece automáticamente
+        }, 
+        onUploadProgress: (progressEvent) => { 
+          const percentCompleted = Math.min(90, Math.round((progressEvent.loaded * 100) / progressEvent.total)); 
+          setProgress(percentCompleted); 
+        } 
+      });
+
+      setProgress(100);
+      setPdfHorario(res.data.horario?.pdfUrl || null);
+      mostrarAlerta("Horario guardado correctamente ✅", "success");
     } catch (err) {
-        console.error(err);
-        mostrarAlerta("Error al guardar el horario ❌", "error");
+      console.error(err);
+      mostrarAlerta("Error al guardar el horario ❌", "error");
     } finally {
-        setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 500);
+      setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 500);
     }
   }, [user.role, anio, horario, leyenda, isLoading, mostrarAlerta]);
 
@@ -242,27 +259,50 @@ function Horario({ user }) {
     setLoadingMessage("Subiendo PDF...");
     setProgress(10);
     try {
-        const formData = new FormData();
-        formData.append("pdf", file);
-        formData.append("anio", anio);
-        const token = localStorage.getItem("token");
-        // 5. CÓDIGO MÁS LIMPIO: Usando apiClient.
-        const res = await apiClient.post("/horario", formData, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }, onUploadProgress: (progressEvent) => { const percentCompleted = Math.min(90, Math.round((progressEvent.loaded * 100) / progressEvent.total)); setProgress(percentCompleted); } });
-        setProgress(100);
-        setPdfHorario(res.data.horario?.pdfUrl || null);
-        mostrarAlerta("PDF subido correctamente ✅", "success");
+      const formData = new FormData();
+      formData.append("pdf", file);
+      formData.append("anio", anio);
+      const token = localStorage.getItem("token");
+      
+      // 5. CÓDIGO MÁS LIMPIO: Usando apiClient. 
+      const res = await apiClient.post("/horario", formData, { 
+        headers: { 
+          Authorization: `Bearer ${token}`, 
+          // NOTA: El Content-Type "multipart/form-data" no debe establecerse manualmente aquí, 
+          // el navegador lo hace automáticamente y añade el boundary necesario. 
+        }, 
+        onUploadProgress: (progressEvent) => { 
+          const percentCompleted = Math.min(90, Math.round((progressEvent.loaded * 100) / progressEvent.total)); 
+          setProgress(percentCompleted); 
+        } 
+      });
+
+      setProgress(100);
+      // El backend ahora devuelve una URL de Cloudinary completa
+      setPdfHorario(res.data.horario?.pdfUrl || null); 
+      mostrarAlerta("PDF subido correctamente ✅", "success");
     } catch (err) {
-        console.error(err);
-        mostrarAlerta("Error al subir PDF ❌", "error");
+      console.error(err);
+      mostrarAlerta("Error al subir PDF ❌", "error");
     } finally {
-        setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 500);
+      setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 500);
     }
   }, [anio, isLoading, mostrarAlerta]);
 
   if (user.role !== "admin" && pdfHorario) {
-    // 6. URL DINÁMICA: Usamos la URL base de apiClient para el visor de PDF.
-    const baseUrl = apiClient.defaults.baseURL;
-    return ( <div className="pdf-viewer-full"> <embed src={`${baseUrl}${pdfHorario}#toolbar=0&navpanes=0&scrollbar=0`} type="application/pdf" width="100%" height="100%" style={{ border: "none", display: "block" }} /> </div> );
+    // 6. CORRECCIÓN CLOUDINARY: pdfHorario AHORA ES UNA URL COMPLETA
+    // Ya no necesitamos apiClient.defaults.baseURL porque Cloudinary devuelve la URL web completa.
+    return ( 
+      <div className="pdf-viewer-full"> 
+        <embed 
+          src={`${pdfHorario}#toolbar=0&navpanes=0&scrollbar=0`} 
+          type="application/pdf" 
+          width="100%" 
+          height="100%" 
+          style={{ border: "none", display: "block" }} 
+        /> 
+      </div> 
+    );
   }
 
   return (

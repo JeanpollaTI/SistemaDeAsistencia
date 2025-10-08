@@ -1,22 +1,27 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-// 1. IMPORTAMOS apiClient PARA OBTENER LA URL BASE DEL SERVIDOR
-import apiClient from '../api/apiClient';
+// Importamos apiClient aunque ya no se usa para concatenar, sino para referencia.
+import apiClient from '../api/apiClient'; 
 import "./Perfil.css";
+
+// Path por defecto que está en tu modelo de MongoDB
+const DEFAULT_IMG_PATH = "/uploads/fotos/default.png"; 
 
 function Perfil({ user, onLogout }) {
   const navigate = useNavigate();
 
   if (!user) return null;
 
-  // 2. LÓGICA DE IMAGEN ACTUALIZADA
-  // Ahora la URL de la imagen se construye dinámicamente usando la
-  // dirección de nuestro backend (sea localhost o la de Render).
-  const profileImgUrl = user.foto && !user.foto.includes("default.png")
-    ? user.foto.startsWith("http")
-      ? user.foto
-      : `${apiClient.defaults.baseURL}${user.foto.startsWith("/") ? "" : "/"}${user.foto}`
-    : `${apiClient.defaults.baseURL}/uploads/fotos/default.png`;
+  // --------------------------------------------------------------------------
+  // 2. LÓGICA DE IMAGEN CORREGIDA PARA CLOUDINARY
+  // La foto ya es una URL completa (http/s) si no es la por defecto.
+  const profileImgUrl = 
+    user.foto && user.foto !== DEFAULT_IMG_PATH
+      // Si el campo foto NO es la ruta por defecto, la usamos directamente (es la URL de Cloudinary)
+      ? user.foto 
+      // Si es la ruta por defecto, necesitamos la URL completa del backend
+      : `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}`; 
+  // --------------------------------------------------------------------------
 
 
   const handleEdit = () => navigate("/editar-perfil");
@@ -25,7 +30,13 @@ function Perfil({ user, onLogout }) {
     <div className="perfil-page">
       <div className="perfil-container">
         <h2>Perfil de Usuario</h2>
-        <img src={profileImgUrl} alt="Perfil" className="profile-img-large" />
+        <img 
+            src={profileImgUrl} 
+            alt="Perfil" 
+            className="profile-img-large" 
+            // Manejo simple de error en caso de que la URL de Cloudinary falle
+            onError={(e) => { e.target.onerror = null; e.target.src = `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}` }}
+        />
 
         <div className="perfil-info">
           <p><strong>Nombre:</strong> {user.nombre || "N/A"}</p>

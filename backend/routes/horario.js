@@ -1,23 +1,34 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
-import fs from "fs";
+import fs from "fs"; // Mantenemos fs solo para fines de seguridad si es necesario, pero la lógica de unlink es de Cloudinary.
+import { CloudinaryStorage } from "multer-storage-cloudinary"; // Nuevo: Para almacenar en la nube
+import { v2 as cloudinary } from "cloudinary"; // Nuevo: Para configurar y eliminar
 
 import Horario from "../models/Horario.js";
-import { verifyToken, verifyAdmin } from "./auth.js";
+import { verifyToken, verifyAdmin } from "./auth.js"; // Asegúrate de que los middlewares se importen correctamente
 
 const router = express.Router();
 
-// Multer PDF
-const storagePdf = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = path.join(process.cwd(), "uploads/pdfHorarios");
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
+// ----------------- CONFIGURACIÓN CLOUDINARY -----------------
+// Debe estar configurado con las variables de entorno de Render
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// NUEVO: Storage de Multer para subir PDFs a Cloudinary
+const storagePdf = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: (req, file) => {
     const anio = req.body.anio || "unknown";
-    cb(null, `horario_${anio}_${Date.now()}${path.extname(file.originalname)}`);
+    return {
+        folder: "sistema-asistencia/pdf-horarios", // Carpeta de destino específica para PDFs
+        resource_type: "raw", // CRUCIAL: 'raw' para archivos que no son imágenes (como PDFs)
+        public_id: `horario_${anio}_${Date.now()}`, // Nombre único del archivo
+        allowed_formats: ["pdf"],
+    };
   },
 });
 const uploadPdf = multer({ storage: storagePdf });
@@ -29,7 +40,8 @@ const parseJSON = (input) => {
   try { return JSON.parse(input); } catch { return {}; }
 };
 
-// CRUD Horario
+// ----------------- CRUD Horario ------------------
+
 router.post("/", verifyAdmin, uploadPdf.single("pdf"), async (req, res) => {
   try {
     const { anio, datos, leyenda } = req.body;
@@ -39,9 +51,21 @@ router.post("/", verifyAdmin, uploadPdf.single("pdf"), async (req, res) => {
     horario.datos = parseJSON(datos);
     horario.leyenda = parseJSON(leyenda);
 
+    // LÓGICA CLOUDINARY: Actualizar/Reemplazar PDF
     if (req.file) {
-      if (horario.pdfUrl) fs.existsSync(horario.pdfUrl) && fs.unlinkSync(path.join(process.cwd(), horario.pdfUrl));
-      horario.pdfUrl = `/uploads/pdfHorarios/${req.file.filename}`;
+        // 1. Eliminar PDF antiguo de Cloudinary si existe
+        if (horario.pdfUrl) {
+            // El public_id está al final de la URL sin la extensión
+            const parts = horario.pdfUrl.split('/');
+            const publicIdWithExt = parts[parts.length - 1]; 
+            const publicId = publicIdWithExt.split('.')[0]; 
+            const fullPublicId = `sistema-asistencia/pdf-horarios/${publicId}`;
+
+            await cloudinary.uploader.destroy(fullPublicId, { resource_type: 'raw' });
+        }
+        
+        // 2. Guardar la nueva URL (req.file.path contiene la URL completa)
+        horario.pdfUrl = req.file.path;
     }
 
     await horario.save();
@@ -78,9 +102,14 @@ router.delete("/:anio", verifyAdmin, async (req, res) => {
     const horario = await Horario.findOne({ anio: req.params.anio });
     if (!horario) return res.status(404).json({ msg: "Horario no encontrado" });
 
+    // LÓGICA CLOUDINARY: Eliminar PDF de la nube
     if (horario.pdfUrl) {
-      const pdfPath = path.join(process.cwd(), horario.pdfUrl);
-      if (fs.existsSync(pdfPath)) fs.unlinkSync(pdfPath);
+        const parts = horario.pdfUrl.split('/');
+        const publicIdWithExt = parts[parts.length - 1]; 
+        const publicId = publicIdWithExt.split('.')[0]; 
+        const fullPublicId = `sistema-asistencia/pdf-horarios/${publicId}`;
+
+        await cloudinary.uploader.destroy(fullPublicId, { resource_type: 'raw' });
     }
 
     await Horario.deleteOne({ anio: req.params.anio });

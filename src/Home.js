@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Home.css";
 // 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro nuevo apiClient en lugar de axios directamente.
-import apiClient from './api/apiClient';
+import apiClient from '../api/apiClient';
+import "./Home.css";
+
+// Ruta por defecto que existe en el servidor (coincide con el modelo)
+const DEFAULT_IMG_PATH = "/uploads/fotos/default.png";
 
 function Home({ user, handleNavClick }) {
   const navigate = useNavigate();
@@ -45,7 +48,8 @@ function Home({ user, handleNavClick }) {
   const fetchProfesores = () => {
     const token = localStorage.getItem("token");
     if (!token) return console.error("⚠️ No hay token guardado.");
-    // 2. CÓDIGO MÁS LIMPIO: Ya no necesitamos la URL completa.
+    
+    // 2. CÓDIGO MÁS LIMPIO: Usando apiClient
     apiClient.get("/auth/profesores", { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => setProfesores(res.data || []))
       .catch((err) => console.error("Error al obtener profesores:", err));
@@ -65,12 +69,14 @@ function Home({ user, handleNavClick }) {
     setAsignaturasSelect([]);
   };
 
-  // 3. URLs CENTRALIZADAS: Esta función ahora usa la URL base de nuestro apiClient.
+  // 3. URLs CENTRALIZADAS (CORREGIDA): La lógica de la imagen es simplificada
   const profileImgUrl = (foto) => {
-    const baseUrl = apiClient.defaults.baseURL; // Obtenemos la URL base configurada
-    if (!foto) return `${baseUrl}/uploads/fotos/default.png`;
-    if (foto.startsWith("http")) return foto;
-    return `${baseUrl}${foto}`;
+    // Si la foto es la ruta por defecto, concatenamos la URL del servidor.
+    if (foto === DEFAULT_IMG_PATH || !foto) {
+        return `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}`;
+    }
+    // Si no es la ruta por defecto, es la URL completa de Cloudinary y la usamos directamente.
+    return foto;
   };
 
   const handleAsignaturasChange = (materia) => {
@@ -82,7 +88,8 @@ function Home({ user, handleNavClick }) {
   const guardarAsignaturas = () => {
     if (!selectedProfesor) return;
     const token = localStorage.getItem("token");
-    // 4. MÁS LIMPIO: Solo indicamos el endpoint, no la URL completa.
+    
+    // 4. MÁS LIMPIO: Solo indicamos el endpoint.
     apiClient.put(`/profesores/${selectedProfesor._id}/asignaturas`, { asignaturas: asignaturasSelect }, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         fetchProfesores();
@@ -96,7 +103,8 @@ function Home({ user, handleNavClick }) {
   const confirmDelete = () => {
     if (!selectedProfesor) return;
     const token = localStorage.getItem("token");
-    // 5. Y DE NUEVO: Solo el endpoint. ¡Así de fácil!
+    
+    // 5. Y DE NUEVO: Solo el endpoint.
     apiClient.delete(`/profesores/${selectedProfesor._id}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         fetchProfesores();
@@ -146,7 +154,8 @@ function Home({ user, handleNavClick }) {
                   <tr key={prof._id}>
                     <td>{prof.nombre}</td>
                     <td>{prof.asignaturas?.join(", ") || "No asignada"}</td>
-                    <td>{new Date(prof.fechaRegistro).toLocaleDateString()}</td>
+                    {/* Aseguramos que 'createdAt' exista antes de usarlo */}
+                    <td>{prof.createdAt ? new Date(prof.createdAt).toLocaleDateString() : "N/A"}</td>
                     <td><button className="btn-ver-perfil" onClick={() => openModal(prof)}>Ver perfil</button></td>
                   </tr>
                 ))}
@@ -161,7 +170,13 @@ function Home({ user, handleNavClick }) {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={closeModal}>&times;</button>
-            <img src={profileImgUrl(selectedProfesor.foto)} alt={selectedProfesor.nombre} className="profile-img-modal" />
+            <img 
+                src={profileImgUrl(selectedProfesor.foto)} 
+                alt={selectedProfesor.nombre} 
+                className="profile-img-modal" 
+                // Añadimos un manejo de error en caso de que la URL de Cloudinary falle
+                onError={(e) => { e.target.onerror = null; e.target.src = `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}` }}
+            />
             <h3>{selectedProfesor.nombre}</h3>
             
             <div className="profesor-details">
@@ -195,7 +210,7 @@ function Home({ user, handleNavClick }) {
                 </div>
               </div>
             )}
-            <p className="fecha-registro"><b>Fecha de registro:</b> {new Date(selectedProfesor.fechaRegistro).toLocaleDateString()}</p>
+            <p className="fecha-registro"><b>Fecha de registro:</b> {selectedProfesor.createdAt ? new Date(selectedProfesor.createdAt).toLocaleDateString() : "N/A"}</p>
           </div>
         </div>
       )}

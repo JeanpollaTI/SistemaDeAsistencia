@@ -2,24 +2,42 @@ import express from "express";
 import User from "../models/User.js";
 import { authMiddleware, isAdmin } from "../middlewares/authMiddleware.js";
 import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary"; // NUEVO
+import { v2 as cloudinary } from "cloudinary"; // NUEVO
 import path from "path";
-import fs from "fs";
+import fs from "fs"; // Mantenemos fs y path para manejar la ruta por defecto, aunque ya no se usa para uploads.
 
-const profesoresRouter = express.Router();
+// ----------------- CONFIGURACIÓN CLOUDINARY -----------------
+// Debe estar configurado con las variables de entorno de Render
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-// Configuración multer para subir fotos
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = path.join(process.cwd(), "uploads/fotos");
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `foto-${Date.now()}${ext}`);
+// NUEVO: Storage de Multer para subir a Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "sistema-asistencia/fotos-profesores", // Carpeta de destino
+    allowed_formats: ["jpg", "jpeg", "png"],
+    transformation: [{ width: 300, height: 300, crop: "fill" }],
   },
 });
 const upload = multer({ storage });
+
+const profesoresRouter = express.Router();
+
+// ---------------- Helper para obtener Public ID de Cloudinary ----------------
+const getCloudinaryPublicId = (url) => {
+    // URL ejemplo: https://res.cloudinary.com/cloudname/image/upload/v1234/folder/public_id.jpg
+    if (!url || url.includes("default.png")) return null;
+    const parts = url.split('/');
+    const publicIdWithExt = parts[parts.length - 1]; // Obtiene public_id.jpg
+    const publicId = publicIdWithExt.split('.')[0];   // Obtiene public_id (sin extensión)
+    // El folder debe coincidir con el path definido en storage.params.folder
+    return `sistema-asistencia/fotos-profesores/${publicId}`; 
+};
 
 // ---------------- Obtener todos los profesores (solo admin) ----------------
 profesoresRouter.get("/", authMiddleware, isAdmin, async (req, res) => {
@@ -55,9 +73,10 @@ profesoresRouter.delete("/:id", authMiddleware, isAdmin, async (req, res) => {
     const profesor = await User.findById(req.params.id);
     if (!profesor) return res.status(404).json({ error: "Profesor no encontrado" });
 
+    // LÓGICA CLOUDINARY: Eliminar foto de la nube
     if (profesor.foto && profesor.foto !== "/uploads/fotos/default.png") {
-      const fotoPath = path.join(process.cwd(), profesor.foto);
-      if (fs.existsSync(fotoPath)) fs.unlinkSync(fotoPath);
+      const publicId = getCloudinaryPublicId(profesor.foto);
+      if (publicId) await cloudinary.uploader.destroy(publicId);
     }
 
     await profesor.deleteOne();
@@ -80,11 +99,11 @@ profesoresRouter.put("/editar-perfil", authMiddleware, upload.single("foto"), as
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
 
+    // Validaciones de email y celular (se mantienen)
     if (email !== user.email) {
       const emailExists = await User.findOne({ email });
       if (emailExists) return res.status(400).json({ msg: "Email already in use" });
     }
-
     if (celular !== user.celular) {
       const celularExists = await User.findOne({ celular });
       if (celularExists) return res.status(400).json({ msg: "Celular already in use" });
@@ -96,12 +115,16 @@ profesoresRouter.put("/editar-perfil", authMiddleware, upload.single("foto"), as
     user.edad = edad;
     user.sexo = sexo;
 
+    // LÓGICA CLOUDINARY: Subir y Reemplazar foto
     if (req.file) {
+      // 1. ELIMINAR FOTO ANTIGUA de Cloudinary
       if (user.foto && user.foto !== "/uploads/fotos/default.png") {
-        const oldPath = path.join(process.cwd(), user.foto);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+        const publicId = getCloudinaryPublicId(user.foto);
+        if (publicId) await cloudinary.uploader.destroy(publicId);
       }
-      user.foto = `/uploads/fotos/${req.file.filename}`;
+      
+      // 2. Guardar la nueva URL (req.file.path contiene la URL completa de Cloudinary)
+      user.foto = req.file.path;
     }
 
     await user.save();

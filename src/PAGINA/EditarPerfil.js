@@ -30,15 +30,19 @@ function EditarPerfil({ user, setUser }) {
         celular: user.celular || "",
       });
 
-      // 2. URL DINÁMICA: Usamos la URL base de nuestro apiClient para construir la ruta de la imagen.
-      const baseUrl = apiClient.defaults.baseURL;
-      setFotoPreview(
-        user.foto && !user.foto.includes("default.png")
-          ? user.foto.startsWith("http")
-            ? user.foto
-            : `${baseUrl}${user.foto.startsWith("/") ? "" : "/"}${user.foto}`
-          : "/default-profile.png"
-      );
+      // ----------------------------------------------------
+      // 2. CORRECCIÓN CLOUDINARY: Simplificamos la lógica de la URL.
+      // Si la URL existe y no es la ruta por defecto, la usamos directamente (ya es una URL web completa).
+      const defaultPath = "/uploads/fotos/default.png";
+
+      if (user.foto && user.foto !== defaultPath) {
+        // Asumimos que si no es la ruta por defecto, ES una URL de Cloudinary (http/s).
+        setFotoPreview(user.foto);
+      } else {
+        // Si no hay foto o es la ruta por defecto, usamos el placeholder local.
+        setFotoPreview("/default-profile.png");
+      }
+      // ----------------------------------------------------
     }
   }, [user]);
 
@@ -90,7 +94,17 @@ function EditarPerfil({ user, setUser }) {
     } catch (err) {
       console.error(err);
       const backendMsg = err.response?.data?.msg || "";
-      if (backendMsg.includes("Email already in use")) {
+      // Manejo de expiración de token para forzar cierre de sesión
+      if (err.response?.status === 401 && backendMsg.includes("Token expirado")) {
+         setError("Tu sesión ha expirado. Redirigiendo al login.");
+         setTimeout(() => {
+             localStorage.removeItem("token");
+             localStorage.removeItem("user");
+             setUser(null);
+             navigate("/login");
+         }, 2000);
+         return; // Detenemos la función aquí.
+      } else if (backendMsg.includes("Email already in use")) {
         setError("El correo ingresado ya está registrado. Por favor, utiliza otro.");
       } else if (backendMsg.includes("Celular already in use")) {
         setError("El número de celular ya está registrado. Por favor, utiliza otro.");

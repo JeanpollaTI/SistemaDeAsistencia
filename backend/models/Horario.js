@@ -19,7 +19,7 @@ const HorarioSchema = new mongoose.Schema(
     },
     pdfUrl: {
       type: String,
-      default: null, // URL del PDF del horario
+      default: null, // URL del PDF del horario (Almacena la URL de Cloudinary)
     },
   },
   { timestamps: true } // createdAt y updatedAt automáticos
@@ -28,6 +28,8 @@ const HorarioSchema = new mongoose.Schema(
 // 🔹 Virtual opcional: fecha de creación legible
 HorarioSchema.virtual("fechaCreacionLegible").get(function () {
   const d = this.createdAt;
+  // Aseguramos que la fecha exista antes de intentar formatearla
+  if (!d) return "N/A";
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 });
 

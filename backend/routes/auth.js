@@ -2,8 +2,8 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import multer from "multer";
-import path from "path";
-import fs from "fs";
+import { v2 as cloudinary } from "cloudinary"; // Nuevo: Para configurar Cloudinary
+import { CloudinaryStorage } from "multer-storage-cloudinary"; // Nuevo: Para el storage de Multer
 import crypto from "crypto";
 
 import User from "../models/User.js";
@@ -11,26 +11,47 @@ import { sendEmail } from "../utils/sendEmail.js";
 
 const router = express.Router();
 
-// Multer fotos
-const storageFotos = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = path.join(process.cwd(), "uploads/fotos");
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
+// ----------------- CONFIGURACIÓN CLOUDINARY -----------------
+// Configurado con las variables de entorno de Render
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// NUEVO: Storage de Multer para subir a Cloudinary
+const storageFotos = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "sistema-asistencia/fotos-profesores", // Carpeta de destino
+    allowed_formats: ["jpg", "jpeg", "png"],
   },
-  filename: (req, file, cb) =>
-    cb(null, "foto-" + Date.now() + path.extname(file.originalname)),
 });
 const uploadFotos = multer({ storage: storageFotos });
 
-// JWT middleware
+// Reset tokens
+const resetTokens = {};
+
+// Helpers
+const formatDate = (date) => {
+  if (!date) return "N/A";
+  const d = new Date(date);
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+};
+
+// ----------------- MIDDLEWARE JWT (VERIFICACIÓN) -----------------
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
+  // Corregido para que el token expire de forma limpia.
   if (!token) return res.status(401).json({ msg: "No hay token" });
   try {
     req.user = jwt.verify(token, process.env.JWT_SECRET);
     next();
-  } catch {
+  } catch (err) {
+    // Si el JWT expira, devolvemos 401 para que el frontend cierre sesión.
+    if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ msg: "Token expirado", error: err.name });
+    }
     return res.status(401).json({ msg: "Token inválido" });
   }
 };
@@ -43,17 +64,8 @@ const verifyAdmin = (req, res, next) => {
   });
 };
 
-// Reset tokens
-const resetTokens = {};
 
-// Helpers
-const formatDate = (date) => {
-  if (!date) return "N/A";
-  const d = new Date(date);
-  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
-};
-
-// ----------------- RUTAS ------------------
+// ----------------- RUTAS DE AUTENTICACIÓN ------------------
 
 // Register
 router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, res) => {
@@ -65,7 +77,10 @@ router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, re
     if (existingUser) return res.status(400).json({ msg: "Usuario ya existe" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const fotoUrl = req.file ? `/uploads/fotos/${req.file.filename}` : "/uploads/fotos/default.png";
+    
+    // LÓGICA CLOUDINARY: Guardar la URL de la foto subida
+    // Si hay archivo, usa la URL completa de Cloudinary (req.file.path).
+    const fotoUrl = req.file ? req.file.path : "/uploads/fotos/default.png";
 
     const newUser = new User({ nombre, edad, sexo, email, celular, password: hashedPassword, role: role || "profesor", foto: fotoUrl });
     await newUser.save();
@@ -73,6 +88,8 @@ router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, re
     res.status(201).json({ msg: "Usuario registrado correctamente", user: newUser });
   } catch (err) {
     console.error(err);
+    // LÓGICA CLOUDINARY: Si falla el registro, eliminar la foto subida (si existe)
+    if (req.file) await cloudinary.uploader.destroy(req.file.filename);
     res.status(500).json({ msg: "Error en el servidor", error: err.message });
   }
 });
@@ -87,7 +104,8 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: "Contraseña incorrecta" });
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "2h" });
+    // Aumentamos la expiración para reducir el error 'jwt expired'
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     res.json({
       token,
@@ -111,6 +129,7 @@ router.post("/forgot-password", async (req, res) => {
     const token = crypto.randomBytes(4).toString("hex");
     resetTokens[email] = { token, expires: Date.now() + 15 * 60 * 1000 };
 
+    // Usando el servicio de correo ya configurado (SendGrid API)
     await sendEmail(email, "Recuperación de contraseña", `<p>Tu código es: <b>${token}</b></p>`);
     res.json({ msg: "Código enviado a tu correo" });
   } catch (err) {
@@ -184,14 +203,18 @@ router.put("/profesores/:id/asignaturas", verifyAdmin, async (req, res) => {
 router.delete("/profesores/:id", verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-
     const profesor = await User.findById(id);
     if (!profesor) return res.status(404).json({ msg: "Profesor no encontrado" });
 
-    // 👇 elimina la foto del servidor
-    if (profesor.foto && profesor.foto !== "/uploads/fotos/default.png") {
-      const fotoPath = path.join(process.cwd(), profesor.foto);
-      if (fs.existsSync(fotoPath)) fs.unlinkSync(fotoPath);
+    // LÓGICA CLOUDINARY: Borrar la foto de la nube
+    if (profesor.foto && !profesor.foto.includes("default.png")) {
+      // Se asume el formato de folder que usamos en la configuración de storage
+      const parts = profesor.foto.split('/');
+      const publicIdWithExt = parts[parts.length - 1]; // foto-12345.jpg
+      const publicId = publicIdWithExt.split('.')[0];   // foto-12345
+      const fullPublicId = `sistema-asistencia/fotos-profesores/${publicId}`;
+
+      await cloudinary.uploader.destroy(fullPublicId);
     }
 
     await profesor.deleteOne();
@@ -201,5 +224,6 @@ router.delete("/profesores/:id", verifyAdmin, async (req, res) => {
     res.status(500).json({ msg: "Error al eliminar profesor", error: err.message });
   }
 });
+
 
 export { router as authRouter, verifyToken, verifyAdmin };

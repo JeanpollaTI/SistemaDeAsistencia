@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
-// 1. IMPORTAMOS apiClient PARA LA URL DE LA IMAGEN DEL NAV
+// 1. IMPORTAMOS apiClient para obtener la URL base de la imagen por defecto
 import apiClient from './api/apiClient';
 import Home from "./Home";
 import Login from "./PAGINA/Login";
@@ -14,6 +14,9 @@ import Trabajos from "./PAGINA/Trabajos";
 import Calificaciones from "./PAGINA/Calificaciones";
 import "./App.css";
 import logo from "./logo.png";
+
+// Ruta por defecto que existe en el servidor
+const DEFAULT_IMG_PATH = "/uploads/fotos/default.png";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -82,12 +85,14 @@ function App() {
         : []),
     ];
 
-    // 2. LÓGICA DE IMAGEN DEL NAVBAR ACTUALIZADA
-    const profileImgUrl = user?.foto && !user.foto.includes("default.png")
-      ? user.foto.startsWith("http")
-        ? user.foto
-        : `${apiClient.defaults.baseURL}${user.foto.startsWith("/") ? "" : "/"}${user.foto}`
-      : `${apiClient.defaults.baseURL}/uploads/fotos/default.png`;
+    // --------------------------------------------------------------------------
+    // 2. CORRECCIÓN CLOUDINARY: Si user.foto no es la ruta por defecto, es una URL completa.
+    const profileImgUrl = 
+      user?.foto && user.foto !== DEFAULT_IMG_PATH
+        ? user.foto // Usamos la URL completa de Cloudinary
+        : `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}`; // Concatenamos para la imagen por defecto
+
+    // --------------------------------------------------------------------------
 
     return (
       <div className="nav-menu-right">
@@ -128,11 +133,13 @@ function App() {
           {user && (
             <li className="nav-profile">
               <img
-                src={profileImgUrl} // <-- URL dinámica aplicada aquí
+                src={profileImgUrl} // <-- URL corregida aplicada aquí
                 alt="Perfil"
                 className="profile-img-small"
                 onClick={() => navigate("/perfil")}
                 style={{ cursor: "pointer" }}
+                // Manejo de error para la imagen por defecto o Cloudinary
+                onError={(e) => { e.target.onerror = null; e.target.src = `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}` }} 
               />
             </li>
           )}
@@ -150,6 +157,7 @@ function App() {
     }
   }, [location]);
 
+  // Usamos handleUserUpdate en la ruta de editar perfil
   return (
     <div>
       <header className="header" id="header">

@@ -13,10 +13,7 @@ const userSchema = new mongoose.Schema(
       required: [true, "La edad es obligatoria"],
       min: [18, "La edad mínima es 18"],
     },
-    fechaRegistro: {
-      type: Date,
-      default: Date.now,
-    },
+    // Quitamos 'fechaRegistro' ya que 'timestamps: true' lo maneja mejor
     sexo: {
       type: String,
       enum: ["Masculino", "Femenino", "Otro"],
@@ -42,7 +39,8 @@ const userSchema = new mongoose.Schema(
     },
     foto: {
       type: String,
-      default: "/uploads/fotos/default.png",
+      // Guarda la URL de Cloudinary o la ruta por defecto
+      default: "/uploads/fotos/default.png", 
     },
     role: {
       type: String,
@@ -53,18 +51,27 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "La contraseña es obligatoria"],
       minlength: [6, "La contraseña debe tener al menos 6 caracteres"],
+      select: false, // CLAVE: No se envía en consultas Find por defecto
     },
     asignaturas: {
       type: [String],
       default: [],
     },
+    // Añadidos campos para manejar tokens de reseteo desde la DB (alternativa al objeto 'resetTokens' en memoria)
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
   },
   {
-    timestamps: true,
+    timestamps: true, // Añade createdAt y updatedAt
     toJSON: {
       transform(doc, ret) {
+        // Renombramos _id a id para el frontend
+        ret.id = ret._id; 
+        delete ret._id;
+        delete ret.__v; 
         delete ret.password; // nunca mostrar password
-        if (!ret.foto) ret.foto = "/uploads/fotos/default.png";
+        // Asegura la foto por defecto si el campo es nulo
+        if (!ret.foto) ret.foto = "/uploads/fotos/default.png"; 
         return ret;
       },
     },
@@ -72,17 +79,18 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+// -----------------------------------------------------
+
 // 🔹 Método para comparar contraseñas manualmente
 userSchema.methods.comparePassword = function (password) {
+  // Aseguramos que la contraseña esté seleccionada para la comparación
   return bcrypt.compare(password, this.password);
 };
 
-// 🔹 Virtual para fecha legible
+// 🔹 Virtual para fecha legible (usando el campo createdAt que añade timestamps)
 userSchema.virtual("fechaRegistroLegible").get(function () {
-  const d = this.fechaRegistro || this.createdAt;
+  const d = this.createdAt || new Date();
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 });
-
-// 🔹 ❌ Middleware de hash eliminado, hash debe hacerse manual al crear/actualizar password
 
 export default mongoose.model("User", userSchema);
