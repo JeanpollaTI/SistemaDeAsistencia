@@ -2,10 +2,12 @@ import express from "express";
 import User from "../models/User.js";
 import { authMiddleware, isAdmin } from "../middlewares/authMiddleware.js";
 import multer from "multer";
-import { CloudinaryStorage } from "multer-storage-cloudinary"; // NUEVO
-import { v2 as cloudinary } from "cloudinary"; // NUEVO
+import { CloudinaryStorage } from "multer-storage-cloudinary"; // Cloudinary Storage Engine
+import { v2 as cloudinary } from "cloudinary"; // Cloudinary core library
 import path from "path";
 import fs from "fs"; // Mantenemos fs y path para manejar la ruta por defecto, aunque ya no se usa para uploads.
+
+const profesoresRouter = express.Router();
 
 // ----------------- CONFIGURACIÓN CLOUDINARY -----------------
 // Debe estar configurado con las variables de entorno de Render
@@ -26,16 +28,18 @@ const storage = new CloudinaryStorage({
 });
 const upload = multer({ storage });
 
-const profesoresRouter = express.Router();
-
 // ---------------- Helper para obtener Public ID de Cloudinary ----------------
+// Extrae el ID necesario para borrar el archivo de Cloudinary
 const getCloudinaryPublicId = (url) => {
-    // URL ejemplo: https://res.cloudinary.com/cloudname/image/upload/v1234/folder/public_id.jpg
-    if (!url || url.includes("default.png")) return null;
+    // Si no es una URL de Cloudinary (ej: es la ruta por defecto), regresamos null
+    if (!url || url.includes("default.png") || !url.includes("cloudinary.com")) return null; 
+    
+    // El formato esperado es folder/public_id.extension
     const parts = url.split('/');
-    const publicIdWithExt = parts[parts.length - 1]; // Obtiene public_id.jpg
-    const publicId = publicIdWithExt.split('.')[0];   // Obtiene public_id (sin extensión)
-    // El folder debe coincidir con el path definido en storage.params.folder
+    const publicIdWithExt = parts[parts.length - 1]; 
+    const publicId = publicIdWithExt.split('.')[0]; 
+    
+    // Retorna el publicId completo con la carpeta, que es requerido para el borrado
     return `sistema-asistencia/fotos-profesores/${publicId}`; 
 };
 
@@ -74,10 +78,8 @@ profesoresRouter.delete("/:id", authMiddleware, isAdmin, async (req, res) => {
     if (!profesor) return res.status(404).json({ error: "Profesor no encontrado" });
 
     // LÓGICA CLOUDINARY: Eliminar foto de la nube
-    if (profesor.foto && profesor.foto !== "/uploads/fotos/default.png") {
-      const publicId = getCloudinaryPublicId(profesor.foto);
-      if (publicId) await cloudinary.uploader.destroy(publicId);
-    }
+    const publicId = getCloudinaryPublicId(profesor.foto);
+    if (publicId) await cloudinary.uploader.destroy(publicId);
 
     await profesor.deleteOne();
     res.json({ msg: "Profesor eliminado correctamente" });
@@ -117,11 +119,9 @@ profesoresRouter.put("/editar-perfil", authMiddleware, upload.single("foto"), as
 
     // LÓGICA CLOUDINARY: Subir y Reemplazar foto
     if (req.file) {
-      // 1. ELIMINAR FOTO ANTIGUA de Cloudinary
-      if (user.foto && user.foto !== "/uploads/fotos/default.png") {
-        const publicId = getCloudinaryPublicId(user.foto);
-        if (publicId) await cloudinary.uploader.destroy(publicId);
-      }
+      // 1. ELIMINAR FOTO ANTIGUA de Cloudinary (si existe)
+      const publicId = getCloudinaryPublicId(user.foto);
+      if (publicId) await cloudinary.uploader.destroy(publicId);
       
       // 2. Guardar la nueva URL (req.file.path contiene la URL completa de Cloudinary)
       user.foto = req.file.path;
@@ -138,7 +138,8 @@ profesoresRouter.put("/editar-perfil", authMiddleware, upload.single("foto"), as
 // ---------------- Obtener perfil propio ----------------
 profesoresRouter.get("/mi-perfil", authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    // Usamos el middleware para obtener req.user, pero seleccionamos todo excepto el password
+    const user = await User.findById(req.user.id).select("-password"); 
     if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
     res.json(user);
   } catch (err) {
