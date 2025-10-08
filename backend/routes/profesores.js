@@ -1,27 +1,25 @@
 import express from "express";
 import User from "../models/User.js";
+import bcrypt from "bcryptjs"; // <-- AÑADIDO: Para encriptar contraseñas
 import { authMiddleware, isAdmin } from "../middlewares/authMiddleware.js";
 import multer from "multer";
-import { CloudinaryStorage } from "multer-storage-cloudinary"; // Cloudinary Storage Engine
-import { v2 as cloudinary } from "cloudinary"; // Cloudinary core library
-import path from "path";
-import fs from "fs"; // Mantenemos fs y path para manejar la ruta por defecto, aunque ya no se usa para uploads.
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import { v2 as cloudinary } from "cloudinary";
 
 const profesoresRouter = express.Router();
 
 // ----------------- CONFIGURACIÓN CLOUDINARY -----------------
-// Debe estar configurado con las variables de entorno de Render
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// NUEVO: Storage de Multer para subir a Cloudinary
+// Storage de Multer para subir a Cloudinary
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "sistema-asistencia/fotos-profesores", // Carpeta de destino
+    folder: "sistema-asistencia/fotos-profesores",
     allowed_formats: ["jpg", "jpeg", "png"],
     transformation: [{ width: 300, height: 300, crop: "fill" }],
   },
@@ -29,19 +27,69 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 // ---------------- Helper para obtener Public ID de Cloudinary ----------------
-// Extrae el ID necesario para borrar el archivo de Cloudinary
 const getCloudinaryPublicId = (url) => {
-    // Si no es una URL de Cloudinary (ej: es la ruta por defecto), regresamos null
-    if (!url || url.includes("default.png") || !url.includes("cloudinary.com")) return null; 
-    
-    // El formato esperado es folder/public_id.extension
-    const parts = url.split('/');
-    const publicIdWithExt = parts[parts.length - 1]; 
-    const publicId = publicIdWithExt.split('.')[0]; 
-    
-    // Retorna el publicId completo con la carpeta, que es requerido para el borrado
-    return `sistema-asistencia/fotos-profesores/${publicId}`; 
+  if (!url || url.includes("default.png") || !url.includes("cloudinary.com")) return null;
+  const parts = url.split('/');
+  const publicIdWithExt = parts[parts.length - 1];
+  const publicId = publicIdWithExt.split('.')[0];
+  return `sistema-asistencia/fotos-profesores/${publicId}`;
 };
+
+// ------------------------------------------------------------------
+// ---- ✅ RUTA AÑADIDA: Registrar un nuevo profesor (solo admin) ----
+// ------------------------------------------------------------------
+profesoresRouter.post("/registrar", authMiddleware, isAdmin, upload.single("foto"), async (req, res) => {
+  try {
+    // 1. Obtenemos los datos del formulario
+    const { nombre, email, password, celular, edad, sexo } = req.body;
+
+    // 2. Validamos que los campos obligatorios no estén vacíos
+    if (!nombre || !email || !password || !celular || !edad || !sexo) {
+      return res.status(400).json({ msg: "Todos los campos son obligatorios" });
+    }
+
+    // 3. Verificamos si el email o celular ya existen para evitar duplicados
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+      return res.status(400).json({ msg: "El correo electrónico ya está en uso" });
+    }
+    const celularExists = await User.findOne({ celular });
+    if (celularExists) {
+      return res.status(400).json({ msg: "El número de celular ya está en uso" });
+    }
+
+    // 4. Encriptamos la contraseña (¡muy importante!)
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // 5. Creamos el nuevo usuario con los datos y el rol de "profesor"
+    const newUser = new User({
+      nombre,
+      email,
+      password: hashedPassword,
+      celular,
+      edad,
+      sexo,
+      role: "profesor", // Asignamos el rol directamente
+      foto: req.file ? req.file.path : "URL_DE_IMAGEN_POR_DEFECTO.png", // Usamos la foto de Cloudinary o una por defecto
+    });
+
+    // 6. Guardamos el nuevo profesor en la base de datos
+    await newUser.save();
+
+    // 7. Enviamos una respuesta de éxito
+    res.status(201).json({ msg: "Profesor registrado exitosamente" });
+
+  } catch (error) {
+    // ---- 🚨 MANEJO DE ERRORES MEJORADO ----
+    // Esto imprimirá el error completo en tus logs de Render para que sepas exactamente qué falló.
+    console.error('---- ERROR DETALLADO AL REGISTRAR PROFESOR ----');
+    console.error(error);
+    console.error('--------------------------------------------');
+    res.status(500).json({ msg: "Error en el servidor al registrar al profesor", error: error.message });
+  }
+});
+
 
 // ---------------- Obtener todos los profesores (solo admin) ----------------
 profesoresRouter.get("/", authMiddleware, isAdmin, async (req, res) => {
@@ -101,7 +149,7 @@ profesoresRouter.put("/editar-perfil", authMiddleware, upload.single("foto"), as
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
 
-    // Validaciones de email y celular (se mantienen)
+    // Validaciones de email y celular
     if (email !== user.email) {
       const emailExists = await User.findOne({ email });
       if (emailExists) return res.status(400).json({ msg: "Email already in use" });
@@ -119,11 +167,8 @@ profesoresRouter.put("/editar-perfil", authMiddleware, upload.single("foto"), as
 
     // LÓGICA CLOUDINARY: Subir y Reemplazar foto
     if (req.file) {
-      // 1. ELIMINAR FOTO ANTIGUA de Cloudinary (si existe)
       const publicId = getCloudinaryPublicId(user.foto);
       if (publicId) await cloudinary.uploader.destroy(publicId);
-      
-      // 2. Guardar la nueva URL (req.file.path contiene la URL completa de Cloudinary)
       user.foto = req.file.path;
     }
 
@@ -138,8 +183,7 @@ profesoresRouter.put("/editar-perfil", authMiddleware, upload.single("foto"), as
 // ---------------- Obtener perfil propio ----------------
 profesoresRouter.get("/mi-perfil", authMiddleware, async (req, res) => {
   try {
-    // Usamos el middleware para obtener req.user, pero seleccionamos todo excepto el password
-    const user = await User.findById(req.user.id).select("-password"); 
+    const user = await User.findById(req.user.id).select("-password");
     if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
     res.json(user);
   } catch (err) {
