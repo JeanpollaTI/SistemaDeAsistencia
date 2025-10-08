@@ -33,15 +33,16 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 12px; /* <-- CAMBIO: Aumentado el espacio entre botones */
+  margin-bottom: 25px; /* <-- CAMBIO: Más espacio debajo */
 }
 
 .btn-add {
   background-color: #d4af37;
   color: #fff;
   border: none;
-  padding: 5px 12px;
+  /* <-- CAMBIO: Más padding para que los botones "respiren" */
+  padding: 8px 16px;
   border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
@@ -103,7 +104,8 @@
 
 .horario-table {
   width: 100%; 
-  min-width: 1200px;
+  /* <-- CAMBIO: Aumentado el ancho mínimo para dar espacio a todo */
+  min-width: 1400px;
   border-collapse: separate;
   border-spacing: 3px;
   font-size: 12px;
@@ -142,8 +144,8 @@
 /* --- Celdas de Hora --- */
 .horas-row-horizontal {
   display: flex;
-  justify-content: center;
-  gap: 1px;
+  justify-content: flex-start; /* <-- CAMBIO: Alineado a la izquierda */
+  gap: 3px; /* <-- CAMBIO: Espacio entre cada cuadrito */
   flex-wrap: nowrap;
 }
 
@@ -151,10 +153,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 1px;
   cursor: pointer;
   transition: transform 0.1s ease;
-  flex-shrink: 0;
+  /* --- ¡LA MAGIA ESTÁ AQUÍ! --- */
+  /* <-- CAMBIO: Se define un ancho mínimo y fijo para que no se aplaste */
+  width: 35px;
+  min-width: 35px;
+  flex-shrink: 0; /* <-- CAMBIO: Se asegura de que no se encoja */
 }
 
 .hora-box-horizontal:hover {
@@ -163,18 +168,19 @@
 
 .hora-num {
   font-weight: bold;
-  font-size: 7px;
+  font-size: 9px; /* <-- CAMBIO: Un poco más grande para que se lea */
   color: #555;
-  margin-bottom: 1px;
+  margin-bottom: 2px;
 }
 
 .hora-box-horizontal input {
-  width: 22px;
-  height: 18px;
+  /* <-- CAMBIO: El input ahora ocupa el 100% de su padre (35px) */
+  width: 100%; 
+  height: 22px;
   text-align: center;
-  font-size: 8px;
+  font-size: 10px; /* <-- CAMBIO: Más grande */
   border: 1px solid #bbb;
-  border-radius: 3px;
+  border-radius: 4px; /* <-- CAMBIO: Más redondeado */
   padding: 0;
   box-sizing: border-box;
   background-color: #fafafa;
@@ -341,20 +347,6 @@
   .horario-table {
     font-size: 10px;
     min-width: 900px;
-  }
-
-  .hora-box-horizontal input {
-    width: 20px;
-    height: 16px;
-  }
-
-  .hora-num {
-    font-size: 6px;
-  }
-
-  .btn-add {
-    padding: 4px 10px;
-    font-size: 12px;
   }
 }
 
