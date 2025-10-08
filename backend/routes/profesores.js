@@ -31,15 +31,15 @@ const upload = multer({ storage });
 // ---------------- Helper para obtener Public ID de Cloudinary ----------------
 // Extrae el ID necesario para borrar el archivo de Cloudinary
 const getCloudinaryPublicId = (url) => {
-    // Si no es una URL de Cloudinary (ej: es la ruta por defecto), regresamos null
+    // Si no es una URL de Cloudinary o es la ruta por defecto, regresa null
     if (!url || url.includes("default.png") || !url.includes("cloudinary.com")) return null; 
     
-    // El formato esperado es folder/public_id.extension
+    // Obtenemos el segmento final (ej: 'public_id.jpg')
     const parts = url.split('/');
     const publicIdWithExt = parts[parts.length - 1]; 
     const publicId = publicIdWithExt.split('.')[0]; 
     
-    // Retorna el publicId completo con la carpeta, que es requerido para el borrado
+    // Retorna el publicId completo con el folder, que es requerido para el borrado
     return `sistema-asistencia/fotos-profesores/${publicId}`; 
 };
 
@@ -98,6 +98,7 @@ profesoresRouter.put("/editar-perfil", authMiddleware, upload.single("foto"), as
     if (!nombre || !email || !celular || !edad || !sexo)
       return res.status(400).json({ msg: "Todos los campos son obligatorios" });
 
+    // Buscamos al usuario antes de actualizar
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
 
@@ -119,18 +120,26 @@ profesoresRouter.put("/editar-perfil", authMiddleware, upload.single("foto"), as
 
     // LÓGICA CLOUDINARY: Subir y Reemplazar foto
     if (req.file) {
-      // 1. ELIMINAR FOTO ANTIGUA de Cloudinary (si existe)
+      // 1. ELIMINAR FOTO ANTIGUA de Cloudinary (CRUCIAL para evitar el crash si no hay foto)
       const publicId = getCloudinaryPublicId(user.foto);
-      if (publicId) await cloudinary.uploader.destroy(publicId);
+      if (publicId) await cloudinary.uploader.destroy(publicId); // Borrado seguro
       
       // 2. Guardar la nueva URL (req.file.path contiene la URL completa de Cloudinary)
       user.foto = req.file.path;
     }
 
+    // Usamos save() para que los triggers y validaciones funcionen
     await user.save();
-    res.json({ msg: "Perfil actualizado correctamente", user });
+    
+    // Devolvemos el usuario, excluyendo el password por seguridad (select: false en el modelo)
+    const userObject = user.toObject();
+    delete userObject.password;
+    
+    res.json({ msg: "Perfil actualizado correctamente", user: userObject });
   } catch (err) {
-    console.error(err);
+    console.error("Error al actualizar perfil:", err);
+    // CLOUDINARY CLEANUP: Si el error ocurrió después del upload PERO antes del save, borramos la nueva foto.
+    if (req.file) await cloudinary.uploader.destroy(req.file.filename);
     res.status(500).json({ msg: "Error al actualizar perfil", error: err.message });
   }
 });
