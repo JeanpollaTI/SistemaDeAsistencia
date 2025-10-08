@@ -2,8 +2,8 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import multer from "multer";
-import { v2 as cloudinary } from "cloudinary"; // Nuevo: Para configurar Cloudinary
-import { CloudinaryStorage } from "multer-storage-cloudinary"; // Nuevo: Para el storage de Multer
+import { v2 as cloudinary } from "cloudinary"; // Para Cloudinary
+import { CloudinaryStorage } from "multer-storage-cloudinary"; // Para el storage de Multer
 import crypto from "crypto";
 
 import User from "../models/User.js";
@@ -12,7 +12,6 @@ import { sendEmail } from "../utils/sendEmail.js";
 const router = express.Router();
 
 // ----------------- CONFIGURACIÓN CLOUDINARY -----------------
-// Configurado con las variables de entorno de Render
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -42,7 +41,6 @@ const formatDate = (date) => {
 // ----------------- MIDDLEWARE JWT (VERIFICACIÓN) -----------------
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
-  // Corregido para que el token expire de forma limpia.
   if (!token) return res.status(401).json({ msg: "No hay token" });
   try {
     req.user = jwt.verify(token, process.env.JWT_SECRET);
@@ -78,8 +76,6 @@ router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, re
 
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    // LÓGICA CLOUDINARY: Guardar la URL de la foto subida
-    // Si hay archivo, usa la URL completa de Cloudinary (req.file.path).
     const fotoUrl = req.file ? req.file.path : "/uploads/fotos/default.png";
 
     const newUser = new User({ nombre, edad, sexo, email, celular, password: hashedPassword, role: role || "profesor", foto: fotoUrl });
@@ -88,7 +84,6 @@ router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, re
     res.status(201).json({ msg: "Usuario registrado correctamente", user: newUser });
   } catch (err) {
     console.error(err);
-    // LÓGICA CLOUDINARY: Si falla el registro, eliminar la foto subida (si existe)
     if (req.file) await cloudinary.uploader.destroy(req.file.filename);
     res.status(500).json({ msg: "Error en el servidor", error: err.message });
   }
@@ -98,18 +93,37 @@ router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, re
 router.post("/login", async (req, res) => {
   try {
     const { identifier, password } = req.body;
-    const user = await User.findOne({ $or: [{ email: identifier }, { celular: identifier }] });
+    
+    // CORRECCIÓN CLAVE: Usar .select('+password') para forzar a MongoDB a incluir el hash
+    const user = await User.findOne({ $or: [{ email: identifier }, { celular: identifier }] }).select('+password'); 
+    
     if (!user) return res.status(400).json({ msg: "Usuario no encontrado" });
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    // isMatch ahora recibirá el password hash correctamente
+    const isMatch = await bcrypt.compare(password, user.password); 
     if (!isMatch) return res.status(400).json({ msg: "Contraseña incorrecta" });
 
     // Aumentamos la expiración para reducir el error 'jwt expired'
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
+    // Clonamos el objeto usuario para eliminar el password antes de enviarlo al frontend
+    const userWithoutPassword = user.toObject();
+    delete userWithoutPassword.password; 
+
     res.json({
       token,
-      user: { id: user._id, nombre: user.nombre, edad: user.edad, sexo: user.sexo, email: user.email, celular: user.celular, role: user.role, foto: user.foto, asignaturas: user.asignaturas || [], fechaRegistro: formatDate(user.createdAt) }
+      user: { 
+        id: user._id, 
+        nombre: user.nombre, 
+        edad: user.edad, 
+        sexo: user.sexo, 
+        email: user.email, 
+        celular: user.celular, 
+        role: user.role, 
+        foto: user.foto, 
+        asignaturas: user.asignaturas || [], 
+        fechaRegistro: formatDate(user.createdAt) 
+      }
     });
   } catch (err) {
     console.error(err);
@@ -129,7 +143,6 @@ router.post("/forgot-password", async (req, res) => {
     const token = crypto.randomBytes(4).toString("hex");
     resetTokens[email] = { token, expires: Date.now() + 15 * 60 * 1000 };
 
-    // Usando el servicio de correo ya configurado (SendGrid API)
     await sendEmail(email, "Recuperación de contraseña", `<p>Tu código es: <b>${token}</b></p>`);
     res.json({ msg: "Código enviado a tu correo" });
   } catch (err) {
@@ -146,7 +159,8 @@ router.post("/reset-password", async (req, res) => {
     if (!savedToken || savedToken.token !== token || Date.now() > savedToken.expires)
       return res.status(400).json({ msg: "Token inválido o expirado" });
 
-    const user = await User.findOne({ email });
+    // Usamos select('+password') para asegurar que podemos hashear la nueva.
+    const user = await User.findOne({ email }).select('+password'); 
     if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
 
     user.password = await bcrypt.hash(newPassword, 10);
@@ -208,10 +222,9 @@ router.delete("/profesores/:id", verifyAdmin, async (req, res) => {
 
     // LÓGICA CLOUDINARY: Borrar la foto de la nube
     if (profesor.foto && !profesor.foto.includes("default.png")) {
-      // Se asume el formato de folder que usamos en la configuración de storage
       const parts = profesor.foto.split('/');
-      const publicIdWithExt = parts[parts.length - 1]; // foto-12345.jpg
-      const publicId = publicIdWithExt.split('.')[0];   // foto-12345
+      const publicIdWithExt = parts[parts.length - 1]; 
+      const publicId = publicIdWithExt.split('.')[0]; 
       const fullPublicId = `sistema-asistencia/fotos-profesores/${publicId}`;
 
       await cloudinary.uploader.destroy(fullPublicId);
