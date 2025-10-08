@@ -1,14 +1,14 @@
 import express from "express";
 import User from "../models/User.js";
-import { verifyToken, verifyAdmin } from "./auth.js"; // Usando tus middlewares
+import bcrypt from "bcryptjs"; // <-- AÑADIDO: Para encriptar contraseñas
+import { verifyToken, verifyAdmin } from "./auth.js";
 import multer from "multer";
-import { CloudinaryStorage } from "multer-storage-cloudinary"; // Nuevo: Para almacenar en la nube
-import { v2 as cloudinary } from "cloudinary"; // Nuevo: Para configurar y eliminar
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import { v2 as cloudinary } from "cloudinary";
 
 const router = express.Router();
 
 // ----------------- CONFIGURACIÓN CLOUDINARY -----------------
-// Debe estar configurado con las variables de entorno que pusiste en Render
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -18,9 +18,9 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "sistema-asistencia/fotos-profesores", // Carpeta en Cloudinary
+    folder: "sistema-asistencia/fotos-profesores",
     allowed_formats: ["jpg", "jpeg", "png"],
-    transformation: [{ width: 300, height: 300, crop: "fill" }], // Opcional: redimensionar
+    transformation: [{ width: 300, height: 300, crop: "fill" }],
   },
 });
 const upload = multer({ storage });
@@ -32,7 +32,86 @@ const formatDate = (date) => {
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 };
 
-// ----------------- RUTAS -----------------
+const getCloudinaryPublicId = (url) => {
+    if (!url || url.includes("default.png") || !url.includes("cloudinary")) return null;
+    const parts = url.split('/');
+    const publicIdWithExt = parts[parts.length - 1];
+    const publicId = publicIdWithExt.split('.')[0];
+    return `sistema-asistencia/fotos-profesores/${publicId}`;
+};
+
+// ---------------------------------------------------------------
+// ---- ✅ RUTAS AÑADIDAS PARA COMPLETAR LA LÓGICA DE USUARIOS ----
+// ---------------------------------------------------------------
+
+// POST: Registrar un nuevo profesor (admin)
+router.post("/registrar-profesor", verifyAdmin, upload.single("foto"), async (req, res) => {
+    try {
+        // 1. Obtener datos del cuerpo de la solicitud
+        const { nombre, email, password, edad, sexo, celular } = req.body;
+
+        // 2. Validar que los campos esenciales no estén vacíos
+        if (!nombre || !email || !password || !celular) {
+            return res.status(400).json({ msg: "Los campos nombre, email, contraseña y celular son obligatorios." });
+        }
+
+        // 3. Revisar si ya existe un usuario con ese email o celular
+        const existingUser = await User.findOne({ $or: [{ email }, { celular }] });
+        if (existingUser) {
+            return res.status(400).json({ msg: "El email o el celular ya están registrados." });
+        }
+
+        // 4. Encriptar la contraseña antes de guardarla
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // 5. Crear el nuevo usuario
+        const newUser = new User({
+            nombre,
+            email,
+            password: hashedPassword,
+            edad,
+            sexo,
+            celular,
+            role: 'profesor', // Rol fijo para esta ruta
+            foto: req.file ? req.file.path : 'URL_DE_FOTO_POR_DEFECTO.png' // Asigna la URL de Cloudinary o una por defecto
+        });
+
+        // 6. Guardar el usuario en la base de datos
+        await newUser.save();
+
+        res.status(201).json({ msg: "Profesor registrado exitosamente." });
+
+    } catch (err) {
+        // 7. MANEJO DE ERRORES MEJORADO
+        console.error('---- ERROR DETALLADO AL REGISTRAR PROFESOR ----');
+        console.error(err); // Esto imprimirá el error completo en la consola del servidor
+
+        // Si el guardado en la BD falla pero la foto ya se subió, la eliminamos
+        if (req.file) {
+            await cloudinary.uploader.destroy(req.file.filename);
+        }
+
+        res.status(500).json({ msg: "Error en el servidor al registrar al profesor", error: err.message });
+    }
+});
+
+// GET: Obtener perfil propio (usuarios logueados)
+router.get("/mi-perfil", verifyToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select("-password"); // req.user.id viene del token
+        if (!user) {
+            return res.status(404).json({ msg: "Usuario no encontrado" });
+        }
+        res.json(user);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: "Error al obtener el perfil", error: err.message });
+    }
+});
+
+
+// ----------------- RUTAS EXISTENTES -----------------
 
 // GET: Todos los profesores (admin)
 router.get("/profesores", verifyAdmin, async (req, res) => {
@@ -76,21 +155,13 @@ router.put("/profesores/:id/asignaturas", verifyAdmin, async (req, res) => {
 router.delete("/profesores/:id", verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-
     const profesor = await User.findById(id);
     if (!profesor) return res.status(404).json({ msg: "Profesor no encontrado" });
 
-    // LÓGICA CLOUDINARY: Borrar la foto de la nube antes de eliminar el usuario
-    if (profesor.foto && !profesor.foto.includes("default.png")) {
-        // Se extrae el ID público del archivo de la URL de Cloudinary (ej: 'carpeta/foto-12345')
-        const parts = profesor.foto.split('/');
-        const publicIdWithExt = parts[parts.length - 1]; // foto-12345.jpg
-        const publicId = publicIdWithExt.split('.')[0];   // foto-12345
-
-        // Asumiendo que el folder es 'sistema-asistencia/fotos-profesores'
-        const fullPublicId = `sistema-asistencia/fotos-profesores/${publicId}`;
-
-        await cloudinary.uploader.destroy(fullPublicId);
+    // LÓGICA CLOUDINARY: Borrar la foto de la nube
+    const publicId = getCloudinaryPublicId(profesor.foto);
+    if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
     }
 
     await profesor.deleteOne();
@@ -101,47 +172,39 @@ router.delete("/profesores/:id", verifyAdmin, async (req, res) => {
   }
 });
 
-// ----------------- EDITAR PERFIL (usuarios logueados) -----------------
+// PUT: Editar perfil propio (usuarios logueados)
 router.put("/editar-perfil", verifyToken, upload.single("foto"), async (req, res) => {
   try {
-    const userId = req.user.id; // viene de verifyToken
+    const userId = req.user.id;
     const { nombre, edad, email, sexo, celular } = req.body;
 
-    // Se mantiene la validación de campos obligatorios
     if (!nombre || !edad || !email || !sexo || !celular) {
-        return res.status(400).json({ msg: "Todos los campos son obligatorios" });
+      return res.status(400).json({ msg: "Todos los campos son obligatorios" });
     }
-
-    const updateData = { nombre, edad, email, sexo, celular };
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
 
+    const updateData = { nombre, edad, email, sexo, celular };
+
     // LÓGICA CLOUDINARY: Actualizar foto
     if (req.file) {
-      // 1. ELIMINAR FOTO ANTIGUA de Cloudinary (si existe)
-      if (user.foto && !user.foto.includes("default.png")) {
-        const parts = user.foto.split('/');
-        const publicIdWithExt = parts[parts.length - 1];
-        const publicId = publicIdWithExt.split('.')[0];
-        const fullPublicId = `sistema-asistencia/fotos-profesores/${publicId}`;
-        
-        await cloudinary.uploader.destroy(fullPublicId);
+      // Eliminar foto antigua de Cloudinary
+      const publicId = getCloudinaryPublicId(user.foto);
+      if (publicId) {
+          await cloudinary.uploader.destroy(publicId);
       }
-      
-      // 2. Guardar la nueva URL que viene de Cloudinary
-      // Cloudinary almacena la URL completa en req.file.path
-      updateData.foto = req.file.path; 
+      // Guardar la nueva URL
+      updateData.foto = req.file.path;
     }
-    
-    // Actualización de usuario (usamos findByIdAndUpdate para la eficiencia)
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       updateData,
       { new: true, runValidators: true }
     ).select("-password");
 
-    if (!updatedUser) return res.status(404).json({ msg: "Usuario no encontrado" });
+    if (!updatedUser) return res.status(404).json({ msg: "No se pudo actualizar el usuario" });
 
     res.json({ msg: "Perfil actualizado correctamente", user: updatedUser });
   } catch (err) {

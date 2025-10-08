@@ -18,7 +18,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// NUEVO: Storage de Multer para subir a Cloudinary (Reemplaza diskStorage)
 const storageFotos = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -28,7 +27,7 @@ const storageFotos = new CloudinaryStorage({
 });
 const uploadFotos = multer({ storage: storageFotos });
 
-// Reset tokens (Mantenido en memoria)
+// Reset tokens (en memoria)
 const resetTokens = {};
 
 // Helpers
@@ -38,13 +37,12 @@ const formatDate = (date) => {
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 };
 
-// Helper para obtener Public ID de Cloudinary
 const getCloudinaryPublicId = (url) => {
-    if (!url || url.includes("default.png")) return null;
-    const parts = url.split('/');
-    const publicIdWithExt = parts[parts.length - 1];
-    const publicId = publicIdWithExt.split('.')[0];
-    return `sistema-asistencia/fotos-profesores/${publicId}`; 
+  if (!url || url.includes("default.png") || !url.includes("cloudinary")) return null;
+  const parts = url.split('/');
+  const publicIdWithExt = parts[parts.length - 1];
+  const publicId = publicIdWithExt.split('.')[0];
+  return `sistema-asistencia/fotos-profesores/${publicId}`;
 };
 
 // ----------------- MIDDLEWARE JWT (VERIFICACIÓN) -----------------
@@ -56,7 +54,7 @@ const verifyToken = (req, res, next) => {
     next();
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
-        return res.status(401).json({ msg: "Token expirado", error: err.name });
+      return res.status(401).json({ msg: "Token expirado", error: err.name });
     }
     return res.status(401).json({ msg: "Token inválido" });
   }
@@ -82,7 +80,6 @@ router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, re
     if (existingUser) return res.status(400).json({ msg: "Usuario ya existe" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    // CLOUDINARY: Guarda la URL completa
     const fotoUrl = req.file ? req.file.path : "/uploads/fotos/default.png";
 
     const newUser = new User({ nombre, edad, sexo, email, celular, password: hashedPassword, role: role || "profesor", foto: fotoUrl });
@@ -90,9 +87,13 @@ router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, re
 
     res.status(201).json({ msg: "Usuario registrado correctamente", user: newUser });
   } catch (err) {
+    console.error('---- ERROR DETALLADO EN REGISTRO ----');
     console.error(err);
-    // CLOUDINARY: Eliminar foto subida si falla el registro
-    if (req.file) await cloudinary.uploader.destroy(req.file.filename);
+    if (req.file) {
+      // Para Cloudinary, el filename es el public_id
+      const publicId = req.file.filename;
+      await cloudinary.uploader.destroy(publicId);
+    }
     res.status(500).json({ msg: "Error en el servidor", error: err.message });
   }
 });
@@ -101,29 +102,18 @@ router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, re
 router.post("/login", async (req, res) => {
   try {
     const { identifier, password } = req.body;
-    
-    // CORRECCIÓN CRUCIAL: Añadir .select('+password') para forzar a MongoDB a incluir el hash
-    // Esto resuelve el error "Illegal arguments: string_undefined"
-    const user = await User.findOne({ $or: [{ email: identifier }, { celular: identifier }] }).select('+password'); 
-    
+    const user = await User.findOne({ $or: [{ email: identifier }, { celular: identifier }] }).select('+password');
     if (!user) return res.status(400).json({ msg: "Usuario no encontrado" });
 
-    const isMatch = await bcrypt.compare(password, user.password); 
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: "Contraseña incorrecta" });
 
-    // Aumentamos la expiración para reducir el error 'jwt expired'
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" }); // Expira en 7 días
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-    // Devolvemos el usuario sin el password
     const userWithoutPassword = user.toObject();
-    delete userWithoutPassword.password; 
+    delete userWithoutPassword.password;
 
-    res.json({
-      token,
-      user: { 
-        id: user._id, nombre: user.nombre, edad: user.edad, sexo: user.sexo, email: user.email, celular: user.celular, role: user.role, foto: user.foto, asignaturas: user.asignaturas || [], fechaRegistro: formatDate(user.createdAt) 
-      }
-    });
+    res.json({ token, user: userWithoutPassword });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Error en el servidor", error: err.message });
@@ -136,14 +126,13 @@ router.post("/forgot-password", async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ msg: "Debe proporcionar un correo" });
 
-    // Forzamos la inclusión del password para el hashing en reset-password
-    const user = await User.findOne({ email }).select('+password'); 
+    const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
 
-    const token = crypto.randomBytes(4).toString("hex");
+    const token = crypto.randomBytes(4).toString("hex").toUpperCase();
     resetTokens[email] = { token, expires: Date.now() + 15 * 60 * 1000 };
 
-    await sendEmail(email, "Recuperación de contraseña", `<p>Tu código es: <b>${token}</b></p>`);
+    await sendEmail(email, "Recuperación de contraseña", `<p>Tu código de recuperación es: <b>${token}</b></p>`);
     res.json({ msg: "Código enviado a tu correo" });
   } catch (err) {
     console.error(err);
@@ -159,8 +148,7 @@ router.post("/reset-password", async (req, res) => {
     if (!savedToken || savedToken.token !== token || Date.now() > savedToken.expires)
       return res.status(400).json({ msg: "Token inválido o expirado" });
 
-    // Forzamos la selección del password para asegurar que podemos hashear la nueva
-    const user = await User.findOne({ email }).select('+password'); 
+    const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
 
     user.password = await bcrypt.hash(newPassword, 10);
@@ -173,7 +161,71 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
-// ---------------- RUTAS ADMIN / PROFESORES -----------------
+// -------------------------------------------------------------
+// ---- ✅ RUTAS AÑADIDAS: GESTIÓN DEL PERFIL DEL PROPIO USUARIO ----
+// -------------------------------------------------------------
+
+// GET: Obtener perfil propio
+router.get("/mi-perfil", verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) {
+      return res.status(404).json({ msg: "Usuario no encontrado" });
+    }
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Error al obtener el perfil", error: err.message });
+  }
+});
+
+// PUT: Editar perfil propio
+router.put("/editar-perfil", verifyToken, uploadFotos.single("foto"), async (req, res) => {
+  try {
+    const { nombre, email, celular, edad, sexo } = req.body;
+    const userId = req.user.id;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
+
+    // Validar si el nuevo email o celular ya está en uso por OTRO usuario
+    if (email && email !== user.email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) return res.status(400).json({ msg: "El correo ya está en uso" });
+    }
+    if (celular && celular !== user.celular) {
+      const celularExists = await User.findOne({ celular });
+      if (celularExists) return res.status(400).json({ msg: "El celular ya está en uso" });
+    }
+
+    // Actualizar datos
+    user.nombre = nombre || user.nombre;
+    user.email = email || user.email;
+    user.celular = celular || user.celular;
+    user.edad = edad || user.edad;
+    user.sexo = sexo || user.sexo;
+
+    // Si se sube una nueva foto, eliminar la anterior y guardar la nueva
+    if (req.file) {
+      const publicId = getCloudinaryPublicId(user.foto);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+      }
+      user.foto = req.file.path;
+    }
+
+    const updatedUser = await user.save();
+    res.json({ msg: "Perfil actualizado correctamente", user: updatedUser });
+
+  } catch (err) {
+    console.error('---- ERROR DETALLADO AL EDITAR PERFIL ----');
+    console.error(err);
+    res.status(500).json({ msg: "Error al actualizar el perfil", error: err.message });
+  }
+});
+
+
+// ---------------- RUTAS DE GESTIÓN DE PROFESORES (SOLO ADMIN) -----------------
 
 // GET: Todos los profesores
 router.get("/profesores", verifyAdmin, async (req, res) => {
@@ -181,12 +233,10 @@ router.get("/profesores", verifyAdmin, async (req, res) => {
     const profesores = await User.find({ role: "profesor" }).select(
       "nombre email celular edad sexo foto asignaturas createdAt"
     );
-
     const formatted = profesores.map((prof) => ({
       ...prof.toObject(),
       fechaRegistro: formatDate(prof.createdAt),
     }));
-
     res.json(formatted);
   } catch (err) {
     console.error(err);
@@ -199,14 +249,12 @@ router.put("/profesores/:id/asignaturas", verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { asignaturas } = req.body;
-
     const profesor = await User.findById(id);
     if (!profesor) return res.status(404).json({ msg: "Profesor no encontrado" });
 
     profesor.asignaturas = asignaturas || [];
     await profesor.save();
-
-    res.json({ msg: "Asignaturas actualizadas correctamente", asignaturas: profesor.asignaturas });
+    res.json({ msg: "Asignaturas actualizadas", asignaturas: profesor.asignaturas });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Error al actualizar asignaturas", error: err.message });
@@ -220,14 +268,11 @@ router.delete("/profesores/:id", verifyAdmin, async (req, res) => {
     const profesor = await User.findById(id);
     if (!profesor) return res.status(404).json({ msg: "Profesor no encontrado" });
 
-    // LÓGICA CLOUDINARY: Borrar la foto de la nube
-    if (profesor.foto && !profesor.foto.includes("default.png")) {
-      const publicId = getCloudinaryPublicId(profesor.foto);
-      if (publicId) await cloudinary.uploader.destroy(publicId);
-    }
+    const publicId = getCloudinaryPublicId(profesor.foto);
+    if (publicId) await cloudinary.uploader.destroy(publicId);
 
     await profesor.deleteOne();
-    res.json({ msg: "Profesor eliminado correctamente" });
+    res.json({ msg: "Profesor eliminado" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Error al eliminar profesor", error: err.message });
