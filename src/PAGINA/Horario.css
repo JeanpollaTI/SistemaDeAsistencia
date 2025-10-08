@@ -33,15 +33,15 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 25px;
 }
 
 .btn-add {
   background-color: #d4af37;
   color: #fff;
   border: none;
-  padding: 5px 12px;
+  padding: 8px 16px;
   border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
@@ -102,10 +102,10 @@
 }
 
 .horario-table {
-  width: 100%; 
-  min-width: 1200px;
+  width: 100%;
+  min-width: 1600px; /* Aumentamos el ancho mínimo para dar más espacio a todo */
   border-collapse: separate;
-  border-spacing: 3px;
+  border-spacing: 2px;
   font-size: 12px;
   table-layout: fixed;
   background-color: #fff;
@@ -113,8 +113,8 @@
 
 .horario-table th,
 .horario-table td {
-  border: 1px solid #ccc;
-  padding: 4px;
+  border: 1px solid #e0e0e0;
+  padding: 5px;
   text-align: center;
   vertical-align: middle;
   color: #000;
@@ -122,38 +122,49 @@
 
 .horario-table th {
   background: linear-gradient(to bottom, #f5d88b, #d4af37);
-  color: #000;
+  color: #333;
   font-weight: bold;
-  font-size: 12px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
-.horario-table td:first-child,
-.horario-table td:nth-child(2) {
+/* --- AJUSTE #1: Más espacio para Profesor y Asignaturas --- */
+.horario-table td:first-child {
   font-weight: bold;
-  color: #000;
   text-align: left;
-  padding-left: 8px;
-  font-size: 12px;
+  padding-left: 10px;
   background-color: #f9f9f9;
   white-space: nowrap;
+  width: 180px; /* Un poco más de ancho para el nombre del profesor */
+}
+
+.horario-table td:nth-child(2) {
+  font-weight: bold;
+  text-align: left;
+  padding-left: 10px;
+  background-color: #f9f9f9;
+  white-space: normal; /* Permite que el texto se divida en varias líneas */
+  width: 300px; /* Mucho más espacio para que quepan las asignaturas */
+  vertical-align: middle; /* Centrar verticalmente */
 }
 
 /* --- Celdas de Hora --- */
 .horas-row-horizontal {
   display: flex;
-  justify-content: center;
-  gap: 1px;
+  justify-content: flex-start;
+  gap: 2px;
   flex-wrap: nowrap;
 }
 
+/* --- AJUSTE #2: Cuadros de hora mucho más compactos --- */
 .hora-box-horizontal {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 1px;
   cursor: pointer;
   transition: transform 0.1s ease;
+  width: 28px; /* Reducimos el ancho */
+  min-width: 28px; /* Reducimos el ancho mínimo */
   flex-shrink: 0;
 }
 
@@ -163,17 +174,17 @@
 
 .hora-num {
   font-weight: bold;
-  font-size: 7px;
-  color: #555;
+  font-size: 7px; /* Hacemos el número más pequeño */
+  color: #666;
   margin-bottom: 1px;
 }
 
 .hora-box-horizontal input {
-  width: 22px;
-  height: 18px;
+  width: 100%;
+  height: 18px; /* Reducimos la altura */
   text-align: center;
-  font-size: 8px;
-  border: 1px solid #bbb;
+  font-size: 8px; /* Hacemos la letra más pequeña */
+  border: 1px solid #ccc;
   border-radius: 3px;
   padding: 0;
   box-sizing: border-box;
@@ -182,9 +193,15 @@
   color: #000;
 }
 
+/* --- AJUSTE #3: Ancho mínimo para las columnas de los días --- */
+.horario-table td:nth-child(n+3) {
+    min-width: 220px; /* Ancho mínimo ajustado para 7 cuadros de 28px + gaps */
+}
+
+
 .hora-box-horizontal input:focus {
   border-color: #d4af37;
-  box-shadow: 0 0 2px rgba(212, 175, 55, 0.6);
+  box-shadow: 0 0 3px rgba(212, 175, 55, 0.7);
   outline: none;
 }
 
@@ -342,20 +359,6 @@
     font-size: 10px;
     min-width: 900px;
   }
-
-  .hora-box-horizontal input {
-    width: 20px;
-    height: 16px;
-  }
-
-  .hora-num {
-    font-size: 6px;
-  }
-
-  .btn-add {
-    padding: 4px 10px;
-    font-size: 12px;
-  }
 }
 
 @media (max-width: 768px) {
@@ -374,3 +377,4 @@
         width: 100%;
     }
 }
+
