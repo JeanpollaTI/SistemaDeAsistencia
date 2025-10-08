@@ -33,15 +33,14 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 12px; /* <-- CAMBIO: Aumentado el espacio entre botones */
-  margin-bottom: 25px; /* <-- CAMBIO: Más espacio debajo */
+  gap: 12px;
+  margin-bottom: 25px;
 }
 
 .btn-add {
   background-color: #d4af37;
   color: #fff;
   border: none;
-  /* <-- CAMBIO: Más padding para que los botones "respiren" */
   padding: 8px 16px;
   border-radius: 5px;
   cursor: pointer;
@@ -104,7 +103,6 @@
 
 .horario-table {
   width: 100%; 
-  /* <-- CAMBIO: Aumentado el ancho mínimo para dar espacio a todo */
   min-width: 1400px;
   border-collapse: separate;
   border-spacing: 3px;
@@ -144,8 +142,8 @@
 /* --- Celdas de Hora --- */
 .horas-row-horizontal {
   display: flex;
-  justify-content: flex-start; /* <-- CAMBIO: Alineado a la izquierda */
-  gap: 3px; /* <-- CAMBIO: Espacio entre cada cuadrito */
+  justify-content: flex-start;
+  gap: 3px;
   flex-wrap: nowrap;
 }
 
@@ -156,10 +154,9 @@
   cursor: pointer;
   transition: transform 0.1s ease;
   /* --- ¡LA MAGIA ESTÁ AQUÍ! --- */
-  /* <-- CAMBIO: Se define un ancho mínimo y fijo para que no se aplaste */
   width: 35px;
   min-width: 35px;
-  flex-shrink: 0; /* <-- CAMBIO: Se asegura de que no se encoja */
+  flex-shrink: 0; 
 }
 
 .hora-box-horizontal:hover {
@@ -168,25 +165,29 @@
 
 .hora-num {
   font-weight: bold;
-  font-size: 9px; /* <-- CAMBIO: Un poco más grande para que se lea */
+  font-size: 9px;
   color: #555;
   margin-bottom: 2px;
 }
 
 .hora-box-horizontal input {
-  /* <-- CAMBIO: El input ahora ocupa el 100% de su padre (35px) */
   width: 100%; 
   height: 22px;
   text-align: center;
-  font-size: 10px; /* <-- CAMBIO: Más grande */
+  font-size: 10px;
   border: 1px solid #bbb;
-  border-radius: 4px; /* <-- CAMBIO: Más redondeado */
+  border-radius: 4px;
   padding: 0;
   box-sizing: border-box;
   background-color: #fafafa;
   transition: all 0.2s ease;
   color: #000;
 }
+
+.horario-table td:nth-child(n+3) {
+    min-width: 270px; /* Ancho mínimo para las columnas de los días */
+}
+
 
 .hora-box-horizontal input:focus {
   border-color: #d4af37;
@@ -366,3 +367,4 @@
         width: 100%;
     }
 }
+
