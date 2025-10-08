@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-// 1. CORRECCIÓN DE RUTA: Ajustamos la importación.
-// Desde PAGINA/ sale un nivel (..) y entra a api/
+// 1. CORRECCIÓN DE RUTA: Apunta correctamente a la carpeta api/ (sube de PAGINA/ a src/ y entra a api/)
 import apiClient from '../api/apiClient';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
