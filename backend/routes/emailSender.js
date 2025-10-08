@@ -18,7 +18,8 @@ router.post('/enviar-boleta', authMiddleware, async (req, res) => {
         const transporter = nodemailer.createTransport({
             host: process.env.EMAIL_HOST,
             port: process.env.EMAIL_PORT,
-            secure: false, // false para el puerto 587
+            // NOTA: Para el puerto 587, secure debe ser false o omitido.
+            secure: false,
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS,
@@ -27,12 +28,12 @@ router.post('/enviar-boleta', authMiddleware, async (req, res) => {
 
         // 2. Prepara las opciones del correo.
         const mailOptions = {
-            from: `"Escuela Secundaria N.9" <${process.env.EMAIL_USER}>`,
+            // CORRECCIÓN CLAVE: Usar EMAIL_FROM para una dirección de remitente válida y verificada.
+            from: `"Escuela Secundaria N.9" <${process.env.EMAIL_FROM}>`, 
             to: to,
             subject: subject,
             html: body,
-            // 3. ESTA ES LA PARTE CORREGIDA Y CLAVE:
-            // Le decimos a Nodemailer que el PDF es contenido en base64, no una ruta de archivo.
+            // 3. Configuración para adjuntar el PDF en Base64.
             attachments: [
                 {
                     filename: 'Boleta_de_Calificaciones.pdf',
@@ -49,10 +50,10 @@ router.post('/enviar-boleta', authMiddleware, async (req, res) => {
         res.status(200).json({ message: 'Boleta enviada exitosamente por correo.' });
 
     } catch (error) {
-        console.error('Error al enviar boleta por correo:', error);
+        // Aquí verás el error detallado de SendGrid si falla.
+        console.error('Error al enviar boleta por correo:', error); 
         res.status(500).json({ error: 'Hubo un error en el servidor al intentar enviar el correo.' });
     }
 });
 
 export { router as emailRouter };
-
