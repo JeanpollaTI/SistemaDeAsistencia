@@ -19,7 +19,7 @@ export const sendEmail = async (to, subject, html, attachments = []) => {
     const sendgridAttachments = attachments.map(att => ({
         content: att.content, // Asumimos que ya está en base64 o en string
         filename: att.filename,
-        type: att.contentType, // SendGrid usa 'type' en lugar de 'contentType'
+        type: att.contentType, // SendGrid usa 'type' en lugar de 'contentType'. Esto es crucial para PDFs.
         disposition: 'attachment'
     }));
 
@@ -35,16 +35,14 @@ export const sendEmail = async (to, subject, html, attachments = []) => {
     try {
         // Enviar el correo usando la API HTTP
         const info = await sgMail.send(msg);
-        console.log("Correo enviado via SendGrid API:", info);
+        console.log("Correo enviado via SendGrid API. Response:", info);
         return info;
     } catch (err) {
-        // --- AJUSTE FINAL AQUÍ ---
-        // Se quita JSON.parse() para evitar el SyntaxError y se imprime el cuerpo del error directamente.
+        // Manejo de error seguro y detallado para diagnosticar problemas de API Key/Remitente
         console.error(
             "Error enviando correo via SendGrid API. Detalles:", 
-            err.response && err.response.body ? err.response.body : err // <-- Manejo de error seguro
+            err.response && err.response.body ? err.response.body : err
         );
-        // -------------------------
         throw new Error("No se pudo enviar el correo");
     }
 };

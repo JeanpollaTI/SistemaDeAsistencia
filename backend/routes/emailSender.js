@@ -1,5 +1,6 @@
 import express from 'express';
-import nodemailer from 'nodemailer';
+// Asegúrate de que esta función importe la versión que usa sgMail
+import { sendEmail } from '../utils/sendEmail.js'; 
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
@@ -13,44 +14,25 @@ router.post('/enviar-boleta', authMiddleware, async (req, res) => {
         return res.status(400).json({ error: 'Faltan datos para enviar el correo.' });
     }
 
+    // Preparamos el array de attachments en el formato que espera la función sendEmail.
+    const attachments = [
+        {
+            filename: 'Boleta_de_Calificaciones.pdf',
+            content: pdfData, 
+            // La función sendEmail.js ya sabe que es base64 y PDF
+            contentType: 'application/pdf' 
+        }
+    ];
+
     try {
-        // 1. Reutiliza la misma configuración de Nodemailer que ya usas para recuperar contraseñas.
-        const transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST,
-            port: process.env.EMAIL_PORT,
-            // NOTA: Para el puerto 587, secure debe ser false o omitido.
-            secure: false,
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-        });
-
-        // 2. Prepara las opciones del correo.
-        const mailOptions = {
-            // CORRECCIÓN CLAVE: Usar EMAIL_FROM para una dirección de remitente válida y verificada.
-            from: `"Escuela Secundaria N.9" <${process.env.EMAIL_FROM}>`, 
-            to: to,
-            subject: subject,
-            html: body,
-            // 3. Configuración para adjuntar el PDF en Base64.
-            attachments: [
-                {
-                    filename: 'Boleta_de_Calificaciones.pdf',
-                    content: pdfData,     // Se usa 'content' para el string base64
-                    encoding: 'base64',   // Se especifica la codificación
-                    contentType: 'application/pdf'
-                },
-            ],
-        };
-
-        // 4. Envía el correo.
-        await transporter.sendMail(mailOptions);
+        // --- LA SOLUCIÓN CLAVE: LLAMAR A LA FUNCIÓN DE API DE SENDGRID ---
+        // Usamos la función centralizada que ya está configurada con el protocolo HTTP.
+        await sendEmail(to, subject, body, attachments);
 
         res.status(200).json({ message: 'Boleta enviada exitosamente por correo.' });
 
     } catch (error) {
-        // Aquí verás el error detallado de SendGrid si falla.
+        // Los errores de la función centralizada serán capturados aquí.
         console.error('Error al enviar boleta por correo:', error); 
         res.status(500).json({ error: 'Hubo un error en el servidor al intentar enviar el correo.' });
     }
