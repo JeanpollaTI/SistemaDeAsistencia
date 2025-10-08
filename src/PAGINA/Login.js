@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-// 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro apiClient.
+// CORRECCIÓN DE RUTA: Ajustamos la importación.
+// Desde PAGINA/ sale un nivel (..) y entra a api/
 import apiClient from '../api/apiClient';
 import "./Login.css";
 
@@ -25,8 +26,7 @@ function Login({ onLogin }) {
     try {
       console.log("Enviando login:", { identifier, password });
 
-      // 2. CÓDIGO MÁS LIMPIO: Usamos apiClient y solo el endpoint.
-      // Axios maneja la serialización a JSON automáticamente.
+      // CÓDIGO MÁS LIMPIO: Usamos apiClient y solo el endpoint.
       const res = await apiClient.post("/auth/login", {
         identifier: identifier.toLowerCase(), // normaliza email
         password,

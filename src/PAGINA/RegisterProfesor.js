@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// 1. IMPORTAMOS apiClient EN LUGAR DE axios
+// 1. CORRECCIÓN DE RUTA: Apunta correctamente a la carpeta api/
 import apiClient from '../api/apiClient';
 import "./RegisterProfesor.css";
 
@@ -29,13 +29,11 @@ export default function RegisterProfesor() {
     if (storedToken) setToken(storedToken);
 
     // 3. ACTUALIZAMOS LA PETICIÓN GET PARA USAR apiClient
-    // Verificamos si ya hay usuarios. Usamos /auth/profesores si la ruta /auth/users no existe.
     apiClient
       .get(`/auth/profesores`, { // RUTA MÁS PROBABLE: /auth/profesores
         headers: storedToken ? { Authorization: `Bearer ${storedToken}` } : {},
       })
       .then((res) => {
-        // Asumimos que la respuesta incluye todos los profesores y quizás admins.
         const allUsers = Array.isArray(res.data) ? res.data : [];
         const admins = allUsers.filter((u) => u.role === "admin");
         

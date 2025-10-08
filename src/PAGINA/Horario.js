@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-// 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro apiClient.
+// 1. CORRECCIÓN DE RUTA: Ajustamos la importación.
+// Desde PAGINA/ sale un nivel (..) y entra a api/
 import apiClient from '../api/apiClient';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -72,11 +73,8 @@ function Horario({ user }) {
         if (res.data?.datos) setHorario(res.data.datos);
         if (res.data?.leyenda) setLeyenda(res.data.leyenda);
         
-        // ----------------------------------------------------
-        // 4. Muestra la URL completa de Cloudinary si existe
+        // Muestra la URL completa de Cloudinary si existe
         if (res.data?.pdfUrl) setPdfHorario(res.data.pdfUrl); 
-        // ----------------------------------------------------
-
       }).catch(error => {
         console.error("Error al cargar el horario:", error);
         mostrarAlerta("Error al cargar el horario ❌", "error");

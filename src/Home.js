@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro nuevo apiClient en lugar de axios directamente.
-import apiClient from '../api/apiClient';
+// 1. CORRECCIÓN DE RUTA: Ajustamos la importación basada en la nueva estructura src/api/
+import apiClient from './api/apiClient'; 
 import "./Home.css";
 
 // Ruta por defecto que existe en el servidor (coincide con el modelo)

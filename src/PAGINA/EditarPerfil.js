@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro apiClient.
+// 1. CORRECCIÓN DE RUTA: Ajustamos la importación.
 import apiClient from '../api/apiClient';
 import "./EditarPerfil.css";
 
@@ -31,15 +31,12 @@ function EditarPerfil({ user, setUser }) {
       });
 
       // ----------------------------------------------------
-      // 2. CORRECCIÓN CLOUDINARY: Simplificamos la lógica de la URL.
-      // Si la URL existe y no es la ruta por defecto, la usamos directamente (ya es una URL web completa).
+      // 2. LÓGICA CLOUDINARY: Simplificada.
       const defaultPath = "/uploads/fotos/default.png";
 
       if (user.foto && user.foto !== defaultPath) {
-        // Asumimos que si no es la ruta por defecto, ES una URL de Cloudinary (http/s).
         setFotoPreview(user.foto);
       } else {
-        // Si no hay foto o es la ruta por defecto, usamos el placeholder local.
         setFotoPreview("/default-profile.png");
       }
       // ----------------------------------------------------
@@ -80,7 +77,8 @@ function EditarPerfil({ user, setUser }) {
       // 3. CÓDIGO MÁS LIMPIO: Usamos apiClient y solo el endpoint.
       const res = await apiClient.put("/profesores/editar-perfil", data, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          // El Content-Type "multipart/form-data" es crucial aquí
+          "Content-Type": "multipart/form-data", 
           Authorization: `Bearer ${token}`,
         },
       });
@@ -96,14 +94,14 @@ function EditarPerfil({ user, setUser }) {
       const backendMsg = err.response?.data?.msg || "";
       // Manejo de expiración de token para forzar cierre de sesión
       if (err.response?.status === 401 && backendMsg.includes("Token expirado")) {
-         setError("Tu sesión ha expirado. Redirigiendo al login.");
-         setTimeout(() => {
-             localStorage.removeItem("token");
-             localStorage.removeItem("user");
-             setUser(null);
-             navigate("/login");
-         }, 2000);
-         return; // Detenemos la función aquí.
+          setError("Tu sesión ha expirado. Redirigiendo al login.");
+          setTimeout(() => {
+              localStorage.removeItem("token");
+              localStorage.removeItem("user");
+              setUser(null);
+              navigate("/login");
+          }, 2000);
+          return; 
       } else if (backendMsg.includes("Email already in use")) {
         setError("El correo ingresado ya está registrado. Por favor, utiliza otro.");
       } else if (backendMsg.includes("Celular already in use")) {

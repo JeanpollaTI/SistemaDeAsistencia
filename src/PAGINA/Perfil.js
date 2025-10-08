@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-// Importamos apiClient aunque ya no se usa para concatenar, sino para referencia.
+// CORRECCIÓN DE RUTA: Ajustamos la importación. 
+// Desde PAGINA/ sale a src/ y entra a api/.
 import apiClient from '../api/apiClient'; 
 import "./Perfil.css";
 
@@ -13,13 +14,12 @@ function Perfil({ user, onLogout }) {
   if (!user) return null;
 
   // --------------------------------------------------------------------------
-  // 2. LÓGICA DE IMAGEN CORREGIDA PARA CLOUDINARY
-  // La foto ya es una URL completa (http/s) si no es la por defecto.
+  // LÓGICA DE IMAGEN CORREGIDA PARA CLOUDINARY
+  // Si la foto no es la por defecto, la usamos directamente (es la URL de Cloudinary).
   const profileImgUrl = 
     user.foto && user.foto !== DEFAULT_IMG_PATH
-      // Si el campo foto NO es la ruta por defecto, la usamos directamente (es la URL de Cloudinary)
       ? user.foto 
-      // Si es la ruta por defecto, necesitamos la URL completa del backend
+      // Si es la ruta por defecto, concatenamos para que se cargue desde el backend.
       : `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}`; 
   // --------------------------------------------------------------------------
 
@@ -34,8 +34,11 @@ function Perfil({ user, onLogout }) {
             src={profileImgUrl} 
             alt="Perfil" 
             className="profile-img-large" 
-            // Manejo simple de error en caso de que la URL de Cloudinary falle
-            onError={(e) => { e.target.onerror = null; e.target.src = `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}` }}
+            // Manejo de error para la imagen
+            onError={(e) => { 
+                e.target.onerror = null; 
+                e.target.src = `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}` 
+            }}
         />
 
         <div className="perfil-info">

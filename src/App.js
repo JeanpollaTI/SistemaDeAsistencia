@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
-// 1. IMPORTAMOS apiClient para obtener la URL base de la imagen por defecto
+// 1. CORRECCIÓN DE RUTA: Apunta directamente a ./api/apiClient
 import apiClient from './api/apiClient';
 import Home from "./Home";
 import Login from "./PAGINA/Login";
@@ -86,7 +86,7 @@ function App() {
     ];
 
     // --------------------------------------------------------------------------
-    // 2. CORRECCIÓN CLOUDINARY: Si user.foto no es la ruta por defecto, es una URL completa.
+    // 2. LÓGICA DE IMAGEN CORREGIDA PARA CLOUDINARY
     const profileImgUrl = 
       user?.foto && user.foto !== DEFAULT_IMG_PATH
         ? user.foto // Usamos la URL completa de Cloudinary
@@ -157,7 +157,6 @@ function App() {
     }
   }, [location]);
 
-  // Usamos handleUserUpdate en la ruta de editar perfil
   return (
     <div>
       <header className="header" id="header">
