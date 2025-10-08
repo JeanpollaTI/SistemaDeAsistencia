@@ -1,15 +1,14 @@
 import express from "express";
 import User from "../models/User.js";
-// Se asume que verifyToken y verifyAdmin están importados de su archivo (ej: ./auth.js)
-import { verifyToken, verifyAdmin } from "./auth.js"; 
+import { verifyToken, verifyAdmin } from "./auth.js"; // Usando tus middlewares
 import multer from "multer";
-import { CloudinaryStorage } from "multer-storage-cloudinary"; 
-import { v2 as cloudinary } from "cloudinary"; 
-// No necesitamos path ni fs en este router ya que Cloudinary se encarga del almacenamiento.
+import { CloudinaryStorage } from "multer-storage-cloudinary"; // Nuevo: Para almacenar en la nube
+import { v2 as cloudinary } from "cloudinary"; // Nuevo: Para configurar y eliminar
 
 const router = express.Router();
 
 // ----------------- CONFIGURACIÓN CLOUDINARY -----------------
+// Debe estar configurado con las variables de entorno que pusiste en Render
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -26,31 +25,17 @@ const storage = new CloudinaryStorage({
 });
 const upload = multer({ storage });
 
-// ---------------- Helper para obtener Public ID de Cloudinary ----------------
-// Función para extraer el ID público con el folder para el borrado
-const getCloudinaryPublicId = (url) => {
-    if (!url || url.includes("default.png") || !url.includes("cloudinary.com")) return null; 
-    
-    const parts = url.split('/');
-    const publicIdWithExt = parts[parts.length - 1]; 
-    const publicId = publicIdWithExt.split('.')[0]; 
-    
-    // Retorna el publicId completo con la carpeta, que es requerido para el borrado
-    return `sistema-asistencia/fotos-profesores/${publicId}`; 
-};
-
-// ---------------- Helper para formatear fecha (necesario para GET) ----------------
+// ----------------- HELPERS -----------------
 const formatDate = (date) => {
-    if (!date) return "N/A";
-    const d = new Date(date);
-    return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+  if (!date) return "N/A";
+  const d = new Date(date);
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 };
-
 
 // ----------------- RUTAS -----------------
 
 // GET: Todos los profesores (admin)
-router.get("/", verifyAdmin, async (req, res) => {
+router.get("/profesores", verifyAdmin, async (req, res) => {
   try {
     const profesores = await User.find({ role: "profesor" }).select(
       "nombre email celular edad sexo foto asignaturas createdAt"
@@ -58,9 +43,9 @@ router.get("/", verifyAdmin, async (req, res) => {
 
     const formatted = profesores.map((prof) => ({
       ...prof.toObject(),
-      fechaRegistro: formatDate(prof.createdAt), // Usando el helper
+      fechaRegistro: formatDate(prof.createdAt),
     }));
-    
+
     res.json(formatted);
   } catch (err) {
     console.error(err);
@@ -69,7 +54,7 @@ router.get("/", verifyAdmin, async (req, res) => {
 });
 
 // PUT: Actualizar asignaturas de un profesor (admin)
-router.put("/:id/asignaturas", verifyAdmin, async (req, res) => {
+router.put("/profesores/:id/asignaturas", verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { asignaturas } = req.body;
@@ -95,9 +80,18 @@ router.delete("/profesores/:id", verifyAdmin, async (req, res) => {
     const profesor = await User.findById(id);
     if (!profesor) return res.status(404).json({ msg: "Profesor no encontrado" });
 
-    // LÓGICA CLOUDINARY: Eliminar foto de la nube
-    const publicId = getCloudinaryPublicId(profesor.foto);
-    if (publicId) await cloudinary.uploader.destroy(publicId);
+    // LÓGICA CLOUDINARY: Borrar la foto de la nube antes de eliminar el usuario
+    if (profesor.foto && !profesor.foto.includes("default.png")) {
+        // Se extrae el ID público del archivo de la URL de Cloudinary (ej: 'carpeta/foto-12345')
+        const parts = profesor.foto.split('/');
+        const publicIdWithExt = parts[parts.length - 1]; // foto-12345.jpg
+        const publicId = publicIdWithExt.split('.')[0];   // foto-12345
+
+        // Asumiendo que el folder es 'sistema-asistencia/fotos-profesores'
+        const fullPublicId = `sistema-asistencia/fotos-profesores/${publicId}`;
+
+        await cloudinary.uploader.destroy(fullPublicId);
+    }
 
     await profesor.deleteOne();
     res.json({ msg: "Profesor eliminado correctamente" });
@@ -110,71 +104,49 @@ router.delete("/profesores/:id", verifyAdmin, async (req, res) => {
 // ----------------- EDITAR PERFIL (usuarios logueados) -----------------
 router.put("/editar-perfil", verifyToken, upload.single("foto"), async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { nombre, email, celular, edad, sexo } = req.body;
+    const userId = req.user.id; // viene de verifyToken
+    const { nombre, edad, email, sexo, celular } = req.body;
 
-    if (!nombre || !email || !celular || !edad || !sexo)
-      return res.status(400).json({ msg: "Todos los campos son obligatorios" });
+    // Se mantiene la validación de campos obligatorios
+    if (!nombre || !edad || !email || !sexo || !celular) {
+        return res.status(400).json({ msg: "Todos los campos son obligatorios" });
+    }
+
+    const updateData = { nombre, edad, email, sexo, celular };
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
 
-    // Validaciones de email y celular (se mantienen)
-    if (email !== user.email) {
-      const emailExists = await User.findOne({ email });
-      if (emailExists) return res.status(400).json({ msg: "Email already in use" });
-    }
-    if (celular !== user.celular) {
-      const celularExists = await User.findOne({ celular });
-      if (celularExists) return res.status(400).json({ msg: "Celular already in use" });
-    }
-
-    user.nombre = nombre;
-    user.email = email;
-    user.celular = celular;
-    user.edad = edad;
-    user.sexo = sexo;
-
-    // LÓGICA CLOUDINARY: Subir y Reemplazar foto
+    // LÓGICA CLOUDINARY: Actualizar foto
     if (req.file) {
-      // 1. ELIMINAR FOTO ANTIGUA de Cloudinary
-      const publicId = getCloudinaryPublicId(user.foto);
-      if (publicId) await cloudinary.uploader.destroy(publicId); 
+      // 1. ELIMINAR FOTO ANTIGUA de Cloudinary (si existe)
+      if (user.foto && !user.foto.includes("default.png")) {
+        const parts = user.foto.split('/');
+        const publicIdWithExt = parts[parts.length - 1];
+        const publicId = publicIdWithExt.split('.')[0];
+        const fullPublicId = `sistema-asistencia/fotos-profesores/${publicId}`;
+        
+        await cloudinary.uploader.destroy(fullPublicId);
+      }
       
-      // 2. Guardar la nueva URL (req.file.path)
-      user.foto = req.file.path;
+      // 2. Guardar la nueva URL que viene de Cloudinary
+      // Cloudinary almacena la URL completa en req.file.path
+      updateData.foto = req.file.path; 
     }
+    
+    // Actualización de usuario (usamos findByIdAndUpdate para la eficiencia)
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true, runValidators: true }
+    ).select("-password");
 
-    await user.save();
-    
-    // Devolvemos el usuario sin el password
-    const userObject = user.toObject();
-    delete userObject.password;
-    
-    res.json({ msg: "Perfil actualizado correctamente", user: userObject });
-  } catch (err) {
-    console.error("Error al actualizar perfil:", err);
-    // CLOUDINARY CLEANUP: Si el error ocurrió después del upload PERO antes del save a MongoDB.
-    if (req.file) await cloudinary.uploader.destroy(req.file.filename);
-    res.status(500).json({ msg: "Error al actualizar perfil", error: err.message });
-  }
-});
+    if (!updatedUser) return res.status(404).json({ msg: "Usuario no encontrado" });
 
-// ---------------- Obtener perfil propio ----------------
-router.get("/mi-perfil", verifyToken, async (req, res) => {
-  try {
-    // Usamos el middleware para obtener req.user, pero seleccionamos todo excepto el password
-    const user = await User.findById(req.user.id).select("-password"); 
-    if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
-    
-    // Formatear la fecha antes de enviar
-    const userObject = user.toObject();
-    userObject.fechaRegistro = formatDate(user.createdAt);
-    
-    res.json(userObject);
+    res.json({ msg: "Perfil actualizado correctamente", user: updatedUser });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: "Error al obtener perfil", error: err.message });
+    res.status(500).json({ msg: "Error al editar perfil", error: err.message });
   }
 });
 

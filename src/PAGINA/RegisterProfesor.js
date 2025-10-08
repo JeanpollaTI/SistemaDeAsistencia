@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// 1. CORRECCIÓN DE RUTA: Ajustamos la importación.
+// 1. CORRECCIÓN DE RUTA: Apunta correctamente a la carpeta api/
 import apiClient from '../api/apiClient';
 import "./RegisterProfesor.css";
 
@@ -92,10 +92,8 @@ export default function RegisterProfesor() {
       );
       if (foto) formData.append("foto", foto);
 
-      // Usamos Content-Type: multipart/form-data implícitamente con FormData
-      const headers = { Authorization: `Bearer ${token}` };
-      // Pero si hay un token de admin, lo adjuntamos para la verificación
-      if (token && !firstAdmin) headers.Authorization = `Bearer ${token}`; 
+      const headers = { "Content-Type": "multipart/form-data" };
+      if (token && !firstAdmin) headers.Authorization = `Bearer ${token}`;
 
       // 4. ACTUALIZAMOS LA PETICIÓN POST PARA USAR apiClient
       const res = await apiClient.post(`/auth/register`, formData, { headers });

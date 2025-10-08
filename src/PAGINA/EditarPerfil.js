@@ -77,7 +77,7 @@ function EditarPerfil({ user, setUser }) {
       // 3. CÓDIGO MÁS LIMPIO: Usamos apiClient y solo el endpoint.
       const res = await apiClient.put("/profesores/editar-perfil", data, {
         headers: {
-          // El Content-Type "multipart/form-data" se establece automáticamente, pero tenerlo explícito es buena práctica
+          // El Content-Type "multipart/form-data" es crucial aquí
           "Content-Type": "multipart/form-data", 
           Authorization: `Bearer ${token}`,
         },
@@ -107,7 +107,6 @@ function EditarPerfil({ user, setUser }) {
       } else if (backendMsg.includes("Celular already in use")) {
         setError("El número de celular ya está registrado. Por favor, utiliza otro.");
       } else {
-        // El error no controlado se captura aquí
         setError("Error al actualizar perfil. Intenta nuevamente.");
       }
     } finally {

@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema(
       required: [true, "La edad es obligatoria"],
       min: [18, "La edad mínima es 18"],
     },
+    // Quitamos 'fechaRegistro' ya que 'timestamps: true' lo maneja mejor
     sexo: {
       type: String,
       enum: ["Masculino", "Femenino", "Otro"],
@@ -36,9 +37,9 @@ const userSchema = new mongoose.Schema(
       ],
       unique: true,
     },
-    // Guarda la URL de Cloudinary o la ruta por defecto
     foto: {
       type: String,
+      // Guarda la URL de Cloudinary o la ruta por defecto
       default: "/uploads/fotos/default.png", 
     },
     role: {
@@ -50,13 +51,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "La contraseña es obligatoria"],
       minlength: [6, "La contraseña debe tener al menos 6 caracteres"],
-      select: false, // CRUCIAL para seguridad: no se devuelve por defecto
+      select: false, // CLAVE: No se envía en consultas Find por defecto
     },
     asignaturas: {
       type: [String],
       default: [],
     },
-    // Campos para manejar la recuperación de contraseña
+    // Añadidos campos para manejar tokens de reseteo desde la DB (alternativa al objeto 'resetTokens' en memoria)
     resetPasswordToken: String,
     resetPasswordExpires: Date,
   },
@@ -64,11 +65,12 @@ const userSchema = new mongoose.Schema(
     timestamps: true, // Añade createdAt y updatedAt
     toJSON: {
       transform(doc, ret) {
-        // Limpieza de datos antes de enviar al frontend
+        // Renombramos _id a id para el frontend
         ret.id = ret._id; 
         delete ret._id;
         delete ret.__v; 
-        delete ret.password; 
+        delete ret.password; // nunca mostrar password
+        // Asegura la foto por defecto si el campo es nulo
         if (!ret.foto) ret.foto = "/uploads/fotos/default.png"; 
         return ret;
       },
@@ -85,7 +87,7 @@ userSchema.methods.comparePassword = function (password) {
   return bcrypt.compare(password, this.password);
 };
 
-// 🔹 Virtual para fecha legible
+// 🔹 Virtual para fecha legible (usando el campo createdAt que añade timestamps)
 userSchema.virtual("fechaRegistroLegible").get(function () {
   const d = this.createdAt || new Date();
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;

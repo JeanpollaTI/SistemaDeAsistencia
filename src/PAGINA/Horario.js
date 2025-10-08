@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-// CORRECCIÓN DE RUTA: Ajustamos la importación.
+// 1. CORRECCIÓN DE RUTA: Ajustamos la importación.
 import apiClient from '../api/apiClient';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -27,12 +27,14 @@ function Horario({ user }) {
   const [colorSeleccionado, setColorSeleccionado] = useState("#f44336");
   const [leyenda, setLeyenda] = useState({});
   const [modoBorrador, setModoBorrador] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState(null); 
+  const [horarioUrl, setHorarioUrl] = useState(null); // Cambiado de pdfHorario a horarioUrl
   const [alerta, setAlerta] = useState(null);
+  // Añadido estado de carga y progreso
   const [isLoading, setIsLoading] = useState(false); 
   const [loadingMessage, setLoadingMessage] = useState("");
   const [progress, setProgress] = useState(0); 
-  const horarioTableRef = useRef(null); 
+  const fileInputRef = useRef(null);
+  const horarioTableRef = useRef(null);
 
   const mostrarAlerta = useCallback((mensaje, tipo = "success") => {
     setAlerta({ mensaje, tipo });
@@ -49,9 +51,10 @@ function Horario({ user }) {
 
 
   // ----------------------------------------------------
-  // Carga Inicial y de Profesores
+  // * NUEVAS FUNCIONES Y EFECTOS *
   // ----------------------------------------------------
 
+  // 1. Carga de Profesores (Usando apiClient)
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -62,6 +65,7 @@ function Horario({ user }) {
     }).catch(console.error);
   }, []);
 
+  // 2. Carga Inicial del Horario (Usando apiClient)
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -74,8 +78,8 @@ function Horario({ user }) {
         setProgress(75);
         if (res.data?.datos) setHorario(res.data.datos);
         if (res.data?.leyenda) setLeyenda(res.data.leyenda);
-        // Lee imageUrl (el campo persistente)
-        if (res.data?.imageUrl) setPdfUrl(res.data.imageUrl); 
+        // CAMBIADO: Usamos imageUrl
+        if (res.data?.imageUrl) setHorarioUrl(res.data.imageUrl); 
     }).catch(error => {
         console.error("Error al cargar el horario:", error);
         mostrarAlerta("Error al cargar el horario ❌", "error");
@@ -84,10 +88,12 @@ function Horario({ user }) {
         setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 300);
     });
   }, [anio, mostrarAlerta]);
+  // * FIN DE NUEVAS FUNCIONES Y EFECTOS *
+  // ----------------------------------------------------
 
 
   const generarHorarioVacio = useCallback(() => {
-    if (user.role !== "admin" || isLoading) return;
+    if (user.role !== "admin") return;
     const nuevoHorario = {};
     profesores.forEach(prof => {
       nuevoHorario[prof.nombre] = {};
@@ -102,7 +108,7 @@ function Horario({ user }) {
   }, [isLoading, profesores, mostrarAlerta]);
 
   const handleCellChange = useCallback((profesor, asignatura, dia, hora, value) => {
-    if (user.role !== "admin" || isLoading) return;
+    if (user.role !== "admin") return;
     setHorario(prev => {
       const profesorHorario = prev[profesor] || {};
       const clave = `${asignatura}-${dia}-${hora}`;
@@ -112,10 +118,11 @@ function Horario({ user }) {
         [profesor]: { ...profesorHorario, [clave]: { ...celdaExistente, text: value } }
       };
     });
-  }, [user.role, isLoading]);
+  }, [user.role]);
 
   const pintarHora = useCallback((profesor, asignatura, dia, hora) => {
-    if (user.role !== "admin" || isLoading || (!mostrarPaleta && !modoBorrador)) return;
+    if (user.role !== "admin") return;
+    if (!mostrarPaleta && !modoBorrador) return;
     const nuevoColor = modoBorrador ? "transparent" : colorSeleccionado;
     setHorario(prev => {
       const profesorHorario = prev[profesor] || {};
@@ -129,24 +136,23 @@ function Horario({ user }) {
     if (!modoBorrador && !leyenda[colorSeleccionado]) {
       setLeyenda(prev => ({ ...prev, [colorSeleccionado]: "" }));
     }
-  }, [user.role, isLoading, mostrarPaleta, modoBorrador, colorSeleccionado, leyenda]);
+  }, [user.role, mostrarPaleta, modoBorrador, colorSeleccionado, leyenda]);
 
   const handleLeyendaChange = (color, value) => {
-    if (user.role !== "admin" || isLoading) return; // Solo admin puede cambiar leyenda
+    if (user.role !== "admin") return; // Solo admin puede cambiar leyenda
     setLeyenda(prev => ({ ...prev, [color]: value }));
   };
 
-  const eliminarLeyenda = useCallback(color => {
-    if (user.role !== "admin" || isLoading) return;
+  const eliminarLeyenda = color => {
+    if (user.role !== "admin") return;
     setLeyenda(prev => {
       const copia = { ...prev };
       delete copia[color];
       return copia;
     });
     mostrarAlerta("Color eliminado de la leyenda ❌", "error");
-  }, [isLoading, mostrarAlerta]);
+  };
 
-  // Función genérica para obtener imagen en Base64 (para PDF)
   const getBase64Image = imgPath => new Promise((resolve, reject) => {
     const img = new Image();
     img.src = imgPath;
@@ -160,116 +166,66 @@ function Horario({ user }) {
     };
     img.onerror = (error) => reject(error);
   });
-  
-  // Helper para generar el PDF (reutilizable)
-  const generarPDFDocument = useCallback(async (returnBase64 = false) => {
-    setProgress(10);
-    const doc = new jsPDF("landscape");
-    
-    // Generación de logos y encabezado (se mantiene)
-    const [logoAgsBase64, logoDerBase64] = await Promise.all([ getBase64Image(logoAgs), getBase64Image(logoDerecho) ]);
-    doc.addImage(logoAgsBase64, "PNG", 10, 5, 40, 16);
-    doc.addImage(logoDerBase64, "PNG", 260, 5, 20, 20);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text("ESCUELA SECUNDARIA GENERAL, No. 9", 148, 15, { align: "center" });
-    doc.text("“AMADO NERVO”", 148, 22, { align: "center" });
-    doc.text(`HORARIO GENERAL ${anio}`, 148, 29, { align: "center" });
-    setProgress(30);
 
-    // Captura de la tabla (html2canvas)
-    const tablaElement = horarioTableRef.current;
-    if (!tablaElement) { throw new Error("Tabla de horario no encontrada."); }
-    const canvas = await html2canvas(tablaElement, { scale: 2, backgroundColor: "#ffffff" });
-    const imgData = canvas.toDataURL("image/png");
+  const exportarPDF = async () => {
+    if (user.role !== "admin") return;
+    mostrarAlerta("Generando PDF, esto puede tomar un momento... ⏳", "info");
     
-    const pdfWidth = doc.internal.pageSize.getWidth() - 20;
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    doc.addImage(imgData, "PNG", 10, 35, pdfWidth, pdfHeight);
-    
-    // Lógica de Leyenda
-    if (Object.keys(leyenda).length > 0) {
-        let leyendaY = 35 + pdfHeight + 5;
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "bold");
-        doc.text("Leyenda:", 10, leyendaY);
-        // Lógica para añadir los rectángulos de color y descripción
-        Object.entries(leyenda).forEach(([color, desc]) => {
-            doc.setFillColor(color);
-            doc.rect(10, leyendaY, 6, 6, "F");
-            doc.setTextColor(0);
-            doc.text(desc || "", 18, leyendaY + 5);
-            leyendaY += 8;
-        });
-    }
-    
-    setProgress(90);
-
-    if (returnBase64) {
-        // Devuelve el PDF en Base64 para el envío
-        return doc.output('datauristring').split(',')[1];
-    } else {
-        // Descarga local
-        doc.save(`Horario_${anio}.pdf`);
-    }
-  }, [anio, leyenda, getBase64Image]);
-
-
-  // 3. EXPORTAR PDF (Descarga local)
-  const exportarPDF = useCallback(async () => {
-    if (isLoading) return;
-    setIsLoading(true);
-    setLoadingMessage("Exportando PDF... por favor espera.");
+    // Lógica completa de exportación a PDF (se mantiene por si se quiere exportar el diseño)
     try {
-        await generarPDFDocument(false);
+        const doc = new jsPDF("landscape");
+        const [logoAgsBase64, logoDerBase64] = await Promise.all([ getBase64Image(logoAgs), getBase64Image(logoDerecho) ]);
+
+        // ... (resto de la lógica de encabezado y canvas) ...
+
+        doc.addImage(logoAgsBase64, "PNG", 10, 5, 40, 16);
+        doc.addImage(logoDerBase64, "PNG", 260, 5, 20, 20);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.text("ESCUELA SECUNDARIA GENERAL, No. 9", 148, 15, { align: "center" });
+        doc.text("“AMADO NERVO”", 148, 22, { align: "center" });
+        doc.text(`HORARIO GENERAL ${anio}`, 148, 29, { align: "center" });
+
+        const tablaElement = document.querySelector(".horario-table");
+        if (!tablaElement) {
+             mostrarAlerta("Tabla de horario no encontrada para exportar ❌", "error");
+             return;
+        }
+        
+        // Uso de html2canvas 
+        const canvas = await html2canvas(tablaElement, { scale: 2, backgroundColor: "#ffffff" });
+        const imgData = canvas.toDataURL("image/png");
+
+        const pdfWidth = doc.internal.pageSize.getWidth() - 20;
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        doc.addImage(imgData, "PNG", 10, 35, pdfWidth, pdfHeight);
+
+        // Lógica de Leyenda
+        if (Object.keys(leyenda).length > 0) {
+            let leyendaY = 35 + pdfHeight + 5;
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text("Leyenda:", 10, leyendaY);
+            leyendaY += 5;
+            Object.entries(leyenda).forEach(([color, desc]) => {
+                doc.setFillColor(color);
+                doc.rect(10, leyendaY, 6, 6, "F");
+                doc.setTextColor(0);
+                doc.text(desc || "", 18, leyendaY + 5);
+                leyendaY += 8;
+            });
+        }
+
+        doc.save(`Horario_${anio}.pdf`);
         mostrarAlerta("PDF exportado correctamente 📄✅", "success");
     } catch (error) {
         console.error("Error al exportar PDF:", error);
         mostrarAlerta("Hubo un error al generar el PDF ❌", "error");
-    } finally {
-        setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 500);
     }
-  }, [isLoading, mostrarAlerta, generarPDFDocument]);
-
-
-  // 4. NUEVO: ENVIAR POR CORREO
-  const enviarHorarioPorCorreo = useCallback(async () => {
-    if (user.role !== "admin" || isLoading) return;
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    setIsLoading(true);
-    setLoadingMessage("Generando y enviando correos...");
-    
-    try {
-        // --- 1. GENERAR EL PDF y obtener Base64 ---
-        const pdfBase64 = await generarPDFDocument(true); // TRUE para obtener Base64
-        setProgress(70);
-
-        // --- 2. LLAMAR AL BACKEND PARA ENVIAR CORREOS ---
-        const res = await apiClient.post("/horario/enviar-correo", {
-            anio: anio,
-            pdfData: pdfBase64, // El contenido PDF en Base64
-            // Enviamos los datos del horario para que el backend sepa a quién buscar
-            horarioData: horario 
-        }, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        setProgress(100);
-        mostrarAlerta(res.data.msg || "Correos enviados a los profesores exitosamente ✅", "success");
-
-    } catch (error) {
-        console.error("Error al enviar correos:", error);
-        mostrarAlerta(error.response?.data?.msg || "Error al enviar correos. Verifica el servidor ❌", "error");
-    } finally {
-        setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 500);
-    }
-  }, [user.role, anio, horario, isLoading, mostrarAlerta, generarPDFDocument]);
-
+  };
 
   const guardarHorario = async () => {
-    if (user.role !== "admin" || isLoading) return;
+    if (user.role !== "admin") return;
     const token = localStorage.getItem("token");
     if (!token) return;
 
@@ -278,38 +234,69 @@ function Horario({ user }) {
       formData.append("anio", anio);
       formData.append("datos", JSON.stringify(horario));
       formData.append("leyenda", JSON.stringify(leyenda));
+      // NOTA: No subimos ningún archivo aquí, solo los datos de la tabla.
 
-      // Guardamos la información de la tabla y la leyenda en MongoDB
+      // CAMBIO CRUCIAL: Usamos apiClient en lugar de axios
       const res = await apiClient.post("/horario", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         }
       });
 
-      // El backend es exitoso, actualiza el estado (aunque no haya archivo)
-      setPdfUrl(res.data.horario?.imageUrl || null); 
+      // Si el backend es exitoso, actualiza la URL por si se subió una imagen antes
+      setHorarioUrl(res.data.horario?.imageUrl || null); // CAMBIADO: pdfUrl a imageUrl
       mostrarAlerta("Horario guardado correctamente ✅", "success");
     } catch (err) {
       console.error(err);
       mostrarAlerta("Error al guardar el horario ❌", "error");
     }
   };
-  
-  // ----------------------------------------------------
-  // VISTA DE PDF/IMAGEN PARA USUARIOS NO-ADMIN
-  // ----------------------------------------------------
 
-  if (user.role !== "admin" && pdfUrl) {
-    // Si hay una URL de horario, mostramos el visor (asumiendo que es una imagen subida o un PDF).
-    // Si fuera PDF (como en la solución original), se usaría <embed>. 
-    // Para simplificar, si el PDF fue la última opción, mantenemos el tag <img> y esperamos que Cloudinary sirva la imagen.
+  const abrirExploradorImagen = () => fileInputRef.current.click(); // Cambiado de PDF a Imagen
+
+  const handleArchivoChange = async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // VALIDACIÓN CRÍTICA: Asegurar que es una imagen
+    if (!file.type.startsWith('image/')) {
+        return mostrarAlerta("Por favor, selecciona un archivo de imagen (PNG, JPG) ❌", "error");
+    }
+
+    const formData = new FormData();
+    // CAMBIO CRÍTICO: El backend espera 'imagen' en lugar de 'pdf'
+    formData.append("imagen", file); 
+    formData.append("anio", anio);
+
+    const token = localStorage.getItem("token");
+    try {
+      // CAMBIO CRUCIAL: Usamos apiClient en lugar de axios
+      const res = await apiClient.post("/horario", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      });
+      
+      // La URL de Cloudinary (imagen) se guarda y se usa para mostrar
+      setHorarioUrl(res.data.horario?.imageUrl || null); // CAMBIADO: pdfUrl a imageUrl
+      mostrarAlerta("Imagen de horario subida correctamente ✅", "success");
+    } catch (err) {
+      console.error(err);
+      mostrarAlerta("Error al subir imagen ❌", "error");
+    }
+  };
+
+  // ----------------------------------------------------
+  // VISTA DE IMAGEN PARA USUARIOS NO-ADMIN
+  if (user.role !== "admin" && horarioUrl) {
+    // Si hay una URL de horario, mostramos la imagen directamente
     return ( 
       <div className="horario-viewer-full"> 
         <img 
-          src={pdfUrl}
+          src={horarioUrl}
           alt={`Horario General ${anio}`}
           style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '90vh' }}
-          onError={(e) => { e.target.onerror = null; e.target.src = '/default-horario.png'; mostrarAlerta("Error al cargar el horario. ❌", "error"); }}
+          onError={(e) => { e.target.onerror = null; e.target.src = '/default-horario.png'; mostrarAlerta("Error al cargar la imagen del horario. ❌", "error"); }}
         /> 
       </div> 
     );
@@ -319,31 +306,19 @@ function Horario({ user }) {
 
   return (
     <div className="horario-page">
-      {isLoading && (
-        <div className="loading-overlay">
-          <div className="loading-content">
-            <p className="loading-message">{loadingMessage || "Cargando..."}</p>
-            <div className="progress-bar-custom">
-              <div className="progress-bar-fill" style={{ width: `${progress}%` }}>
-                <span className="progress-bar-text">{`${Math.round(progress)}%`}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
+      {/* ... (Alerta y Titulo de Año se mantienen) ... */}
       {alerta && <div className={`alerta ${alerta.tipo}`}>{alerta.mensaje}</div>}
 
       <div className="titulo-anio">
         {user.role === "admin" ? (
-          <input type="text" value={anio} onChange={e => setAnio(e.target.value)} className="anio-input" disabled={isLoading} />
+          <input type="text" value={anio} onChange={e => setAnio(e.target.value)} className="anio-input" />
         ) : <h2>{anio}</h2>}
       </div>
 
       {user.role === "admin" && (
         <div className="admin-panel">
-          <button className={`btn-add ${modoBorrador ? "activo" : ""}`} onClick={() => setModoBorrador(!modoBorrador)} disabled={isLoading}>🧹 Borrador</button>
-          <button className="btn-add" onClick={() => setMostrarPaleta(!mostrarPaleta)} disabled={isLoading}>🖌 Pincel</button>
+          <button className={`btn-add ${modoBorrador ? "activo" : ""}`} onClick={() => setModoBorrador(!modoBorrador)}>🧹 Borrador</button>
+          <button className="btn-add" onClick={() => setMostrarPaleta(!mostrarPaleta)}>🖌 Pincel</button>
           {mostrarPaleta && (
             <div className="paleta-colores">
               {paletaColores.map(c => (
@@ -351,21 +326,16 @@ function Horario({ user }) {
               ))}
             </div>
           )}
-          <button onClick={generarHorarioVacio} className="btn-add" disabled={isLoading}>Limpiar Horario</button>
-          <button onClick={guardarHorario} className="btn-add" disabled={isLoading}>💾 Guardar horario</button>
-          
-          {/* BOTÓN DE ENVÍO DE CORREO */}
-          <button onClick={enviarHorarioPorCorreo} className="btn-add" disabled={isLoading}>📧 Enviar a Profesores</button>
-          
-          <button onClick={exportarPDF} className="btn-add" disabled={isLoading}>📄 Exportar PDF (Local)</button>
-          
-          {/* ELIMINADO: Botón e input para subir archivos */}
+          <button onClick={generarHorarioVacio} className="btn-add">Limpiar Horario</button>
+          <button onClick={guardarHorario} className="btn-add">💾 Guardar horario</button>
+          <button onClick={exportarPDF} className="btn-add">📄 Exportar PDF</button>
+          <button onClick={abrirExploradorImagen} className="btn-add">⬆️ Subir Imagen Horario</button>
+          <input type="file" accept="image/*" ref={fileInputRef} style={{ display: "none" }} onChange={handleArchivoChange} />
         </div>
       )}
 
       {user.role === "admin" && (
-        <div className="horario-table-container">
-        <table className="horario-table" ref={horarioTableRef}>
+        <table className="horario-table">
           <thead>
             <tr>
               <th>Profesor</th>
@@ -387,7 +357,7 @@ function Horario({ user }) {
                           <div key={`${d}-${h}`} className="hora-box-horizontal" style={{ backgroundColor: cell.color === "transparent" ? "#fff" : cell.color }}
                             onClick={() => pintarHora(prof.nombre, "General", d, h)}>
                             <div className="hora-num">{h}</div>
-                            <input type="text" maxLength={4} value={cell.text} onChange={e => handleCellChange(prof.nombre, "General", d, h, e.target.value)} disabled={isLoading} />
+                            <input type="text" maxLength={4} value={cell.text} onChange={e => handleCellChange(prof.nombre, "General", d, h, e.target.value)} />
                           </div>
                         );
                       })}
@@ -398,7 +368,6 @@ function Horario({ user }) {
             ))}
           </tbody>
         </table>
-        </div>
       )}
 
       {user.role === "admin" && Object.keys(leyenda).length > 0 && (
@@ -408,8 +377,8 @@ function Horario({ user }) {
             {Object.entries(leyenda).map(([color, significado]) => (
               <div key={color} className="leyenda-item">
                 <div className="color-cuadro-leyenda" style={{ backgroundColor: color }} />
-                <input type="text" placeholder="Significado" value={significado} onChange={e => handleLeyendaChange(color, e.target.value)} disabled={isLoading} />
-                <button className="btn-add" onClick={() => eliminarLeyenda(color)} disabled={isLoading}>❌</button>
+                <input type="text" placeholder="Significado" value={significado} onChange={e => handleLeyendaChange(color, e.target.value)} />
+                <button className="btn-add" onClick={() => eliminarLeyenda(color)}>❌</button>
               </div>
             ))}
           </div>

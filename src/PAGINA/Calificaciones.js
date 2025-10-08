@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 // 1. IMPORTACIÓN ACTUALIZADA: Usamos nuestro apiClient centralizado.
 import apiClient from '../api/apiClient';
 import jsPDF from 'jspdf';
@@ -24,70 +24,6 @@ function Notificacion({ mensaje, tipo, onClose }) {
   );
 }
 
-// --- NUEVO COMPONENTE: Modal para Compartir (Se debe definir fuera de Calificaciones) ---
-function ModalShare({ alumno, onClose, onSend }) {
-    const [recipientEmail, setRecipientEmail] = useState('');
-    const [recipientPhone, setRecipientPhone] = useState('');
-
-    const handleEmailSubmit = (e) => {
-        e.preventDefault();
-        if (recipientEmail) {
-            onSend('email', recipientEmail, alumno);
-        }
-    };
-
-    const handleWhatsAppSubmit = (e) => {
-        e.preventDefault();
-        if (recipientPhone) {
-            // Aseguramos que el número tenga el formato correcto (solo dígitos)
-            const phone = recipientPhone.replace(/\D/g,'');
-            onSend('whatsapp', phone, alumno);
-        }
-    };
-
-    return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <h3>Enviar Boleta de {`${alumno.apellidoPaterno} ${alumno.nombre}`}</h3>
-                
-                <form onSubmit={handleEmailSubmit} className="share-form">
-                    <label htmlFor="email-input">Enviar por Correo Electrónico:</label>
-                    <div className="input-group">
-                        <input
-                            id="email-input"
-                            type="email"
-                            value={recipientEmail}
-                            onChange={(e) => setRecipientEmail(e.target.value)}
-                            placeholder="ejemplo@correo.com"
-                            required
-                        />
-                        <button type="submit" className="button">Enviar Email</button>
-                    </div>
-                </form>
-
-                <form onSubmit={handleWhatsAppSubmit} className="share-form">
-                    <label htmlFor="phone-input">Enviar a WhatsApp (Solo número):</label>
-                    <div className="input-group">
-                        <input
-                            id="phone-input"
-                            type="tel"
-                            value={recipientPhone}
-                            onChange={(e) => setRecipientPhone(e.target.value)}
-                            placeholder="Ej: 521234567890 (código país + número)"
-                            required
-                        />
-                        <button type="submit" className="button whatsapp">Enviar WhatsApp</button>
-                    </div>
-                </form>
-                
-                <div className="modal-actions">
-                    <button type="button" className="button-secondary" onClick={onClose}>Cancelar</button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
 // --- Componente Principal de Calificaciones (Vista Admin) ---
 function Calificaciones({ user }) {
   const [grupos, setGrupos] = useState([]);
@@ -99,8 +35,7 @@ function Calificaciones({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalPdf, setModalPdf] = useState({ visible: false, alumno: null });
-  // Usamos el ModalShare definido arriba
-  const [modalShare, setModalShare] = useState({ visible: false, alumno: null }); 
+  const [modalShare, setModalShare] = useState({ visible: false, alumno: null });
   const [notificacion, setNotificacion] = useState({ visible: false, mensaje: '', tipo: '' });
 
   const mostrarNotificacion = (mensaje, tipo = 'exito') => {
@@ -115,7 +50,7 @@ function Calificaciones({ user }) {
     const fetchGrupos = async () => {
       try {
         // 2. CÓDIGO MÁS LIMPIO: Usando apiClient.
-        const res = await apiClient.get('/grupos', getAxiosConfig()); // Se asume que el backend populates por defecto
+        const res = await apiClient.get('/grupos?populate=alumnos,profesoresAsignados', getAxiosConfig());
         setGrupos(res.data);
       } catch (err) {
         console.error("Error al cargar grupos:", err);
@@ -134,12 +69,11 @@ function Calificaciones({ user }) {
     const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno));
     setAlumnos(alumnosOrdenados);
 
-    // Mapeamos las asignaturas de los profesores asignados para obtener la lista de materias
     const materiasAsignadas = [...new Set(grupo.profesoresAsignados.map(asig => asig.asignatura))];
     setMaterias(materiasAsignadas);
 
     try {
-      // 3. CÓDIGO MÁS LIMPIO: Usando apiClient. Ruta para obtener calificaciones consolidadas.
+      // 3. CÓDIGO MÁS LIMPIO: Usando apiClient.
       const res = await apiClient.get(`/grupos/${grupo._id}/calificaciones-admin`, getAxiosConfig());
       setCalificaciones(res.data || {});
     } catch (err) {
@@ -154,19 +88,13 @@ function Calificaciones({ user }) {
   const calcularPromedioBimestre = (alumnoId, bimestreIndex) => {
     const alumnoCal = calificaciones[alumnoId];
     if (!alumnoCal) return 0;
-    
     let suma = 0;
     let count = 0;
-    
-    // El backend devuelve el array de promedios bimestrales (ej: [9.2, 8.5, 0])
     materias.forEach(materia => {
-        // alumnoCal[materia] es el array de promedios [B1, B2, B3] para esa materia
-        const promedioBim = alumnoCal[materia]?.[bimestreIndex]; 
-        
-        if (typeof promedioBim === 'number' && promedioBim > 0) {
-            suma += promedioBim;
-            count++;
-        }
+      if (alumnoCal[materia] && typeof alumnoCal[materia][bimestreIndex] === 'number') {
+        suma += alumnoCal[materia][bimestreIndex];
+        count++;
+      }
     });
     return count > 0 ? (suma / count) : 0;
   };
@@ -174,8 +102,6 @@ function Calificaciones({ user }) {
   const calcularPromedioFinal = (alumnoId) => {
     let sumaDePromedios = 0;
     let bimestresConCalificacion = 0;
-    
-    // Sumamos los promedios de cada bimestre
     for (let i = 0; i < 3; i++) {
       const promedioBim = calcularPromedioBimestre(alumnoId, i);
       if (promedioBim > 0) {
@@ -183,12 +109,10 @@ function Calificaciones({ user }) {
         bimestresConCalificacion++;
       }
     }
-    // Promedio de los bimestres que tienen calificación
     return bimestresConCalificacion > 0 ? (sumaDePromedios / bimestresConCalificacion) : 0;
   };
 
   const generatePdfIndividual = async (alumno, bimestresSeleccionados, outputType = 'save') => {
-    // Se mantiene la lógica de generación de PDF
     const doc = new jsPDF();
     const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
     
@@ -207,25 +131,21 @@ function Calificaciones({ user }) {
     doc.text(`Grupo: ${selectedGrupo.nombre}`, margin, margin + 21);
 
     const tableHeaders = ['Materia'];
-    // Se ajustan los headers según los bimestres seleccionados
     if (bimestresSeleccionados[0]) tableHeaders.push("Bim. 1");
     if (bimestresSeleccionados[1]) tableHeaders.push("Bim. 2");
     if (bimestresSeleccionados[2]) tableHeaders.push("Bim. 3");
 
     const alumnoCal = calificaciones[alumno._id] || {};
     const tableBody = materias.map(materia => {
-        // cals es el array de promedios [B1, B2, B3]
-        const cals = alumnoCal[materia] || [null, null, null]; 
-        const row = [materia];
-        // Se mapean las calificaciones para la fila
-        cals.forEach((cal, index) => {
-            if (bimestresSeleccionados[index]) row.push(cal !== null ? cal.toFixed(1) : '-');
-        });
-        return row;
+      const cals = alumnoCal[materia] || [null, null, null];
+      const row = [materia];
+      cals.forEach((cal, index) => {
+        if (bimestresSeleccionados[index]) row.push(cal !== null ? cal.toFixed(1) : '-');
+      });
+      return row;
     });
 
-    // Fila de Promedio Final Bimestral
-    const promedioRow = ['PROMEDIO BIMESTRAL'];
+    const promedioRow = ['PROMEDIO'];
     [0, 1, 2].forEach(index => {
       if (bimestresSeleccionados[index]) {
         const promedio = calcularPromedioBimestre(alumno._id, index);
@@ -242,25 +162,20 @@ function Calificaciones({ user }) {
       styles: { halign: 'center', cellPadding: 2.5 },
       headStyles: { fillColor: [212, 175, 55], textColor: 255 },
       didDrawCell: (data) => {
-        // Negritas a la fila de promedio
         if (data.row.index === tableBody.length - 1) {
             doc.setFont(undefined, 'bold');
         }
       }
     });
     
-    // Si se pide guardar, se descarga
     if (outputType === 'save') {
         doc.save(`Boleta_${nombreCompleto.replace(/\s/g, '_')}.pdf`);
         setModalPdf({ visible: false, alumno: null });
-        mostrarNotificacion(`Boleta de ${nombreCompleto} descargada.`, 'exito');
     }
     
-    // Si no se pide guardar, se devuelve la URI (para el envío por correo)
     return doc.output('datauristring');
   };
   
-  // Función para descargar el PDF consolidado (se mantiene)
   const generatePdfConsolidado = async () => {
     const doc = new jsPDF({ orientation: 'landscape' });
     doc.setFontSize(18);
@@ -268,12 +183,10 @@ function Calificaciones({ user }) {
 
     const head = [
         [{ content: 'Nombre del Alumno', rowSpan: 2 }],
-        // Usamos flatMap para crear un header con 3 columnas por materia
-        ...materias.map(materia => [{ content: materia, colSpan: 3 }]), 
+        ...materias.map(materia => [{ content: materia, colSpan: 3 }]),
         [{ content: 'PROMEDIO BIMESTRAL', colSpan: 3 }],
         [{ content: 'FINAL', rowSpan: 2 }]
     ];
-    // Se crea la sub-fila de B1, B2, B3 repetida
     const subhead = [...materias.flatMap(() => ['B1', 'B2', 'B3']), 'B1', 'B2', 'B3'];
     head.push(subhead);
 
@@ -285,12 +198,10 @@ function Calificaciones({ user }) {
                 row.push(cal != null ? cal.toFixed(1) : '-');
             });
         });
-        // Promedios Bimestrales de la última columna
         [0, 1, 2].forEach(bim => {
             const prom = calcularPromedioBimestre(alumno._id, bim);
             row.push(prom > 0 ? prom.toFixed(1) : '-');
         });
-        // Promedio Final
         const promFinal = calcularPromedioFinal(alumno._id);
         row.push(promFinal > 0 ? promFinal.toFixed(2) : '-');
         return row;
@@ -303,19 +214,15 @@ function Calificaciones({ user }) {
         columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } }
     });
     doc.save(`Reporte_Consolidado_${selectedGrupo.nombre.replace(/\s/g, '_')}.pdf`);
-    mostrarNotificacion(`Reporte de grupo ${selectedGrupo.nombre} descargado.`, 'exito');
   };
 
-  // 4. LÓGICA DE ENVÍO POR CORREO
   const handleSendPdf = async (platform, recipient, alumno) => {
-    // Generamos el PDF individual incluyendo todos los bimestres para el envío
     const pdfDataUri = await generatePdfIndividual(alumno, [true, true, true], 'data');
     const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
 
     if (platform === 'email') {
         try {
-            // El backend espera el Base64 puro
-            const base64Pdf = pdfDataUri.split(',')[1]; 
+            const base64Pdf = pdfDataUri.split(',')[1];
 
             const payload = {
                 to: recipient,
@@ -324,15 +231,13 @@ function Calificaciones({ user }) {
                 pdfData: base64Pdf 
             };
             
-            // 5. LLAMADA AL BACKEND: Usamos apiClient
+            // 4. CÓDIGO MÁS LIMPIO: Usando apiClient.
             await apiClient.post('/api/enviar-boleta', payload, getAxiosConfig());
             mostrarNotificacion(`Boleta enviada a ${recipient} exitosamente.`, 'exito');
         
         } catch (error) {
             console.error("Error al enviar correo:", error);
-            // Mostrar error específico del backend si existe
-            const errorMsg = error.response?.data?.error || "Error al enviar el correo. Revisa la consola.";
-            mostrarNotificacion(errorMsg, "error");
+            mostrarNotificacion("Error al enviar el correo. Revisa el backend.", "error");
         }
 
     } else if (platform === 'whatsapp') {
@@ -340,14 +245,12 @@ function Calificaciones({ user }) {
         const url = `https://wa.me/${recipient}?text=${encodeURIComponent(mensaje)}`;
         window.open(url, '_blank');
         
-        // Descargamos el PDF localmente para que el usuario pueda adjuntarlo manualmente
         const link = document.createElement('a');
         link.href = pdfDataUri;
         link.download = `Boleta_${nombreCompleto.replace(/\s/g, '_')}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        mostrarNotificacion(`Descarga iniciada. Abre WhatsApp para compartir.`, 'info');
     }
     setModalShare({ visible: false, alumno: null });
   };
@@ -380,44 +283,44 @@ function Calificaciones({ user }) {
       ) : (
         <>
           {modalPdf.visible && (
-              <div className="modal-overlay" onClick={() => setModalPdf({ visible: false, alumno: null })}>
+             <div className="modal-overlay" onClick={() => setModalPdf({ visible: false, alumno: null })}>
                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                  <h3>Descargar Boleta de {`${modalPdf.alumno?.apellidoPaterno} ${modalPdf.alumno?.nombre}`}</h3>
                  <p>Selecciona los bimestres que deseas incluir:</p>
                  <form onSubmit={(e) => {
-                    e.preventDefault();
-                    const bimestresSeleccionados = [e.target.b1.checked, e.target.b2.checked, e.target.b3.checked];
-                    if (!bimestresSeleccionados.some(b => b)) {
-                      mostrarNotificacion("Debes seleccionar al menos un bimestre.", "error");
-                      return;
-                    }
-                    generatePdfIndividual(modalPdf.alumno, bimestresSeleccionados, 'save');
-                  }}>
-                    <div className="checkbox-group">
-                      <label><input type="checkbox" name="b1" defaultChecked /> Bimestre 1</label>
-                      <label><input type="checkbox" name="b2" defaultChecked /> Bimestre 2</label>
-                      <label><input type="checkbox" name="b3" defaultChecked /> Bimestre 3</label>
-                    </div>
-                    <div className="modal-actions">
-                      <button type="submit" className="button">Descargar Boleta</button>
-                      <button type="button" className="button-secondary" onClick={() => setModalPdf({ visible: false, alumno: null })}>Cancelar</button>
-                    </div>
-                  </form>
+                   e.preventDefault();
+                   const bimestresSeleccionados = [e.target.b1.checked, e.target.b2.checked, e.target.b3.checked];
+                   if (!bimestresSeleccionados.some(b => b)) {
+                     mostrarNotificacion("Debes seleccionar al menos un bimestre.", "error");
+                     return;
+                   }
+                   generatePdfIndividual(modalPdf.alumno, bimestresSeleccionados, 'save');
+                 }}>
+                   <div className="checkbox-group">
+                     <label><input type="checkbox" name="b1" defaultChecked /> Bimestre 1</label>
+                     <label><input type="checkbox" name="b2" defaultChecked /> Bimestre 2</label>
+                     <label><input type="checkbox" name="b3" defaultChecked /> Bimestre 3</label>
+                   </div>
+                   <div className="modal-actions">
+                     <button type="submit" className="button">Descargar Boleta</button>
+                     <button type="button" className="button-secondary" onClick={() => setModalPdf({ visible: false, alumno: null })}>Cancelar</button>
+                   </div>
+                 </form>
                </div>
              </div>
           )}
 
           {modalShare.visible && (
             <ModalShare
-                  alumno={modalShare.alumno}
-                  onClose={() => setModalShare({ visible: false, alumno: null })}
-                  onSend={handleSendPdf}
+                 alumno={modalShare.alumno}
+                 onClose={() => setModalShare({ visible: false, alumno: null })}
+                 onSend={handleSendPdf}
             />
           )}
           
           <div className="header-controls">
             <button onClick={() => setSelectedGrupo(null)} className="back-button">&larr; Volver a Grupos</button>
-            <button onClick={generatePdfConsolidado} className="button-consolidado">Descargar Reporte Consolidado 📥</button>
+           
           </div>
 
           <div className="calificaciones-header">
@@ -451,9 +354,7 @@ function Calificaciones({ user }) {
                         {materias.map(materia => (
                           <React.Fragment key={`${alumno._id}-${materia}`}>
                             {[0, 1, 2].map(bimestreIndex => {
-                              // Aseguramos que la estructura de calificaciones[alumnoId][materia] sea un array antes de acceder al índice
-                              const materiaCalificaciones = calificaciones[alumno._id]?.[materia];
-                              const cal = materiaCalificaciones ? materiaCalificaciones[bimestreIndex] : null; 
+                              const cal = calificaciones[alumno._id]?.[materia]?.[bimestreIndex];
                               return (
                                 <td key={bimestreIndex} className={typeof cal === 'number' ? (cal < 6 ? 'reprobado' : 'aprobado') : ''}>
                                   {cal != null ? cal.toFixed(1) : '-'}
@@ -488,6 +389,68 @@ function Calificaciones({ user }) {
       )}
     </div>
   );
+}
+
+// --- NUEVO COMPONENTE: Modal para Compartir ---
+function ModalShare({ alumno, onClose, onSend }) {
+    const [recipientEmail, setRecipientEmail] = useState('');
+    const [recipientPhone, setRecipientPhone] = useState('');
+
+    const handleEmailSubmit = (e) => {
+        e.preventDefault();
+        if (recipientEmail) {
+            onSend('email', recipientEmail, alumno);
+        }
+    };
+
+    const handleWhatsAppSubmit = (e) => {
+        e.preventDefault();
+        if (recipientPhone) {
+            onSend('whatsapp', recipientPhone, alumno);
+        }
+    };
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <h3>Enviar Boleta de {`${alumno.apellidoPaterno} ${alumno.nombre}`}</h3>
+                
+                <form onSubmit={handleEmailSubmit} className="share-form">
+                    <label htmlFor="email-input">Enviar por Correo Electrónico:</label>
+                    <div className="input-group">
+                        <input
+                            id="email-input"
+                            type="email"
+                            value={recipientEmail}
+                            onChange={(e) => setRecipientEmail(e.target.value)}
+                            placeholder="ejemplo@correo.com"
+                            required
+                        />
+                        <button type="submit" className="button">Enviar Email</button>
+                    </div>
+                </form>
+
+                <form onSubmit={handleWhatsAppSubmit} className="share-form">
+                    <label htmlFor="phone-input">Enviar a WhatsApp:</label>
+                    <div className="input-group">
+                        <input
+                            id="phone-input"
+                            type="tel"
+                            value={recipientPhone}
+                            onChange={(e) => setRecipientPhone(e.target.value)}
+                            placeholder="1234567890 (número)"
+                            required
+                        />
+                        <button type="submit" className="button whatsapp">Enviar WhatsApp</button>
+                    </div>
+                </form>
+                
+                <div className="modal-actions">
+                    <button type="button" className="button-secondary" onClick={onClose}>Cancelar</button>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 export default Calificaciones;

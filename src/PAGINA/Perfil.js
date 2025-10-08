@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-// CORRECCIÓN DE RUTA: Ajustamos la importación.
+// CORRECCIÓN DE RUTA: Ajustamos la importación. 
 // Desde PAGINA/ sale a src/ y entra a api/.
 import apiClient from '../api/apiClient'; 
 import "./Perfil.css";
@@ -34,7 +34,7 @@ function Perfil({ user, onLogout }) {
             src={profileImgUrl} 
             alt="Perfil" 
             className="profile-img-large" 
-            // Manejo de error: Si la URL de Cloudinary falla, muestra la imagen por defecto del servidor.
+            // Manejo de error para la imagen
             onError={(e) => { 
                 e.target.onerror = null; 
                 e.target.src = `${apiClient.defaults.baseURL}${DEFAULT_IMG_PATH}` 

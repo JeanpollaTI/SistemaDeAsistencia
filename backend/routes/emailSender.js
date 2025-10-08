@@ -14,27 +14,25 @@ router.post('/enviar-boleta', authMiddleware, async (req, res) => {
         return res.status(400).json({ error: 'Faltan datos para enviar el correo.' });
     }
 
-    // El frontend envía el PDF en formato Base64. Preparamos el attachment para sendEmail.
+    // Preparamos el array de attachments en el formato que espera la función sendEmail.
     const attachments = [
         {
             filename: 'Boleta_de_Calificaciones.pdf',
             content: pdfData, 
-            encoding: 'base64', // Especificamos que el contenido es Base64
+            // La función sendEmail.js ya sabe que es base64 y PDF
             contentType: 'application/pdf' 
         }
     ];
 
     try {
         // --- LA SOLUCIÓN CLAVE: LLAMAR A LA FUNCIÓN DE API DE SENDGRID ---
-        // sendEmail maneja el JWT y la conexión HTTP.
-        // NOTA: 'to' puede ser una cadena de correos separada por comas o un array.
+        // Usamos la función centralizada que ya está configurada con el protocolo HTTP.
         await sendEmail(to, subject, body, attachments);
 
         res.status(200).json({ message: 'Boleta enviada exitosamente por correo.' });
 
     } catch (error) {
         // Los errores de la función centralizada serán capturados aquí.
-        // Si hay un error, es un problema de SendGrid (API Key, remitente, etc.).
         console.error('Error al enviar boleta por correo:', error); 
         res.status(500).json({ error: 'Hubo un error en el servidor al intentar enviar el correo.' });
     }

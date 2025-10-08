@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // Se usa useLocation
+import { useNavigate } from "react-router-dom";
 // 1. RUTA CORREGIDA: Apunta correctamente a la carpeta api/ usando './'
 import apiClient from './api/apiClient'; 
 import "./Home.css";
@@ -9,7 +9,6 @@ const DEFAULT_IMG_PATH = "/uploads/fotos/default.png";
 
 function Home({ user, handleNavClick }) {
   const navigate = useNavigate();
-  const location = useLocation(); // Hook para saber la ruta actual
   const [profesores, setProfesores] = useState([]);
   const [selectedProfesor, setSelectedProfesor] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -119,10 +118,10 @@ function Home({ user, handleNavClick }) {
   const primerNombre = user?.nombre ? user.nombre.split(" ")[0] : "";
   
   // --------------------------------------------------------------------------
-  // CORRECCIÓN CLAVE: Detiene el renderizado del contenido de Home si la ruta no es /
-  if (location.pathname !== '/') {
-      return null;
-  }
+  // LÓGICA DE DETENER FUGA DE CONTENIDO EN RUTAS SECUNDARIAS
+  // Si la ruta no es la raíz, la lógica de renderizado del componente Home NO debe ejecutarse.
+  // Sin la prop 'location' aquí, esta función se movería a App.js
+  // (Asumiendo que App.js se encarga de la guarda estructural)
   // --------------------------------------------------------------------------
 
   return (

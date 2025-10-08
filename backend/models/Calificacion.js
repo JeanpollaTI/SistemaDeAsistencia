@@ -20,7 +20,6 @@ const CalificacionSchema = new mongoose.Schema({
     porcentaje: Number
   }],
   // Objeto con las calificaciones detalladas que el profesor ingresa
-  // La estructura interna es flexible (Mixed) para permitir alumnoId: { bimestre: { criterio: nota } }
   calificaciones: {
     type: mongoose.Schema.Types.Mixed,
     default: {}
@@ -31,6 +30,7 @@ const CalificacionSchema = new mongoose.Schema({
 
 // ÍNDICE COMPUESTO: Esta es la corrección clave.
 // Asegura que la COMBINACIÓN de 'grupo' y 'asignatura' sea única.
+// Esto permite múltiples documentos para el mismo grupo, siempre que la asignatura sea diferente.
 CalificacionSchema.index({ grupo: 1, asignatura: 1 }, { unique: true });
 
 const Calificacion = mongoose.model("Calificacion", CalificacionSchema);
