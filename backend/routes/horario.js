@@ -1,9 +1,9 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
-import fs from "fs"; // Mantenemos fs solo para fines de seguridad si es necesario, pero la lógica de unlink es de Cloudinary.
-import { CloudinaryStorage } from "multer-storage-cloudinary"; // Nuevo: Para almacenar en la nube
-import { v2 as cloudinary } from "cloudinary"; // Nuevo: Para configurar y eliminar
+import fs from "fs"; // Mantenemos fs si aún lo usas en otros lados, pero no para uploads.
+import { CloudinaryStorage } from "multer-storage-cloudinary"; 
+import { v2 as cloudinary } from "cloudinary"; 
 
 import Horario from "../models/Horario.js";
 import { verifyToken, verifyAdmin } from "./auth.js"; // Asegúrate de que los middlewares se importen correctamente
@@ -11,22 +11,21 @@ import { verifyToken, verifyAdmin } from "./auth.js"; // Asegúrate de que los m
 const router = express.Router();
 
 // ----------------- CONFIGURACIÓN CLOUDINARY -----------------
-// Debe estar configurado con las variables de entorno de Render
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// NUEVO: Storage de Multer para subir PDFs a Cloudinary
+// Storage de Multer para subir PDFs a Cloudinary
 const storagePdf = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: (req, file) => {
     const anio = req.body.anio || "unknown";
     return {
-        folder: "sistema-asistencia/pdf-horarios", // Carpeta de destino específica para PDFs
-        resource_type: "raw", // CRUCIAL: 'raw' para archivos que no son imágenes (como PDFs)
-        public_id: `horario_${anio}_${Date.now()}`, // Nombre único del archivo
+        folder: "sistema-asistencia/pdf-horarios", // Carpeta de destino
+        resource_type: "raw", // CRUCIAL para PDFs
+        public_id: `horario_${anio}_${Date.now()}`, // Nombre único
         allowed_formats: ["pdf"],
     };
   },
@@ -55,16 +54,17 @@ router.post("/", verifyAdmin, uploadPdf.single("pdf"), async (req, res) => {
     if (req.file) {
         // 1. Eliminar PDF antiguo de Cloudinary si existe
         if (horario.pdfUrl) {
-            // El public_id está al final de la URL sin la extensión
+            // Lógica para extraer el ID público de la URL y borrarlo
             const parts = horario.pdfUrl.split('/');
             const publicIdWithExt = parts[parts.length - 1]; 
             const publicId = publicIdWithExt.split('.')[0]; 
             const fullPublicId = `sistema-asistencia/pdf-horarios/${publicId}`;
 
+            // resource_type: 'raw' es necesario para borrar PDFs
             await cloudinary.uploader.destroy(fullPublicId, { resource_type: 'raw' });
         }
         
-        // 2. Guardar la nueva URL (req.file.path contiene la URL completa)
+        // 2. Guardar la nueva URL (req.file.path)
         horario.pdfUrl = req.file.path;
     }
 
