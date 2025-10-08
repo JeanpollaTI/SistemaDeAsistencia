@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom"; // Se usa useLocation
+// 1. RUTA CORREGIDA: Apunta correctamente a la carpeta api/
 import apiClient from './api/apiClient'; 
 import "./Home.css";
 
@@ -75,23 +76,45 @@ function Home({ user, handleNavClick }) {
     }
     return foto;
   };
-  
+
   const handleAsignaturasChange = (materia) => {
     setAsignaturasSelect((prev) =>
       prev.includes(materia) ? prev.filter((m) => m !== materia) : [...prev, materia]
     );
   };
 
-  const guardarAsignaturas = () => { /* ... (función completa) ... */ };
+  const guardarAsignaturas = () => {
+    if (!selectedProfesor) return;
+    const token = localStorage.getItem("token");
+    
+    apiClient.put(`/profesores/${selectedProfesor._id}/asignaturas`, { asignaturas: asignaturasSelect }, { headers: { Authorization: `Bearer ${token}` } })
+      .then(() => {
+        fetchProfesores();
+        closeModal();
+      })
+      .catch((err) => console.error("Error al guardar asignaturas:", err));
+  };
+
   const handleDeleteClick = () => setConfirmDeleteVisible(true);
-  const confirmDelete = () => { /* ... (función completa) ... */ };
+
+  const confirmDelete = () => {
+    if (!selectedProfesor) return;
+    const token = localStorage.getItem("token");
+    
+    apiClient.delete(`/profesores/${selectedProfesor._id}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(() => {
+        fetchProfesores();
+        closeModal();
+      })
+      .catch((err) => console.error("Error al eliminar profesor:", err));
+  };
+
   const cancelDelete = () => setConfirmDeleteVisible(false);
 
   const primerNombre = user?.nombre ? user.nombre.split(" ")[0] : "";
-  
+
   // --------------------------------------------------------------------------
   // CORRECCIÓN CLAVE: Detiene el renderizado del contenido de Home si la ruta no es /
-  // Esto soluciona la superposición de contenido en /horario
   if (location.pathname !== '/') {
       return null;
   }
