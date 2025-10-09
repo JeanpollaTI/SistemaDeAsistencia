@@ -15,6 +15,7 @@ const DIAS_INICIALES = 30; // Valor por defecto de días si no hay registro
 
 
 // --- Funciones de Cálculo (Para useMemo) ---
+// Función para calcular presentes/ausentes (se asume que AsistenciaData y diasData vienen del backend)
 const calcularTotales = (asistencia, diasPorBimestre) => (alumnoId, bimestre, asistenciaData, diasData) => {
     let presentes = 0;
     let faltas = 0;
@@ -66,6 +67,8 @@ function Grupo({ user }) {
     setEditingAlumno(null);
     setArchivoXLS(null);
     setNombreGrupoImport('');
+    // Forzamos la recarga de la lista de grupos para ver cambios de asignación/eliminación
+    fetchGrupos(); 
   };
   
   const fetchGrupos = async () => {
@@ -74,13 +77,15 @@ function Grupo({ user }) {
     try {
       if (user.role === 'admin') {
         const [gruposRes, profesoresRes] = await Promise.all([
-          apiClient.get('/grupos', axiosConfig),
-          apiClient.get('/profesores', axiosConfig)
+          // El backend ya popule los profesores
+          apiClient.get('/grupos', axiosConfig), 
+          apiClient.get('/auth/profesores', axiosConfig)
         ]);
         setGrupos(gruposRes.data);
         setProfesores(profesoresRes.data);
       } else if (user.role === 'profesor') {
-        const gruposRes = await apiClient.get('/grupos/mis-grupos', axiosConfig);
+        // Obtiene solo los grupos asignados al profesor
+        const gruposRes = await apiClient.get('/grupos/mis-grupos', axiosConfig); 
         setGrupos(gruposRes.data);
       }
     } catch (err) {
@@ -100,6 +105,7 @@ function Grupo({ user }) {
   
   
   // --- FUNCIÓN DE CÁLCULO MEMORIZADA ---
+  // Memoizamos el cálculo de totales de asistencia para evitar recálculos excesivos
   const memoCalcularTotales = useMemo(() => calcularTotales(asistencia, diasPorBimestre), [asistencia, diasPorBimestre]);
 
 
@@ -122,6 +128,7 @@ function Grupo({ user }) {
       setModalVisible('asignar');
     } else if (tipo === 'asistencia') {
       setGrupoSeleccionado(data);
+      // El profesor solo puede tomar asistencia para su materia
       const miAsignacion = data.profesoresAsignados.find(asig => asig.profesor?._id === user.id);
       if (!miAsignacion) {
         return mostrarNotificacion("No tienes una asignatura asignada para este grupo.", "error");
@@ -134,7 +141,8 @@ function Grupo({ user }) {
           setAsistencia(asistenciaData.registros || {});
           const counts = {};
           for (let i = 1; i <= NUM_BIMESTRES; i++) {
-            counts[i] = asistenciaData.diasPorBimestre?.[i] || DIAS_INICIALES;
+            // Se usa asistenciaData.diasPorBimestre[i]
+            counts[i] = asistenciaData.diasPorBimestre?.[i] || DIAS_INICIALES; 
           }
           setDiasPorBimestre(counts);
         } else {
@@ -449,7 +457,7 @@ function Grupo({ user }) {
             headStyles: { 
                 halign: 'center',
                 valign: 'middle',
-                textColor: [255, 255, 255], 
+                textColor: [255, 255, 255], // Letra blanca para que resalte
                 lineWidth: 0.1,
                 lineColor: [255, 255, 255]
             },
@@ -617,7 +625,7 @@ function Grupo({ user }) {
               {grupoSeleccionado?.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => {
                 const bimestreActual = bimestreAbierto[alumno._id];
                 // Usamos la función de cálculo del useMemo
-                const totales = memoCalcularTotales(alumno._id, bimestreActual, asistencia, diasPorBimestre); 
+                const totales = memoCalcularTotales(alumno._id, bimestreActual); 
                 return (
                   <React.Fragment key={alumno._id}>
                     <div className="asistencia-row">
@@ -771,19 +779,19 @@ function Grupo({ user }) {
               </thead>
               <tbody>
                 {grupos.map(grupo => {
-                  const miAsignacion = grupo.profesoresAsignados.find(asig => asig.profesor?._id === user.id);
-                  const miAsignatura = miAsignacion ? miAsignacion.asignatura : 'N/A';
-                  return (
-                    <tr key={grupo._id}>
+                  const misAsignaciones = grupo.profesoresAsignados.filter(asig => asig.profesor?._id === user.id);
+                  // Mapeamos todas las asignaciones del profesor a este grupo para mostrar una fila por materia
+                  return misAsignaciones.map((asig, index) => (
+                    <tr key={`${grupo._id}-${asig.asignatura}`}>
                       <td data-label="Grupo">{grupo.nombre}</td>
                       <td data-label="Alumnos">{grupo.alumnos?.length || 0}</td>
-                      <td data-label="Mi Asignatura">{miAsignatura}</td>
+                      <td data-label="Mi Asignatura">{asig.asignatura}</td>
                       <td className="acciones-cell">
                         <button className="btn btn-primary" onClick={() => openModal('asistencia', grupo)}>Tomar Asistencia</button>
                         <button className="btn btn-export" onClick={() => generarPDF(grupo)}>PDF</button>
                       </td>
                     </tr>
-                  );
+                  ));
                 })}
               </tbody>
             </table>
