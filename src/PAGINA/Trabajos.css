@@ -1,0 +1,454 @@
+/* ================================================= */
+/* ESTILOS EXCLUSIVOS PARA Trabajos.js               */
+/* ================================================= */
+
+/* --- FUENTES Y VARIABLES GLOBALES --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+.grupo-componente {
+  --dark-color: #191D28;
+  --dark-color-alt: #1E222D;
+  --main-color: #b9972b;
+  --title-color: #FFFFFF;
+  --text-color: #E9E9E9;
+  --danger-color: #d32f2f;
+  --success-color: #27ae60;
+  --warning-color: #f39c12;
+
+  --body-font: 'Poppins', sans-serif;
+  --font-semi-bold: 600;
+}
+
+/* --- ESTRUCTURA GENERAL Y TÍTULOS --- */
+.grupo-componente {
+  font-family: var(--body-font);
+  color: var(--text-color);
+}
+
+.grupo-componente .page-container {
+  padding-top: 12rem; 
+  padding-bottom: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.grupo-componente h1, h2, h3 {
+  color: var(--title-color);
+  font-weight: var(--font-semi-bold);
+}
+
+.grupo-componente .main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid var(--dark-color-alt);
+  padding-bottom: 1.5rem;
+}
+
+.grupo-componente .subtitulo {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.5rem;
+  color: var(--main-color);
+}
+
+/* --- BOTONES --- */
+.grupo-componente .btn {
+  display: inline-block;
+  padding: 0.8rem 1.5rem;
+  border-radius: .5rem;
+  font-weight: 500;
+  transition: .3s;
+  cursor: pointer;
+  color: var(--text-color);
+  background-color: var(--dark-color);
+  border: 1px solid #555;
+}
+.grupo-componente .btn:hover {
+  filter: brightness(1.2);
+  transform: translateY(-2px);
+  border-color: var(--main-color);
+}
+.grupo-componente .btn-primary { 
+  background-color: var(--main-color); 
+  color: var(--dark-color);
+  border-color: var(--main-color);
+}
+.grupo-componente .btn-cancel { 
+  background-color: #2c3e50;
+  color: white;
+  border-color: #2c3e50;
+}
+
+/* --- TABLA DE SELECCIÓN DE GRUPO --- */
+.grupo-componente .grupos-table {
+  width: 100%;
+  margin-top: 2rem;
+  border-collapse: collapse;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.grupo-componente .grupos-table thead th {
+  background-color: var(--main-color);
+  color: var(--dark-color);
+  padding: 15px 20px;
+  text-align: left;
+}
+.grupo-componente .grupos-table tbody td {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--dark-color-alt);
+}
+.grupo-componente .grupos-table tbody tr:last-of-type {
+  border-bottom: 2px solid var(--main-color);
+}
+.grupo-componente .grupos-table tbody tr {
+  background-color: #2a2f3c;
+  transition: background-color 0.3s;
+}
+.grupo-componente .grupos-table tbody tr:hover {
+  background-color: #3c4252;
+}
+.grupo-componente .grupos-table .acciones-cell {
+  display: flex;
+  gap: 10px;
+}
+
+/* ================================================= */
+/* ESTILOS PARA EL PANEL DE CALIFICACIÓN TIPO ASISTENCIA */
+/* ================================================= */
+
+.grupo-componente .modal-backdrop-solid {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: var(--dark-color);
+  display: block;
+  z-index: 1000;
+  /* <-- MODIFICADO: Se reduce el padding superior de 8rem a 5rem */
+  padding: 5rem 1rem 2rem 1rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.grupo-componente .modal-content.asistencia-modal-content {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  width: 100%;
+  max-width: none;
+  box-shadow: none;
+}
+
+.grupo-componente .asistencia-grid {
+  padding: 1rem 0;
+}
+
+.grupo-componente .asistencia-header {
+  display: flex;
+  align-items: center;
+  padding: 0 10px 10px 10px;
+  gap: 1rem;
+  border-bottom: 1px solid #444;
+  font-weight: var(--font-semi-bold);
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.grupo-componente .asistencia-header .bimestres-container {
+  text-align: center;
+}
+
+.grupo-componente .asistencia-body {
+  max-height: 75vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.grupo-componente .asistencia-row {
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  gap: 1rem;
+  border-bottom: 1px solid var(--dark-color-alt);
+}
+
+.grupo-componente .alumno-nombre {
+  width: 250px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.grupo-componente .bimestres-container {
+  display: flex;
+  flex-grow: 1;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+.grupo-componente .bimestre-header-btn {
+  text-align: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+  background-color: var(--dark-color-alt);
+  color: var(--text-color);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  border: 1px solid #555;
+}
+.grupo-componente .bimestre-header-btn:hover {
+  border-color: var(--main-color);
+  filter: brightness(1.2);
+}
+.grupo-componente .bimestre-header-btn.activo {
+  background-color: var(--main-color);
+  color: var(--dark-color);
+  font-weight: bold;
+  border-color: var(--main-color);
+}
+
+.grupo-componente .promedio-bimestre-display,
+.grupo-componente .calificacion-final-display {
+  width: 100px;
+  flex-shrink: 0;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.grupo-componente .calificacion-final-display {
+  color: var(--main-color);
+  font-size: 1.1rem;
+}
+
+.grupo-componente .bimestre-desplegable {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease-out, padding 0.4s ease-out, margin 0.4s ease-out;
+  padding: 0 20px;
+  margin: 0;
+  background-color: var(--dark-color-alt);
+  border-radius: 8px;
+}
+.grupo-componente .bimestre-desplegable.desplegado {
+  max-height: 500px;
+  padding: 20px;
+  margin: 5px 0 10px 0;
+}
+
+.grupo-componente .asistencia-totales {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+.grupo-componente .total-presentes {
+  color: var(--success-color);
+  font-weight: bold;
+}
+
+.grupo-componente .cuadritos-grid {
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+  gap: 6px;
+  align-items: center;
+}
+
+.grupo-componente .cuadrito-calificacion {
+  width: 32px;
+  height: 32px;
+  background-color: #4a4a4a;
+  border: 1px solid #777;
+  border-radius: 4px;
+  color: white;
+  text-align: center;
+  font-weight: bold;
+  font-family: var(--body-font);
+}
+.grupo-componente .cuadrito-calificacion::placeholder {
+    color: #999;
+    font-size: 0.8em;
+}
+.grupo-componente .cuadrito-calificacion:focus {
+  outline: 2px solid var(--main-color);
+  background-color: #5f5f5f;
+}
+.grupo-componente .cuadrito-calificacion::-webkit-outer-spin-button,
+.grupo-componente .cuadrito-calificacion::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.grupo-componente .btn-agregar-dias {
+  background-color: var(--main-color);
+  color: var(--dark-color);
+  border: none;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.grupo-componente .btn-agregar-dias:hover {
+  transform: scale(1.1);
+}
+
+/* --- MODAL DE CRITERIOS (CON NUEVOS ESTILOS) --- */
+.grupo-componente .modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex; justify-content: center; align-items: center; z-index: 1050;
+}
+
+.grupo-componente .modal-content {
+  background-color: var(--dark-color-alt);
+  padding: 2rem; border-radius: 12px; width: 90%;
+  max-width: 600px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.grupo-componente .modal-actions {
+  display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;
+}
+
+.grupo-componente .criterio-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--dark-color);
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+.grupo-componente .criterio-item span {
+  color: var(--text-color);
+}
+.grupo-componente .criterio-item span strong {
+  color: var(--main-color);
+}
+.grupo-componente .criterio-item button {
+  background-color: transparent;
+  border: none;
+  color: var(--danger-color);
+  border-radius: 0;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  transition: transform 0.2s;
+}
+.grupo-componente .criterio-item button:hover {
+  transform: scale(1.2);
+}
+
+.grupo-componente .criterio-form {
+  display: flex;
+  gap: 10px;
+  margin: 1.5rem 0;
+  align-items: center;
+}
+.grupo-componente .criterio-form input {
+  background: var(--dark-color);
+  border: 1px solid #555;
+  border-radius: 6px;
+  color: var(--text-color);
+  padding: 12px;
+  box-sizing: border-box;
+}
+.grupo-componente .criterio-form input:focus {
+    outline: none;
+    border-color: var(--main-color);
+}
+.grupo-componente .criterio-form input::placeholder {
+    color: #888;
+}
+.grupo-componente .criterio-form input[type="text"] { flex-grow: 3; }
+
+.grupo-componente .porcentaje-wrapper {
+  position: relative;
+  flex-grow: 1;
+}
+.grupo-componente .porcentaje-wrapper::after {
+  content: '%';
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  font-weight: bold;
+  pointer-events: none;
+}
+.grupo-componente .criterio-form input[type="number"] {
+  width: 100%;
+  padding-right: 35px;
+}
+
+.grupo-componente .criterio-form .btn {
+  padding: 12px;
+  background-color: var(--dark-color);
+  color: var(--text-color);
+  border: 1px solid #555;
+}
+.grupo-componente .criterio-form .btn:hover {
+  background-color: #000;
+  border-color: var(--main-color);
+}
+
+.grupo-componente .criterio-total {
+  text-align: right; font-size: 1.1rem; font-weight: bold;
+  margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #444;
+  color: var(--text-color);
+}
+.grupo-componente .aviso-criterios {
+  text-align: center; padding: 3rem; background-color: var(--dark-color-alt);
+  border-radius: 8px; margin: 2rem;
+}
+.grupo-componente .aviso-criterios p {
+  margin-bottom: 1.5rem; font-size: 1.1rem; color: var(--warning-color);
+}
+
+/* <-- MODIFICADO: Ahora solo oculta la barra de scroll de la lista interna de alumnos --> */
+/* --- OCULTAR BARRA DE SCROLL INTERNA --- */
+.grupo-componente .asistencia-body::-webkit-scrollbar {
+  display: none;
+}
+.grupo-componente .asistencia-body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* <-- NUEVO: Estilos personalizados para la barra de scroll principal --> */
+/* --- ESTILO DE SCROLLBAR PERSONALIZADO --- */
+.grupo-componente .modal-backdrop-solid {
+    /* Para Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: var(--main-color) var(--dark-color-alt);
+}
+/* Para Webkit (Chrome, Safari, Edge) */
+.grupo-componente .modal-backdrop-solid::-webkit-scrollbar {
+    width: 8px;
+}
+.grupo-componente .modal-backdrop-solid::-webkit-scrollbar-track {
+    background: var(--dark-color-alt);
+}
+.grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb {
+    background-color: var(--main-color);
+    border-radius: 10px;
+    border: 2px solid var(--dark-color-alt);
+}
+.grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb:hover {
+    background-color: #d4b03f; /* Un tono más claro del color principal */
+}

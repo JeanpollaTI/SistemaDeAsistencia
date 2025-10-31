@@ -1,0 +1,71 @@
+.editar-perfil-page {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+ 
+}
+
+.editar-perfil-card {
+  background-color: #ffffff;
+  padding: 30px 40px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  width: 100%;
+  margin-top: 80px;
+  text-align: center;
+}
+
+.editar-perfil-card h2 {
+  margin-bottom: 20px;
+  color: #000000;
+}
+
+.editar-perfil-card form {
+  display: flex;
+  flex-direction: column;
+}
+
+.editar-perfil-card input,
+.editar-perfil-card select {
+  margin-bottom: 15px;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.editar-perfil-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.btn-save, .btn-cancel {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.btn-save {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.btn-save:hover {
+  background-color: #333333;
+}
+
+.btn-cancel {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.btn-cancel:hover {
+  background-color: #333333;
+}

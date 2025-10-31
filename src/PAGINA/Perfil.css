@@ -1,0 +1,183 @@
+/* Página contenedora */
+.perfil-page, .editar-perfil-page {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Card de perfil o edición */
+.perfil-container, .editar-perfil-card {
+  background-color: #ffffff;
+  padding: 25px 30px; /* menos padding vertical y horizontal */
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  margin-top: 80px; /* reducir margen superior */
+}
+
+/* Título */
+.perfil-container h2, .editar-perfil-card h2 {
+  margin-bottom: 20px;
+  color: #000000;
+}
+
+/* Imagen de perfil */
+.profile-img-large {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 20px;
+  border: 3px solid #ddd;
+}
+
+/* Texto de datos */
+.perfil-container p, .editar-perfil-card input, .editar-perfil-card select {
+  margin: 8px 0;
+  color: #000000;
+  font-size: 16px;
+  width: 100%;
+  box-sizing: border-box; /* para que padding no agrande la tarjeta */
+}
+
+/* Inputs y selects en edición */
+.editar-perfil-card input,
+.editar-perfil-card select {
+  padding: 10px; /* menos padding para que no estire demasiado */
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+/* Botones */
+.perfil-buttons, .editar-perfil-buttons {
+  display: flex;
+  justify-content: center; /* centramos los botones */
+  gap: 20px; /* espacio uniforme entre botones */
+  margin-top: 20px;
+}
+
+/* Botones apilados verticalmente y centrados */
+.perfil-buttons, .editar-perfil-buttons {
+  display: flex;
+  flex-direction: column; /* apilar verticalmente */
+  align-items: center;    /* centrar horizontalmente */
+  gap: 15px;              /* espacio entre botones */
+  margin-top: 20px;
+}
+
+/* Estilo de todos los botones */
+.btn-edit, .btn-save, .btn-logout, .btn-cancel, .btn-delete, .btn-confirm-delete {
+  padding: 10px 20px;
+  background-color: #000000;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.btn-edit:hover, .btn-save:hover, .btn-logout:hover, .btn-cancel:hover, 
+.btn-delete:hover, .btn-confirm-delete:hover {
+  background-color: #333333;
+}
+
+/* Botón eliminar específico */
+.btn-delete {
+  background-color: #e53935;
+}
+
+.btn-delete:hover {
+  background-color: #b71c1c;
+}
+
+/* Modal / confirmación de eliminación */
+.delete-confirm {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background-color: #fff5f5;
+  text-align: center;
+}
+
+.delete-confirm input {
+  padding: 10px;
+  width: 80%;
+  margin: 10px 0;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.error-msg {
+  color: #e53935;
+  margin: 5px 0;
+}
+
+.delete-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.btn-cancel {
+  background-color: #aaa;
+}
+
+.btn-cancel:hover {
+  background-color: #888;
+}
+
+.btn-confirm-delete {
+  background-color: #e53935;
+}
+
+.btn-confirm-delete:hover {
+  background-color: #b71c1c;
+}
+/* Overlay de modal para alerta de eliminación */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* oscurece el fondo */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Cajita de alerta centrada */
+.delete-alert-modal {
+  background-color: #ffffff;
+  padding: 30px 40px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  font-size: 18px;
+  color: #000000;
+  max-width: 350px;
+  width: 90%;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Animación suave */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
