@@ -1213,11 +1213,15 @@ const PanelCalificaciones = ({
             };
 
             const handleTableScroll = () => {
-                if (topScrollEl) topScrollEl.scrollLeft = tableEl.scrollLeft;
+                if (topScrollEl && Math.abs(topScrollEl.scrollLeft - tableEl.scrollLeft) > 1) {
+                    topScrollEl.scrollLeft = tableEl.scrollLeft;
+                }
             };
 
             const handleTopScroll = () => {
-                if (tableEl) tableEl.scrollLeft = topScrollEl.scrollLeft;
+                if (tableEl && Math.abs(tableEl.scrollLeft - topScrollEl.scrollLeft) > 1) {
+                    tableEl.scrollLeft = topScrollEl.scrollLeft;
+                }
             };
 
             tableEl.addEventListener('scroll', handleTableScroll);
