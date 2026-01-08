@@ -257,7 +257,7 @@ function Trabajos({ user }) {
                 .grupo-componente .trabajos-container {
                     padding-top: 8rem;
                     padding-bottom: 2rem;
-                    max-width: 1200px;
+                    max-width: 95%; /* 🌟 AUMENTO: Usar más espacio de pantalla (antes 1200px) */
                     margin: 0 auto;
                     padding-left: 1rem;
                     padding-right: 1rem;
@@ -1585,14 +1585,14 @@ const PanelCalificaciones = ({
                 {/* 🌟 SELECTOR DE CRITERIOS (TABS) */}
                 {criteriosActivos.length > 0 && (
                     <div className="tabs-criterios">
-                        <div 
+                        <div
                             className={`tab-criterio ${criterioSeleccionadoGlobal === null ? 'activo' : ''}`}
                             onClick={() => setCriterioSeleccionadoGlobal(null)}
                         >
                             📋 Vista General
                         </div>
                         {criteriosActivos.map(crit => (
-                            <div 
+                            <div
                                 key={crit.nombre}
                                 className={`tab-criterio ${criterioSeleccionadoGlobal === crit.nombre ? 'activo' : ''}`}
                                 onClick={() => setCriterioSeleccionadoGlobal(crit.nombre)}
@@ -1621,8 +1621,8 @@ const PanelCalificaciones = ({
 
                                                 return (
                                                     <th key={tareaIndex}>
-                                                        <div 
-                                                            className="tabla-header-task" 
+                                                        <div
+                                                            className="tabla-header-task"
                                                             title={nombreTarea || `Clic para nombrar Tarea ${tareaIndex + 1}`}
                                                             onClick={() => setTareaPorNombrar({
                                                                 criterioNombre: criterioSeleccionadoGlobal,
@@ -1630,8 +1630,12 @@ const PanelCalificaciones = ({
                                                                 nombreActual: nombreTarea
                                                             })}
                                                         >
-                                                            {nombreTarea && <span className="task-name">{nombreTarea}</span>}
-                                                            <span className="task-num">T{tareaIndex + 1}</span>
+                                                            {/* 🌟 CAMBIO: Si tiene nombre, mostrar SOLO el nombre con fuente más grande. Si no, T + numero */}
+                                                            {nombreTarea ? (
+                                                                <span className="task-name" style={{ fontSize: '0.85rem', whiteSpace: 'normal', lineHeight: '1.2' }}>{nombreTarea}</span>
+                                                            ) : (
+                                                                <span className="task-num">T{tareaIndex + 1}</span>
+                                                            )}
                                                         </div>
                                                     </th>
                                                 );
@@ -1639,8 +1643,8 @@ const PanelCalificaciones = ({
                                             <th style={{ width: '80px', color: '#f39c12' }}>Prom</th>
                                             {/* Botón +5 en el header */}
                                             <th>
-                                                <button 
-                                                    className="btn btn-agregar-dias" 
+                                                <button
+                                                    className="btn btn-agregar-dias"
                                                     style={{ width: '40px', height: '30px', padding: 0, fontSize: '0.9rem' }}
                                                     onClick={() => agregarTareas(criterioSeleccionadoGlobal)}
                                                 >
