@@ -1003,7 +1003,122 @@ function Trabajos({ user }) {
                 .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb:hover {
                     background-color: #d4b03f;
                 }
-            `}</style>
+
+                /* --- VISTA GLOBAL DE CRITERIOS (TABLA MASIVA) --- */
+                .grupo-componente .tabs-criterios {
+                    display: flex;
+                    gap: 10px;
+                    margin-bottom: 20px;
+                    padding: 0 20px;
+                    flex-wrap: wrap;
+                    border-bottom: 1px solid #444;
+                    padding-bottom: 10px;
+                }
+                .grupo-componente .tab-criterio {
+                    padding: 8px 20px;
+                    background-color: transparent;
+                    border: 1px solid #444;
+                    border-radius: 20px;
+                    color: var(--text-color);
+                    cursor: pointer;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                    font-size: 0.95rem;
+                }
+                .grupo-componente .tab-criterio:hover {
+                    background-color: #2a2f3c;
+                    border-color: var(--main-color);
+                    color: var(--main-color);
+                }
+                .grupo-componente .tab-criterio.activo {
+                    background-color: var(--main-color);
+                    color: var(--dark-color);
+                    font-weight: 700;
+                    border-color: var(--main-color);
+                    box-shadow: 0 0 10px rgba(185, 151, 43, 0.4);
+                }
+
+                .grupo-componente .tabla-global-container {
+                    overflow-x: auto;
+                    padding: 0 20px 40px 20px;
+                }
+                .grupo-componente .tabla-global {
+                    width: 100%;
+                    border-collapse: separate; /* Necesario para sticky headers */
+                    border-spacing: 0;
+                    min-width: 800px;
+                }
+                .grupo-componente .tabla-global th,
+                .grupo-componente .tabla-global td {
+                    padding: 8px 5px;
+                    border-bottom: 1px solid #444;
+                    border-right: 1px solid #444;
+                    text-align: center;
+                    vertical-align: middle;
+                }
+                .grupo-componente .tabla-global th {
+                    background-color: #2c3e50;
+                    color: white;
+                    font-weight: 600;
+                    font-size: 0.9rem;
+                    position: sticky;
+                    top: 0;
+                    z-index: 20;
+                    height: 50px;
+                }
+                .grupo-componente .tabla-global th.alumno-col {
+                    text-align: left;
+                    min-width: 280px;
+                    padding-left: 15px;
+                    position: sticky;
+                    left: 0;
+                    z-index: 30; /* Mayor z-index para cruzar con el header top */
+                    border-right: 2px solid #666;
+                }
+                .grupo-componente .tabla-global td.alumno-col {
+                    text-align: left;
+                    padding-left: 15px;
+                    position: sticky;
+                    left: 0;
+                    background-color: var(--dark-color-alt); /* Fondo sólido para tapar scroll */
+                    z-index: 10;
+                    border-right: 2px solid #666;
+                    font-weight: 500;
+                    color: var(--text-color);
+                }
+                .grupo-componente .tabla-global tr:hover td {
+                    background-color: rgba(185, 151, 43, 0.05);
+                }
+                /* Asegurar que la primera columna mantenga el color al hover de la fila */
+                .grupo-componente .tabla-global tr:hover td.alumno-col {
+                    background-color: #2a2f3c; 
+                }
+
+                .grupo-componente .tabla-header-task {
+                    cursor: pointer;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                }
+                .grupo-componente .tabla-header-task:hover .task-num {
+                    color: var(--main-color);
+                    text-decoration: underline;
+                }
+                .grupo-componente .tabla-header-task .task-name {
+                    font-size: 0.7rem;
+                    color: var(--main-color);
+                    margin-bottom: 2px;
+                    max-width: 80px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                .grupo-componente .tabla-header-task .task-num {
+                    font-size: 1rem;
+                }
+             `}</style>
             <div className="trabajos-container grupo-componente">
                 {!grupoSeleccionado ? (
                     <ListaDeGrupos grupos={grupos} user={user} onSeleccionarGrupo={handleSeleccionarGrupo} />
@@ -1054,6 +1169,8 @@ const PanelCalificaciones = ({
     const [tareaPorNombrar, setTareaPorNombrar] = useState(null);
     // 🌟 ESTADO AGREGADO: Para el modal de confirmación personalizado
     const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: '', onConfirm: null });
+    // 🌟 ESTADO AGREGADO: Criterio seleccionado para vista masiva (null = vista lista, string = vista tabla)
+    const [criterioSeleccionadoGlobal, setCriterioSeleccionadoGlobal] = useState(null);
 
     // Obtener los criterios del bimestre activo
     const criteriosActivos = criteriosPorBimestre[bimestreActivo] || [];
@@ -1461,93 +1578,195 @@ const PanelCalificaciones = ({
                 </header>
                 <div className="bimestre-selector">
                     {[1, 2, 3].map(bim => (
-                        <button key={bim} className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} onClick={() => setBimestreActivo(bim)}>Trimestre {bim}</button>
+                        <button key={bim} className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} onClick={() => { setBimestreActivo(bim); setCriterioSeleccionadoGlobal(null); }}>Trimestre {bim}</button>
                     ))}
                 </div>
 
-                {criteriosActivos.length > 0 ? (
-                    <div className="asistencia-grid">
-                        <div className="asistencia-body">
-                            {grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => (
-                                <React.Fragment key={alumno._id}>
-                                    <div className="asistencia-row">
-                                        <div className="alumno-nombre">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
-                                        <div className="bimestres-container">
-                                            {criteriosActivos.map(criterio => (
-                                                <div
-                                                    key={criterio.nombre}
-                                                    className={`bimestre-header-btn ${criterioAbierto?.alumnoId === alumno._id && criterioAbierto?.criterioNombre === criterio.nombre ? 'activo' : ''}`}
-                                                    onClick={() => handleToggleCriterio(alumno._id, criterio.nombre)}
-                                                >
-                                                    {criterio.nombre} ({criterio.porcentaje}%)
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="promedio-final-display" style={{ color: calcularPromedioBimestre(alumno._id, bimestreActivo) >= 6 ? '#27ae60' : '#d32f2f' }}>
-                                            Prom: {calcularPromedioBimestre(alumno._id, bimestreActivo)}
-                                        </div>
-                                    </div>
-                                    {criterioAbierto?.alumnoId === alumno._id && (
-                                        <div className={`bimestre-desplegable desplegado`}>
-                                            <div className="criterio-resumen-wrapper">
-                                                <div className="criterio-resumen">
-                                                    <span className="criterio-info">
-                                                        {criterioAbierto.criterioNombre} ({criteriosActivos.find(c => c.nombre === criterioAbierto.criterioNombre)?.porcentaje}%)
-                                                    </span>
-                                                    <span className="criterio-prom" style={{ color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre) >= 6 ? 'var(--dark-color)' : 'var(--danger-color)' }}>
-                                                        Prom: {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre).toFixed(2)}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            <div className="cuadritos-grid">
-                                                {/* 🌟 HEADER ROW PARA TAREAS */}
-                                                <div className="task-header-row" style={{ gridColumn: '1 / -1' }}>
-                                                    {Array.from({ length: numTareas[criterioAbierto.criterioNombre] || 10 }).map((_, tareaIndex) => {
-                                                        // Buscar si alguna calificación en esta columna tiene nombre
-                                                        const nombreTarea = Object.values(calificaciones).find(
-                                                            alumnoCal => alumnoCal?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex]?.nombre
-                                                        )?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex]?.nombre;
-
-                                                        return (
-                                                            <div
-                                                                key={tareaIndex}
-                                                                className={`task-header-cell ${nombreTarea ? 'named' : ''}`}
-                                                                title={nombreTarea || `Tarea ${tareaIndex + 1}`}
-                                                                onClick={() => setTareaPorNombrar({
-                                                                    criterioNombre: criterioAbierto.criterioNombre,
-                                                                    tareaIndex,
-                                                                    nombreActual: nombreTarea
-                                                                })}
-                                                            >
-                                                                {nombreTarea || `T${tareaIndex + 1}`}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-
-                                                {/* 🌟 Uso del nuevo componente CriterioCell */}
-                                                {Array.from({ length: numTareas[criterioAbierto.criterioNombre] || 10 }).map((_, tareaIndex) => (
-                                                    <CriterioCell
-                                                        key={tareaIndex}
-                                                        alumnoId={alumno._id}
-                                                        bimestreActivo={bimestreActivo}
-                                                        criterioNombre={criterioAbierto.criterioNombre}
-                                                        tareaIndex={tareaIndex}
-                                                        calificaciones={calificaciones}
-                                                        handleCalificacionChange={handleCalificacionChange}
-                                                        formatFechaTooltip={formatFechaTooltip}
-                                                        setTareaPorNombrar={setTareaPorNombrar}
-                                                    />
-                                                ))}
-                                                <button className="btn btn-agregar-dias" onClick={() => agregarTareas(criterioAbierto.criterioNombre)}>+5</button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </React.Fragment>
-                            ))}
+                {/* 🌟 SELECTOR DE CRITERIOS (TABS) */}
+                {criteriosActivos.length > 0 && (
+                    <div className="tabs-criterios">
+                        <div 
+                            className={`tab-criterio ${criterioSeleccionadoGlobal === null ? 'activo' : ''}`}
+                            onClick={() => setCriterioSeleccionadoGlobal(null)}
+                        >
+                            📋 Vista General
                         </div>
+                        {criteriosActivos.map(crit => (
+                            <div 
+                                key={crit.nombre}
+                                className={`tab-criterio ${criterioSeleccionadoGlobal === crit.nombre ? 'activo' : ''}`}
+                                onClick={() => setCriterioSeleccionadoGlobal(crit.nombre)}
+                            >
+                                {crit.nombre} ({crit.porcentaje}%)
+                            </div>
+                        ))}
                     </div>
+                )}
+
+                {criteriosActivos.length > 0 ? (
+                    <>
+                        {/* --- VISTA 1: TABLA MASIVA (SI HAY UN CRITERIO SELECCIONADO) --- */}
+                        {criterioSeleccionadoGlobal ? (
+                            <div className="tabla-global-container">
+                                <table className="tabla-global">
+                                    <thead>
+                                        <tr>
+                                            <th className="alumno-col">Alumno</th>
+                                            {/* Columnas de Tareas */}
+                                            {Array.from({ length: numTareas[criterioSeleccionadoGlobal] || 10 }).map((_, tareaIndex) => {
+                                                // Buscar nombre de tarea (scan all students)
+                                                const nombreTarea = Object.values(calificaciones).find(
+                                                    alumnoCal => alumnoCal?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[tareaIndex]?.nombre
+                                                )?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[tareaIndex]?.nombre;
+
+                                                return (
+                                                    <th key={tareaIndex}>
+                                                        <div 
+                                                            className="tabla-header-task" 
+                                                            title={nombreTarea || `Clic para nombrar Tarea ${tareaIndex + 1}`}
+                                                            onClick={() => setTareaPorNombrar({
+                                                                criterioNombre: criterioSeleccionadoGlobal,
+                                                                tareaIndex,
+                                                                nombreActual: nombreTarea
+                                                            })}
+                                                        >
+                                                            {nombreTarea && <span className="task-name">{nombreTarea}</span>}
+                                                            <span className="task-num">T{tareaIndex + 1}</span>
+                                                        </div>
+                                                    </th>
+                                                );
+                                            })}
+                                            <th style={{ width: '80px', color: '#f39c12' }}>Prom</th>
+                                            {/* Botón +5 en el header */}
+                                            <th>
+                                                <button 
+                                                    className="btn btn-agregar-dias" 
+                                                    style={{ width: '40px', height: '30px', padding: 0, fontSize: '0.9rem' }}
+                                                    onClick={() => agregarTareas(criterioSeleccionadoGlobal)}
+                                                >
+                                                    +5
+                                                </button>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => (
+                                            <tr key={alumno._id}>
+                                                <td className="alumno-col">
+                                                    {`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}
+                                                </td>
+                                                {/* Celdas de Calificación */}
+                                                {Array.from({ length: numTareas[criterioSeleccionadoGlobal] || 10 }).map((_, tareaIndex) => (
+                                                    <td key={tareaIndex}>
+                                                        <CriterioCell
+                                                            alumnoId={alumno._id}
+                                                            bimestreActivo={bimestreActivo}
+                                                            criterioNombre={criterioSeleccionadoGlobal}
+                                                            tareaIndex={tareaIndex}
+                                                            calificaciones={calificaciones}
+                                                            handleCalificacionChange={handleCalificacionChange}
+                                                            formatFechaTooltip={formatFechaTooltip}
+                                                            setTareaPorNombrar={setTareaPorNombrar}
+                                                        />
+                                                    </td>
+                                                ))}
+                                                {/* Promedio del Alumno para este criterio */}
+                                                <td style={{ fontWeight: 'bold', color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioSeleccionadoGlobal) >= 6 ? 'var(--success-color)' : 'var(--danger-color)' }}>
+                                                    {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioSeleccionadoGlobal).toFixed(1)}
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            /* --- VISTA 2: LISTA DE ALUMNOS (ORIGINAL - VISTA GENERAL) --- */
+                            <div className="asistencia-grid">
+                                <div className="asistencia-body">
+                                    {grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => (
+                                        <React.Fragment key={alumno._id}>
+                                            <div className="asistencia-row">
+                                                <div className="alumno-nombre">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
+                                                <div className="bimestres-container">
+                                                    {criteriosActivos.map(criterio => (
+                                                        <div
+                                                            key={criterio.nombre}
+                                                            className={`bimestre-header-btn ${criterioAbierto?.alumnoId === alumno._id && criterioAbierto?.criterioNombre === criterio.nombre ? 'activo' : ''}`}
+                                                            onClick={() => handleToggleCriterio(alumno._id, criterio.nombre)}
+                                                        >
+                                                            {criterio.nombre} ({criterio.porcentaje}%)
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="promedio-final-display" style={{ color: calcularPromedioBimestre(alumno._id, bimestreActivo) >= 6 ? '#27ae60' : '#d32f2f' }}>
+                                                    Prom: {calcularPromedioBimestre(alumno._id, bimestreActivo)}
+                                                </div>
+                                            </div>
+                                            {/* Desplegable en Vista General */}
+                                            {criterioAbierto?.alumnoId === alumno._id && (
+                                                <div className={`bimestre-desplegable desplegado`}>
+                                                    <div className="criterio-resumen-wrapper">
+                                                        <div className="criterio-resumen">
+                                                            <span className="criterio-info">
+                                                                {criterioAbierto.criterioNombre} ({criteriosActivos.find(c => c.nombre === criterioAbierto.criterioNombre)?.porcentaje}%)
+                                                            </span>
+                                                            <span className="criterio-prom" style={{ color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre) >= 6 ? 'var(--dark-color)' : 'var(--danger-color)' }}>
+                                                                Prom: {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre).toFixed(2)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="cuadritos-grid">
+                                                        {/* 🌟 HEADER ROW PARA TAREAS */}
+                                                        <div className="task-header-row" style={{ gridColumn: '1 / -1' }}>
+                                                            {Array.from({ length: numTareas[criterioAbierto.criterioNombre] || 10 }).map((_, tareaIndex) => {
+                                                                // Buscar si alguna calificación en esta columna tiene nombre
+                                                                const nombreTarea = Object.values(calificaciones).find(
+                                                                    alumnoCal => alumnoCal?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex]?.nombre
+                                                                )?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex]?.nombre;
+
+                                                                return (
+                                                                    <div
+                                                                        key={tareaIndex}
+                                                                        className={`task-header-cell ${nombreTarea ? 'named' : ''}`}
+                                                                        title={nombreTarea || `Tarea ${tareaIndex + 1}`}
+                                                                        onClick={() => setTareaPorNombrar({
+                                                                            criterioNombre: criterioAbierto.criterioNombre,
+                                                                            tareaIndex,
+                                                                            nombreActual: nombreTarea
+                                                                        })}
+                                                                    >
+                                                                        {nombreTarea || `T${tareaIndex + 1}`}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+
+                                                        {/* 🌟 Uso del nuevo componente CriterioCell */}
+                                                        {Array.from({ length: numTareas[criterioAbierto.criterioNombre] || 10 }).map((_, tareaIndex) => (
+                                                            <CriterioCell
+                                                                key={tareaIndex}
+                                                                alumnoId={alumno._id}
+                                                                bimestreActivo={bimestreActivo}
+                                                                criterioNombre={criterioAbierto.criterioNombre}
+                                                                tareaIndex={tareaIndex}
+                                                                calificaciones={calificaciones}
+                                                                handleCalificacionChange={handleCalificacionChange}
+                                                                formatFechaTooltip={formatFechaTooltip}
+                                                                setTareaPorNombrar={setTareaPorNombrar}
+                                                            />
+                                                        ))}
+                                                        <button className="btn btn-agregar-dias" onClick={() => agregarTareas(criterioAbierto.criterioNombre)}>+5</button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </React.Fragment>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </>
                 ) : (
                     <div className="aviso-criterios"><p>⚠️ Por favor, define los criterios de evaluación para el **Trimestre {bimestreActivo}**.</p></div>
                 )}
