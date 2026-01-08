@@ -440,7 +440,7 @@ function Trabajos({ user }) {
                 }
 
                 /* Estilos de Contenedor y Títulos (Mantenidos) */
-                .grupo-componente .trabajos-container { padding-top: 8rem; padding-bottom: 2rem; max-width: 1200px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
+                .grupo-componente .trabajos-container { padding-top: 8rem; padding-bottom: 2rem; max-width: 98%; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
                 .grupo-componente h1, h2, h3 { color: var(--title-color); font-weight: var(--font-semi-bold); }
                 .grupo-componente .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid var(--dark-color-alt); padding-bottom: 1.5rem; width: 100%; }
                 .grupo-componente .main-header h1 { font-size: 2.5rem; }
@@ -626,8 +626,8 @@ function Trabajos({ user }) {
                     border-radius: 12px;
                     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
                     padding: 20px;
-                    width: 95%;
-                    max-width: 1200px;
+                    width: 98%;
+                    max-width: 98%;
                     margin: 0;
                 }
 
