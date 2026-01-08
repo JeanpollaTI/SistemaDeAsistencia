@@ -1118,38 +1118,6 @@ function Trabajos({ user }) {
                 .grupo-componente .tabla-header-task .task-num {
                     font-size: 1rem;
                 }
-                
-                /* 🌟 CUSTOM SCROLLBAR STYLING */
-                .grupo-componente .custom-scrollbar::-webkit-scrollbar {
-                    height: 12px;
-                    width: 12px;
-                }
-                .grupo-componente .custom-scrollbar::-webkit-scrollbar-track {
-                    background: var(--dark-color-alt);
-                    border-radius: 6px;
-                }
-                .grupo-componente .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background-color: var(--main-color);
-                    border-radius: 6px;
-                    border: 3px solid var(--dark-color-alt); /* Creates padding effect */
-                }
-                .grupo-componente .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background-color: #d4b03f;
-                }
-                /* Firefox */
-                .grupo-componente .custom-scrollbar {
-                    scrollbar-width: thin;
-                    scrollbar-color: var(--main-color) var(--dark-color-alt);
-                }
-
-                /* 🌟 HIDE SCROLLBAR CLASS */
-                .grupo-componente .no-scrollbar::-webkit-scrollbar {
-                    display: none;
-                }
-                .grupo-componente .no-scrollbar {
-                    -ms-overflow-style: none;  /* IE and Edge */
-                    scrollbar-width: none;  /* Firefox */
-                }
              `}</style>
             <div className="trabajos-container grupo-componente">
                 {!grupoSeleccionado ? (
@@ -1203,60 +1171,6 @@ const PanelCalificaciones = ({
     const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: '', onConfirm: null });
     // 🌟 ESTADO AGREGADO: Criterio seleccionado para vista masiva (null = vista lista, string = vista tabla)
     const [criterioSeleccionadoGlobal, setCriterioSeleccionadoGlobal] = useState(null);
-
-    // 🌟 REFS Y ESTADO PARA SCROLL SINCRONIZADO
-    const tableContainerRef = React.useRef(null);
-    const topScrollRef = React.useRef(null);
-    const [tableScrollWidth, setTableScrollWidth] = useState(0);
-
-    // 🌟 EFECTO DE SINCRONIZACIÓN DE SCROLL
-    useEffect(() => {
-        const tableEl = tableContainerRef.current;
-        const topScrollEl = topScrollRef.current;
-
-        if (criterioSeleccionadoGlobal && tableEl && topScrollEl) {
-            const syncScroll = (source, target) => {
-                if (source.current && target.current) {
-                    target.current.scrollLeft = source.current.scrollLeft;
-                }
-            };
-
-            const handleTableScroll = () => {
-                window.requestAnimationFrame(() => {
-                    if (topScrollEl && Math.abs(topScrollEl.scrollLeft - tableEl.scrollLeft) > 1) {
-                        topScrollEl.scrollLeft = tableEl.scrollLeft;
-                    }
-                });
-            };
-
-            const handleTopScroll = () => {
-                window.requestAnimationFrame(() => {
-                    if (tableEl && Math.abs(tableEl.scrollLeft - topScrollEl.scrollLeft) > 1) {
-                        tableEl.scrollLeft = topScrollEl.scrollLeft;
-                    }
-                });
-            };
-
-            tableEl.addEventListener('scroll', handleTableScroll);
-            topScrollEl.addEventListener('scroll', handleTopScroll);
-
-            // Update width logic
-            const updateWidth = () => {
-                if (tableEl) setTableScrollWidth(tableEl.scrollWidth);
-            };
-
-            // Resize Observer to detect table size changes
-            const resizeObserver = new ResizeObserver(updateWidth);
-            resizeObserver.observe(tableEl);
-            updateWidth(); // Initial check
-
-            return () => {
-                tableEl.removeEventListener('scroll', handleTableScroll);
-                topScrollEl.removeEventListener('scroll', handleTopScroll);
-                resizeObserver.disconnect();
-            };
-        }
-    }, [criterioSeleccionadoGlobal, grupo.alumnos, numTareas]); // Dependencies that might change table size
 
     // Obtener los criterios del bimestre activo
     const criteriosActivos = criteriosPorBimestre[bimestreActivo] || [];
@@ -1693,100 +1607,83 @@ const PanelCalificaciones = ({
                     <>
                         {/* --- VISTA 1: TABLA MASIVA (SI HAY UN CRITERIO SELECCIONADO) --- */}
                         {criterioSeleccionadoGlobal ? (
-                            <>
-                                {/* 🌟 TOP SCROLLBAR (DUMMY) */}
-                                <div
-                                    ref={topScrollRef}
-                                    className="custom-scrollbar"
-                                    style={{
-                                        overflowX: 'auto',
-                                        overflowY: 'hidden',
-                                        marginBottom: '0px', // Pegado a la tabla
-                                        width: '100%',
-                                        padding: '0 20px' // Match container padding
-                                    }}
-                                >
-                                    <div style={{ width: tableScrollWidth, height: '1px', paddingTop: '1px' }}></div>
-                                </div>
+                            <div className="tabla-global-container">
+                                <table className="tabla-global">
+                                    <thead>
+                                        <tr>
+                                            <th className="alumno-col">Alumno</th>
+                                            {/* Columnas de Tareas */}
+                                            {Array.from({ length: numTareas[criterioSeleccionadoGlobal] || 10 }).map((_, tareaIndex) => {
+                                                // Buscar nombre de tarea (scan all students)
+                                                const nombreTarea = Object.values(calificaciones).find(
+                                                    alumnoCal => alumnoCal?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[tareaIndex]?.nombre
+                                                )?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[tareaIndex]?.nombre;
 
-                                <div className="tabla-global-container no-scrollbar" ref={tableContainerRef}>
-                                    <table className="tabla-global">
-                                        <thead>
-                                            <tr>
-                                                <th className="alumno-col">Alumno</th>
-                                                {/* Columnas de Tareas */}
-                                                {Array.from({ length: numTareas[criterioSeleccionadoGlobal] || 10 }).map((_, tareaIndex) => {
-                                                    // Buscar nombre de tarea (scan all students)
-                                                    const nombreTarea = Object.values(calificaciones).find(
-                                                        alumnoCal => alumnoCal?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[tareaIndex]?.nombre
-                                                    )?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[tareaIndex]?.nombre;
-
-                                                    return (
-                                                        <th key={tareaIndex}>
-                                                            <div
-                                                                className="tabla-header-task"
-                                                                title={nombreTarea || `Clic para nombrar Tarea ${tareaIndex + 1}`}
-                                                                onClick={() => setTareaPorNombrar({
-                                                                    criterioNombre: criterioSeleccionadoGlobal,
-                                                                    tareaIndex,
-                                                                    nombreActual: nombreTarea
-                                                                })}
-                                                            >
-                                                                {/* 🌟 CAMBIO: Si tiene nombre, mostrar SOLO el nombre con fuente más grande. Si no, T + numero */}
-                                                                {nombreTarea ? (
-                                                                    <span className="task-name" style={{ fontSize: '0.85rem', whiteSpace: 'normal', lineHeight: '1.2' }}>{nombreTarea}</span>
-                                                                ) : (
-                                                                    <span className="task-num">T{tareaIndex + 1}</span>
-                                                                )}
-                                                            </div>
-                                                        </th>
-                                                    );
-                                                })}
-                                                <th style={{ width: '80px', color: '#f39c12' }}>Prom</th>
-                                                {/* Botón +5 en el header */}
-                                                <th>
-                                                    <button
-                                                        className="btn btn-agregar-dias"
-                                                        style={{ width: '40px', height: '30px', padding: 0, fontSize: '0.9rem' }}
-                                                        onClick={() => agregarTareas(criterioSeleccionadoGlobal)}
-                                                    >
-                                                        +5
-                                                    </button>
-                                                </th>
+                                                return (
+                                                    <th key={tareaIndex}>
+                                                        <div
+                                                            className="tabla-header-task"
+                                                            title={nombreTarea || `Clic para nombrar Tarea ${tareaIndex + 1}`}
+                                                            onClick={() => setTareaPorNombrar({
+                                                                criterioNombre: criterioSeleccionadoGlobal,
+                                                                tareaIndex,
+                                                                nombreActual: nombreTarea
+                                                            })}
+                                                        >
+                                                            {/* 🌟 CAMBIO: Si tiene nombre, mostrar SOLO el nombre con fuente más grande. Si no, T + numero */}
+                                                            {nombreTarea ? (
+                                                                <span className="task-name" style={{ fontSize: '0.85rem', whiteSpace: 'normal', lineHeight: '1.2' }}>{nombreTarea}</span>
+                                                            ) : (
+                                                                <span className="task-num">T{tareaIndex + 1}</span>
+                                                            )}
+                                                        </div>
+                                                    </th>
+                                                );
+                                            })}
+                                            <th style={{ width: '80px', color: '#f39c12' }}>Prom</th>
+                                            {/* Botón +5 en el header */}
+                                            <th>
+                                                <button
+                                                    className="btn btn-agregar-dias"
+                                                    style={{ width: '40px', height: '30px', padding: 0, fontSize: '0.9rem' }}
+                                                    onClick={() => agregarTareas(criterioSeleccionadoGlobal)}
+                                                >
+                                                    +5
+                                                </button>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => (
+                                            <tr key={alumno._id}>
+                                                <td className="alumno-col">
+                                                    {`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}
+                                                </td>
+                                                {/* Celdas de Calificación */}
+                                                {Array.from({ length: numTareas[criterioSeleccionadoGlobal] || 10 }).map((_, tareaIndex) => (
+                                                    <td key={tareaIndex}>
+                                                        <CriterioCell
+                                                            alumnoId={alumno._id}
+                                                            bimestreActivo={bimestreActivo}
+                                                            criterioNombre={criterioSeleccionadoGlobal}
+                                                            tareaIndex={tareaIndex}
+                                                            calificaciones={calificaciones}
+                                                            handleCalificacionChange={handleCalificacionChange}
+                                                            formatFechaTooltip={formatFechaTooltip}
+                                                            setTareaPorNombrar={setTareaPorNombrar}
+                                                        />
+                                                    </td>
+                                                ))}
+                                                {/* Promedio del Alumno para este criterio */}
+                                                <td style={{ fontWeight: 'bold', color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioSeleccionadoGlobal) >= 6 ? 'var(--success-color)' : 'var(--danger-color)' }}>
+                                                    {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioSeleccionadoGlobal).toFixed(1)}
+                                                </td>
+                                                <td></td>
                                             </tr>
-                                        </thead>
-                                        <tbody>
-                                            {grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => (
-                                                <tr key={alumno._id}>
-                                                    <td className="alumno-col">
-                                                        {`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}
-                                                    </td>
-                                                    {/* Celdas de Calificación */}
-                                                    {Array.from({ length: numTareas[criterioSeleccionadoGlobal] || 10 }).map((_, tareaIndex) => (
-                                                        <td key={tareaIndex}>
-                                                            <CriterioCell
-                                                                alumnoId={alumno._id}
-                                                                bimestreActivo={bimestreActivo}
-                                                                criterioNombre={criterioSeleccionadoGlobal}
-                                                                tareaIndex={tareaIndex}
-                                                                calificaciones={calificaciones}
-                                                                handleCalificacionChange={handleCalificacionChange}
-                                                                formatFechaTooltip={formatFechaTooltip}
-                                                                setTareaPorNombrar={setTareaPorNombrar}
-                                                            />
-                                                        </td>
-                                                    ))}
-                                                    {/* Promedio del Alumno para este criterio */}
-                                                    <td style={{ fontWeight: 'bold', color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioSeleccionadoGlobal) >= 6 ? 'var(--success-color)' : 'var(--danger-color)' }}>
-                                                        {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioSeleccionadoGlobal).toFixed(1)}
-                                                    </td>
-                                                    <td></td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         ) : (
                             /* --- VISTA 2: LISTA DE ALUMNOS (ORIGINAL - VISTA GENERAL) --- */
                             <div className="asistencia-grid">
