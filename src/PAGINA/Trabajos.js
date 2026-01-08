@@ -1141,6 +1141,15 @@ function Trabajos({ user }) {
                     scrollbar-width: thin;
                     scrollbar-color: var(--main-color) var(--dark-color-alt);
                 }
+
+                /* 🌟 HIDE SCROLLBAR CLASS */
+                .grupo-componente .no-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                .grupo-componente .no-scrollbar {
+                    -ms-overflow-style: none;  /* IE and Edge */
+                    scrollbar-width: none;  /* Firefox */
+                }
              `}</style>
             <div className="trabajos-container grupo-componente">
                 {!grupoSeleccionado ? (
@@ -1213,15 +1222,19 @@ const PanelCalificaciones = ({
             };
 
             const handleTableScroll = () => {
-                if (topScrollEl && Math.abs(topScrollEl.scrollLeft - tableEl.scrollLeft) > 1) {
-                    topScrollEl.scrollLeft = tableEl.scrollLeft;
-                }
+                window.requestAnimationFrame(() => {
+                    if (topScrollEl && Math.abs(topScrollEl.scrollLeft - tableEl.scrollLeft) > 1) {
+                        topScrollEl.scrollLeft = tableEl.scrollLeft;
+                    }
+                });
             };
 
             const handleTopScroll = () => {
-                if (tableEl && Math.abs(tableEl.scrollLeft - topScrollEl.scrollLeft) > 1) {
-                    tableEl.scrollLeft = topScrollEl.scrollLeft;
-                }
+                window.requestAnimationFrame(() => {
+                    if (tableEl && Math.abs(tableEl.scrollLeft - topScrollEl.scrollLeft) > 1) {
+                        tableEl.scrollLeft = topScrollEl.scrollLeft;
+                    }
+                });
             };
 
             tableEl.addEventListener('scroll', handleTableScroll);
@@ -1696,7 +1709,7 @@ const PanelCalificaciones = ({
                                     <div style={{ width: tableScrollWidth, height: '1px', paddingTop: '1px' }}></div>
                                 </div>
 
-                                <div className="tabla-global-container custom-scrollbar" ref={tableContainerRef}>
+                                <div className="tabla-global-container no-scrollbar" ref={tableContainerRef}>
                                     <table className="tabla-global">
                                         <thead>
                                             <tr>
