@@ -112,6 +112,8 @@ const CriterioCell = React.memo(({
     handleCalificacionChange,
     formatFechaTooltip,
     setTareaPorNombrar,
+    rowIndex, // 🌟 NEW PROP: Row index per student
+    colIndex  // 🌟 NEW PROP: Column index per task
 }) => {
     // La estructura de la data es: { nota: X, fecha: Y, nombre: Z }
     const entrada = calificaciones[alumnoId]?.[bimestreActivo]?.[criterioNombre]?.[tareaIndex];
@@ -119,8 +121,6 @@ const CriterioCell = React.memo(({
 
     const handleChange = (e) => {
         const valor = e.target.value;
-
-        // 1. Manejar la entrada de calificación (Llama a la función modificada del padre).
         handleCalificacionChange(alumnoId, bimestreActivo, criterioNombre, tareaIndex, valor);
     };
 
@@ -130,8 +130,31 @@ const CriterioCell = React.memo(({
         `${tareaData.nombre} (${tareaIndex + 1})\nFecha: ${fechaFormatted}` :
         `Tarea ${tareaIndex + 1}: ${fechaFormatted}`;
 
+    // 🌟 Keyboard Navigation Logic
+    const handleKeyDown = (e) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            e.preventDefault();
+            let nextRow = rowIndex;
+            let nextCol = colIndex;
+
+            if (e.key === 'ArrowUp') nextRow = Math.max(0, rowIndex - 1);
+            if (e.key === 'ArrowDown') nextRow = rowIndex + 1; // Limit checked by existence
+            if (e.key === 'ArrowLeft') nextCol = Math.max(0, colIndex - 1);
+            if (e.key === 'ArrowRight') nextCol = colIndex + 1; // Limit checked by existence
+
+            const nextId = `cell-${nextRow}-${nextCol}`;
+            const nextElement = document.getElementById(nextId);
+            if (nextElement) {
+                nextElement.focus();
+                // Optional: Select text when focusing
+                setTimeout(() => nextElement.select(), 0);
+            }
+        }
+    };
+
     return (
         <input
+            id={`cell-${rowIndex}-${colIndex}`} // 🌟 Unique ID for navigation
             type="number"
             min="5" max="10" step="0.1"
             className="cuadrito-calificacion"
@@ -139,6 +162,7 @@ const CriterioCell = React.memo(({
             value={tareaData.nota ?? ''}
             title={tooltipText}
             onChange={handleChange}
+            onKeyDown={handleKeyDown} // 🌟 Attach handler
             onBlur={() => {
                 // Validación al perder foco: Si es número válido y < 5, ajustar a 5
                 if (typeof tareaData.nota === 'number' && tareaData.nota < 5) {
@@ -1671,6 +1695,8 @@ const PanelCalificaciones = ({
                                                             handleCalificacionChange={handleCalificacionChange}
                                                             formatFechaTooltip={formatFechaTooltip}
                                                             setTareaPorNombrar={setTareaPorNombrar}
+                                                            rowIndex={grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).findIndex(x => x._id === alumno._id)} // 🌟 Pass row index
+                                                            colIndex={tareaIndex} // 🌟 Pass column index
                                                         />
                                                     </td>
                                                 ))}
