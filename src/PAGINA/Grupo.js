@@ -429,11 +429,18 @@ function Grupo({ user }) {
   }, [asistencia, diasPorBimestre]);
 
   const handleAddAsignatura = (profesorId, nuevaAsignatura) => {
+    console.log("Adding asignatura:", { profesorId, nuevaAsignatura }); // DEBUG LOG
     if (!nuevaAsignatura) return;
+
     setAsignaciones(prev => {
       const current = prev[profesorId] || [];
-      if (current.includes(nuevaAsignatura)) return prev; // Evitar duplicados
-      return { ...prev, [profesorId]: [...current, nuevaAsignatura] };
+      if (current.includes(nuevaAsignatura)) {
+        console.warn("Materia ya asignada:", nuevaAsignatura);
+        return prev;
+      }
+      const newState = { ...prev, [profesorId]: [...current, nuevaAsignatura] };
+      console.log("New asignaciones state:", newState);
+      return newState;
     });
   };
 
