@@ -689,7 +689,7 @@ function Calificaciones({ user }) {
               <table className="calificaciones-table">
                 <thead>
                   <tr>
-                    <th>#</th>
+                    <th rowSpan="2">#</th>
                     <th rowSpan="2">Nombre del Alumno</th>
                     <DndContext
                       sensors={sensors}
