@@ -1,39 +1,48 @@
-import sgMail from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Configura la API Key de SendGrid que pusiste en las variables de entorno
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// Configuración del transporter de Nodemailer
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // true para 465, false para otros puertos
+    auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS, // App Password de Google
+    },
+    tls: {
+        rejectUnauthorized: false
+    },
+    connectionTimeout: 10000, // Timeouts para evitar cuelgues
+    greetingTimeout: 5000,
+    socketTimeout: 10000
+});
 
 /**
- * Envía un correo electrónico usando SendGrid.
- * @param {string|Array<string>} to - El destinatario o un array de destinatarios.
- * @param {string} subject - El asunto del correo.
- * @param {string} html - El cuerpo del correo en formato HTML.
- * @param {Array} attachments - Opcional: un array de archivos adjuntos en formato SendGrid.
+ * Envía un correo electrónico usando Nodemailer.
+ * @param {string|string[]} to - Destinatario(s).
+ * @param {string} subject - Asunto del correo.
+ * @param {string} html - Cuerpo del correo en HTML.
+ * @param {Array} attachments - Lista de adjuntos (opcional).
  */
 export const sendEmail = async (to, subject, html, attachments = []) => {
-  // Prepara el mensaje para la API de SendGrid
-  const msg = {
-    to: to, // Puede ser un string o un array de strings
-    from: process.env.SENDGRID_FROM_EMAIL, // El correo que verificaste en SendGrid
-    subject: subject,
-    html: html,
-    attachments: attachments,
-  };
+    try {
+        const mailOptions = {
+            from: `"Sistema de Asistencia" <${process.env.GMAIL_USER}>`,
+            to: Array.isArray(to) ? to.join(', ') : to,
+            subject,
+            html,
+            attachments
+        };
 
-  try {
-    // Envía el correo
-    await sgMail.send(msg);
-    console.log(`Correo enviado exitosamente a ${Array.isArray(to) ? to.join(', ') : to}`);
-  } catch (error) {
-    console.error('Error al enviar el correo con SendGrid:', error);
-    // Si hay un error, lo muestra en los logs de Render para facilitar la depuración
-    if (error.response) {
-      console.error(error.response.body);
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Correo enviado: %s', info.messageId);
+        return info;
+    } catch (error) {
+        console.error('Error al enviar el correo:', error);
+        throw error;
     }
-    // Lanza el error para que la ruta que lo llamó sepa que algo salió mal
-    throw new Error('No se pudo enviar el correo a través de SendGrid.');
-  }
 };

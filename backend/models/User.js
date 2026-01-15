@@ -13,10 +13,14 @@ const userSchema = new mongoose.Schema(
       required: [true, "La edad es obligatoria"],
       min: [18, "La edad mínima es 18"],
     },
+<<<<<<< HEAD
     fechaRegistro: {
       type: Date,
       default: Date.now,
     },
+=======
+    // Quitamos 'fechaRegistro' ya que 'timestamps: true' lo maneja mejor
+>>>>>>> 703e5c5995cdad84c053490f64661dcfb8853aba
     sexo: {
       type: String,
       enum: ["Masculino", "Femenino", "Otro"],
@@ -42,7 +46,12 @@ const userSchema = new mongoose.Schema(
     },
     foto: {
       type: String,
+<<<<<<< HEAD
       default: "/uploads/fotos/default.png",
+=======
+      // Guarda la URL de Cloudinary o la ruta por defecto
+      default: "/uploads/fotos/default.png", 
+>>>>>>> 703e5c5995cdad84c053490f64661dcfb8853aba
     },
     role: {
       type: String,
@@ -53,11 +62,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "La contraseña es obligatoria"],
       minlength: [6, "La contraseña debe tener al menos 6 caracteres"],
+<<<<<<< HEAD
+=======
+      select: false, // CLAVE: No se envía en consultas Find por defecto
+>>>>>>> 703e5c5995cdad84c053490f64661dcfb8853aba
     },
     asignaturas: {
       type: [String],
       default: [],
     },
+<<<<<<< HEAD
   },
   {
     timestamps: true,
@@ -65,6 +79,23 @@ const userSchema = new mongoose.Schema(
       transform(doc, ret) {
         delete ret.password; // nunca mostrar password
         if (!ret.foto) ret.foto = "/uploads/fotos/default.png";
+=======
+    // Añadidos campos para manejar tokens de reseteo desde la DB (alternativa al objeto 'resetTokens' en memoria)
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
+  },
+  {
+    timestamps: true, // Añade createdAt y updatedAt
+    toJSON: {
+      transform(doc, ret) {
+        // Renombramos _id a id para el frontend
+        ret.id = ret._id; 
+        delete ret._id;
+        delete ret.__v; 
+        delete ret.password; // nunca mostrar password
+        // Asegura la foto por defecto si el campo es nulo
+        if (!ret.foto) ret.foto = "/uploads/fotos/default.png"; 
+>>>>>>> 703e5c5995cdad84c053490f64661dcfb8853aba
         return ret;
       },
     },
@@ -72,6 +103,7 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+<<<<<<< HEAD
 // 🔹 Método para comparar contraseñas manualmente
 userSchema.methods.comparePassword = function (password) {
   return bcrypt.compare(password, this.password);
@@ -86,3 +118,20 @@ userSchema.virtual("fechaRegistroLegible").get(function () {
 // 🔹 ❌ Middleware de hash eliminado, hash debe hacerse manual al crear/actualizar password
 
 export default mongoose.model("User", userSchema);
+=======
+// -----------------------------------------------------
+
+// 🔹 Método para comparar contraseñas manualmente
+userSchema.methods.comparePassword = function (password) {
+  // Aseguramos que la contraseña esté seleccionada para la comparación
+  return bcrypt.compare(password, this.password);
+};
+
+// 🔹 Virtual para fecha legible (usando el campo createdAt que añade timestamps)
+userSchema.virtual("fechaRegistroLegible").get(function () {
+  const d = this.createdAt || new Date();
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+});
+
+export default mongoose.model("User", userSchema);
+>>>>>>> 703e5c5995cdad84c053490f64661dcfb8853aba
