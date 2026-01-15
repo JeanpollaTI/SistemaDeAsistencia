@@ -239,6 +239,7 @@ function Trabajos({ user }) {
         </div>
     );
 
+
     return (
         <>
             <style>{`
