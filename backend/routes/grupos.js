@@ -150,14 +150,18 @@ router.delete("/:id", authMiddleware, isAdmin, async (req, res) => {
 // [GET] /grupos/mis-grupos - Obtener los grupos asignados al profesor logueado
 router.get("/mis-grupos", authMiddleware, async (req, res) => {
     try {
-        const profesorId = req.user._id; // Usar _id directamente
-        console.log("Buscando grupos para profesor:", profesorId);
+        const profesorId = req.user._id;
+        const profesorStringId = String(req.user._id);
+        console.log("Buscando grupos para profesor:", { objectId: profesorId, stringId: profesorStringId });
 
         if (!profesorId) {
             return res.status(401).json({ error: "ID de profesor no válido o faltante en el token." });
         }
 
-        const query = Grupo.find({ 'profesoresAsignados.profesor': profesorId })
+        // Buscamos coincidencia tanto por ObjectId como por String para maximizar compatibilidad
+        const query = Grupo.find({
+            'profesoresAsignados.profesor': { $in: [profesorId, profesorStringId] }
+        })
             .populate({
                 path: 'profesoresAsignados.profesor',
                 select: 'nombre email foto'
