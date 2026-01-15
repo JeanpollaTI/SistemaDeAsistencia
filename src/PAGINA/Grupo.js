@@ -792,7 +792,6 @@ function Grupo({ user }) {
                       </div>
                       <div className="asignaturas-asignadas">
                         {asignaciones[profId] && asignaciones[profId]
-                          .filter(asig => materiasDb.length === 0 || materiasDb.some(m => m.nombre === asig)) // Filtrar visibles
                           .map((asig, idx) => (
                             <div key={idx} className="asignatura-tag">
                               {asig}
@@ -815,7 +814,6 @@ function Grupo({ user }) {
                           {/* REVERTIDO: Solo mostrar las materias asignadas al perfil del profesor seleccionado */}
                           {profesor.asignaturas && profesor.asignaturas.length > 0 ? (
                             profesor.asignaturas
-                              .filter(asig => materiasDb.length === 0 || materiasDb.some(m => m.nombre === asig)) // Filtrar
                               .map(asig => (
                                 <option key={asig} value={asig}>{asig}</option>
                               ))
