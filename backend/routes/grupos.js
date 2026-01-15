@@ -150,9 +150,10 @@ router.delete("/:id", authMiddleware, isAdmin, async (req, res) => {
 // [GET] /grupos/mis-grupos - Obtener los grupos asignados al profesor logueado
 router.get("/mis-grupos", authMiddleware, async (req, res) => {
     try {
-        const profesorId = req.user.id;
+        const profesorId = req.user._id; // Usar _id directamente
+        console.log("Buscando grupos para profesor:", profesorId);
 
-        if (!profesorId || !mongoose.Types.ObjectId.isValid(profesorId)) {
+        if (!profesorId) {
             return res.status(401).json({ error: "ID de profesor no válido o faltante en el token." });
         }
 
