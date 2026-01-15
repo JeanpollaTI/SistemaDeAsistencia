@@ -1846,7 +1846,9 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
                                 // Puede ser objeto poblado (asig.profesor._id) o solo ID (asig.profesor)
                                 const assignedId = asig.profesor?._id || asig.profesor;
                                 // Comparar como strings para evitar fallos de ObjectId vs String
-                                return String(assignedId) === String(userId);
+                                const isMatch = String(assignedId) === String(userId);
+                                console.log(`[DEBUG] Grupo: ${grupo.nombre} | Asignatura: ${asig.asignatura} | ProfesorAssigned: ${assignedId} | UserID: ${userId} | Match: ${isMatch}`);
+                                return isMatch;
                             });
 
                             // Retornar una fila por cada asignatura asignada
