@@ -1841,8 +1841,13 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
                     <thead><tr><th>Grupo</th><th>Mi Asignatura</th><th>Acciones</th></tr></thead>
                     <tbody>
                         {grupos.flatMap(grupo => {
-                            // Filtrar todas las asignaciones para este profesor
-                            const misAsignaciones = grupo.profesoresAsignados.filter(asig => asig.profesor?._id === userId);
+                            // Filtrar todas las asignaciones para este profesor con comparación robusta
+                            const misAsignaciones = grupo.profesoresAsignados.filter(asig => {
+                                // Puede ser objeto poblado (asig.profesor._id) o solo ID (asig.profesor)
+                                const assignedId = asig.profesor?._id || asig.profesor;
+                                // Comparar como strings para evitar fallos de ObjectId vs String
+                                return String(assignedId) === String(userId);
+                            });
 
                             // Retornar una fila por cada asignatura asignada
                             return misAsignaciones.map((asignacion, index) => (
