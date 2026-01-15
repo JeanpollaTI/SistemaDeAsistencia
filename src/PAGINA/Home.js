@@ -18,6 +18,9 @@ function Home({ user }) {
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
   const [alerta, setAlerta] = useState(null); // Nuevo estado para alertas
 
+  // Estados Admin Change Password
+  const [changePassVisible, setChangePassVisible] = useState(false);
+  const [adminPassData, setAdminPassData] = useState({ newPassword: "", adminPassword: "" });
 
 
   const mostrarAlerta = (mensaje, tipo = "success") => {
@@ -158,6 +161,7 @@ function Home({ user }) {
     setShowSubjects(false); // Reset al abrir
     setModalVisible(true);
     setConfirmDeleteVisible(false);
+    setChangePassVisible(false); // Reset pass modal
   };
 
 
@@ -166,6 +170,7 @@ function Home({ user }) {
     setSelectedProfesor(null);
     setConfirmDeleteVisible(false);
     setAsignaturasSelect([]);
+    setChangePassVisible(false);
   };
 
   // Lógica de Cloudinary/Imagen por URL completa o placeholder
@@ -215,6 +220,29 @@ function Home({ user }) {
   };
 
   const cancelDelete = () => setConfirmDeleteVisible(false);
+
+  // --- Lógica ADMIN CAMBIAR CONTRASEÑA ---
+  const handleAdminChangePassword = async (e) => {
+    e.preventDefault();
+    if (!adminPassData.newPassword || !adminPassData.adminPassword) {
+      return mostrarAlerta("Debes llenar ambos campos", "error");
+    }
+    const token = localStorage.getItem("token");
+    try {
+      await axios.put(`${API_URL}/auth/admin/change-user-password`, {
+        targetUserId: selectedProfesor._id,
+        newPassword: adminPassData.newPassword,
+        adminPassword: adminPassData.adminPassword
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      mostrarAlerta("Contraseña actualizada exitosamente.", "success");
+      setChangePassVisible(false);
+      setAdminPassData({ newPassword: "", adminPassword: "" });
+    } catch (err) {
+      console.error(err);
+      mostrarAlerta(err.response?.data?.msg || "Error al cambiar contraseña", "error");
+    }
+  };
 
   // --- JSX del Modal ---
   const primerNombre = user?.nombre ? user.nombre.split(" ")[0] : "";
@@ -411,9 +439,49 @@ function Home({ user }) {
               cancelText="Cancelar"
             />
 
-            <div className="modal-actions">
+            <div className="modal-actions" style={{ position: 'relative' }}>
               <button className="btn-guardar" onClick={guardarAsignaturas}>Guardar asignaturas</button>
+
+              {/* Botón Cambiar Contraseña Admin */}
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setChangePassVisible(!changePassVisible)}
+                style={{ marginLeft: '10px' }}
+              >
+                🔐 Cambiar Contraseña
+              </button>
+
               {!confirmDeleteVisible && <button className="btn-eliminar" onClick={handleDeleteClick}>Eliminar profesor</button>}
+
+              {/* Popup Cambiar Contraseña */}
+              {changePassVisible && (
+                <div className="password-popup" style={{
+                  position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
+                  backgroundColor: 'white', padding: '15px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                  zIndex: 100, width: '300px', border: '1px solid #ddd'
+                }}>
+                  <h4 style={{ marginBottom: '10px', color: '#333' }}>Cambiar Contraseña de Usuario</h4>
+                  <input
+                    type="password"
+                    placeholder="Nueva Contraseña Usuario"
+                    style={{ width: '90%', marginBottom: '10px', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                    value={adminPassData.newPassword}
+                    onChange={e => setAdminPassData({ ...adminPassData, newPassword: e.target.value })}
+                  />
+                  <input
+                    type="password"
+                    placeholder="TU Contraseña de Admin"
+                    style={{ width: '90%', marginBottom: '10px', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                    value={adminPassData.adminPassword}
+                    onChange={e => setAdminPassData({ ...adminPassData, adminPassword: e.target.value })}
+                  />
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <button onClick={handleAdminChangePassword} className="btn-guardar" style={{ fontSize: '0.8rem' }}>Confirmar</button>
+                    <button onClick={() => setChangePassVisible(false)} className="btn-eliminar" style={{ fontSize: '0.8rem' }}>Cancelar</button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {confirmDeleteVisible && (

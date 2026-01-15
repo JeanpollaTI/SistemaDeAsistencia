@@ -2,11 +2,9 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import multer from "multer";
-import crypto from "crypto";
 
 // Importaciones
 import User from "../models/User.js";
-import { sendEmail } from "../utils/sendEmail.js";
 import cloudinary from '../config/cloudinary.js';
 
 const router = express.Router();
@@ -17,9 +15,6 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 // Renombramos para compatibilidad con el código existente
 const uploadFotos = upload;
-
-// Reset tokens (en memoria)
-const resetTokens = {};
 
 // Helpers
 const formatDate = (date) => {
@@ -133,46 +128,58 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Forgot password
-router.post("/forgot-password", async (req, res) => {
+// CAMBIAR CONTRASEÑA (Usuario autenticado cambia su propia contraseña)
+router.put("/change-password", verifyToken, async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ msg: "Debe proporcionar un correo" });
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
 
-    const user = await User.findOne({ email });
+    const user = await User.findById(userId).select('+password');
     if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
 
-    const token = crypto.randomBytes(4).toString("hex").toUpperCase();
-    resetTokens[email] = { token, expires: Date.now() + 15 * 60 * 1000 };
-
-    await sendEmail(email, "Recuperación de contraseña", `<p>Tu código de recuperación es: <b>${token}</b></p>`);
-    res.json({ msg: "Código enviado a tu correo" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: "Error enviando el correo", error: err.message });
-  }
-});
-
-// Reset password
-router.post("/reset-password", async (req, res) => {
-  try {
-    const { email, token, newPassword } = req.body;
-    const savedToken = resetTokens[email];
-    if (!savedToken || savedToken.token !== token || Date.now() > savedToken.expires)
-      return res.status(400).json({ msg: "Token inválido o expirado" });
-
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(400).json({ msg: "La contraseña actual es incorrecta" });
 
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
-    delete resetTokens[email];
-    res.json({ msg: "Contraseña restablecida exitosamente" });
+
+    res.json({ msg: "Contraseña actualizada exitosamente" });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: "Error al restablecer la contraseña", error: err.message });
+    res.status(500).json({ msg: "Error al cambiar contraseña", error: err.message });
   }
 });
+
+// ADMIN: CAMBIAR CONTRASEÑA DE OTRO USUARIO
+// Se requiere que el admin envíe SU propia contraseña para confirmar la acción
+router.put("/admin/change-user-password", verifyAdmin, async (req, res) => {
+  try {
+    const { targetUserId, newPassword, adminPassword } = req.body;
+    const adminId = req.user.id;
+
+    // 1. Verificar credenciales del Admin
+    const adminUser = await User.findById(adminId).select('+password');
+    if (!adminUser) return res.status(404).json({ msg: "Admin no encontrado" });
+
+    const isAdminMatch = await bcrypt.compare(adminPassword, adminUser.password);
+    if (!isAdminMatch) return res.status(403).json({ msg: "Contraseña de administrador incorrecta" });
+
+    // 2. Buscar al usuario objetivo y cambiar su contraseña
+    const targetUser = await User.findById(targetUserId);
+    if (!targetUser) return res.status(404).json({ msg: "Usuario objetivo no encontrado" });
+
+    targetUser.password = await bcrypt.hash(newPassword, 10);
+    await targetUser.save();
+
+    res.json({ msg: `Contraseña para ${targetUser.nombre} actualizada exitosamente` });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Error en server al cambiar contraseña de usuario", error: err.message });
+  }
+});
+
 
 // ----------------- MI PERFIL -----------------
 

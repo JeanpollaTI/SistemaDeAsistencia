@@ -9,9 +9,9 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function EditarPerfil({ user }) {
   const navigate = useNavigate();
-  
+
   // Obtener la función login (setter para el usuario) y la función de URL del contexto
-  const { login, getProfileImageUrl } = useContext(AuthContext); 
+  const { login, getProfileImageUrl } = useContext(AuthContext);
 
   const [formData, setFormData] = useState({
     nombre: "",
@@ -27,6 +27,11 @@ function EditarPerfil({ user }) {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Estados para cambio de contraseña
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordData, setPasswordData] = useState({ currentPassword: "", newPassword: "" });
+  const [passwordMessage, setPasswordMessage] = useState({ type: "", text: "" });
+
   useEffect(() => {
     if (user) {
       setFormData({
@@ -38,7 +43,7 @@ function EditarPerfil({ user }) {
       });
 
       // Usa la función centralizada para la previsualización
-      setFotoPreview(getProfileImageUrl(user.foto)); 
+      setFotoPreview(getProfileImageUrl(user.foto));
     }
   }, [user, getProfileImageUrl]);
 
@@ -82,9 +87,9 @@ function EditarPerfil({ user }) {
       });
 
       const updatedUser = res.data.user || res.data;
-      
+
       // Actualizar el estado global del usuario
-      login(updatedUser, token); 
+      login(updatedUser, token);
 
       setSuccess("Perfil actualizado correctamente.");
 
@@ -99,6 +104,30 @@ function EditarPerfil({ user }) {
       } else {
         setError("Error al actualizar perfil. Intenta nuevamente.");
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordMessage({ type: "", text: "" });
+    if (!passwordData.currentPassword || !passwordData.newPassword) {
+      return setPasswordMessage({ type: "error", text: "Ambos campos son obligatorios." });
+    }
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      await axios.put(`${API_URL}/auth/change-password`, passwordData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPasswordMessage({ type: "success", text: "Contraseña actualizada exitosamente." });
+      setPasswordData({ currentPassword: "", newPassword: "" });
+      setShowPasswordForm(false);
+    } catch (err) {
+      console.error(err);
+      setPasswordMessage({ type: "error", text: err.response?.data?.msg || "Error al cambiar la contraseña." });
     } finally {
       setLoading(false);
     }
@@ -127,13 +156,13 @@ function EditarPerfil({ user }) {
           <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Nombre" />
           <input type="number" name="edad" value={formData.edad} onChange={handleChange} placeholder="Edad" />
           <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" />
-          
+
           <select name="sexo" value={formData.sexo} onChange={handleChange}>
             <option value="Masculino">Masculino</option>
             <option value="Femenino">Femenino</option>
             <option value="Otro">Otro</option>
           </select>
-          
+
           <input type="text" name="celular" value={formData.celular} onChange={handleChange} placeholder="Celular" />
 
           {/* Botones de acción */}
@@ -146,6 +175,46 @@ function EditarPerfil({ user }) {
             </button>
           </div>
         </form>
+
+        <hr className="divider" style={{ margin: "20px 0", borderTop: "1px solid #ccc" }} />
+
+        {/* Sección de Cambio de Contraseña */}
+        <div style={{ textAlign: "center" }}>
+          <button
+            type="button"
+            className="btn-toggle-password"
+            onClick={() => setShowPasswordForm(!showPasswordForm)}
+            style={{ background: "none", border: "none", color: "#3498db", cursor: "pointer", textDecoration: "underline" }}
+          >
+            {showPasswordForm ? "Cancelar cambio de contraseña" : "Cambiar Contraseña"}
+          </button>
+        </div>
+
+        {showPasswordForm && (
+          <form onSubmit={handlePasswordChange} style={{ marginTop: "15px", border: "1px solid #eee", padding: "15px", borderRadius: "8px" }}>
+            <h4>Cambiar Contraseña</h4>
+            {passwordMessage.text && <p className={passwordMessage.type === 'error' ? 'error' : 'success'}>{passwordMessage.text}</p>}
+
+            <input
+              type="password"
+              placeholder="Contraseña Actual"
+              value={passwordData.currentPassword}
+              onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+              required
+            />
+            <input
+              type="password"
+              placeholder="Nueva Contraseña"
+              value={passwordData.newPassword}
+              onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+              required
+            />
+
+            <button type="submit" className="btn-save" disabled={loading} style={{ marginTop: "10px", width: "100%" }}>
+              Actualizar Contraseña
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

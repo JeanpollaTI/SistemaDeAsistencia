@@ -465,27 +465,7 @@ function Calificaciones({ user }) {
     const pdfDataUri = await generatePdfIndividual(alumno, [true, true, true], 'data');
     const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
 
-    if (platform === 'email') {
-      try {
-        const base64Pdf = pdfDataUri.split(',')[1];
-
-        const payload = {
-          to: recipient,
-          subject: `Boleta de Calificaciones de ${nombreCompleto}`,
-          body: `Estimado/a, <br><br>Adjunto encontrará la boleta de calificaciones de <strong>${nombreCompleto}</strong>.<br><br>Saludos cordiales,<br>Administración Escolar`,
-          pdfData: base64Pdf
-        };
-
-        // --- CAMBIO: Usar API_URL ---
-        await axios.post(`${API_URL}/api/enviar-boleta`, payload, getAxiosConfig());
-        mostrarNotificacion(`Boleta enviada a ${recipient} exitosamente.`, 'exito');
-
-      } catch (error) {
-        console.error("Error al enviar correo:", error);
-        mostrarNotificacion("Error al enviar el correo. Revisa el backend.", "error");
-      }
-
-    } else if (platform === 'whatsapp') {
+    if (platform === 'whatsapp') {
       const mensaje = `Hola, te comparto la boleta de calificaciones de ${nombreCompleto}. Por favor, descárgala y adjúntala en la conversación.`;
       const url = `https://wa.me/${recipient}?text=${encodeURIComponent(mensaje)}`;
       window.open(url, '_blank');
@@ -709,6 +689,7 @@ function Calificaciones({ user }) {
               <table className="calificaciones-table">
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th rowSpan="2">Nombre del Alumno</th>
                     <DndContext
                       sensors={sensors}
@@ -742,6 +723,7 @@ function Calificaciones({ user }) {
                     const promFinal = calcularPromedioFinal(alumno._id);
                     return (
                       <tr key={alumno._id}>
+                        <td>{alumnos.indexOf(alumno) + 1}</td>
                         <td>{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</td>
                         {materias.map(materia => (
                           <React.Fragment key={`${alumno._id}-${materia}`}>

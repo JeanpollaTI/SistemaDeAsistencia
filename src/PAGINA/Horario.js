@@ -287,47 +287,7 @@ function Horario({ user }) {
     }
   }, [anio, leyenda, isLoading, mostrarAlerta]);
 
-  // --- Función de ENVÍO por correo (SendGrid) ---
-  const enviarHorarioProfesores = useCallback(async () => {
-    if (user.role !== "admin" || isLoading) return;
-    const correos = profesores.map(p => p.email).filter(Boolean); // Usamos 'email'
-    if (correos.length === 0) {
-      return mostrarAlerta("No hay correos de profesores registrados para enviar.", "error");
-    }
 
-    setIsLoading(true);
-    setLoadingMessage(`Enviando a ${correos.length} profesores...`);
-    setProgress(10);
-    try {
-      const doc = new jsPDF("landscape");
-      await generarContenidoPDF(doc);
-      setProgress(85);
-
-      const pdfDataUri = doc.output('datauristring');
-      const base64Pdf = pdfDataUri.split(',')[1];
-
-      const payload = {
-        to: correos,
-        subject: `Horario Escolar General ${anio}`,
-        body: `Estimados profesores,<br><br>Se adjunta el horario general para el ciclo escolar <strong>${anio}</strong>.<br><br>Saludos cordiales,<br>Administración.`,
-        pdfData: base64Pdf,
-        fileName: `Horario_${anio}.pdf`
-      };
-
-      const token = localStorage.getItem("token");
-      // Uso de API_URL para Vercel/Render
-      await axios.post(`${API_URL}/api/enviar-horario`, payload, { headers: { Authorization: `Bearer ${token}` } });
-
-      setProgress(100);
-      mostrarAlerta(`Horario enviado a ${correos.length} profesores ✅`, "success");
-    } catch (error) {
-      console.error("Error al enviar el horario:", error);
-      mostrarAlerta("Error al enviar el horario por correo ❌", "error");
-    } finally {
-      setIsLoading(false);
-      setLoadingMessage("");
-    }
-  }, [user.role, isLoading, profesores, anio, leyenda, mostrarAlerta]);
 
   // --- Función para GUARDAR horario (Unificada) ---
   const guardarHorario = useCallback(async () => {
@@ -422,7 +382,7 @@ function Horario({ user }) {
           <button onClick={generarHorarioVacio} className="btn-admin" disabled={isLoading}>🗑️ Limpiar</button>
           <button onClick={guardarHorario} className="btn-admin" disabled={isLoading}> 💾 Guardar</button>
           <button onClick={exportarPDF} className="btn-admin" disabled={isLoading}> 📄 Exportar PDF </button>
-          <button onClick={enviarHorarioProfesores} className="btn-admin" disabled={isLoading}> 📧 Enviar </button>
+
 
           <input type="file" accept="application/pdf" ref={fileInputRef} style={{ display: "none" }} onChange={handleArchivoChange} disabled={isLoading} />
         </div>
