@@ -767,16 +767,9 @@ function Calificaciones({ user }) {
 }
 
 // --- Componente: Modal para Compartir ---
+// --- Componente: Modal para Compartir ---
 function ModalShare({ alumno, onClose, onSend }) {
-  const [recipientEmail, setRecipientEmail] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
-
-  const handleEmailSubmit = (e) => {
-    e.preventDefault();
-    if (recipientEmail) {
-      onSend('email', recipientEmail, alumno);
-    }
-  };
 
   const handleWhatsAppSubmit = (e) => {
     e.preventDefault();
@@ -789,21 +782,6 @@ function ModalShare({ alumno, onClose, onSend }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <h3>Enviar Boleta de {`${alumno.apellidoPaterno} ${alumno.nombre}`}</h3>
-
-        <form onSubmit={handleEmailSubmit} className="share-form">
-          <label htmlFor="email-input">Enviar por Correo Electrónico:</label>
-          <div className="input-group">
-            <input
-              id="email-input"
-              type="email"
-              value={recipientEmail}
-              onChange={(e) => setRecipientEmail(e.target.value)}
-              placeholder="ejemplo@correo.com"
-              required
-            />
-            <button type="submit" className="button">Enviar Email</button>
-          </div>
-        </form>
 
         <form onSubmit={handleWhatsAppSubmit} className="share-form">
           <label htmlFor="phone-input">Enviar a WhatsApp:</label>
