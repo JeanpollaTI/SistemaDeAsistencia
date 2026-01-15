@@ -704,7 +704,14 @@ function Grupo({ user }) {
               <tbody>
                 {grupos.flatMap(grupo => {
                   // Filtrar todas las asignaciones para este profesor
-                  const misAsignaciones = grupo.profesoresAsignados.filter(asig => asig.profesor?._id === user.id);
+                  let misAsignaciones = grupo.profesoresAsignados.filter(asig => asig.profesor?._id === user.id);
+
+                  // 🌟 FALLBACK: Si tras filtrar no hay coincidencias (posible error de ID),
+                  // pero el backend nos mandó este grupo, mostramos TODAS las asignaturas.
+                  if (misAsignaciones.length === 0 && grupo.profesoresAsignados.length > 0) {
+                    console.warn(`[WARNING] No ID match for group ${grupo.nombre} in Asistencia. Using fallback to show all assignments.`);
+                    misAsignaciones = grupo.profesoresAsignados;
+                  }
 
                   // Retornar una fila por cada asignatura asignada
                   return misAsignaciones.map((asignacion, index) => (
