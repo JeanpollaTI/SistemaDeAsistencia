@@ -89,10 +89,11 @@ function Grupo({ user }) {
       // Agrupar asignaturas por profesor
       data.profesoresAsignados.forEach(asig => {
         if (asig.profesor?._id) {
-          if (!asignacionesIniciales[asig.profesor._id]) {
-            asignacionesIniciales[asig.profesor._id] = [];
+          const profId = String(asig.profesor._id);
+          if (!asignacionesIniciales[profId]) {
+            asignacionesIniciales[profId] = [];
           }
-          asignacionesIniciales[asig.profesor._id].push(asig.asignatura);
+          asignacionesIniciales[profId].push(asig.asignatura);
         }
       });
       setAsignaciones(asignacionesIniciales);
@@ -790,7 +791,7 @@ function Grupo({ user }) {
                         .map((asig, idx) => (
                           <div key={idx} className="asignatura-tag">
                             {asig}
-                            <button className="btn-remove-tag" onClick={() => handleRemoveAsignatura(profesor._id, asig)}><FaTimes /></button>
+                            <button className="btn-remove-tag" onClick={() => handleRemoveAsignatura(String(profesor._id), asig)}><FaTimes /></button>
                           </div>
                         ))}
                     </div>
@@ -798,7 +799,7 @@ function Grupo({ user }) {
                       <select
                         className="asignatura-select-add"
                         onChange={(e) => {
-                          handleAddAsignatura(profesor._id, e.target.value);
+                          handleAddAsignatura(String(profesor._id), e.target.value);
                           e.target.value = ""; // Reset select
                         }}
                         defaultValue=""
