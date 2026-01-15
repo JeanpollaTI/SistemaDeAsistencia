@@ -26,7 +26,37 @@ const __dirname = path.dirname(__filename);
 
 // ----------------- MIDDLEWARE -----------------
 // Habilita Cross-Origin Resource Sharing para permitir peticiones desde el frontend
-app.use(cors());
+// Habilita Cross-Origin Resource Sharing
+// <-- CAMBIO: Configuración explícita de CORS para permitir Vercel -->
+const allowedOrigins = [
+  "https://sec-n9-k0tx1latf-sec9gs-projects.vercel.app",
+  "https://secn9.vercel.app", // Posible dominio principal
+  "http://localhost:3000",
+  "http://localhost:5173"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (como Postman o mobile apps)
+    if (!origin) return callback(null, true);
+    // Verificar si el origen está en la lista blanca
+    // O permitir todos los subdominios de vercel.app si prefieres una regex
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith(".vercel.app")) {
+      callback(null, true);
+    } else {
+      console.log("Origen bloqueado por CORS:", origin);
+      callback(new Error('No permitido por CORS'));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+// <-- CAMBIO: Ruta de prueba para verificar que el servidor corre -->
+app.get("/", (req, res) => {
+  res.send("✅ El servidor Backend está corriendo correctamente.");
+});
 // Parsea los cuerpos de las peticiones entrantes con formato JSON
 // <-- CAMBIO: Se aumenta el límite para aceptar el PDF en formato base64 -->
 app.use(express.json({ limit: '10mb' }));
