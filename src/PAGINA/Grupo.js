@@ -780,13 +780,15 @@ function Grupo({ user }) {
             <div className="modal-content">
               <h2>Asignar Profesores a "{grupoSeleccionado?.nombre}"</h2>
               <div className="profesores-list">
-                {profesores.map(profesor => {
-                  if (!profesor?._id) return null;
-                  const profId = String(profesor._id);
+                {profesores.map((profesor, index) => {
+                  if (!profesor) return null;
+                  // Use _id if available, otherwise fallback (though _id should always exist)
+                  const profId = profesor._id ? String(profesor._id) : `unknown-${index}`;
+
                   return (
-                    <div key={profId} className="asignacion-row-container">
+                    <div key={profesor._id || index} className="asignacion-row-container">
                       <div className="profesor-header">
-                        <strong>{profesor.nombre}</strong>
+                        <strong>{profesor.nombre || 'Sin Nombre'}</strong>
                       </div>
                       <div className="asignaturas-asignadas">
                         {asignaciones[profId] && asignaciones[profId]
@@ -802,7 +804,9 @@ function Grupo({ user }) {
                         <select
                           className="asignatura-select-add"
                           onChange={(e) => {
-                            handleAddAsignatura(profId, e.target.value);
+                            if (profId !== `unknown-${index}`) {
+                              handleAddAsignatura(profId, e.target.value);
+                            }
                             e.target.value = ""; // Reset select
                           }}
                           defaultValue=""
