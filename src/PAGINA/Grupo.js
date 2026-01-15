@@ -810,12 +810,10 @@ function Grupo({ user }) {
                         <select
                           className="asignatura-select-add"
                           onChange={(e) => {
-                            if (profId !== `unknown-${index}`) {
-                              handleAddAsignatura(profId, e.target.value);
-                            }
-                            e.target.value = ""; // Reset select
+                            handleAddAsignatura(profId, e.target.value);
+                            // e.target.value = ""; // No need with controlled comp
                           }}
-                          defaultValue=""
+                          value=""
                         >
                           <option value="" disabled>Agregar asignatura...</option>
                           {/* REVERTIDO: Solo mostrar las materias asignadas al perfil del profesor seleccionado */}
