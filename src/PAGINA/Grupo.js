@@ -780,45 +780,49 @@ function Grupo({ user }) {
             <div className="modal-content">
               <h2>Asignar Profesores a "{grupoSeleccionado?.nombre}"</h2>
               <div className="profesores-list">
-                {profesores.map(profesor => (
-                  <div key={profesor._id} className="asignacion-row-container">
-                    <div className="profesor-header">
-                      <strong>{profesor.nombre}</strong>
+                {profesores.map(profesor => {
+                  if (!profesor?._id) return null;
+                  const profId = String(profesor._id);
+                  return (
+                    <div key={profId} className="asignacion-row-container">
+                      <div className="profesor-header">
+                        <strong>{profesor.nombre}</strong>
+                      </div>
+                      <div className="asignaturas-asignadas">
+                        {asignaciones[profId] && asignaciones[profId]
+                          .filter(asig => materiasDb.length === 0 || materiasDb.some(m => m.nombre === asig)) // Filtrar visibles
+                          .map((asig, idx) => (
+                            <div key={idx} className="asignatura-tag">
+                              {asig}
+                              <button className="btn-remove-tag" onClick={() => handleRemoveAsignatura(profId, asig)}><FaTimes /></button>
+                            </div>
+                          ))}
+                      </div>
+                      <div className="add-asignatura-container">
+                        <select
+                          className="asignatura-select-add"
+                          onChange={(e) => {
+                            handleAddAsignatura(profId, e.target.value);
+                            e.target.value = ""; // Reset select
+                          }}
+                          defaultValue=""
+                        >
+                          <option value="" disabled>Agregar asignatura...</option>
+                          {/* REVERTIDO: Solo mostrar las materias asignadas al perfil del profesor seleccionado */}
+                          {profesor.asignaturas && profesor.asignaturas.length > 0 ? (
+                            profesor.asignaturas
+                              .filter(asig => materiasDb.length === 0 || materiasDb.some(m => m.nombre === asig)) // Filtrar
+                              .map(asig => (
+                                <option key={asig} value={asig}>{asig}</option>
+                              ))
+                          ) : (
+                            <option disabled>Este profesor no tiene materias asignadas</option>
+                          )}
+                        </select>
+                      </div>
                     </div>
-                    <div className="asignaturas-asignadas">
-                      {asignaciones[profesor._id] && asignaciones[profesor._id]
-                        .filter(asig => materiasDb.length === 0 || materiasDb.some(m => m.nombre === asig)) // Filtrar visibles
-                        .map((asig, idx) => (
-                          <div key={idx} className="asignatura-tag">
-                            {asig}
-                            <button className="btn-remove-tag" onClick={() => handleRemoveAsignatura(String(profesor._id), asig)}><FaTimes /></button>
-                          </div>
-                        ))}
-                    </div>
-                    <div className="add-asignatura-container">
-                      <select
-                        className="asignatura-select-add"
-                        onChange={(e) => {
-                          handleAddAsignatura(String(profesor._id), e.target.value);
-                          e.target.value = ""; // Reset select
-                        }}
-                        defaultValue=""
-                      >
-                        <option value="" disabled>Agregar asignatura...</option>
-                        {/* REVERTIDO: Solo mostrar las materias asignadas al perfil del profesor seleccionado */}
-                        {profesor.asignaturas && profesor.asignaturas.length > 0 ? (
-                          profesor.asignaturas
-                            .filter(asig => materiasDb.length === 0 || materiasDb.some(m => m.nombre === asig)) // Filtrar
-                            .map(asig => (
-                              <option key={asig} value={asig}>{asig}</option>
-                            ))
-                        ) : (
-                          <option disabled>Este profesor no tiene materias asignadas</option>
-                        )}
-                      </select>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="modal-actions">
                 <button className="btn btn-primary" onClick={handleGuardarAsignacion}>Guardar Cambios</button>
