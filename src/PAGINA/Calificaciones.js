@@ -689,8 +689,8 @@ function Calificaciones({ user }) {
               <table className="calificaciones-table">
                 <thead>
                   <tr>
-                    <th rowSpan="2">#</th>
-                    <th rowSpan="2">Nombre del Alumno</th>
+                    <th rowSpan="2" className="num-header">#</th>
+                    <th rowSpan="2" className="nombre-header">Nombre del Alumno</th>
                     <DndContext
                       sensors={sensors}
                       collisionDetection={closestCenter}

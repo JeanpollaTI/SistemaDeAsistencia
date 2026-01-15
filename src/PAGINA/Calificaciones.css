@@ -336,31 +336,58 @@
   /* Reduced padding */
 }
 
-/* --- FIXING THE T1 NAME COLUMN BUG --- */
-/* First Column (Name) Sticky Left - HEADER */
-.calificaciones-table thead tr:first-child th:first-child {
+/* --- FIXING THE T1 NAME COLUMN BUG + NUMBERING ADJUSTMENT --- */
+
+/* 1. COLUMN # (Numbering) - Sticky Left: 0 */
+.calificaciones-table thead tr th.num-header {
   position: sticky;
   left: 0;
-  z-index: 40 !important;
-  width: 300px;
-  /* Optimized to 300px */
-  min-width: 300px;
-  max-width: 300px;
+  z-index: 45 !important; /* Higher than normal cells */
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
   background-color: #2c3e50;
   color: white;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-  padding: 10px !important;
+  padding: 5px !important;
+  text-align: center;
 }
 
-/* First Column (Name) Sticky Left - BODY */
 .calificaciones-table tbody td:first-child {
   position: sticky;
   left: 0;
-  z-index: 10;
-  width: 300px;
-  /* Optimized to 300px */
-  min-width: 300px;
-  max-width: 300px;
+  z-index: 15; /* Above normal scrollable cells */
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  background-color: #f8f9fa !important;
+  color: #555 !important;
+  font-weight: bold;
+  text-align: center !important;
+  border-right: 1px solid #ddd;
+}
+
+/* 2. COLUMN Name - Sticky Left: 40px (Width of # col) */
+.calificaciones-table thead tr th.nombre-header {
+  position: sticky;
+  left: 40px; /* Starts where # ends */
+  z-index: 45 !important;
+  width: 250px !important;
+  min-width: 250px !important;
+  max-width: 250px !important;
+  background-color: #2c3e50;
+  color: white;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Shadow to right */
+  padding: 10px !important;
+  text-align: left !important;
+}
+
+.calificaciones-table tbody td:nth-child(2) {
+  position: sticky;
+  left: 40px;
+  z-index: 15;
+  width: 250px !important;
+  min-width: 250px !important;
+  max-width: 250px !important;
   background-color: #f8f9fa !important;
   color: black !important;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
