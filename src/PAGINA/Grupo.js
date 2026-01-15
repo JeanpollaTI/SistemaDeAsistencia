@@ -88,8 +88,9 @@ function Grupo({ user }) {
       const asignacionesIniciales = {};
       // Agrupar asignaturas por profesor
       data.profesoresAsignados.forEach(asig => {
-        if (asig.profesor?._id) {
-          const profId = String(asig.profesor._id);
+        const pId = asig.profesor?.id || asig.profesor?._id;
+        if (pId) {
+          const profId = String(pId);
           if (!asignacionesIniciales[profId]) {
             asignacionesIniciales[profId] = [];
           }
@@ -789,11 +790,12 @@ function Grupo({ user }) {
               <div className="profesores-list">
                 {profesores.map((profesor, index) => {
                   if (!profesor) return null;
-                  // Use _id if available, otherwise fallback (though _id should always exist)
-                  const profId = profesor._id ? String(profesor._id) : `unknown-${index}`;
+                  // Use id (from toJSON) or _id, otherwise fallback
+                  const pId = profesor.id || profesor._id;
+                  const profId = pId ? String(pId) : `unknown-${index}`;
 
                   return (
-                    <div key={profesor._id || index} className="asignacion-row-container">
+                    <div key={profId} className="asignacion-row-container">
                       <div className="profesor-header">
                         <strong>{profesor.nombre || 'Sin Nombre'}</strong>
                       </div>
