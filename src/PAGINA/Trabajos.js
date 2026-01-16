@@ -1842,21 +1842,16 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
                     <tbody>
                         {grupos.flatMap(grupo => {
                             // Filtrar todas las asignaciones para este profesor con comparación robusta
-                            let misAsignaciones = grupo.profesoresAsignados.filter(asig => {
-                                // Puede ser objeto poblado (asig.profesor._id) o solo ID (asig.profesor)
-                                const assignedId = asig.profesor?._id || asig.profesor;
+                            const misAsignaciones = grupo.profesoresAsignados.filter(asig => {
+                                // Verificación robusta del ID del profesor.
+                                // El backend puede transformar _id a id en toJSON (User model), o devolver solo el ID.
+                                const assignedId = asig.profesor?.id || asig.profesor?._id || asig.profesor;
+
                                 // Comparar como strings para evitar fallos de ObjectId vs String
                                 const isMatch = String(assignedId) === String(userId);
-                                console.log(`[DEBUG] Grupo: ${grupo.nombre} | Asignatura: ${asig.asignatura} | ProfesorAssigned: ${assignedId} | UserID: ${userId} | Match: ${isMatch}`);
+                                // console.log(`[DEBUG] Grupo: ${grupo.nombre} | Asignatura: ${asig.asignatura} | ProfesorAssigned: ${assignedId} | UserID: ${userId} | Match: ${isMatch}`);
                                 return isMatch;
                             });
-
-                            // 🌟 FALLBACK: Si tras filtrar no hay coincidencias (posible error de ID),
-                            // pero el backend nos mandó este grupo, mostramos TODAS las asignaturas.
-                            if (misAsignaciones.length === 0 && grupo.profesoresAsignados.length > 0) {
-                                console.warn(`[WARNING] No ID match for group ${grupo.nombre}. Using fallback to show all assignments.`);
-                                misAsignaciones = grupo.profesoresAsignados;
-                            }
 
                             // Retornar una fila por cada asignatura asignada
                             return misAsignaciones.map((asignacion, index) => (

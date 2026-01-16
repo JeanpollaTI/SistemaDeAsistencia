@@ -104,14 +104,11 @@ function Grupo({ user }) {
       setAsignaturaActual(asignatura); // Guardar la asignatura actual
 
       // Validar que el usuario tenga asignada esa materia (doble check)
-      let misAsignaciones = data.profesoresAsignados.filter(asig => asig.profesor?._id === user.id);
-
-      // 🌟 FALLBACK: Si tras filtrar no hay coincidencias (posible error de ID),
-      // pero el backend nos mandó este grupo y tiene profesores asignados, permitimos acceso usando todas las asignaciones.
-      if (misAsignaciones.length === 0 && data.profesoresAsignados && data.profesoresAsignados.length > 0) {
-        console.warn(`[WARNING] No ID match for validation in Group ${data.nombre}. Using fallback to allow access.`);
-        misAsignaciones = data.profesoresAsignados;
-      }
+      // Validar que el usuario tenga asignada esa materia (doble check)
+      const misAsignaciones = data.profesoresAsignados.filter(asig => {
+        const assignedId = asig.profesor?.id || asig.profesor?._id || asig.profesor;
+        return String(assignedId) === String(user.id);
+      });
 
       const tieneAsignatura = misAsignaciones.some(a => a.asignatura === asignatura);
 
@@ -712,14 +709,11 @@ function Grupo({ user }) {
               <tbody>
                 {grupos.flatMap(grupo => {
                   // Filtrar todas las asignaciones para este profesor
-                  let misAsignaciones = grupo.profesoresAsignados.filter(asig => asig.profesor?._id === user.id);
-
-                  // 🌟 FALLBACK: Si tras filtrar no hay coincidencias (posible error de ID),
-                  // pero el backend nos mandó este grupo, mostramos TODAS las asignaturas.
-                  if (misAsignaciones.length === 0 && grupo.profesoresAsignados.length > 0) {
-                    console.warn(`[WARNING] No ID match for group ${grupo.nombre} in Asistencia. Using fallback to show all assignments.`);
-                    misAsignaciones = grupo.profesoresAsignados;
-                  }
+                  // Filtrar todas las asignaciones para este profesor
+                  const misAsignaciones = grupo.profesoresAsignados.filter(asig => {
+                    const assignedId = asig.profesor?.id || asig.profesor?._id || asig.profesor;
+                    return String(assignedId) === String(user.id);
+                  });
 
                   // Retornar una fila por cada asignatura asignada
                   return misAsignaciones.map((asignacion, index) => (
