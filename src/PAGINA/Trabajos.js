@@ -1452,11 +1452,12 @@ const PanelCalificaciones = ({
         let pesoTotalAplicable = 0;
 
         criteriosDelBimestre.forEach(criterio => {
-            // Verificar si este criterio tiene calificaciones válidas
+            // Verificar si este criterio tiene calificaciones válidas (números reales)
             const tareas = calificaciones[alumnoId]?.[bimestre]?.[criterio.nombre] || {};
-            const tieneNotas = Object.values(tareas).some(entrada => entrada && typeof entrada.nota === 'number');
+            // Usamos la misma lógica que calcularPromedioCriterio para consistencia
+            const validNotesCount = Object.values(tareas).filter(entrada => entrada && typeof entrada.nota === 'number').length;
 
-            if (tieneNotas) {
+            if (validNotesCount > 0) {
                 const promCriterio = calcularPromedioCriterio(alumnoId, bimestre, criterio.nombre);
                 sumaPonderada += promCriterio * (criterio.porcentaje / 100);
                 pesoTotalAplicable += (criterio.porcentaje / 100);
