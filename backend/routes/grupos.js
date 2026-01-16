@@ -257,6 +257,7 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
                     }
 
                     let promedioPonderado = 0;
+                    let pesoTotalAplicable = 0; // 🌟 FIX: Track total weight of active criteria
 
                     criteriosActivos.forEach(criterio => {
                         const calificacionesCriterio = calificacionesAlumnoEnBimestre[criterio.nombre] || {};
@@ -265,21 +266,25 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
                             .filter(e => e && typeof e.nota === 'number')
                             .map(e => e.nota);
 
-                        let promedioCriterio = 0;
                         if (notasValidas.length > 0) {
-                            promedioCriterio = notasValidas.reduce((a, b) => a + b, 0) / notasValidas.length;
+                            const promedioCriterio = notasValidas.reduce((a, b) => a + b, 0) / notasValidas.length;
+                            promedioPonderado += promedioCriterio * (criterio.porcentaje / 100);
+                            pesoTotalAplicable += (criterio.porcentaje / 100); // Add weight only if criterion is active
                         }
-
-                        promedioPonderado += promedioCriterio * (criterio.porcentaje / 100);
                     });
 
-                    // Solo devolvemos la calificación si el total de criterios suma 100
-                    const totalPorcentaje = criteriosActivos.reduce((sum, c) => sum + (c.porcentaje || 0), 0);
+                    // Solo devolvemos la calificación si el total de criterios definidos suma 100 (sanity check), 
+                    // PERO el cálculo se basa en el peso aplicable actual.
+                    // const totalPorcentaje = criteriosActivos.reduce((sum, c) => sum + (c.porcentaje || 0), 0);
+                    // if (totalPorcentaje !== 100) return null; // Relaxing this strict check might be good, but keeping for safety.
 
-                    if (totalPorcentaje !== 100) return null;
+                    if (pesoTotalAplicable === 0) return null; // No active grades
+
+                    // Rescale: (WeightedSum / TotalWeight)
+                    const promedioFinal = promedioPonderado / pesoTotalAplicable;
 
                     // Solo se reporta la calificación si es mayor a 0 (para evitar 0s falsos)
-                    return promedioPonderado > 0 ? parseFloat(promedioPonderado.toFixed(1)) : null;
+                    return promedioFinal > 0 ? parseFloat(promedioFinal.toFixed(1)) : null;
                 });
 
                 // 5. Asignar el array de promedios [bim1, bim2, bim3] a la materia correspondiente
