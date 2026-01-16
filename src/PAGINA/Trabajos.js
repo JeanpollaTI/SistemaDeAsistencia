@@ -1435,7 +1435,11 @@ const PanelCalificaciones = ({
 
     const calcularPromedioCriterio = (alumnoId, bimestre, criterioNombre) => {
         const tareas = calificaciones[alumnoId]?.[bimestre]?.[criterioNombre] || {};
-        const notasValidas = Object.values(tareas)
+        const maxTareas = numTareas[criterioNombre] || 0;
+
+        const notasValidas = Object.keys(tareas)
+            .filter(index => parseInt(index) < maxTareas) // Solo tareas visibles
+            .map(index => tareas[index])
             .filter(entrada => entrada && typeof entrada.nota === 'number')
             .map(entrada => entrada.nota);
 
@@ -1452,10 +1456,14 @@ const PanelCalificaciones = ({
         let pesoTotalAplicable = 0;
 
         criteriosDelBimestre.forEach(criterio => {
-            // Verificar si este criterio tiene calificaciones válidas (números reales)
+            // Verificar si este criterio tiene calificaciones válidas (números reales) EN TAREAS VISIBLES
             const tareas = calificaciones[alumnoId]?.[bimestre]?.[criterio.nombre] || {};
-            // Usamos la misma lógica que calcularPromedioCriterio para consistencia
-            const validNotesCount = Object.values(tareas).filter(entrada => entrada && typeof entrada.nota === 'number').length;
+            const maxTareas = numTareas[criterio.nombre] || 0;
+
+            // Filtrar por índice visible y por validez de nota
+            const validNotesCount = Object.keys(tareas)
+                .filter(index => parseInt(index) < maxTareas && tareas[index] && typeof tareas[index].nota === 'number')
+                .length;
 
             if (validNotesCount > 0) {
                 const promCriterio = calcularPromedioCriterio(alumnoId, bimestre, criterio.nombre);
