@@ -158,7 +158,7 @@ const CriterioCell = React.memo(({
             type="number"
             min="5" max="10" step="0.1"
             className="cuadrito-calificacion"
-            placeholder={`${tareaIndex + 1}`}
+            placeholder=""
             value={tareaData.nota ?? ''}
             title={tooltipText}
             onChange={handleChange}
