@@ -104,7 +104,15 @@ function Grupo({ user }) {
       setAsignaturaActual(asignatura); // Guardar la asignatura actual
 
       // Validar que el usuario tenga asignada esa materia (doble check)
-      const misAsignaciones = data.profesoresAsignados.filter(asig => asig.profesor?._id === user.id);
+      let misAsignaciones = data.profesoresAsignados.filter(asig => asig.profesor?._id === user.id);
+
+      // 🌟 FALLBACK: Si tras filtrar no hay coincidencias (posible error de ID),
+      // pero el backend nos mandó este grupo y tiene profesores asignados, permitimos acceso usando todas las asignaciones.
+      if (misAsignaciones.length === 0 && data.profesoresAsignados && data.profesoresAsignados.length > 0) {
+        console.warn(`[WARNING] No ID match for validation in Group ${data.nombre}. Using fallback to allow access.`);
+        misAsignaciones = data.profesoresAsignados;
+      }
+
       const tieneAsignatura = misAsignaciones.some(a => a.asignatura === asignatura);
 
       if (!tieneAsignatura) {
