@@ -1842,15 +1842,19 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
                     <tbody>
                         {grupos.flatMap(grupo => {
                             // Filtrar todas las asignaciones para este profesor con comparación robusta
+                            // Filtrar todas las asignaciones para este profesor con comparación robusta
                             const misAsignaciones = grupo.profesoresAsignados.filter(asig => {
-                                // Verificación robusta del ID del profesor.
-                                // El backend puede transformar _id a id en toJSON (User model), o devolver solo el ID.
+                                // 1. Intentar matching por ID (id o _id)
                                 const assignedId = asig.profesor?.id || asig.profesor?._id || asig.profesor;
+                                const idMatch = String(assignedId) === String(userId);
 
-                                // Comparar como strings para evitar fallos de ObjectId vs String
-                                const isMatch = String(assignedId) === String(userId);
-                                // console.log(`[DEBUG] Grupo: ${grupo.nombre} | Asignatura: ${asig.asignatura} | ProfesorAssigned: ${assignedId} | UserID: ${userId} | Match: ${isMatch}`);
-                                return isMatch;
+                                // 2. Intentar matching por Email (Backup robusto si falla el ID)
+                                const assignedEmail = asig.profesor?.email;
+                                const userEmail = user?.email;
+                                const emailMatch = assignedEmail && userEmail && (assignedEmail === userEmail);
+
+                                // console.log(`[DEBUG] G:${grupo.nombre} | Asig:${asig.asignatura} | ID_MATCH:${idMatch} | EMAIL_MATCH:${emailMatch}`);
+                                return idMatch || emailMatch;
                             });
 
                             // Retornar una fila por cada asignatura asignada

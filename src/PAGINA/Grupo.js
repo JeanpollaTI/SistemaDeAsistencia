@@ -107,7 +107,12 @@ function Grupo({ user }) {
       // Validar que el usuario tenga asignada esa materia (doble check)
       const misAsignaciones = data.profesoresAsignados.filter(asig => {
         const assignedId = asig.profesor?.id || asig.profesor?._id || asig.profesor;
-        return String(assignedId) === String(user.id);
+        const idMatch = String(assignedId) === String(user.id);
+
+        const assignedEmail = asig.profesor?.email;
+        const emailMatch = assignedEmail && user.email && (assignedEmail === user.email);
+
+        return idMatch || emailMatch;
       });
 
       const tieneAsignatura = misAsignaciones.some(a => a.asignatura === asignatura);
