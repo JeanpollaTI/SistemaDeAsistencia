@@ -717,7 +717,12 @@ function Grupo({ user }) {
                   // Filtrar todas las asignaciones para este profesor
                   const misAsignaciones = grupo.profesoresAsignados.filter(asig => {
                     const assignedId = asig.profesor?.id || asig.profesor?._id || asig.profesor;
-                    return String(assignedId) === String(user.id);
+                    const idMatch = String(assignedId) === String(user.id);
+
+                    const assignedEmail = asig.profesor?.email;
+                    const emailMatch = assignedEmail && user.email && (assignedEmail === user.email);
+
+                    return idMatch || emailMatch;
                   });
 
                   // Retornar una fila por cada asignatura asignada
