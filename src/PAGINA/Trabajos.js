@@ -164,9 +164,9 @@ const CriterioCell = React.memo(({
             onChange={handleChange}
             onKeyDown={handleKeyDown} // 🌟 Attach handler
             onBlur={() => {
-                // Validación al perder foco: Asegurar que sea número válido
-                if (typeof tareaData.nota === 'number') {
-                    // No forzamos mínimo 5
+                // Validación al perder foco: Si es número válido y < 5, ajustar a 5
+                if (typeof tareaData.nota === 'number' && tareaData.nota > 0 && tareaData.nota < 5) {
+                    handleCalificacionChange(alumnoId, bimestreActivo, criterioNombre, tareaIndex, 5);
                 }
             }}
         />
@@ -1472,7 +1472,7 @@ const PanelCalificaciones = ({
         // "La calificación mínima sea 5, no menos"
         // Si hay promedio (es decir, hubo calificaciones), el mínimo es 5.
         const promedioRedondeado = Math.round(promedioFinal); // Redondeo estándar
-        return promedioRedondeado; // Eliminada la restricción de mínimo 5
+        return Math.max(5, promedioRedondeado); // Restaurada la restricción de mínimo 5
     };
 
     const formatFechaTooltip = (fechaISO) => {
