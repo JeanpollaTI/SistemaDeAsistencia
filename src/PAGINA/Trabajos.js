@@ -1422,7 +1422,13 @@ const PanelCalificaciones = ({
         const token = localStorage.getItem('token');
         const config = { headers: { Authorization: `Bearer ${token}` } };
         // Envía el objeto de criterios completo, separado por bimestre, que viene del estado del padre.
-        const payload = { grupoId: grupo._id, asignatura, criterios: criteriosPorBimestre, calificaciones };
+        const payload = {
+            grupoId: grupo._id,
+            asignatura,
+            criterios: criteriosPorBimestre,
+            calificaciones,
+            numTareas // 🎯 Enviamos configuración de tareas visibles
+        };
         try {
             await axios.post(`${API_URL}/calificaciones`, payload, config);
             setNotificacion({ mensaje: '¡Calificaciones guardadas con éxito!', tipo: 'exito' });

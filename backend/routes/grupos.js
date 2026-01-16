@@ -251,6 +251,9 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
                     // Si no hay criterios definidos, se considera que no hay calificación
                     if (criteriosActivos.length === 0) return null;
 
+                    // Recuperar configuración de tareas visibles (numTareas)
+                    const numTareasConfig = registro.numTareas || {};
+
                     const calificacionesAlumnoEnBimestre = calificacionesMateria?.[alumnoId]?.[bimestreKey];
                     if (!calificacionesAlumnoEnBimestre) {
                         return null;
@@ -261,10 +264,11 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
 
                     criteriosActivos.forEach(criterio => {
                         const calificacionesCriterio = calificacionesAlumnoEnBimestre[criterio.nombre] || {};
+                        const maxTareas = numTareasConfig[criterio.nombre] || 999; // Si no hay config, asumimos todo visible (safe fallback)
 
-                        const notasValidas = Object.values(calificacionesCriterio)
-                            .filter(e => e && typeof e.nota === 'number')
-                            .map(e => e.nota);
+                        const notasValidas = Object.keys(calificacionesCriterio)
+                            .filter(index => parseInt(index) < maxTareas && calificacionesCriterio[index] && typeof calificacionesCriterio[index].nota === 'number')
+                            .map(index => calificacionesCriterio[index].nota);
 
                         if (notasValidas.length > 0) {
                             const promedioCriterio = notasValidas.reduce((a, b) => a + b, 0) / notasValidas.length;

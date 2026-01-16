@@ -45,7 +45,7 @@ router.get('/', authMiddleware, async (req, res) => {
  * @access  Private (Profesores)
  */
 router.post('/', authMiddleware, async (req, res) => {
-  const { grupoId, asignatura, criterios, calificaciones } = req.body;
+  const { grupoId, asignatura, criterios, calificaciones, numTareas } = req.body;
 
   if (!grupoId || !asignatura || !criterios || calificaciones === undefined) {
     return res.status(400).json({ msg: 'Faltan datos requeridos (grupoId, asignatura, criterios, calificaciones)' });
@@ -54,7 +54,7 @@ router.post('/', authMiddleware, async (req, res) => {
   try {
     const registroActualizado = await Calificacion.findOneAndUpdate(
       { grupo: grupoId, asignatura: asignatura },
-      { criterios, calificaciones, grupo: grupoId, asignatura: asignatura },
+      { criterios, calificaciones, numTareas, grupo: grupoId, asignatura: asignatura },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 

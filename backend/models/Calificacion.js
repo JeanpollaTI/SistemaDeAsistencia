@@ -22,6 +22,11 @@ const CalificacionSchema = new mongoose.Schema({
   calificaciones: {
     type: mongoose.Schema.Types.Mixed,
     default: {}
+  },
+  // Almacena el número de tareas visibles por criterio para ignorar 'ghost grades'
+  numTareas: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
   }
 }, {
   timestamps: true
