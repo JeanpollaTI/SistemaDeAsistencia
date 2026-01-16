@@ -164,9 +164,9 @@ const CriterioCell = React.memo(({
             onChange={handleChange}
             onKeyDown={handleKeyDown} // 🌟 Attach handler
             onBlur={() => {
-                // Validación al perder foco: Si es número válido y < 5, ajustar a 5
-                if (typeof tareaData.nota === 'number' && tareaData.nota < 5) {
-                    handleCalificacionChange(alumnoId, bimestreActivo, criterioNombre, tareaIndex, 5);
+                // Validación al perder foco: Asegurar que sea número válido
+                if (typeof tareaData.nota === 'number') {
+                    // No forzamos mínimo 5
                 }
             }}
         />
@@ -792,6 +792,38 @@ function Trabajos({ user }) {
                 .grupo-componente .criterio-resumen .criterio-prom {
                     font-size: 1.3em;
                     margin-left: 10px;
+                }
+
+                /* Responsive adjustments for mobile */
+                @media (max-width: 768px) {
+                    .grupo-componente .asistencia-row {
+                        grid-template-columns: 1fr auto !important; /* Stack name and average */
+                        grid-template-areas: 
+                            "nombre promedio"
+                            "bimestres bimestres";
+                        gap: 10px;
+                        padding: 15px;
+                    }
+                    .grupo-componente .alumno-nombre {
+                        grid-area: nombre;
+                        font-size: 1rem;
+                        white-space: normal; /* Allow wrapping */
+                    }
+                    .grupo-componente .promedio-final-display {
+                        grid-area: promedio;
+                        text-align: right;
+                        width: auto;
+                    }
+                    .grupo-componente .bimestres-container {
+                        grid-area: bimestres;
+                        width: 100%;
+                        overflow-x: auto;
+                        padding-bottom: 5px;
+                        justify-content: flex-start; /* Start align for scroll */
+                    }
+                    .grupo-componente .bimestre-header-btn {
+                        flex-shrink: 0; /* Prevent shrinking */
+                    }
                 }
 
                 .grupo-componente .cuadritos-grid {
@@ -1440,7 +1472,7 @@ const PanelCalificaciones = ({
         // "La calificación mínima sea 5, no menos"
         // Si hay promedio (es decir, hubo calificaciones), el mínimo es 5.
         const promedioRedondeado = Math.round(promedioFinal); // Redondeo estándar
-        return Math.max(5, promedioRedondeado);
+        return promedioRedondeado; // Eliminada la restricción de mínimo 5
     };
 
     const formatFechaTooltip = (fechaISO) => {

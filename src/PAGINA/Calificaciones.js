@@ -194,7 +194,7 @@ function Calificaciones({ user }) {
   // Si está entre 0.1 y 4.9, sube a 5.
   const clampGrade = (grade) => {
     if (typeof grade !== 'number') return null;
-    if (grade > 0 && grade < 5) return 5;
+    // if (grade > 0 && grade < 5) return 5; // REMOVED: Allow real grade
     return grade;
   };
 
@@ -223,7 +223,7 @@ function Calificaciones({ user }) {
       // calcularPromedioBimestre ya devuelve un valor redondeado (y clamp implicitamente si sus inputs lo son, pero aseguramos)
       const promedioBim = calcularPromedioBimestre(alumnoId, i);
       if (promedioBim > 0) {
-        sumaDePromedios += (promedioBim < 5 ? 5 : promedioBim);
+        sumaDePromedios += promedioBim; // REMOVED: (promedioBim < 5 ? 5 : promedioBim)
         bimestresConCalificacion++;
       }
     }
