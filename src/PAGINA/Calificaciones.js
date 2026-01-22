@@ -21,7 +21,8 @@ function SortableHeader({ id, children, disabled }) {
     backgroundColor: isDragging ? '#2c3e50' : undefined, // Color oscuro al arrastrar
     color: isDragging ? 'white' : undefined,
     zIndex: isDragging ? 100 : undefined,
-    position: 'relative',
+    // 🌟 FIX: 'relative' overrides 'sticky' from CSS. Only use relative when dragging.
+    position: isDragging ? 'relative' : undefined,
     // Removed fixed minWidth to allow CSS to control it better, or use auto. 
     // The CSS defines 35px for sub-columns (grades), but this is a main column.
     // Let's set it to 'auto' or match the table style unless dragging.
