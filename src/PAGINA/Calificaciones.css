@@ -152,9 +152,11 @@
 
 
 .table-wrapper {
-  overflow-x: auto;
+  overflow: auto; /* Permitir scroll en ambos ejes */
+  max-height: 75vh; /* Altura máxima para forzar scroll interno y sticky headers */
   border: 1px solid var(--border-color);
   border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05); /* Sutil sombra opcional */
 }
 
 /* --- TABLE CONTAINER & MAIN LAYOUT --- */

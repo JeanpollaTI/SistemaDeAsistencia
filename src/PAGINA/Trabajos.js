@@ -1350,7 +1350,7 @@ const PanelCalificaciones = ({
                             ...criterioCal,
                             [tareaIndex]: {
                                 nota: notaExistente, // Mantenemos la nota
-                                fecha: tareaCal.fecha || new Date().toISOString(), // Mantenemos la fecha o la actual si hay nota
+                                fecha: tareaCal?.fecha || new Date().toISOString(), // Mantenemos la fecha o la actual si hay nota
                                 nombre: nuevoNombre // 🎯 Guardamos el nombre aquí para todos los alumnos
                             }
                         },
