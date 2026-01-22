@@ -13,7 +13,8 @@ function SortableHeader({ id, children, disabled }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
 
   const style = {
-    transform: CSS.Translate.toString(transform),
+    // 🌟 FIX: Apply transform ONLY when dragging to preserve sticky behavior
+    transform: isDragging ? CSS.Translate.toString(transform) : undefined,
     transition,
     cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
     touchAction: 'none',
