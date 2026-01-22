@@ -152,11 +152,14 @@
 
 
 .table-wrapper {
-  overflow: auto; /* Permitir scroll en ambos ejes */
-  max-height: 75vh; /* Altura máxima para forzar scroll interno y sticky headers */
+  overflow: auto;
+  /* Permitir scroll en ambos ejes */
+  max-height: 75vh;
+  /* Altura máxima para forzar scroll interno y sticky headers */
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05); /* Sutil sombra opcional */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  /* Sutil sombra opcional */
 }
 
 /* --- TABLE CONTAINER & MAIN LAYOUT --- */
@@ -190,14 +193,14 @@
   width: 120px !important;
   min-width: 120px !important;
   max-width: 120px !important;
-  z-index: 50;
+  z-index: 80;
   background-color: white;
   /* Opaque white */
   border-left: 1px solid #ddd;
 }
 
 .calificaciones-table thead th.actions-header {
-  z-index: 60 !important;
+  z-index: 100 !important;
 }
 
 /* 2. FINAL COLUMN (Width: 80px, Right: 120px) */
@@ -208,12 +211,12 @@
   width: 80px !important;
   min-width: 80px !important;
   max-width: 80px !important;
-  z-index: 50;
+  z-index: 80;
   border-left: 1px solid #ddd;
 }
 
 .calificaciones-table thead th.promedio-header-final {
-  z-index: 60 !important;
+  z-index: 100 !important;
   background-color: var(--gold-accent) !important;
   color: var(--text-color-dark) !important;
 }
@@ -235,7 +238,7 @@
   width: 150px !important;
   min-width: 150px !important;
   max-width: 150px !important;
-  z-index: 60 !important;
+  z-index: 95 !important;
   border-left: 1px solid #aaa !important;
   /* Reduced border width to avoid overflow issues */
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
@@ -247,7 +250,7 @@
   /* T3 */
   position: sticky !important;
   right: 200px;
-  z-index: 60;
+  z-index: 90;
   width: 50px !important;
   min-width: 50px !important;
   max-width: 50px !important;
@@ -259,7 +262,7 @@
   /* T2 */
   position: sticky !important;
   right: 250px;
-  z-index: 60;
+  z-index: 90;
   width: 50px !important;
   min-width: 50px !important;
   max-width: 50px !important;
@@ -271,7 +274,7 @@
   /* T1 */
   position: sticky !important;
   right: 300px;
-  z-index: 60;
+  z-index: 90;
   width: 50px !important;
   min-width: 50px !important;
   max-width: 50px !important;
@@ -288,7 +291,7 @@
   /* Prom T3 */
   position: sticky !important;
   right: 200px;
-  z-index: 50;
+  z-index: 80;
   width: 50px !important;
   min-width: 50px !important;
   max-width: 50px !important;
@@ -299,7 +302,7 @@
   /* Prom T2 */
   position: sticky !important;
   right: 250px;
-  z-index: 50;
+  z-index: 80;
   width: 50px !important;
   min-width: 50px !important;
   max-width: 50px !important;
@@ -310,7 +313,7 @@
   /* Prom T1 */
   position: sticky !important;
   right: 300px;
-  z-index: 50;
+  z-index: 80;
   width: 50px !important;
   min-width: 50px !important;
   max-width: 50px !important;
@@ -439,12 +442,68 @@
   color: white;
   font-weight: 600;
   position: sticky;
-  top: 0;
-  z-index: 2;
+  z-index: 20;
+  /* Base Z-Index for headers */
   font-size: 0.85rem;
   white-space: normal;
   word-break: break-word;
   vertical-align: middle;
+  box-shadow: 0 1px 0 #ccc;
+  /* Separator line that moves with scroll */
+}
+
+/* --- ROW 1: Subject Names & Main Headers --- */
+.calificaciones-table thead tr:first-child th {
+  top: 0;
+  height: 50px;
+  /* Fixed height for calculations */
+}
+
+/* --- ROW 2: T1, T2, T3 Sub-headers --- */
+.calificaciones-table thead tr:nth-child(2) th {
+  top: 50px;
+  /* Positioned below Row 1 */
+  z-index: 15;
+  /* Slightly lower than main headers */
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* --- CORNER & FULL-HEIGHT HEADERS (Rowspan=2) --- */
+/* These span both rows, so they stick to top 0 */
+.calificaciones-table thead tr:first-child th[rowspan="2"] {
+  top: 0;
+  z-index: 30;
+  /* Higher than normal headers to overlap if needed */
+}
+
+/* --- FIX: Specific Z-Index for Sticky Columns in Header --- */
+/* Left Columns (Num, Name) */
+.calificaciones-table thead tr th.num-header,
+.calificaciones-table thead tr th.nombre-header {
+  z-index: 45 !important;
+  /* Top-Left Corner beats everything */
+  top: 0;
+}
+
+/* Right Columns (Final, Actions) */
+.calificaciones-table thead th.promedio-header-final,
+.calificaciones-table thead th.actions-header {
+  z-index: 45 !important;
+  /* Top-Right Corner beats everything */
+  top: 0;
+}
+
+/* Promedio Trimestral Header Block (Row 1) */
+.calificaciones-table thead tr:first-child th.promedio-header {
+  top: 0;
+  z-index: 40 !important;
+  /* High, but below corners if they overlap */
+}
+
+/* Promedio Trimestral Sub-headers (Row 2) */
+.calificaciones-table thead tr:nth-child(2) th.promedio-header {
+  top: 50px;
+  z-index: 90 !important;
 }
 
 .calificaciones-table tbody tr:hover td:first-child {
