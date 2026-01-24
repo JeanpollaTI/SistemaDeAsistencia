@@ -269,7 +269,7 @@ function Calificaciones({ user }) {
 
     // 2. Boleta de Calificaciones
     doc.setFont(undefined, 'bold'); // Poner el título en negrita para resaltarlo
-    doc.text('Boleta de Calificaciones', margin, yPos);
+    doc.text('Boleta parcial de calificaciones', margin, yPos);
     doc.setFont(undefined, 'normal'); // Volver a normal
 
     // Incremento
