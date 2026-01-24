@@ -79,6 +79,7 @@ export default function RegisterProfesor() {
                         const finalForm = { ...form, role: firstAdmin ? "admin" : form.role };
                         finalForm.email = finalForm.email.toLowerCase().trim();
                         finalForm.celular = finalForm.celular?.trim() || "";
+                        finalForm.fechaRegistro = new Date().toISOString(); // Send current date
 
                         Object.keys(finalForm).forEach((key) =>
                                 formData.append(key, finalForm[key])

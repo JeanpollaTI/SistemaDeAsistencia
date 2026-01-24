@@ -308,7 +308,7 @@ function Home({ user }) {
                   <tr key={prof._id}>
                     <td>{prof.nombre}</td>
                     <td>{prof.asignaturas?.join(", ") || "No asignada"}</td>
-                    <td>{prof.fechaRegistro ? new Date(prof.fechaRegistro).toLocaleDateString() : 'N/A'}</td>
+                    <td>{prof.fechaRegistro && !isNaN(new Date(prof.fechaRegistro)) ? new Date(prof.fechaRegistro).toLocaleDateString() : new Date().toLocaleDateString()}</td>
                     <td><button className="btn-ver-perfil" onClick={() => openModal(prof)}>Ver perfil</button></td>
                   </tr>
                 )) : <tr><td colSpan="4">Cargando profesores...</td></tr>}
@@ -339,7 +339,7 @@ function Home({ user }) {
                   <p><b>Celular:</b> {selectedProfesor.celular}</p>
                   {/* <p><b>Edad:</b> {selectedProfesor.edad}</p> */}
                   {/* <p><b>Sexo:</b> {selectedProfesor.sexo}</p> */}
-                  <p><b>Registro:</b> {selectedProfesor.fechaRegistro ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
+                  <p><b>Registro:</b> {selectedProfesor.fechaRegistro && !isNaN(new Date(selectedProfesor.fechaRegistro)) ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
                 </div>
 
                 <div style={{ width: '100%', marginTop: '1rem', textAlign: 'left' }}>
