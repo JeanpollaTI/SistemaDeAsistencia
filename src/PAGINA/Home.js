@@ -47,7 +47,14 @@ function Home({ user }) {
       .then((res) => setProfesores(res.data || []))
       .catch((err) => {
         console.error("Error al obtener profesores:", err);
-        mostrarAlerta("No se pudieron cargar los profesores.", "error"); // Alerta del código nuevo
+        if (err.response && err.response.status === 401) {
+          mostrarAlerta("Sesión expirada. Por favor inicia sesión nuevamente.", "error");
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          setTimeout(() => window.location.href = "/", 2000);
+        } else {
+          mostrarAlerta("No se pudieron cargar los profesores.", "error");
+        }
       });
   };
 
@@ -66,7 +73,12 @@ function Home({ user }) {
       .then((res) => {
         setMateriasDb(res.data || []);
       })
-      .catch((err) => console.error("Error al cargar materias:", err));
+      .catch((err) => {
+        console.error("Error al cargar materias:", err);
+        if (err.response && err.response.status === 401) {
+          // No need to alert twice, fetchProfesores will handle it or user will see empty state
+        }
+      });
   };
 
   const handleAddMateria = () => {
