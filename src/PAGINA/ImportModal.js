@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 import { FaUpload, FaFileExcel, FaCheck, FaTimes, FaExclamationTriangle } from 'react-icons/fa';
 import './Calificaciones.css'; // Reusing existing styles or add specific ones
 
-export default function ImportModal({ onClose, onImport, materias, alumnos }) {
+export default function ImportModal({ onClose, onImport, materias, alumnos, mode = 'general', criterios = [] }) {
     const [file, setFile] = useState(null);
     const [sheetData, setSheetData] = useState([]);
     const [headerRowIndex, setHeaderRowIndex] = useState(-1);
@@ -12,6 +12,9 @@ export default function ImportModal({ onClose, onImport, materias, alumnos }) {
     // Selection States
     const [selectedMateria, setSelectedMateria] = useState('');
     const [selectedTrimestre, setSelectedTrimestre] = useState('0'); // 0, 1, 2 (Indices)
+    const [selectedCriterio, setSelectedCriterio] = useState(''); // For 'trabajos' mode
+    const [selectedTareaIndex, setSelectedTareaIndex] = useState('0'); // For 'trabajos' mode
+
     const [colName, setColName] = useState('');
     const [colGrade, setColGrade] = useState('');
 
@@ -71,7 +74,8 @@ export default function ImportModal({ onClose, onImport, materias, alumnos }) {
     };
 
     const generatePreview = () => {
-        if (!selectedMateria || !colName || !colGrade) return;
+        if (mode === 'general' && (!selectedMateria || !colName || !colGrade)) return;
+        if (mode === 'trabajos' && (!selectedCriterio || !colName || !colGrade)) return;
 
         const nameIdx = headers.indexOf(colName);
         const gradeIdx = headers.indexOf(colGrade);
@@ -132,14 +136,24 @@ export default function ImportModal({ onClose, onImport, materias, alumnos }) {
 
     const handleImportClick = () => {
         if (previewData.length === 0) return;
-        onImport(previewData, selectedMateria, parseInt(selectedTrimestre));
+
+        if (mode === 'general') {
+            onImport(previewData, selectedMateria, parseInt(selectedTrimestre));
+        } else {
+            // For 'trabajos' mode, we pass criterion and task index
+            onImport(previewData, selectedCriterio, parseInt(selectedTareaIndex));
+        }
     };
+
+    const isFormValid = mode === 'general'
+        ? (selectedMateria && colName && colGrade)
+        : (selectedCriterio && colName && colGrade);
 
     return (
         <div className="modal-overlay">
             <div className="modal-content import-modal" style={{ maxWidth: '800px', width: '90%' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <h3>Importar Calificaciones desde Excel</h3>
+                    <h3>Importar Calificaciones ({mode === 'general' ? 'General' : 'Por Tarea'})</h3>
                     <button className="modal-close" onClick={onClose} style={{ fontSize: '1.5rem', background: 'none', border: 'none', cursor: 'pointer' }}>&times;</button>
                 </div>
 
@@ -164,18 +178,39 @@ export default function ImportModal({ onClose, onImport, materias, alumnos }) {
                         <div className="left-panel">
                             <p><b>Archivo:</b> {file.name}</p>
 
-                            <label>Materia destino:</label>
-                            <select value={selectedMateria} onChange={e => setSelectedMateria(e.target.value)} style={{ width: '100%', padding: '8px', marginBottom: '10px' }}>
-                                <option value="">-- Selecciona Materia --</option>
-                                {materias.map(m => <option key={m} value={m}>{m}</option>)}
-                            </select>
+                            {mode === 'general' ? (
+                                <>
+                                    <label>Materia destino:</label>
+                                    <select value={selectedMateria} onChange={e => setSelectedMateria(e.target.value)} style={{ width: '100%', padding: '8px', marginBottom: '10px' }}>
+                                        <option value="">-- Selecciona Materia --</option>
+                                        {materias.map(m => <option key={m} value={m}>{m}</option>)}
+                                    </select>
 
-                            <label>Trimestre destino:</label>
-                            <select value={selectedTrimestre} onChange={e => setSelectedTrimestre(e.target.value)} style={{ width: '100%', padding: '8px', marginBottom: '10px' }}>
-                                <option value="0">Trimestre 1</option>
-                                <option value="1">Trimestre 2</option>
-                                <option value="2">Trimestre 3</option>
-                            </select>
+                                    <label>Trimestre destino:</label>
+                                    <select value={selectedTrimestre} onChange={e => setSelectedTrimestre(e.target.value)} style={{ width: '100%', padding: '8px', marginBottom: '10px' }}>
+                                        <option value="0">Trimestre 1</option>
+                                        <option value="1">Trimestre 2</option>
+                                        <option value="2">Trimestre 3</option>
+                                    </select>
+                                </>
+                            ) : (
+                                <>
+                                    <p style={{ fontSize: '0.9rem', color: '#555', marginBottom: '10px' }}>Estás importando para <b>{selectedMateria || 'la materia seleccionada'}</b>.</p>
+
+                                    <label>Criterio (ej: Tareas, Examen):</label>
+                                    <select value={selectedCriterio} onChange={e => setSelectedCriterio(e.target.value)} style={{ width: '100%', padding: '8px', marginBottom: '10px' }}>
+                                        <option value="">-- Selecciona Criterio --</option>
+                                        {criterios.map(c => <option key={c.nombre} value={c.nombre}>{c.nombre}</option>)}
+                                    </select>
+
+                                    <label>Número de Tarea:</label>
+                                    <select value={selectedTareaIndex} onChange={e => setSelectedTareaIndex(e.target.value)} style={{ width: '100%', padding: '8px', marginBottom: '10px' }}>
+                                        {Array.from({ length: 20 }, (_, i) => (
+                                            <option key={i} value={i}>Tarea {i + 1}</option>
+                                        ))}
+                                    </select>
+                                </>
+                            )}
 
                             <hr />
 
@@ -194,7 +229,7 @@ export default function ImportModal({ onClose, onImport, materias, alumnos }) {
                             <button
                                 className="button"
                                 style={{ marginTop: '10px', width: '100%' }}
-                                disabled={!selectedMateria || !colName || !colGrade}
+                                disabled={!isFormValid}
                                 onClick={generatePreview}
                             >
                                 Vista Previa

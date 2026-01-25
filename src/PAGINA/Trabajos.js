@@ -4,6 +4,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import logoImage from './Logoescuela.png';
 import ConfirmacionModal from './ConfirmacionModal';
+import ImportModal from './ImportModal';
 
 // La URL de la API se obtiene de las variables de entorno para Vercel/Render
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -1610,6 +1611,40 @@ const PanelCalificaciones = ({
         });
     };
 
+    // --- IMPORTACIÓN EXCEL ---
+    const [modalImport, setModalImport] = useState(false);
+
+    const handleImportGrades = async (importData, criterioNombre, tareaIndex) => {
+        // importData: [{ alumnoId, grade }]
+        setLoading(true);
+        setModalImport(false);
+
+        // Strategy: Loop and reuse handleCalificacionChange
+        let updatedCount = 0;
+
+        try {
+            // Notificar inicio
+            setNotificacion({ mensaje: 'Iniciando importación...', tipo: 'info' });
+
+            const promises = importData.map(async (item) => {
+                if (item.grade === null) return;
+
+                // Simulate delay to avoid rate limiting if necessary or just await
+                await handleCalificacionChange(item.alumnoId, bimestreActivo, criterioNombre, tareaIndex, item.grade);
+                updatedCount++;
+            });
+
+            await Promise.all(promises);
+            setNotificacion({ mensaje: `Importadas ${updatedCount} calificaciones exitosamente.`, tipo: 'exito' });
+
+        } catch (err) {
+            console.error("Error importando:", err);
+            setNotificacion({ mensaje: "Error al guardar calificaciones importadas.", tipo: 'error' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     if (isLoadingData) return <div className="trabajos-container grupo-componente" style={{ textAlign: 'center', paddingTop: '10rem' }}><p style={{ color: '#E9E9E9' }}>Cargando datos del grupo...</p></div>;
 
@@ -1636,6 +1671,19 @@ const PanelCalificaciones = ({
                 mensaje={confirmModal.message}
                 confirmText="Sí, Eliminar Todo"
             />
+
+            {/* 🌟 Modal Importar Excel */}
+            {modalImport && (
+                <ImportModal
+                    onClose={() => setModalImport(false)}
+                    onImport={handleImportGrades}
+                    mode="trabajos" // Specific mode for this view
+                    materias={[]} // Not used in this mode
+                    alumnos={grupo.alumnos}
+                    criterios={criteriosActivos}
+                />
+            )}
+
             {/* Contenido principal del panel de calificaciones */}
             <div className="asistencia-modal-content">
                 <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 20px' }}>
@@ -1647,6 +1695,9 @@ const PanelCalificaciones = ({
                         </button>
                         <button className="btn" onClick={handleLimpiarCalificaciones} style={{ marginRight: '10px', backgroundColor: '#c0392b', borderColor: '#c0392b', color: 'white' }}>
                             🗑️ Limpiar Calificaciones
+                        </button>
+                        <button className="btn" onClick={() => setModalImport(true)} style={{ marginRight: '10px', backgroundColor: '#8e44ad', borderColor: '#8e44ad', color: 'white' }}>
+                            📥 Importar Excel
                         </button>
 
                         {/* Botón para abrir el modal de criterios */}
