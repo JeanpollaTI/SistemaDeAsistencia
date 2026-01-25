@@ -1614,8 +1614,10 @@ const PanelCalificaciones = ({
     // --- IMPORTACIÓN EXCEL ---
     const [modalImport, setModalImport] = useState(false);
 
-    const handleImportGrades = async (importData, criterioNombre, tareaIndex) => {
-        // importData: [{ alumnoId, grade }]
+    const handleImportGrades = async (importData) => {
+        // importData: [{ alumnoId, grade, ...gradesObj }] 
+        // gradesObj keys are "Criterio-TareaIndex" e.g "Tareas-0": 10
+
         setIsLoadingData(true);
         setModalImport(false);
 
@@ -1624,18 +1626,37 @@ const PanelCalificaciones = ({
 
         try {
             // Notificar inicio
-            setNotificacion({ mensaje: 'Iniciando importación...', tipo: 'info' });
+            setNotificacion({ mensaje: 'Iniciando importación masiva...', tipo: 'info' });
 
-            const promises = importData.map(async (item) => {
-                if (item.grade === null) return;
+            const promises = [];
 
-                // Simulate delay to avoid rate limiting if necessary or just await
-                await handleCalificacionChange(item.alumnoId, bimestreActivo, criterioNombre, tareaIndex, item.grade);
-                updatedCount++;
-            });
+            for (const item of importData) {
+                // Determine if it's general mode (item.grade) or bulk mode (keys with '-')
+                if (item.grade !== undefined) {
+                    // General mode or legacy fallback (though this function is mainly for Trabajos view now)
+                    // But in Trabajos view we don't really support SINGLE column import effectively without the new modal logic.
+                    // The new modal logic returns bulk keys even for 1 column if mapped.
+                }
+
+                // Iterate over all keys in item to find grade keys
+                Object.keys(item).forEach(key => {
+                    if (key.includes('-')) {
+                        const [criterioNombre, tareaIdxStr] = key.split('-');
+                        const tareaIndex = parseInt(tareaIdxStr);
+                        const valor = item[key];
+
+                        if (valor !== null && !isNaN(valor)) {
+                            promises.push(
+                                handleCalificacionChange(item.alumnoId, bimestreActivo, criterioNombre, tareaIndex, valor)
+                            );
+                        }
+                    }
+                });
+                updatedCount++; // Count students, not individual grades
+            }
 
             await Promise.all(promises);
-            setNotificacion({ mensaje: `Importadas ${updatedCount} calificaciones exitosamente.`, tipo: 'exito' });
+            setNotificacion({ mensaje: `Importación completada. Se actualizaron datos para ${updatedCount} alumnos.`, tipo: 'exito' });
 
         } catch (err) {
             console.error("Error importando:", err);
@@ -1681,6 +1702,7 @@ const PanelCalificaciones = ({
                     materias={[]} // Not used in this mode
                     alumnos={grupo.alumnos}
                     criterios={criteriosActivos}
+                    numTareas={numTareas} // 🌟 Passed for bulk mapping
                 />
             )}
 
