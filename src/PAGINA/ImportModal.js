@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 import { FaUpload, FaFileExcel, FaCheck, FaTimes, FaExclamationTriangle, FaMagic } from 'react-icons/fa';
 import './Calificaciones.css';
 
-export default function ImportModal({ onClose, onImport, materias, alumnos, mode = 'general', criterios = [], numTareas = {} }) {
+export default function ImportModal({ onClose, onImport, materias, alumnos, mode = 'general', criterios = [], numTareas = {}, customTaskNames = {} }) {
     const [file, setFile] = useState(null);
     const [sheetData, setSheetData] = useState([]);
     const [headerRowIndex, setHeaderRowIndex] = useState(-1);
@@ -14,7 +14,7 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
     const [selectedTrimestre, setSelectedTrimestre] = useState('0'); // 0, 1, 2 (Indices)
 
     // Bulk Mapping State (For 'trabajos' mode)
-    // Structure: { "Criterio - TareaIndex": "ExcelHeaderName" }
+    // Structure: { "Criterio-Index": "ExcelHeaderName" }
     const [columnMapping, setColumnMapping] = useState({});
 
     const [colName, setColName] = useState('');
@@ -71,6 +71,7 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
         if (!text) return '';
         return text.toString().toUpperCase()
             .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^A-Z0-9\s]/g, "") // Remove special chars just in case
             .replace(/\s+/g, ' ').trim();
     };
 
@@ -86,31 +87,44 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
 
         criterios.forEach(criterio => {
             const maxTareas = numTareas[criterio.nombre] || 10;
-            // Iterate all possible tasks for this criterion
+
             for (let i = 0; i < maxTareas; i++) {
                 const systemKey = `${criterio.nombre}-${i}`;
+                const customName = customTaskNames[systemKey]; // e.g. "Domina tu mundo"
 
-                // 1. Try to find exact match: "TAREAS T1", "EXAMEN", etc.
-                // We'll search for headers that contain the criterion name AND "T{i+1}" or just the task number if clearly labeled
-
-                // Simple Fuzzy Logic:
-                // If header contains "TAREA 1" and criterion is "TAREAS" -> Match
-                // If header is "T1" and criterion is "TAREAS" -> Maybe too risky? Let's stick to stricter matching first.
-
-                const taskLabel = `T${i + 1}`; // "T1"
+                // Define search tokens
+                const taskLabelShort = `T${i + 1}`; // "T1"
                 const taskLabelFull = `TAREA ${i + 1}`; // "TAREA 1"
+                const normCriterio = normalizeText(criterio.nombre);
 
+                // Find matching header
                 const matchedHeader = headers.find(h => {
-                    if (!h) return false;
+                    if (!h || typeof h !== 'string') return false;
                     const normH = normalizeText(h);
-                    const normCrit = normalizeText(criterio.nombre);
 
-                    // Specific Logic: Header includes Criterion Name AND (TaskLabel or TaskLabelFull)
-                    // Or if Criterion is generic like "Tareas", maybe just "T1" is enough?
-                    // Let's look for "T1", "T2" generic matches if we can't find specific ones.
+                    // 1. IGNORE Explicitly specific columns that cause noise
+                    const ignoreKeywords = ['ASISTENCIA', 'FALTAS', 'TOTAL', 'PROMEDIO'];
+                    if (ignoreKeywords.some(bad => normH.includes(bad))) return false;
 
-                    if (normH === taskLabel || normH === taskLabelFull) return true;
-                    if (normH.includes(normCrit) && (normH.includes(taskLabel) || normH.includes(taskLabelFull))) return true;
+                    // 2. Custom Name Match (High Priority)
+                    if (customName) {
+                        const normCustom = normalizeText(customName);
+                        // Check if header contains custom name significantly
+                        // e.g. Header: "Domina tu mundo controla tus emociones" vs Custom: "Domina tu mundo"
+                        if (normH.includes(normCustom) || normCustom.includes(normH)) return true;
+                    }
+
+                    // 3. Fallback: Standard "Tarea 1" or "Examen" matching
+                    // Check exact matches or strong inclusions
+
+                    // Match "Examen" if criterion is Examen
+                    if (normCriterio === 'EXAMEN' && normH.includes('EXAMEN')) return true;
+
+                    // Match generic "Tarea 1"
+                    if (normH === taskLabelShort || normH === taskLabelFull) return true;
+
+                    // Match "Tareas T1" combo
+                    if (normH.includes(normCriterio) && (normH.includes(taskLabelShort) || normH.includes(taskLabelFull))) return true;
 
                     return false;
                 });
@@ -280,11 +294,13 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
                                             <strong style={{ color: 'var(--main-color)' }}>{crit.nombre}</strong>
                                             {Array.from({ length: numTareas[crit.nombre] || 10 }).map((_, idx) => (
                                                 <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '5px', fontSize: '0.9rem' }}>
-                                                    <span>Tarea {idx + 1}:</span>
+                                                    <span>Tarea {idx + 1}:
+                                                        {customTaskNames[`${crit.nombre}-${idx}`] && <span style={{ color: '#e67e22', marginLeft: '5px' }}>({customTaskNames[`${crit.nombre}-${idx}`]})</span>}
+                                                    </span>
                                                     <select
                                                         value={columnMapping[`${crit.nombre}-${idx}`] || ''}
                                                         onChange={e => setColumnMapping(prev => ({ ...prev, [`${crit.nombre}-${idx}`]: e.target.value }))}
-                                                        style={{ width: '60%', padding: '2px' }}
+                                                        style={{ width: '50%', padding: '2px' }}
                                                     >
                                                         <option value="">(Ignorar)</option>
                                                         {headers.map((h, i) => <option key={i} value={h}>{h}</option>)}
@@ -335,4 +351,3 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
         </div>
     );
 }
-
