@@ -49,7 +49,12 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
                 setHeaderRowIndex(idx);
                 setHeaders(data[idx]);
                 // Try to auto-select "Nombre" column
-                const nameIdx = data[idx].findIndex(h => h && h.toString().toUpperCase().includes('NOMBRE DEL ALUMNO'));
+                const nameKeywords = ['NOMBRE', 'ALUMNO', 'ESTUDIANTE', 'NAME'];
+                const nameIdx = data[idx].findIndex(h => {
+                    if (!h || typeof h !== 'string') return false;
+                    const upper = h.toUpperCase();
+                    return nameKeywords.some(k => upper.includes(k));
+                });
                 if (nameIdx !== -1) setColName(data[idx][nameIdx]);
             }
             setIsProcessing(false);
@@ -58,13 +63,23 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
     };
 
     const detectHeaderRow = (data) => {
+        // Broaden search for header row
+        const keywords = ['NOMBRE', 'ALUMNO', 'ESTUDIANTE', 'NAME', 'APELLIDO', 'FULL NAME'];
+
         for (let i = 0; i < Math.min(data.length, 50); i++) {
             const row = data[i];
-            if (row.some(cell => cell && typeof cell === 'string' && cell.toUpperCase().includes('NOMBRE DEL ALUMNO'))) {
-                return i;
+            if (Array.isArray(row)) {
+                // Check if any cell in the row contains one of our keywords
+                const hasKeyword = row.some(cell => {
+                    if (!cell || typeof cell !== 'string') return false;
+                    const upper = cell.toUpperCase();
+                    return keywords.some(k => upper.includes(k));
+                });
+
+                if (hasKeyword) return i;
             }
         }
-        return 0;
+        return 0; // Fallback to first row
     };
 
     const normalizeText = (text) => {
@@ -83,19 +98,20 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
     }, [headers, mode]);
 
     const autoMatchColumns = () => {
+        console.log("Auto-matching columns...", { headers, criterios });
         const newMapping = {};
 
         criterios.forEach(criterio => {
             const maxTareas = numTareas[criterio.nombre] || 10;
+            const normCriterio = normalizeText(criterio.nombre); // e.g. "TAREAS" or "EXAMEN"
 
             for (let i = 0; i < maxTareas; i++) {
                 const systemKey = `${criterio.nombre}-${i}`;
-                const customName = customTaskNames[systemKey]; // e.g. "Domina tu mundo"
+                const customName = customTaskNames[systemKey];
 
                 // Define search tokens
                 const taskLabelShort = `T${i + 1}`; // "T1"
                 const taskLabelFull = `TAREA ${i + 1}`; // "TAREA 1"
-                const normCriterio = normalizeText(criterio.nombre);
 
                 // Find matching header
                 const matchedHeader = headers.find(h => {
@@ -109,22 +125,29 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
                     // 2. Custom Name Match (High Priority)
                     if (customName) {
                         const normCustom = normalizeText(customName);
-                        // Check if header contains custom name significantly
-                        // e.g. Header: "Domina tu mundo controla tus emociones" vs Custom: "Domina tu mundo"
                         if (normH.includes(normCustom) || normCustom.includes(normH)) return true;
                     }
 
-                    // 3. Fallback: Standard "Tarea 1" or "Examen" matching
-                    // Check exact matches or strong inclusions
+                    // 3. Logic:
+                    // A. Exact criterion match ("Examen" matches "Examen") for first item
+                    //    Only valid if it's the first task (i=0) because a single column "Examen" should map to Examen-0
+                    if (i === 0 && (normH === normCriterio || normH.includes(normCriterio))) {
+                        // Careful: "Tareas" shouldn't match "Total Tareas" or "Promedio Tareas" (handled by ignore)
+                        // But "Examen" should match "Examen"
+                        return true;
+                    }
 
-                    // Match "Examen" if criterion is Examen
-                    if (normCriterio === 'EXAMEN' && normH.includes('EXAMEN')) return true;
+                    // B. "Tarea 1", "T1" generic matching
+                    //    Only valid if the criterion name is essentially "Tareas" or "Trabajos"
+                    //    OR if the user just has "T1" in their excel and we assume it maps to the first criterion's T1.
+                    //    This is risky if there are multiple criteria with T1. 
+                    //    So let's be strict: "Criterion + T1" or just "T1" if it's the dominant pattern.
 
-                    // Match generic "Tarea 1"
-                    if (normH === taskLabelShort || normH === taskLabelFull) return true;
-
-                    // Match "Tareas T1" combo
+                    // Match "Tareas T1", "Trabajo 1", "Crit 1"
                     if (normH.includes(normCriterio) && (normH.includes(taskLabelShort) || normH.includes(taskLabelFull))) return true;
+
+                    // C. Generic Fallback: If header IS exactly "Tarea 1" or "T1"
+                    if (normH === taskLabelShort || normH === taskLabelFull) return true;
 
                     return false;
                 });
@@ -134,6 +157,8 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
                 }
             }
         });
+
+        console.log("New Mapping:", newMapping);
         setColumnMapping(prev => ({ ...prev, ...newMapping }));
     };
 
