@@ -1616,7 +1616,7 @@ const PanelCalificaciones = ({
 
     const handleImportGrades = async (importData, criterioNombre, tareaIndex) => {
         // importData: [{ alumnoId, grade }]
-        setLoading(true);
+        setIsLoadingData(true);
         setModalImport(false);
 
         // Strategy: Loop and reuse handleCalificacionChange
@@ -1641,7 +1641,7 @@ const PanelCalificaciones = ({
             console.error("Error importando:", err);
             setNotificacion({ mensaje: "Error al guardar calificaciones importadas.", tipo: 'error' });
         } finally {
-            setLoading(false);
+            setIsLoadingData(false);
         }
     };
 
