@@ -724,6 +724,7 @@ function Calificaciones({ user }) {
             <ImportModal
               onClose={() => setModalImport(false)}
               onImport={handleImportGrades}
+              mode="general"
               materias={materias}
               alumnos={alumnos}
             />
