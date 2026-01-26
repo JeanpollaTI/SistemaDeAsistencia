@@ -77,23 +77,38 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
     }, [headers]);
 
     const detectHeaderRow = (data) => {
-        // Broaden search for header row
-        const keywords = ['NOMBRE', 'ALUMNO', 'ESTUDIANTE', 'NAME', 'APELLIDO', 'FULL NAME'];
+        // Broaden search for header row with STRICTER rules to avoid "Nombre del Docente"
+        // We require 'ALUMNO' or 'LISTA' or 'ESTUDIANTE' which are typical of the TABLE header.
+        const keywords = ['ALUMNO', 'ESTUDIANTE', 'APELLIDO', 'FULL NAME', 'LISTA', 'NO.'];
+        const secondaryKeywords = ['NOMBRE']; // "NOMBRE" by itself is too risky (matches "Nombre del Docente")
 
         for (let i = 0; i < Math.min(data.length, 100); i++) {
             const row = data[i];
             if (Array.isArray(row)) {
-                // Check if any cell in the row contains one of our keywords
-                const hasKeyword = row.some(cell => {
+                // Check for primary strong keywords
+                const hasPrimary = row.some(cell => {
                     if (!cell || typeof cell !== 'string') return false;
                     const upper = cell.toUpperCase();
                     return keywords.some(k => upper.includes(k));
                 });
 
-                if (hasKeyword) return i;
+                // Check for "NOMBRE" specifically if combined with valid table structure (multiple columns)
+                const hasSecondary = row.some(cell => {
+                    if (!cell || typeof cell !== 'string') return false;
+                    const upper = cell.toUpperCase();
+                    return secondaryKeywords.some(k => upper.includes(k));
+                });
+
+                // Confirm it's a likely header row:
+                // 1. Has a primary keyword (ALUMNO, LISTA) - Strongest signal
+                // 2. OR Has "NOMBRE" AND has at least 3 non-empty cells (to avoid single metadata lines like "Nombre Prof: ...")
+                const nonEmptyCount = row.filter(c => c).length;
+
+                if (hasPrimary) return i;
+                if (hasSecondary && nonEmptyCount > 3) return i;
             }
         }
-        return 0; // Fallback to first row
+        return 0; // Fallback
     };
 
     const normalizeText = (text) => {
@@ -236,8 +251,17 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
                     Object.entries(columnMapIndices).forEach(([sysKey, colIdx]) => {
                         const rawG = row[colIdx];
                         let parsed = parseFloat(rawG);
+
+                        // Extract Header Name for Task Naming
+                        const headerName = headers[colIdx];
+                        // Clean clean header name (remove line breaks etc) but keep it readable
+                        const cleanHeaderName = headerName ? headerName.toString().replace(/[\r\n]+/g, " ").trim() : "";
+
                         if (!isNaN(parsed)) {
-                            gradesObj[sysKey] = parsed;
+                            gradesObj[sysKey] = {
+                                value: parsed,
+                                taskName: cleanHeaderName // 🌟 Pass the header name as the task name
+                            };
                         }
                     });
                 }
@@ -392,11 +416,16 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
                                             {mode === 'general' ? (
                                                 <span className={item.grade < 6 ? 'badge-danger' : 'badge-success'}>Calif: {item.grade}</span>
                                             ) : (
-                                                Object.entries(item).filter(([k]) => k.includes('-')).map(([key, val]) => (
-                                                    <span key={key} style={{ background: '#e0e0e0', padding: '2px 5px', borderRadius: '3px' }}>
-                                                        {key.split('-')[0].substr(0, 3)} T{parseInt(key.split('-')[1]) + 1}: <b>{val}</b>
-                                                    </span>
-                                                ))
+                                                Object.entries(item).filter(([k]) => k.includes('-')).map(([key, val]) => {
+                                                    // Handle new object structure { value, taskName } or legacy number
+                                                    const gradeVal = typeof val === 'object' ? val.value : val;
+
+                                                    return (
+                                                        <span key={key} style={{ background: '#e0e0e0', padding: '2px 5px', borderRadius: '3px' }}>
+                                                            {key.split('-')[0].substr(0, 3)} T{parseInt(key.split('-')[1]) + 1}: <b>{gradeVal}</b>
+                                                        </span>
+                                                    );
+                                                })
                                             )}
                                         </div>
                                     </div>

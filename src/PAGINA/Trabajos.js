@@ -1643,19 +1643,54 @@ const PanelCalificaciones = ({
                     if (key.includes('-')) {
                         const [criterioNombre, tareaIdxStr] = key.split('-');
                         const tareaIndex = parseInt(tareaIdxStr);
-                        const valor = item[key];
+                        const valData = item[key]; // This is now { value: 10, taskName: "Examen" } or just 10 (legacy)
+
+                        // Normalized value and name
+                        const valor = typeof valData === 'object' ? valData.value : valData;
+                        const nuevoNombreTarea = typeof valData === 'object' ? valData.taskName : null;
 
                         if (valor !== null && !isNaN(valor)) {
-                            promises.push(
-                                handleCalificacionChange(item.alumnoId, bimestreActivo, criterioNombre, tareaIndex, valor)
-                            );
+                            // Update State Helper
+                            setCalificaciones(prev => {
+                                const nextCalificaciones = { ...prev };
+                                const alumnoId = item.alumnoId;
+
+                                const alumnoCal = nextCalificaciones[alumnoId] || {};
+                                const bimestreCal = alumnoCal[bimestreActivo] || {};
+                                const criterioCal = bimestreCal[criterioNombre] || {};
+                                const tareaCal = criterioCal[tareaIndex] || {};
+
+                                const datosAnteriores = tareaCal;
+
+                                nextCalificaciones[alumnoId] = {
+                                    ...alumnoCal,
+                                    [bimestreActivo]: {
+                                        ...bimestreCal,
+                                        [criterioNombre]: {
+                                            ...criterioCal,
+                                            [tareaIndex]: {
+                                                nota: parseFloat(valor),
+                                                fecha: datosAnteriores.fecha || new Date().toISOString(),
+                                                // 🌟 IMPORT NAME: If we have a name from Excel, use it. Else keep existing.
+                                                nombre: nuevoNombreTarea || datosAnteriores.nombre
+                                            }
+                                        },
+                                    },
+                                };
+                                return nextCalificaciones;
+                            });
                         }
                     }
                 });
                 updatedCount++; // Count students, not individual grades
             }
 
-            await Promise.all(promises);
+            // Note: We are updating state synchronously/batched above.
+            // But we need to handle the SAVE. The 'guardarCalificaciones' call will grab this new state.
+            // Wait, we need to ensure the state update is processed.
+            // Actually, handleImportGrades updates local state. The User must click "Guardar Calificaciones" to persist to DB.
+            // Or we could auto-save. The current flow seems to be: Import -> Update UI -> User Clicks Save.
+            // Let's keep it that way for safety.
             setNotificacion({ mensaje: `Importación completada. Se actualizaron datos para ${updatedCount} alumnos.`, tipo: 'exito' });
 
         } catch (err) {
