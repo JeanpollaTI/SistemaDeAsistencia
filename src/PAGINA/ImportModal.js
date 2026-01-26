@@ -158,7 +158,7 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
         // Get candidate columns (those to the right of Name)
         // Filter out obvious metadata columns
         const candidateIndices = [];
-        const ignoreKeywords = ['ASISTENCIA', 'FALTAS', 'TOTAL', 'PROMEDIO', 'OBSERVACIONES', 'RIESGO', 'DOCENTE', 'DISCIPLINA', 'GRADO', 'GRUPO'];
+        const ignoreKeywords = ['ASISTENCIA', 'FALTAS', 'TOTAL', 'PROMEDIO', 'OBSERVACIONES', 'RIESGO', 'DOCENTE', 'DISCIPLINA', 'GRADO', 'GRUPO', 'NO. DE LISTA', '#'];
 
         headers.forEach((h, idx) => {
             if (idx > nameColIndex) {
@@ -171,8 +171,11 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
             }
         });
 
-        let candidatePointer = 0; // Pointer to assign candidates sequentially
+        // POINTERS
+        let candidatePointer = 0; // Points to the next available Excel column
 
+        // Iterate through System Tasks (Ordered by Criterio then TaskIndex)
+        // We want to fill them sequentially.
         criterios.forEach(criterio => {
             const maxTareas = numTareas[criterio.nombre] || 10;
             const normCriterio = normalizeText(criterio.nombre);
@@ -180,49 +183,32 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
             for (let i = 0; i < maxTareas; i++) {
                 const systemKey = `${criterio.nombre}-${i}`;
                 const customName = customTaskNames[systemKey];
-                const taskLabelShort = `T${i + 1}`;
                 const taskNumber = (i + 1).toString();
 
-                // --- STRATEGY 1: Explicit Match (Custom Name, Exact Criterio Match, "T1") ---
-                let matchedHeader = headers.find(h => {
+                let matchedHeader = null;
+
+                // --- STRATEGY 1: EXPLICIT MATCH (Strongest) ---
+                // Search ALL headers (not just candidates) for a strong name match
+                matchedHeader = headers.find(h => {
                     if (!h || typeof h !== 'string') return false;
                     const normH = normalizeText(h);
                     if (ignoreKeywords.some(bad => normH.includes(bad))) return false;
 
-                    // Custom
+                    // Custom Name Match
                     if (customName) {
                         const normCustom = normalizeText(customName);
-                        if (normH.includes(normCustom) || normCustom.includes(normH)) return true;
+                        if (normH.includes(normCustom)) return true;
                     }
-                    // Exact Criterio Match + Number (e.g. "Proyecto 1")
-                    if (normH === `${normCriterio} ${taskNumber}` || normH === `${normCriterio}${taskNumber}`) return true;
 
-                    // "Tarea 1", "Tabajo 1"
+                    // Specific Criterio Match (e.g. "Examen")
+                    // If the criterion is "Examen", look for "Examen" header
+                    if (normCriterio === 'EXAMEN' && normH.includes('EXAMEN')) return true;
+
+                    // "Tarea 1" specific match
                     if (normH.includes(`TAREA ${taskNumber}`) || normH.includes(`TRABAJO ${taskNumber}`)) return true;
 
                     return false;
                 });
-
-                // --- STRATEGY 2: Numeric Header Match (Specific to reports like the screenshot: "4", "5", "6") ---
-                if (!matchedHeader) {
-                    // Try to find a header that is exactly the task number? 
-                    // Or maybe check if there is a header that is basically just a number 
-                    // and matches our sequence logic if we assume columns are sequential?  
-                    // Actually, let's look for exact number match first.
-                    // Risk: "1" might be "Trimestre 1" or something. But usually headers are descriptive.
-                    // In the screenshot, headers are "4", "5", "6", "7".
-                    const exactNumberMatch = headers.find(h => {
-                        if (!h) return false;
-                        const normH = normalizeText(h);
-                        // Check if it's exactly the number? No, the screenshot has "4", "5", "6"... 
-                        // This is tricky because "4" in the screenshot might mean "Noviembre" or something?
-                        // Screenshot shows: "NOV 4", "DIC 5", "ENE 6", "FEB 7". 
-                        // The header row seems to be the one with "NOV", "DIC"... NO.
-                        // The screenshot shows a row with numbers "4", "5", "6", "7" and another with "NOMBRE DEL ALUMNO".
-                        // If "4" is a header, we might want to map it. 
-                        return false;
-                    });
-                }
 
 
                 // --- STRATEGY 3: Positional Fallback ---
