@@ -62,11 +62,25 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
         reader.readAsBinaryString(f);
     };
 
+    // 🌟 Re-run auto match if headers change manually
+    useEffect(() => {
+        if (headers.length > 0) {
+            // Re-detect 'Nombre' column if headers change
+            const nameKeywords = ['NOMBRE', 'ALUMNO', 'ESTUDIANTE', 'NAME'];
+            const nameIdx = headers.findIndex(h => {
+                if (!h || typeof h !== 'string') return false;
+                const upper = h.toUpperCase();
+                return nameKeywords.some(k => upper.includes(k));
+            });
+            if (nameIdx !== -1) setColName(headers[nameIdx]);
+        }
+    }, [headers]);
+
     const detectHeaderRow = (data) => {
         // Broaden search for header row
         const keywords = ['NOMBRE', 'ALUMNO', 'ESTUDIANTE', 'NAME', 'APELLIDO', 'FULL NAME'];
 
-        for (let i = 0; i < Math.min(data.length, 50); i++) {
+        for (let i = 0; i < Math.min(data.length, 100); i++) {
             const row = data[i];
             if (Array.isArray(row)) {
                 // Check if any cell in the row contains one of our keywords
@@ -85,8 +99,9 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
     const normalizeText = (text) => {
         if (!text) return '';
         return text.toString().toUpperCase()
+            .replace(/[\r\n]+/g, " ") // 🌟 CRITICAL: Replace newlines with spaces (for vertical headers)
             .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^A-Z0-9\s]/g, "") // Remove special chars just in case
+            .replace(/[^A-Z0-9\s]/g, "")
             .replace(/\s+/g, ' ').trim();
     };
 
@@ -294,6 +309,31 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
                                     </select>
                                 </>
                             )}
+
+
+                            {/* 🌟 New Manual Header Row Control */}
+                            <div style={{ marginBottom: '15px', padding: '10px', background: '#ffeaa7', borderRadius: '5px' }}>
+                                <label style={{ fontSize: '0.85rem', color: '#d35400', fontWeight: 'bold' }}>Fila de Encabezados (Detectada: {headerRowIndex + 1})</label>
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={headerRowIndex + 1}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) - 1;
+                                            if (val >= 0 && sheetData.length > val) {
+                                                setHeaderRowIndex(val);
+                                                setHeaders(sheetData[val]);
+                                                // Trigger re-match? The useEffect on 'headers' will handle it.
+                                            }
+                                        }}
+                                        style={{ width: '80px', padding: '5px' }}
+                                    />
+                                    <span style={{ fontSize: '0.8rem', color: '#666', alignSelf: 'center' }}>
+                                        Si no aparecen las columnas, ajusta este número.
+                                    </span>
+                                </div>
+                            </div>
 
                             <label>Columna Nombre:</label>
                             <select value={colName} onChange={e => setColName(e.target.value)} style={{ width: '100%', marginBottom: '15px' }}>
