@@ -131,106 +131,93 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
         console.log("Auto-matching columns...", { headers, criterios });
         const newMapping = {};
 
+        // 1. Find the "Name" column index to start Positional Matching
+        const nameKeywords = ['NOMBRE', 'ALUMNO', 'ESTUDIANTE', 'NAME'];
+        let nameColIndex = headers.findIndex(h => {
+            if (!h || typeof h !== 'string') return false;
+            return nameKeywords.some(k => h.toUpperCase().includes(k));
+        });
+        if (nameColIndex === -1) nameColIndex = 0; // Fallback
+
+        // Get candidate columns (those to the right of Name)
+        // Filter out obvious metadata columns
+        const candidateIndices = [];
+        const ignoreKeywords = ['ASISTENCIA', 'FALTAS', 'TOTAL', 'PROMEDIO', 'OBSERVACIONES', 'RIESGO'];
+
+        headers.forEach((h, idx) => {
+            if (idx > nameColIndex) {
+                const normH = normalizeText(h);
+                const isIgnored = ignoreKeywords.some(bad => normH.includes(bad));
+                if (!isIgnored) {
+                    candidateIndices.push({ idx, name: h });
+                }
+            }
+        });
+
+        let candidatePointer = 0; // Pointer to assign candidates sequentially
+
         criterios.forEach(criterio => {
             const maxTareas = numTareas[criterio.nombre] || 10;
-            const normCriterio = normalizeText(criterio.nombre); // e.g. "TAREAS" or "EXAMEN"
+            const normCriterio = normalizeText(criterio.nombre);
 
             for (let i = 0; i < maxTareas; i++) {
                 const systemKey = `${criterio.nombre}-${i}`;
                 const customName = customTaskNames[systemKey];
+                const taskLabelShort = `T${i + 1}`;
 
-                // Define search tokens
-                const taskLabelShort = `T${i + 1}`; // "T1"
-                const taskLabelFull = `TAREA ${i + 1}`; // "TAREA 1"
-
-                // Find matching header
-                const matchedHeader = headers.find(h => {
+                // --- STRATEGY 1: Explicit Match (Custom Name, Exact Criterio Match, "T1") ---
+                let matchedHeader = headers.find(h => {
                     if (!h || typeof h !== 'string') return false;
                     const normH = normalizeText(h);
-
-                    // 1. IGNORE Explicitly specific columns that cause noise
-                    const ignoreKeywords = ['ASISTENCIA', 'FALTAS', 'TOTAL', 'PROMEDIO'];
                     if (ignoreKeywords.some(bad => normH.includes(bad))) return false;
 
-                    // 2. Custom Name Match (High Priority)
+                    // Custom
                     if (customName) {
                         const normCustom = normalizeText(customName);
                         if (normH.includes(normCustom) || normCustom.includes(normH)) return true;
                     }
-
-                    // 3. Logic:
-                    // A. Exact criterion match ("Examen" matches "Examen") for first item
-                    //    Only valid if it's the first task (i=0) because a single column "Examen" should map to Examen-0
-                    if (i === 0 && (normH === normCriterio || normH.includes(normCriterio))) {
-                        // Careful: "Tareas" shouldn't match "Total Tareas" or "Promedio Tareas" (handled by ignore)
-                        // But "Examen" should match "Examen"
-                        return true;
-                    }
-
-                    // B. "Tarea 1", "T1" generic matching
-                    //    Only valid if the criterion name is essentially "Tareas" or "Trabajos"
-                    //    OR if the user just has "T1" in their excel and we assume it maps to the first criterion's T1.
-                    //    This is risky if there are multiple criteria with T1. 
-                    //    So let's be strict: "Criterion + T1" or just "T1" if it's the dominant pattern.
-
-                    // Match "Tareas T1", "Trabajo 1", "Crit 1"
-                    if (normH.includes(normCriterio) && (normH.includes(taskLabelShort) || normH.includes(taskLabelFull))) return true;
-
-                    // C. Generic Fallback: If header IS exactly "Tarea 1" or "T1"
-                    if (normH === taskLabelShort || normH === taskLabelFull) return true;
-
+                    // Exact Criterio Match (only for first task usually, or explicit "Examen")
+                    if (normH === normCriterio) return true;
+                    // "Tarea 1"
+                    if (normH.includes(taskLabelShort)) return true;
                     return false;
                 });
+
+                // --- STRATEGY 2: Positional Fallback ---
+                // If it's a generic "assignments" criterion (usually the first one or named "Tareas"/"Trabajos")
+                // And we didn't find an explicit match name
+                // We assume the user wants the columns exactly as they appear in Excel
+                if (!matchedHeader && candidatePointer < candidateIndices.length) {
+                    // Check if this candidate is "Examen" but we are in "Tareas" criterion?
+                    // Verify candidate name isn't "EXAMEN" if we are mapping "TAREAS"
+                    const nextCandidate = candidateIndices[candidatePointer];
+                    const normCand = normalizeText(nextCandidate.name);
+
+                    // Safety check: Don't auto-assign "EXAMEN" column to "TAREAS" criterion
+                    // If standard keywords imply another criterion, skip? 
+                    // For now, let's just assign.
+
+                    // Only use positional for "main" criteria or if forced?
+                    // Let's use it generally but carefully.
+
+                    // Special Case: "Examen" criterion should look for "Examen" column specifically first.
+                    // But if not found, maybe it's the last one?
+                    // Let's stick to: Positional is mostly for "Tasks"
+
+                    if (normCriterio.includes('TAREA') || normCriterio.includes('TRABAJO') || normCriterio.includes('PROYECTO')) {
+                        matchedHeader = nextCandidate.name;
+                        candidatePointer++; // Comsume this candidate
+                    } else if (normCriterio === 'EXAMEN' && normCand.includes('EXAMEN')) {
+                        matchedHeader = nextCandidate.name;
+                        candidatePointer++;
+                    }
+                }
 
                 if (matchedHeader) {
                     newMapping[systemKey] = matchedHeader;
                 }
             }
         });
-
-        // 🌟 SEQUENTIAL FALLBACK (For unknown columns like "Domina tu mundo...")
-        // If we have 'General' tasks (assignments) that weren't mapped, 
-        // take all 'unknown' columns to the right of Name and assign them sequentially.
-
-        const usedHeaders = new Set(Object.values(newMapping));
-        const nameKeywords = ['NOMBRE', 'ALUMNO', 'ESTUDIANTE'];
-        const nameIdx = headers.findIndex(h => {
-            if (!h || typeof h !== 'string') return false;
-            return nameKeywords.some(k => h.toUpperCase().includes(k));
-        });
-
-        // Loop through FIRST criterion (usually Tareas/Proyectos) to fill gaps
-        if (criterios.length > 0 && nameIdx !== -1) {
-            const mainCriterio = criterios[0]; // e.g. "Tareas" (50%) or "Proyectos" (75%)
-            const maxTareas = numTareas[mainCriterio.nombre] || 10;
-
-            let currentExcelColIdx = nameIdx + 1;
-
-            for (let i = 0; i < maxTareas; i++) {
-                const systemKey = `${mainCriterio.nombre}-${i}`;
-
-                // Only if NOT already mapped
-                if (!newMapping[systemKey]) {
-                    // Find next available column
-                    while (currentExcelColIdx < headers.length) {
-                        const h = headers[currentExcelColIdx];
-                        currentExcelColIdx++;
-
-                        if (!h || typeof h !== 'string') continue;
-                        const normH = normalizeText(h);
-                        const ignoreKeywords = ['ASISTENCIA', 'FALTAS', 'TOTAL', 'PROMEDIO', 'FINAL', 'OBSERVACIONES', 'RIESGO', 'DOCENTE', 'DISCIPLINA'];
-
-                        // If it's explicitly ignored or ALREADY used by another criterion (e.g. Examen match)
-                        if (ignoreKeywords.some(bad => normH.includes(bad)) || usedHeaders.has(h)) continue;
-
-                        // Found a candidate! Map it.
-                        newMapping[systemKey] = h;
-                        usedHeaders.add(h);
-                        break; // Move to next task
-                    }
-                }
-            }
-        }
 
         console.log("New Mapping:", newMapping);
         setColumnMapping(prev => ({ ...prev, ...newMapping }));
