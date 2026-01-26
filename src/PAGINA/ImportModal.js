@@ -194,16 +194,6 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
                     const normCand = normalizeText(nextCandidate.name);
 
                     // Safety check: Don't auto-assign "EXAMEN" column to "TAREAS" criterion
-                    // If standard keywords imply another criterion, skip? 
-                    // For now, let's just assign.
-
-                    // Only use positional for "main" criteria or if forced?
-                    // Let's use it generally but carefully.
-
-                    // Special Case: "Examen" criterion should look for "Examen" column specifically first.
-                    // But if not found, maybe it's the last one?
-                    // Let's stick to: Positional is mostly for "Tasks"
-
                     if (normCriterio.includes('TAREA') || normCriterio.includes('TRABAJO') || normCriterio.includes('PROYECTO')) {
                         matchedHeader = nextCandidate.name;
                         candidatePointer++; // Comsume this candidate
