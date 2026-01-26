@@ -188,6 +188,50 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
             }
         });
 
+        // 🌟 SEQUENTIAL FALLBACK (For unknown columns like "Domina tu mundo...")
+        // If we have 'General' tasks (assignments) that weren't mapped, 
+        // take all 'unknown' columns to the right of Name and assign them sequentially.
+
+        const usedHeaders = new Set(Object.values(newMapping));
+        const nameKeywords = ['NOMBRE', 'ALUMNO', 'ESTUDIANTE'];
+        const nameIdx = headers.findIndex(h => {
+            if (!h || typeof h !== 'string') return false;
+            return nameKeywords.some(k => h.toUpperCase().includes(k));
+        });
+
+        // Loop through FIRST criterion (usually Tareas/Proyectos) to fill gaps
+        if (criterios.length > 0 && nameIdx !== -1) {
+            const mainCriterio = criterios[0]; // e.g. "Tareas" (50%) or "Proyectos" (75%)
+            const maxTareas = numTareas[mainCriterio.nombre] || 10;
+
+            let currentExcelColIdx = nameIdx + 1;
+
+            for (let i = 0; i < maxTareas; i++) {
+                const systemKey = `${mainCriterio.nombre}-${i}`;
+
+                // Only if NOT already mapped
+                if (!newMapping[systemKey]) {
+                    // Find next available column
+                    while (currentExcelColIdx < headers.length) {
+                        const h = headers[currentExcelColIdx];
+                        currentExcelColIdx++;
+
+                        if (!h || typeof h !== 'string') continue;
+                        const normH = normalizeText(h);
+                        const ignoreKeywords = ['ASISTENCIA', 'FALTAS', 'TOTAL', 'PROMEDIO', 'FINAL', 'OBSERVACIONES', 'RIESGO', 'DOCENTE', 'DISCIPLINA'];
+
+                        // If it's explicitly ignored or ALREADY used by another criterion (e.g. Examen match)
+                        if (ignoreKeywords.some(bad => normH.includes(bad)) || usedHeaders.has(h)) continue;
+
+                        // Found a candidate! Map it.
+                        newMapping[systemKey] = h;
+                        usedHeaders.add(h);
+                        break; // Move to next task
+                    }
+                }
+            }
+        }
+
         console.log("New Mapping:", newMapping);
         setColumnMapping(prev => ({ ...prev, ...newMapping }));
     };
