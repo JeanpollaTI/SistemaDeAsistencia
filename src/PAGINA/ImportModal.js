@@ -66,12 +66,19 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
     useEffect(() => {
         if (headers.length > 0) {
             // Re-detect 'Nombre' column if headers change
-            const nameKeywords = ['NOMBRE', 'ALUMNO', 'ESTUDIANTE', 'NAME'];
-            const nameIdx = headers.findIndex(h => {
-                if (!h || typeof h !== 'string') return false;
-                const upper = h.toUpperCase();
-                return nameKeywords.some(k => upper.includes(k));
-            });
+            // Priority: "NOMBRE DEL ALUMNO", then "NOMBRE", etc.
+            const nameKeywords = ['NOMBRE DEL ALUMNO', 'ALUMNO', 'ESTUDIANTE', 'NOMBRE', 'NAME'];
+
+            let nameIdx = -1;
+            // Try explicit strict match first
+            for (const kw of nameKeywords) {
+                nameIdx = headers.findIndex(h => {
+                    if (!h || typeof h !== 'string') return false;
+                    return h.toUpperCase().includes(kw);
+                });
+                if (nameIdx !== -1) break;
+            }
+
             if (nameIdx !== -1) setColName(headers[nameIdx]);
         }
     }, [headers]);
@@ -79,12 +86,21 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
     const detectHeaderRow = (data) => {
         // Broaden search for header row with STRICTER rules to avoid "Nombre del Docente"
         // We require 'ALUMNO' or 'LISTA' or 'ESTUDIANTE' which are typical of the TABLE header.
-        const keywords = ['ALUMNO', 'ESTUDIANTE', 'APELLIDO', 'FULL NAME', 'LISTA', 'NO.'];
+        const keywords = ['ALUMNO', 'ESTUDIANTE', 'APELLIDO', 'FULL NAME', 'LISTA', 'NO. DE LISTA', 'NÚMERO DE LISTA'];
         const secondaryKeywords = ['NOMBRE']; // "NOMBRE" by itself is too risky (matches "Nombre del Docente")
+        const specificKeywords = ['NOMBRE DEL ALUMNO', 'NOMBRE DEL ALUMNO (A)']; // Very strong signal
 
         for (let i = 0; i < Math.min(data.length, 100); i++) {
             const row = data[i];
             if (Array.isArray(row)) {
+
+                // Check for very specific strong keywords first (Layout specific)
+                const hasSpecific = row.some(cell => {
+                    if (!cell || typeof cell !== 'string') return false;
+                    return specificKeywords.some(k => cell.toUpperCase().includes(k));
+                });
+                if (hasSpecific) return i;
+
                 // Check for primary strong keywords
                 const hasPrimary = row.some(cell => {
                     if (!cell || typeof cell !== 'string') return false;
@@ -125,7 +141,7 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
         if (mode === 'trabajos' && headers.length > 0) {
             autoMatchColumns();
         }
-    }, [headers, mode]);
+    }, [headers, mode, criterios, numTareas]);
 
     const autoMatchColumns = () => {
         console.log("Auto-matching columns...", { headers, criterios });
@@ -142,13 +158,14 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
         // Get candidate columns (those to the right of Name)
         // Filter out obvious metadata columns
         const candidateIndices = [];
-        const ignoreKeywords = ['ASISTENCIA', 'FALTAS', 'TOTAL', 'PROMEDIO', 'OBSERVACIONES', 'RIESGO'];
+        const ignoreKeywords = ['ASISTENCIA', 'FALTAS', 'TOTAL', 'PROMEDIO', 'OBSERVACIONES', 'RIESGO', 'DOCENTE', 'DISCIPLINA', 'GRADO', 'GRUPO'];
 
         headers.forEach((h, idx) => {
             if (idx > nameColIndex) {
                 const normH = normalizeText(h);
                 const isIgnored = ignoreKeywords.some(bad => normH.includes(bad));
-                if (!isIgnored) {
+                // Only consider non-empty headers, or headers that look like numbers (1, 2, 3...)
+                if (!isIgnored && h) {
                     candidateIndices.push({ idx, name: h });
                 }
             }
@@ -164,6 +181,7 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
                 const systemKey = `${criterio.nombre}-${i}`;
                 const customName = customTaskNames[systemKey];
                 const taskLabelShort = `T${i + 1}`;
+                const taskNumber = (i + 1).toString();
 
                 // --- STRATEGY 1: Explicit Match (Custom Name, Exact Criterio Match, "T1") ---
                 let matchedHeader = headers.find(h => {
@@ -176,28 +194,70 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
                         const normCustom = normalizeText(customName);
                         if (normH.includes(normCustom) || normCustom.includes(normH)) return true;
                     }
-                    // Exact Criterio Match (only for first task usually, or explicit "Examen")
-                    if (normH === normCriterio) return true;
-                    // "Tarea 1"
-                    if (normH.includes(taskLabelShort)) return true;
+                    // Exact Criterio Match + Number (e.g. "Proyecto 1")
+                    if (normH === `${normCriterio} ${taskNumber}` || normH === `${normCriterio}${taskNumber}`) return true;
+
+                    // "Tarea 1", "Tabajo 1"
+                    if (normH.includes(`TAREA ${taskNumber}`) || normH.includes(`TRABAJO ${taskNumber}`)) return true;
+
                     return false;
                 });
 
-                // --- STRATEGY 2: Positional Fallback ---
-                // If it's a generic "assignments" criterion (usually the first one or named "Tareas"/"Trabajos")
-                // And we didn't find an explicit match name
-                // We assume the user wants the columns exactly as they appear in Excel
+                // --- STRATEGY 2: Numeric Header Match (Specific to reports like the screenshot: "4", "5", "6") ---
+                if (!matchedHeader) {
+                    // Try to find a header that is exactly the task number? 
+                    // Or maybe check if there is a header that is basically just a number 
+                    // and matches our sequence logic if we assume columns are sequential?  
+                    // Actually, let's look for exact number match first.
+                    // Risk: "1" might be "Trimestre 1" or something. But usually headers are descriptive.
+                    // In the screenshot, headers are "4", "5", "6", "7".
+                    const exactNumberMatch = headers.find(h => {
+                        if (!h) return false;
+                        const normH = normalizeText(h);
+                        // Check if it's exactly the number? No, the screenshot has "4", "5", "6"... 
+                        // This is tricky because "4" in the screenshot might mean "Noviembre" or something?
+                        // Screenshot shows: "NOV 4", "DIC 5", "ENE 6", "FEB 7". 
+                        // The header row seems to be the one with "NOV", "DIC"... NO.
+                        // The screenshot shows a row with numbers "4", "5", "6", "7" and another with "NOMBRE DEL ALUMNO".
+                        // If "4" is a header, we might want to map it. 
+                        return false;
+                    });
+                }
+
+
+                // --- STRATEGY 3: Positional Fallback ---
+                // If we didn't find an explicit match name
+                // We assume the use wants the columns exactly as they appear in Excel to the right of Name
+                // But we must skip known non-task columns.
                 if (!matchedHeader && candidatePointer < candidateIndices.length) {
-                    // Check if this candidate is "Examen" but we are in "Tareas" criterion?
-                    // Verify candidate name isn't "EXAMEN" if we are mapping "TAREAS"
                     const nextCandidate = candidateIndices[candidatePointer];
                     const normCand = normalizeText(nextCandidate.name);
+                    const candIsNumber = /^\d+$/.test(normCand); // Is just digits?
 
-                    // Safety check: Don't auto-assign "EXAMEN" column to "TAREAS" criterion
-                    if (normCriterio.includes('TAREA') || normCriterio.includes('TRABAJO') || normCriterio.includes('PROYECTO')) {
+                    // Heuristic: If candidate is "EXAMEN" but we are in "TAREAS", skip it?
+                    // Unless "TAREAS" is the only criterion.
+
+                    if (normCriterio === 'EXAMEN' && normCand.includes('EXAMEN')) {
                         matchedHeader = nextCandidate.name;
-                        candidatePointer++; // Comsume this candidate
-                    } else if (normCriterio === 'EXAMEN' && normCand.includes('EXAMEN')) {
+                        candidatePointer++;
+                    } else if (normCriterio !== 'EXAMEN' && normCand.includes('EXAMEN')) {
+                        // Skip this candidate for non-exam criteria
+                        // Do NOT increment pointer, just don't match this one to Tarea X
+                        // Actually, we should PROBABLY increment pointer so we don't get stuck?
+                        // If we skip it, we need to check the next candidate for THIS task.
+                        // Ideally we find 'Examen' later.
+
+                        // Let's iterate forward in candidates to find a "safe" one?
+                        // For simplicity, if we hit "EXAMEN", we skip it for "TAREAS".
+                        candidatePointer++;
+                        // check next?
+                        if (candidatePointer < candidateIndices.length) {
+                            const nextNext = candidateIndices[candidatePointer];
+                            matchedHeader = nextNext.name;
+                            candidatePointer++;
+                        }
+                    } else {
+                        // Default sequential assignment
                         matchedHeader = nextCandidate.name;
                         candidatePointer++;
                     }
@@ -241,23 +301,49 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
         for (let i = headerRowIndex + 1; i < sheetData.length; i++) {
             const row = sheetData[i];
             const rawName = row[nameIdx];
-            if (!rawName) continue;
+            if (!rawName) continue; // Skip empty rows
 
             const normExcelName = normalizeText(rawName);
-            let bestMatch = alumnos.find(a => {
-                const fullName = normalizeText(`${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`);
-                return fullName === normExcelName;
+            if (normExcelName.length < 3) continue; // Skip junk rows
+
+            // --- IMPROVED MATCHING STRATEGY ---
+            let bestMatch = null;
+            let maxScore = 0;
+
+            alumnos.forEach(a => {
+                const sysFullName = normalizeText(`${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`);
+
+                // 1. Exact Match
+                if (sysFullName === normExcelName) {
+                    bestMatch = a;
+                    maxScore = 100;
+                    return;
+                }
+
+                if (maxScore === 100) return;
+
+                // 2. Token Matching (Score based)
+                const sysTokens = sysFullName.split(' ').filter(t => t.length > 2);
+                const excelTokens = normExcelName.split(' ').filter(t => t.length > 2);
+
+                let hitCount = 0;
+                sysTokens.forEach(st => {
+                    if (excelTokens.includes(st)) hitCount++;
+                });
+
+                // Calculate score: Hits / (Total Tokens in System Name)
+                const score = hitCount / sysTokens.length;
+
+                // Threshold: 0.7 (Allows for missing middle name or slight diff)
+                // Also require at least 2 hits if names are long to avoid false positives with just one common name
+                if (score > 0.6 && score > maxScore) {
+                    // Additional check: Ensure surname matches?
+                    // Usually usually good enough if > 70% match
+                    maxScore = score;
+                    bestMatch = a;
+                }
             });
 
-            if (!bestMatch) {
-                bestMatch = alumnos.find(a => {
-                    const systemName = normalizeText(`${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`);
-                    const sysTokens = systemName.split(' ');
-                    const excelTokens = normExcelName.split(' ');
-                    if (sysTokens.length < 2 || excelTokens.length < 2) return false;
-                    return sysTokens.every(t => excelTokens.includes(t)) || excelTokens.every(t => sysTokens.includes(t));
-                });
-            }
 
             if (bestMatch) {
                 // Extract grades
@@ -275,13 +361,12 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
 
                         // Extract Header Name for Task Naming
                         const headerName = headers[colIdx];
-                        // Clean clean header name (remove line breaks etc) but keep it readable
                         const cleanHeaderName = headerName ? headerName.toString().replace(/[\r\n]+/g, " ").trim() : "";
 
                         if (!isNaN(parsed)) {
                             gradesObj[sysKey] = {
                                 value: parsed,
-                                taskName: cleanHeaderName // 🌟 Pass the header name as the task name
+                                taskName: cleanHeaderName
                             };
                         }
                     });
