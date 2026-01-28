@@ -55,12 +55,18 @@ function Grupo({ user }) {
             axios.get(`${API_URL}/profesores`, axiosConfig),
             axios.get(`${API_URL}/api/materias`, axiosConfig) // NUEVO: Fetch materias
           ]);
-          setGrupos(gruposRes.data);
+          const sortedGrupos = gruposRes.data.sort((a, b) =>
+            a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
+          );
+          setGrupos(sortedGrupos);
           setProfesores(profesoresRes.data);
           setMateriasDb(materiasRes.data || []); // Guardar materias
         } else if (user.role === 'profesor') {
           const gruposRes = await axios.get(`${API_URL}/grupos/mis-grupos`, axiosConfig);
-          setGrupos(gruposRes.data);
+          const sortedGrupos = gruposRes.data.sort((a, b) =>
+            a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
+          );
+          setGrupos(sortedGrupos);
         }
       } catch (err) {
         console.error("Error al cargar datos:", err);

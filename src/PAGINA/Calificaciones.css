@@ -81,8 +81,12 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   width: 220px;
   /* Ancho fijo para las tarjetas */
-  flex-shrink: 0;
   /* Evita que las tarjetas se encojan */
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .grupo-card:hover {
