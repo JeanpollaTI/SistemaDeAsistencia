@@ -4,7 +4,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import logoImage from './Logoescuela.png';
 import ConfirmacionModal from './ConfirmacionModal';
-import ImportModal from './ImportModal';
+
 
 // La URL de la API se obtiene de las variables de entorno para Vercel/Render
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -1611,95 +1611,7 @@ const PanelCalificaciones = ({
         });
     };
 
-    // --- IMPORTACIÓN EXCEL ---
-    const [modalImport, setModalImport] = useState(false);
 
-    const handleImportGrades = async (importData) => {
-        // importData: [{ alumnoId, grade, ...gradesObj }] 
-        // gradesObj keys are "Criterio-TareaIndex" e.g "Tareas-0": 10
-
-        setIsLoadingData(true);
-        setModalImport(false);
-
-        // Strategy: Loop and reuse handleCalificacionChange
-        let updatedCount = 0;
-
-        try {
-            // Notificar inicio
-            setNotificacion({ mensaje: 'Iniciando importación masiva...', tipo: 'info' });
-
-            const promises = [];
-
-            for (const item of importData) {
-                // Determine if it's general mode (item.grade) or bulk mode (keys with '-')
-                if (item.grade !== undefined) {
-                    // General mode or legacy fallback (though this function is mainly for Trabajos view now)
-                    // But in Trabajos view we don't really support SINGLE column import effectively without the new modal logic.
-                    // The new modal logic returns bulk keys even for 1 column if mapped.
-                }
-
-                // Iterate over all keys in item to find grade keys
-                Object.keys(item).forEach(key => {
-                    if (key.includes('-')) {
-                        const [criterioNombre, tareaIdxStr] = key.split('-');
-                        const tareaIndex = parseInt(tareaIdxStr);
-                        const valData = item[key]; // This is now { value: 10, taskName: "Examen" } or just 10 (legacy)
-
-                        // Normalized value and name
-                        const valor = typeof valData === 'object' ? valData.value : valData;
-                        const nuevoNombreTarea = typeof valData === 'object' ? valData.taskName : null;
-
-                        if (valor !== null && !isNaN(valor)) {
-                            // Update State Helper
-                            setCalificaciones(prev => {
-                                const nextCalificaciones = { ...prev };
-                                const alumnoId = item.alumnoId;
-
-                                const alumnoCal = nextCalificaciones[alumnoId] || {};
-                                const bimestreCal = alumnoCal[bimestreActivo] || {};
-                                const criterioCal = bimestreCal[criterioNombre] || {};
-                                const tareaCal = criterioCal[tareaIndex] || {};
-
-                                const datosAnteriores = tareaCal;
-
-                                nextCalificaciones[alumnoId] = {
-                                    ...alumnoCal,
-                                    [bimestreActivo]: {
-                                        ...bimestreCal,
-                                        [criterioNombre]: {
-                                            ...criterioCal,
-                                            [tareaIndex]: {
-                                                nota: parseFloat(valor),
-                                                fecha: datosAnteriores.fecha || new Date().toISOString(),
-                                                // 🌟 IMPORT NAME: If we have a name from Excel, use it. Else keep existing.
-                                                nombre: nuevoNombreTarea || datosAnteriores.nombre
-                                            }
-                                        },
-                                    },
-                                };
-                                return nextCalificaciones;
-                            });
-                        }
-                    }
-                });
-                updatedCount++; // Count students, not individual grades
-            }
-
-            // Note: We are updating state synchronously/batched above.
-            // But we need to handle the SAVE. The 'guardarCalificaciones' call will grab this new state.
-            // Wait, we need to ensure the state update is processed.
-            // Actually, handleImportGrades updates local state. The User must click "Guardar Calificaciones" to persist to DB.
-            // Or we could auto-save. The current flow seems to be: Import -> Update UI -> User Clicks Save.
-            // Let's keep it that way for safety.
-            setNotificacion({ mensaje: `Importación completada. Se actualizaron datos para ${updatedCount} alumnos.`, tipo: 'exito' });
-
-        } catch (err) {
-            console.error("Error importando:", err);
-            setNotificacion({ mensaje: "Error al guardar calificaciones importadas.", tipo: 'error' });
-        } finally {
-            setIsLoadingData(false);
-        }
-    };
 
 
     if (isLoadingData) return <div className="trabajos-container grupo-componente" style={{ textAlign: 'center', paddingTop: '10rem' }}><p style={{ color: '#E9E9E9' }}>Cargando datos del grupo...</p></div>;
@@ -1728,18 +1640,7 @@ const PanelCalificaciones = ({
                 confirmText="Sí, Eliminar Todo"
             />
 
-            {/* 🌟 Modal Importar Excel */}
-            {modalImport && (
-                <ImportModal
-                    onClose={() => setModalImport(false)}
-                    onImport={handleImportGrades}
-                    mode="trabajos" // Specific mode for this view
-                    materias={[]} // Not used in this mode
-                    alumnos={grupo.alumnos}
-                    criterios={criteriosActivos}
-                    numTareas={numTareas} // 🌟 Passed for bulk mapping
-                />
-            )}
+
 
             {/* Contenido principal del panel de calificaciones */}
             <div className="asistencia-modal-content">
@@ -1753,9 +1654,7 @@ const PanelCalificaciones = ({
                         <button className="btn" onClick={handleLimpiarCalificaciones} style={{ marginRight: '10px', backgroundColor: '#c0392b', borderColor: '#c0392b', color: 'white' }}>
                             🗑️ Limpiar Calificaciones
                         </button>
-                        <button className="btn" onClick={() => setModalImport(true)} style={{ marginRight: '10px', backgroundColor: '#8e44ad', borderColor: '#8e44ad', color: 'white' }}>
-                            📥 Importar Excel
-                        </button>
+
 
                         {/* Botón para abrir el modal de criterios */}
                         <button className="btn" onClick={() => setModalCriterios(true)}>Criterios</button>
