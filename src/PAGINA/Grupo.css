@@ -319,7 +319,7 @@ body {
   padding: 2rem;
   border-radius: 12px;
   width: 90%;
-  max-width: 600px;
+  max-width: 950px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
@@ -342,6 +342,24 @@ body {
 .grupo-componente .modal-content input[type="text"]:focus {
   outline: none;
   border-color: var(--main-color);
+}
+
+.grupo-componente .modal-body-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+  margin-bottom: 20px;
+}
+
+.grupo-componente .modal-column-left {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.grupo-componente .modal-column-right {
+  display: flex;
+  flex-direction: column;
 }
 
 .grupo-componente .modal-actions {
@@ -383,7 +401,7 @@ body {
 
 .grupo-componente .alumnos-list,
 .grupo-componente .profesores-list {
-  max-height: 250px;
+  max-height: 480px;
   overflow-y: auto;
   border: 1px solid #444;
   padding: 1rem;
@@ -820,6 +838,11 @@ body {
 
   .grupo-componente .alumno-form-inputs {
     grid-template-columns: 1fr;
+  }
+
+  .grupo-componente .modal-body-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
   }
 }
 

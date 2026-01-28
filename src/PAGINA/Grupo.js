@@ -754,32 +754,39 @@ function Grupo({ user }) {
           <div className="modal-backdrop">
             <div className="modal-content">
               <h2>{grupoSeleccionado ? 'Editar Grupo' : 'Crear Nuevo Grupo'}</h2>
-              <input type="text" placeholder="Nombre del Grupo (Ej: 1A)" value={nuevoGrupo.nombre} onChange={(e) => setNuevoGrupo({ ...nuevoGrupo, nombre: e.target.value })} style={{ marginBottom: '10px' }} />
-              <input type="text" placeholder="Nombre del Asesor (Opcional)" value={nuevoGrupo.asesor || ''} onChange={(e) => setNuevoGrupo({ ...nuevoGrupo, asesor: e.target.value })} />
-              <div className="alumno-form">
-                <h4 className="form-subtitle">Agregar Nuevo Alumno</h4>
-                <div className="alumno-form-inputs">
-                  <input type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} />
-                  <input type="text" placeholder="Apellido Paterno" value={alumnoInput.apellidoPaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoPaterno: e.target.value })} />
-                  <input type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} />
+              <div className="modal-body-grid">
+                <div className="modal-column-left">
+                  <input type="text" placeholder="Nombre del Grupo (Ej: 1A)" value={nuevoGrupo.nombre} onChange={(e) => setNuevoGrupo({ ...nuevoGrupo, nombre: e.target.value })} style={{ marginBottom: '10px' }} />
+                  <input type="text" placeholder="Nombre del Asesor (Opcional)" value={nuevoGrupo.asesor || ''} onChange={(e) => setNuevoGrupo({ ...nuevoGrupo, asesor: e.target.value })} />
+                  <div className="alumno-form">
+                    <h4 className="form-subtitle">Agregar Nuevo Alumno</h4>
+                    <div className="alumno-form-inputs">
+                      <input type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} />
+                      <input type="text" placeholder="Apellido Paterno" value={alumnoInput.apellidoPaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoPaterno: e.target.value })} />
+                      <input type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} />
+                    </div>
+                    <div className="alumno-form-actions">
+                      <button className="btn btn-add" onClick={handleAgregarAlumno}>Agregar Alumno</button>
+                    </div>
+                  </div>
                 </div>
-                <div className="alumno-form-actions">
-                  <button className="btn btn-add" onClick={handleAgregarAlumno}>Agregar Alumno</button>
+
+                <div className="modal-column-right">
+                  <div className="alumnos-list">
+                    <div className="alumnos-count-header">Alumnos en el grupo: {nuevoGrupo.alumnos.length}</div>
+                    <ul>
+                      {nuevoGrupo.alumnos.map(a => (
+                        <li key={a._id}>
+                          <span className="alumno-nombre-display">{`${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`}</span>
+                          <div className="alumno-actions">
+                            <button className="btn-edit-alumno" onClick={() => abrirModal('editarAlumno', a)}><FaPencilAlt /></button>
+                            <button className="btn-delete-alumno" onClick={() => handleDeleteAlumno(a)}><FaTrash /></button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              </div>
-              <div className="alumnos-list">
-                <div className="alumnos-count-header">Alumnos en el grupo: {nuevoGrupo.alumnos.length}</div>
-                <ul>
-                  {nuevoGrupo.alumnos.map(a => (
-                    <li key={a._id}>
-                      <span className="alumno-nombre-display">{`${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`}</span>
-                      <div className="alumno-actions">
-                        <button className="btn-edit-alumno" onClick={() => abrirModal('editarAlumno', a)}><FaPencilAlt /></button>
-                        <button className="btn-delete-alumno" onClick={() => handleDeleteAlumno(a)}><FaTrash /></button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
               </div>
               <div className="modal-actions">
                 <button className="btn btn-primary" onClick={grupoSeleccionado ? handleUpdateGrupo : handleGuardarGrupo}>
