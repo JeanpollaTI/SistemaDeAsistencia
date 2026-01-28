@@ -9,6 +9,7 @@ import ConfirmacionModal from './ConfirmacionModal';
 // La URL de la API se obtiene de las variables de entorno para Vercel/Render
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+
 // ======================================
 // --- 1. Componente de Notificación (Integrado) ---
 // ======================================
