@@ -114,8 +114,11 @@ const CriterioCell = React.memo(({
     handleCalificacionChange,
     formatFechaTooltip,
     setTareaPorNombrar,
+    formatFechaTooltip,
+    setTareaPorNombrar,
     rowIndex, // 🌟 NEW PROP: Row index per student
-    colIndex  // 🌟 NEW PROP: Column index per task
+    colIndex,  // 🌟 NEW PROP: Column index per task
+    onPasteValues // 🌟 NEW PROP: Handler del padre para updates masivos
 }) => {
     // La estructura de la data es: { nota: X, fecha: Y, nombre: Z }
     const entrada = calificaciones[alumnoId]?.[bimestreActivo]?.[criterioNombre]?.[tareaIndex];
@@ -154,6 +157,26 @@ const CriterioCell = React.memo(({
         }
     };
 
+    // 🌟 Manejo del Pegado (Paste)
+    const handlePaste = (e) => {
+        e.preventDefault();
+        const clipboardData = e.clipboardData.getData('Text');
+        if (!clipboardData) return;
+
+        // Parsear filas y columnas
+        // Excel usa \t para separar columnas y \n para filas
+        const rows = clipboardData.split(/\r?\n/).filter(r => r.trim() !== '');
+        if (rows.length === 0) return;
+
+        const matrix = rows.map(row => row.split('\t'));
+
+        // Necesitamos notificar al padre para que haga el update masivo
+        // Pasamos: mi posición (rowIndex, colIndex) y la matriz de datos
+        if (onPasteValues) {
+            onPasteValues(rowIndex, colIndex, matrix);
+        }
+    };
+
     return (
         <input
             id={`cell-${rowIndex}-${colIndex}`} // 🌟 Unique ID for navigation
@@ -165,6 +188,7 @@ const CriterioCell = React.memo(({
             title={tooltipText}
             onChange={handleChange}
             onKeyDown={handleKeyDown} // 🌟 Attach handler
+            onPaste={handlePaste}     // 🌟 Paste handler
             onBlur={() => {
                 // Validación al perder foco: Si es número válido y < 5, ajustar a 5
                 if (typeof tareaData.nota === 'number' && tareaData.nota > 0 && tareaData.nota < 5) {
@@ -1389,6 +1413,52 @@ const PanelCalificaciones = ({
     };
 
 
+    // 🌟 FUNCIÓN BULK: Actualizar múltiples calificaciones a la vez (Optimizada)
+    const handleBulkCalificacionUpdate = (updates) => {
+        // updates: [{ alumnoId, bimestre, criterioNombre, tareaIndex, valor }]
+        if (!updates || updates.length === 0) return;
+
+        setCalificaciones(prev => {
+            const nextCalificaciones = { ...prev };
+
+            updates.forEach(update => {
+                const { alumnoId, bimestre, criterioNombre, tareaIndex, valor } = update;
+                const notaFloat = valor === '' ? null : parseFloat(valor);
+
+                // Validaciones básicas, igual que en individual
+                if (notaFloat !== null && (isNaN(notaFloat) || notaFloat < 0 || notaFloat > 10)) return;
+
+                const alumnoCal = nextCalificaciones[alumnoId] || {};
+                const bimestreCal = alumnoCal[bimestre] || {};
+                const criterioCal = bimestreCal[criterioNombre] || {};
+                const tareaCal = criterioCal[tareaIndex] || {};
+
+                // Mantenemos datos anteriores (fecha y nombre)
+                const datosAnteriores = tareaCal;
+
+                nextCalificaciones[alumnoId] = {
+                    ...alumnoCal,
+                    [bimestre]: {
+                        ...bimestreCal,
+                        [criterioNombre]: {
+                            ...criterioCal,
+                            [tareaIndex]: {
+                                nota: notaFloat,
+                                fecha: datosAnteriores.fecha || new Date().toISOString(),
+                                nombre: datosAnteriores.nombre // Preservar nombre
+                            },
+                        },
+                    },
+                };
+            });
+
+            return nextCalificaciones;
+        });
+
+        const count = updates.length;
+        setNotificacion({ mensaje: `Se pegaron ${count} calificaciones correctamente.`, tipo: 'exito' });
+    };
+
     // Lógica de manipulación de calificaciones (MODIFICADA para preservar el nombre)
     const handleCalificacionChange = (alumnoId, bimestre, criterioNombre, tareaIndex, valor) => {
         const notaFloat = valor === '' ? null : parseFloat(valor);
@@ -1439,6 +1509,38 @@ const PanelCalificaciones = ({
         } finally {
             setIsSaving(false);
         }
+    };
+
+    // 🌟 COORDINADOR DE PEGADO: Recibe desde la celda y orquesta los updates
+    const handlePasteFromCell = (startRowIndex, startColIndex, matrix) => {
+        // Necesitamos la lista de alumnos ORDENADA exactamente igual que en el render
+        // Esta misma lógica de ordenamiento se usa en el map del JSX
+        const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno));
+
+        // Determinar si estamos en vista global (tabla) o vista lista (cuadritos)
+        // La prop 'criterioNombre' se infiere.
+        //   - En Vista Global: usamos criterioSeleccionadoGlobal
+        //   - En Vista Lista: usamos criterioAbierto.criterioNombre (pero ojo, el paste solo funciona si la celda está visible)
+
+        // PROBLEMA: CriterioCell ya tiene 'criterioNombre' en sus props, pero aqui en el padre necesitamos saberlo.
+        // SOLUCION: CriterioCell no pasa el criterio, solo coords. Pero el padre sabe el contexto?
+        // En Vista Global, criterio es 'criterioSeleccionadoGlobal'.
+        // En Vista Lista, puede ser cualquiera porque cada alumno tiene desplegables independientes? 
+        // No, el paste se hace en UN input especifico.
+        // Mejor: Que CriterioCell pase tambien el criterioNombre en el callback.
+
+        // REFACTOR RAPIDO: No puedo cambiar CriterioCell firma facil sin ver todo.
+        // PERO: handlePasteFromCell puede ser un wrapper que YA trae el nombre del criterio pre-configurado si lo paso como closure o prop.
+        // O mejor: Que CriterioCell reciba 'onPasteValues' y le pase (rowIndex, colIndex, matrix). 
+        // El Padre debe saber en cual criterio estamos.
+
+        // Vemos el JSX. 
+        // En Vista Global: CriterioCell recibe criterioNombre={criterioSeleccionadoGlobal}
+        // En Vista Lista: CriterioCell recibe criterioNombre={criterioAbierto.criterioNombre}
+
+        // Por ende, la función onPasteValues debería ser agnóstica del criterio O recibirlo.
+        // Vamos a modificar CriterioCell para que devuelva el criterioNombre tambien? 
+        // No, mejor simplificamos: pasamos una funcion arrow al CriterioCell que ya tenga el criterio "quemado" (curried).
     };
 
     const calcularPromedioCriterio = (alumnoId, bimestre, criterioNombre) => {
@@ -1757,8 +1859,35 @@ const PanelCalificaciones = ({
                                                             handleCalificacionChange={handleCalificacionChange}
                                                             formatFechaTooltip={formatFechaTooltip}
                                                             setTareaPorNombrar={setTareaPorNombrar}
+                                                            setTareaPorNombrar={setTareaPorNombrar}
                                                             rowIndex={grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).findIndex(x => x._id === alumno._id)} // 🌟 Pass row index
                                                             colIndex={tareaIndex} // 🌟 Pass column index
+                                                            onPasteValues={(rIndex, cIndex, matrix) => {
+                                                                const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno));
+                                                                const updates = [];
+
+                                                                matrix.forEach((rowVals, rOffset) => {
+                                                                    const targetRow = rIndex + rOffset;
+                                                                    if (targetRow < alumnosOrdenados.length) {
+                                                                        const targetAlumno = alumnosOrdenados[targetRow];
+                                                                        rowVals.forEach((valStr, cOffset) => {
+                                                                            const targetCol = cIndex + cOffset;
+                                                                            // Verificar si la tarea existe (cols limit)
+                                                                            const maxTareas = numTareas[criterioSeleccionadoGlobal] || 10;
+                                                                            if (targetCol < maxTareas) {
+                                                                                updates.push({
+                                                                                    alumnoId: targetAlumno._id,
+                                                                                    bimestre: bimestreActivo,
+                                                                                    criterioNombre: criterioSeleccionadoGlobal,
+                                                                                    tareaIndex: targetCol,
+                                                                                    valor: valStr
+                                                                                });
+                                                                            }
+                                                                        });
+                                                                    }
+                                                                });
+                                                                handleBulkCalificacionUpdate(updates);
+                                                            }}
                                                         />
                                                     </td>
                                                 ))}
@@ -1847,6 +1976,34 @@ const PanelCalificaciones = ({
                                                                 handleCalificacionChange={handleCalificacionChange}
                                                                 formatFechaTooltip={formatFechaTooltip}
                                                                 setTareaPorNombrar={setTareaPorNombrar}
+                                                                onPasteValues={(rIndex, cIndex, matrix) => {
+                                                                    // En vista LISTA, el 'rowIndex' es relativo al alumno (siempre 0 o irrelevante si no cruzamos alumnos) via props?
+                                                                    // No, CriterioCell no recibe rowIndex en este loop, asi que es undefined.
+                                                                    // Para simplificar, en vista lista solo soportaremos pegar HORIZONTALMENTE (misma fila).
+                                                                    // O soportar vertical si calculamos el index.
+                                                                    // Dado que esta vista es "un alumno desplegado", pegar verticalmente no tiene sentido visual directo (saltaría al sig alumno cerrado?).
+                                                                    // LIMITACIÓN: En vista lista, solo pegamos en la fila actual.
+
+                                                                    const updates = [];
+                                                                    matrix.forEach((rowVals, rOffset) => {
+                                                                        if (rOffset === 0) { // Solo primera fila del pegado
+                                                                            rowVals.forEach((valStr, cOffset) => {
+                                                                                const targetCol = cIndex + cOffset;
+                                                                                const maxTareas = numTareas[criterioAbierto.criterioNombre] || 10;
+                                                                                if (targetCol < maxTareas) {
+                                                                                    updates.push({
+                                                                                        alumnoId: alumno._id,
+                                                                                        bimestre: bimestreActivo,
+                                                                                        criterioNombre: criterioAbierto.criterioNombre,
+                                                                                        tareaIndex: targetCol,
+                                                                                        valor: valStr
+                                                                                    });
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                    });
+                                                                    handleBulkCalificacionUpdate(updates);
+                                                                }}
                                                             />
                                                         ))}
                                                         <button className="btn btn-agregar-dias" onClick={() => agregarTareas(criterioAbierto.criterioNombre)}>+5</button>
