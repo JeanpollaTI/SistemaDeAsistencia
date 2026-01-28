@@ -89,6 +89,7 @@
   align-items: center;
 }
 
+
 .grupo-card:hover {
   transform: translateY(-8px);
   box-shadow: 0 10px 30px rgba(212, 175, 55, 0.25);
