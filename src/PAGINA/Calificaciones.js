@@ -6,7 +6,7 @@ import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSens
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import './Calificaciones.css';
-import ImportModal from './ImportModal';
+
 import logoImage from './Logoescuela.png';
 
 // --- Sortable Header Component ---
@@ -79,7 +79,7 @@ function Calificaciones({ user }) {
   const [notificacion, setNotificacion] = useState({ visible: false, mensaje: '', tipo: '' });
   const [isEditing, setIsEditing] = useState(false); // Estado para controlar el modo edición
   const [savedDirectores, setSavedDirectores] = useState([]); // Estado para directores guardados
-  const [modalImport, setModalImport] = useState(false); // Estado para modal de importación
+
 
   // --- DnD Sensors ---
   const sensors = useSensors(
@@ -487,71 +487,7 @@ function Calificaciones({ user }) {
     setModalShare({ visible: false, alumno: null });
   };
 
-  // --- IMPORTACIÓN EXCEL ---
-  const handleImportGrades = async (importData, materia, trimestreIndex) => {
-    // importData: [{ alumnoId, grade }]
-    if (!selectedGrupo) return;
 
-    setLoading(true);
-    setModalImport(false);
-
-    // We need to update local state AND backend. 
-    // Ideally, we send one bulk update, but for now we'll simulate edits or use existing endpoint.
-    // The existing endpoint is per-student/per-grade usually via 'handleCalificacionChange'.
-    // Let's modify the local state first, then iterate to save.
-
-    let updatedCount = 0;
-    const newCalificaciones = { ...calificaciones };
-
-    try {
-      // Prepare bulk payload if backend supports it, or parallel requests
-      // Assuming backend supports PUT /grupos/:id/calificaciones/batch (We might need to create this route or loop)
-      // Since we don't have a batch route confirmed, we will loop parallel requests (careful with rate limits)
-
-      // Strategy: update local state immediately for visual feedback, then sync in background.
-
-      for (const item of importData) {
-        if (item.grade === null) continue; // Skip empty
-
-        if (!newCalificaciones[item.alumnoId]) newCalificaciones[item.alumnoId] = {};
-        if (!newCalificaciones[item.alumnoId][materia]) newCalificaciones[item.alumnoId][materia] = [null, null, null];
-
-        newCalificaciones[item.alumnoId][materia][trimestreIndex] = item.grade;
-        updatedCount++;
-      }
-
-      setCalificaciones(newCalificaciones);
-
-      // PERSISTENCE: Loop and save (Optimized: Filter only changed ones)
-      // This is heavy. If > 20 changes, we really should have a batch endpoint.
-      // For now, let's use the existing single-update logic but batched? 
-      // Or simply send the WHOLE calificaciones object back if the backend supports saving the whole group.
-
-      // Checking backend routes... usually it's save-all or save-one.
-      // Let's assume we can save the whole group data if we send it back?
-      // Actually, the easiest way with current frontend structure implies we might have to make individual calls.
-      // Let's try to do it sequentially to be safe.
-
-      const promises = importData.map(item => {
-        if (item.grade === null) return Promise.resolve();
-        return axios.put(`${API_URL}/calificaciones/${item.alumnoId}`, {
-          materia,
-          bimestre: trimestreIndex,
-          calificacion: item.grade
-        }, getAxiosConfig());
-      });
-
-      await Promise.all(promises);
-      mostrarNotificacion(`Importadas ${updatedCount} calificaciones correctamente.`);
-
-    } catch (err) {
-      console.error("Error importando:", err);
-      mostrarNotificacion("Error al guardar las calificaciones importadas.", "error");
-      // Revert local state if needed? For now we assume partial success is okay.
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading && !selectedGrupo) return <div className="calificaciones-container">Cargando grupos...</div>;
   if (error) return <div className="calificaciones-container error-message">{error}</div>;
@@ -657,14 +593,7 @@ function Calificaciones({ user }) {
           <div className="calificaciones-header">
             <h1 className="calificaciones-title">Calificaciones del Grupo {selectedGrupo.nombre}</h1>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px' }}>
-              <button
-                className="button"
-                style={{ backgroundColor: '#8e44ad' }} // Purple for distinction
-                onClick={() => setModalImport(true)}
-                title="Importar desde Excel"
-              >
-                📥 Importar Excel
-              </button>
+
               <button
                 className="button"
                 onClick={() => setIsEditing(!isEditing)}
@@ -722,16 +651,7 @@ function Calificaciones({ user }) {
           )}
 
 
-          {/* 🌟 MODAL IMPORTAR EXCEL */}
-          {modalImport && (
-            <ImportModal
-              onClose={() => setModalImport(false)}
-              onImport={handleImportGrades}
-              mode="general"
-              materias={materias}
-              alumnos={alumnos}
-            />
-          )}
+
 
           {loading ? (
             <div className="loading-spinner">Cargando calificaciones...</div>
