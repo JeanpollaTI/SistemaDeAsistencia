@@ -392,6 +392,15 @@ body {
   text-align: left;
 }
 
+.grupo-componente .alumnos-count-header {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--main-color);
+  margin-bottom: 0.5rem;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #444;
+}
+
 .grupo-componente .alumnos-list ul {
   padding-left: 0;
   list-style: none;
@@ -826,6 +835,7 @@ body {
   border-color: #d39e00 !important;
   color: #212529 !important;
 }
+
 /* ======================================= */
 /* CUSTOM TOOLTIP FOR ATTENDANCE DATE      */
 /* ======================================= */
@@ -839,7 +849,8 @@ body {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
   z-index: 2000;
   border: 1px solid var(--main-color);
-  pointer-events: auto; /* Allow interaction */
+  pointer-events: auto;
+  /* Allow interaction */
   display: flex;
   align-items: center;
   gap: 8px;
@@ -925,7 +936,7 @@ body {
   top: 100%;
   left: 0;
   width: 100%;
-  height: 20px; /* Extends hover area downwards */
+  height: 20px;
+  /* Extends hover area downwards */
   background: transparent;
 }
-

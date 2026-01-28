@@ -214,7 +214,8 @@ function Grupo({ user }) {
       mostrarNotificacion(`Grupo "${nuevoGrupo.nombre}" guardado.`);
       cerrarModal();
     } catch (error) {
-      mostrarNotificacion(error.response?.data?.error || 'Error al guardar.', 'error');
+      console.error("Error al guardar grupo:", error);
+      mostrarNotificacion(error.response?.data?.error || error.message || 'Error al guardar.', 'error');
     }
   };
 
@@ -226,7 +227,8 @@ function Grupo({ user }) {
       mostrarNotificacion(`Grupo "${nuevoGrupo.nombre}" actualizado.`);
       cerrarModal();
     } catch (error) {
-      mostrarNotificacion(error.response?.data?.error || 'Error al actualizar.', 'error');
+      console.error("Error al actualizar grupo:", error);
+      mostrarNotificacion(error.response?.data?.error || error.message || 'Error al actualizar.', 'error');
     }
   };
 
@@ -766,7 +768,7 @@ function Grupo({ user }) {
                 </div>
               </div>
               <div className="alumnos-list">
-                <h5>Alumnos en el grupo: {nuevoGrupo.alumnos.length}</h5>
+                <div className="alumnos-count-header">Alumnos en el grupo: {nuevoGrupo.alumnos.length}</div>
                 <ul>
                   {nuevoGrupo.alumnos.map(a => (
                     <li key={a._id}>
