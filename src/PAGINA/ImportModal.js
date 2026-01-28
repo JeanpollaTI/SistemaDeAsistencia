@@ -4,6 +4,27 @@ import { FaFileExcel, FaCheck, FaTimes, FaExclamationTriangle, FaMagic } from 'r
 import './Calificaciones.css';
 
 export default function ImportModal({ onClose, onImport, materias, alumnos, mode = 'general', criterios = [], numTareas = {}, customTaskNames = {} }) {
+    const [sheetData, setSheetData] = useState([]);
+    const [headerRowIndex, setHeaderRowIndex] = useState(-1);
+    const [headers, setHeaders] = useState([]);
+
+    // Selection States
+    const [selectedMateria, setSelectedMateria] = useState('');
+    const [selectedTrimestre, setSelectedTrimestre] = useState('0'); // 0, 1, 2 (Indices)
+
+    // Bulk Mapping State (For 'trabajos' mode)
+    // Structure: { "Criterio-Index": "ExcelHeaderName" }
+    const [columnMapping, setColumnMapping] = useState({});
+
+    const [colName, setColName] = useState('');
+    const [colGrade, setColGrade] = useState(''); // For 'general' mode
+
+    // Preview
+    const [previewData, setPreviewData] = useState([]);
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const [pasteData, setPasteData] = useState('');
+
     const [showAdvanced, setShowAdvanced] = useState(false);
 
     // 🌟 Auto-Preview Effect
