@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import * as XLSX from 'xlsx';
-import { FaUpload, FaFileExcel, FaCheck, FaTimes, FaExclamationTriangle, FaMagic } from 'react-icons/fa';
+// import * as XLSX from 'xlsx'; // Removed dependency
+import { FaFileExcel, FaCheck, FaTimes, FaExclamationTriangle, FaMagic } from 'react-icons/fa';
 import './Calificaciones.css';
 
 export default function ImportModal({ onClose, onImport, materias, alumnos, mode = 'general', criterios = [], numTareas = {}, customTaskNames = {} }) {
-    const [file, setFile] = useState(null);
+    // const [file, setFile] = useState(null); // Removed file state
     const [sheetData, setSheetData] = useState([]);
     const [headerRowIndex, setHeaderRowIndex] = useState(-1);
     const [headers, setHeaders] = useState([]);
@@ -24,42 +24,42 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
     const [previewData, setPreviewData] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const handleFileChange = (e) => {
-        const f = e.target.files[0];
-        if (f) {
-            setFile(f);
-            parseExcel(f);
-        }
+    const [pasteData, setPasteData] = useState('');
+
+    const handlePaste = (e) => {
+        const text = e.target.value;
+        setPasteData(text);
+        if (text) processPasteData(text);
     };
 
-    const parseExcel = (f) => {
+    const processPasteData = (text) => {
         setIsProcessing(true);
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            const bstr = evt.target.result;
-            const wb = XLSX.read(bstr, { type: 'binary' });
-            const wsname = wb.SheetNames[0]; // Assume first sheet
-            const ws = wb.Sheets[wsname];
-            const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-            setSheetData(data);
+        // Excel copies as Tab-Separated Values (TSV)
+        // Rows are newlines, columns are tabs
+        const rows = text.split(/\r\n|\n|\r/);
+        const data = rows.map(row => row.split('\t'));
 
-            // Auto-detect header row
-            const idx = detectHeaderRow(data);
-            if (idx !== -1) {
-                setHeaderRowIndex(idx);
-                setHeaders(data[idx]);
-                // Try to auto-select "Nombre" column
-                const nameKeywords = ['NOMBRE', 'ALUMNO', 'ESTUDIANTE', 'NAME'];
-                const nameIdx = data[idx].findIndex(h => {
-                    if (!h || typeof h !== 'string') return false;
-                    const upper = h.toUpperCase();
-                    return nameKeywords.some(k => upper.includes(k));
-                });
-                if (nameIdx !== -1) setColName(data[idx][nameIdx]);
-            }
-            setIsProcessing(false);
-        };
-        reader.readAsBinaryString(f);
+        // Remove empty trailing rows
+        const cleanData = data.filter(r => r.some(c => c && c.trim() !== ''));
+
+        setSheetData(cleanData);
+
+        // Auto-detect header row
+        const idx = detectHeaderRow(cleanData);
+        if (idx !== -1) {
+            setHeaderRowIndex(idx);
+            setHeaders(cleanData[idx]);
+
+            // Try to auto-select "Nombre" column
+            const nameKeywords = ['NOMBRE', 'ALUMNO', 'ESTUDIANTE', 'NAME'];
+            const nameIdx = cleanData[idx].findIndex(h => {
+                if (!h || typeof h !== 'string') return false;
+                const upper = h.toUpperCase();
+                return nameKeywords.some(k => upper.includes(k));
+            });
+            if (nameIdx !== -1) setColName(cleanData[idx][nameIdx]);
+        }
+        setIsProcessing(false);
     };
 
     // 🌟 Re-run auto match if headers change manually
@@ -397,20 +397,31 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
                     <button className="modal-close" onClick={onClose} style={{ fontSize: '1.5rem', background: 'none', border: 'none', cursor: 'pointer' }}>&times;</button>
                 </div>
 
-                {!file && (
-                    <div className="upload-area" style={{ border: '2px dashed #ccc', padding: '40px', textAlign: 'center', cursor: 'pointer', borderRadius: '8px', backgroundColor: '#fafafa' }}>
-                        <input type="file" accept=".xlsx, .xls" onChange={handleFileChange} style={{ display: 'none' }} id="excel-upload" />
-                        <label htmlFor="excel-upload" style={{ cursor: 'pointer', display: 'block' }}>
-                            <FaFileExcel size={50} color="#27ae60" style={{ marginBottom: '10px' }} />
-                            <p>Subir Archivo Excel</p>
-                        </label>
+                {!sheetData.length && (
+                    <div className="upload-area" style={{ border: '2px dashed #ccc', padding: '20px', textAlign: 'center', borderRadius: '8px', backgroundColor: '#fafafa' }}>
+                        <FaFileExcel size={40} color="#27ae60" style={{ marginBottom: '10px' }} />
+                        <p style={{ marginBottom: '10px' }}>Copia tus celdas de Excel (Ctrl+C) y pégalas aquí (Ctrl+V)</p>
+                        <textarea
+                            value={pasteData}
+                            onChange={(e) => handlePaste(e)}
+                            placeholder="Pega aquí los datos de Excel..."
+                            style={{
+                                width: '100%',
+                                height: '150px',
+                                padding: '10px',
+                                borderRadius: '5px',
+                                border: '1px solid #ddd',
+                                fontFamily: 'monospace',
+                                fontSize: '0.8rem'
+                            }}
+                        />
                     </div>
                 )}
 
-                {file && (
+                {sheetData.length > 0 && (
                     <div className="config-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                         <div className="left-panel" style={{ overflowY: 'auto', maxHeight: '500px' }}>
-                            <p><b>Archivo:</b> {file.name}</p>
+                            <p><b>Datos cargados:</b> {sheetData.length} filas</p>
 
                             {mode === 'general' && (
                                 <>
@@ -528,7 +539,12 @@ export default function ImportModal({ onClose, onImport, materias, alumnos, mode
                     </div>
                 )}
                 <div className="modal-actions" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                    <button className="button-secondary" onClick={onClose}>Cancelar</button>
+                    <button className="button-secondary" onClick={() => {
+                        setPasteData('');
+                        setSheetData([]);
+                        setHeaders([]);
+                        onClose();
+                    }}>Cancelar</button>
                     <button className="button" onClick={handleImportClick} disabled={previewData.length === 0}>
                         Importar {previewData.length} Alumnos
                     </button>
