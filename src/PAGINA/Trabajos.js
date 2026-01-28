@@ -114,8 +114,7 @@ const CriterioCell = React.memo(({
     handleCalificacionChange,
     formatFechaTooltip,
     setTareaPorNombrar,
-    formatFechaTooltip,
-    setTareaPorNombrar,
+
     rowIndex, // 🌟 NEW PROP: Row index per student
     colIndex,  // 🌟 NEW PROP: Column index per task
     onPasteValues // 🌟 NEW PROP: Handler del padre para updates masivos
@@ -1859,7 +1858,7 @@ const PanelCalificaciones = ({
                                                             handleCalificacionChange={handleCalificacionChange}
                                                             formatFechaTooltip={formatFechaTooltip}
                                                             setTareaPorNombrar={setTareaPorNombrar}
-                                                            setTareaPorNombrar={setTareaPorNombrar}
+
                                                             rowIndex={grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).findIndex(x => x._id === alumno._id)} // 🌟 Pass row index
                                                             colIndex={tareaIndex} // 🌟 Pass column index
                                                             onPasteValues={(rIndex, cIndex, matrix) => {
