@@ -1397,6 +1397,8 @@ const PanelCalificaciones = ({
         const nuevoNombre = tareaNombre.trim();
         const alumnosIds = grupo.alumnos.map(a => a._id);
 
+        saveToHistory(); // 🌟 Guardar antes de renombrar tarea
+
         setCalificaciones(prev => {
             const nextCalificaciones = { ...prev };
 
@@ -1434,6 +1436,8 @@ const PanelCalificaciones = ({
     // 🌟 FUNCIÓN NUEVA: Eliminar nombre y calificaciones de una columna
     const handleEliminarTarea = (criterioNombre, tareaIndex) => {
         const alumnosIds = grupo.alumnos.map(a => a._id);
+
+        saveToHistory(); // 🌟 Guardar antes de eliminar tarea
 
         setCalificaciones(prev => {
             const nextCalificaciones = { ...prev };
@@ -1516,6 +1520,8 @@ const PanelCalificaciones = ({
             fecha: datosAnteriores.fecha || new Date().toISOString(),
             nombre: datosAnteriores.nombre // Mantenemos el nombre si ya fue asignado
         };
+
+        saveToHistory(); // 🌟 Guardar para deshacer cambios manuales
 
         setCalificaciones(prev => ({
             ...prev,
