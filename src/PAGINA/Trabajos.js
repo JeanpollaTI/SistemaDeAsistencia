@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import logoImage from './Logoescuela.png';
 import ConfirmacionModal from './ConfirmacionModal';
 
@@ -1260,6 +1261,45 @@ const PanelCalificaciones = ({
     // 🌟 ESTADO AGREGADO: Criterio seleccionado para vista masiva (null = vista lista, string = vista tabla)
     const [criterioSeleccionadoGlobal, setCriterioSeleccionadoGlobal] = useState(null);
 
+    // 🌟 ESTADO AGREGADO: Historial para Deshacer/Rehacer (Undo/Redo)
+    const [history, setHistory] = useState({ past: [], future: [] });
+
+    // 🌟 FUNCIONES UNDO/REDO
+    const saveToHistory = () => {
+        setHistory(curr => ({
+            past: [...curr.past, calificaciones],
+            future: []
+        }));
+    };
+
+    const handleUndo = () => {
+        setHistory(curr => {
+            if (curr.past.length === 0) return curr;
+            const previous = curr.past[curr.past.length - 1];
+            const newPast = curr.past.slice(0, -1);
+            return {
+                past: newPast,
+                future: [calificaciones, ...curr.future]
+            };
+        });
+        setCalificaciones(history.past[history.past.length - 1]);
+        setNotificacion({ mensaje: 'Cambio deshecho.', tipo: 'info' });
+    };
+
+    const handleRedo = () => {
+        setHistory(curr => {
+            if (curr.future.length === 0) return curr;
+            const next = curr.future[0];
+            const newFuture = curr.future.slice(1);
+            return {
+                past: [...curr.past, calificaciones],
+                future: newFuture
+            };
+        });
+        setCalificaciones(history.future[0]);
+        setNotificacion({ mensaje: 'Cambio rehecho.', tipo: 'info' });
+    };
+
     // Obtener los criterios del bimestre activo
     const criteriosActivos = criteriosPorBimestre[bimestreActivo] || [];
 
@@ -1416,6 +1456,8 @@ const PanelCalificaciones = ({
     const handleBulkCalificacionUpdate = (updates) => {
         // updates: [{ alumnoId, bimestre, criterioNombre, tareaIndex, valor }]
         if (!updates || updates.length === 0) return;
+
+        saveToHistory(); // 🌟 Guardar estado actual antes de pegar
 
         setCalificaciones(prev => {
             const nextCalificaciones = { ...prev };
@@ -1829,14 +1871,37 @@ const PanelCalificaciones = ({
                                             })}
                                             <th style={{ width: '80px', color: '#f39c12' }}>Prom</th>
                                             {/* Botón +5 en el header */}
-                                            <th>
-                                                <button
-                                                    className="btn btn-agregar-dias"
-                                                    style={{ width: '40px', height: '30px', padding: 0, fontSize: '0.9rem' }}
-                                                    onClick={() => agregarTareas(criterioSeleccionadoGlobal)}
-                                                >
-                                                    +5
-                                                </button>
+                                            <th style={{ minWidth: '100px', textAlign: 'center' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'center' }}>
+                                                    <div style={{ display: 'flex', gap: '5px' }}>
+                                                        <button
+                                                            className="btn btn-secondary"
+                                                            style={{ padding: '0 8px', height: '30px', opacity: history.past.length === 0 ? 0.5 : 1 }}
+                                                            onClick={handleUndo}
+                                                            title="Deshacer (Ctrl+Z)"
+                                                            disabled={history.past.length === 0}
+                                                        >
+                                                            <FaArrowLeft />
+                                                        </button>
+                                                        <button
+                                                            className="btn btn-secondary"
+                                                            style={{ padding: '0 8px', height: '30px', opacity: history.future.length === 0 ? 0.5 : 1 }}
+                                                            onClick={handleRedo}
+                                                            title="Rehacer"
+                                                            disabled={history.future.length === 0}
+                                                        >
+                                                            <FaArrowRight />
+                                                        </button>
+                                                    </div>
+                                                    <button
+                                                        className="btn btn-agregar-dias"
+                                                        style={{ width: '40px', height: '30px', padding: 0, fontSize: '0.9rem' }}
+                                                        onClick={() => agregarTareas(criterioSeleccionadoGlobal)}
+                                                        title="Agregar 5 columnas más"
+                                                    >
+                                                        +5
+                                                    </button>
+                                                </div>
                                             </th>
                                         </tr>
                                     </thead>
