@@ -1794,6 +1794,26 @@ const PanelCalificaciones = ({
                     <h2>Calificaciones: {grupo.nombre} - {asignatura}</h2>
                     <div>
                         {/* Botones de Acción Nuevos */}
+                        <div style={{ display: 'inline-flex', gap: '5px', marginRight: '15px', verticalAlign: 'middle' }}>
+                            <button
+                                className="btn"
+                                style={{ padding: '0 12px', height: '35px', backgroundColor: '#95a5a6', color: 'white', opacity: history.past.length === 0 ? 0.5 : 1, cursor: history.past.length === 0 ? 'not-allowed' : 'pointer' }}
+                                onClick={handleUndo}
+                                disabled={history.past.length === 0}
+                                title="Deshacer (Ctrl+Z)"
+                            >
+                                <FaArrowLeft />
+                            </button>
+                            <button
+                                className="btn"
+                                style={{ padding: '0 12px', height: '35px', backgroundColor: '#95a5a6', color: 'white', opacity: history.future.length === 0 ? 0.5 : 1, cursor: history.future.length === 0 ? 'not-allowed' : 'pointer' }}
+                                onClick={handleRedo}
+                                disabled={history.future.length === 0}
+                                title="Rehacer"
+                            >
+                                <FaArrowRight />
+                            </button>
+                        </div>
                         <button className="btn" onClick={generateSubjectReport} style={{ marginRight: '10px', backgroundColor: '#2980b9', borderColor: '#2980b9', color: 'white' }}>
                             📄 Reporte PDF
                         </button>
@@ -1873,37 +1893,15 @@ const PanelCalificaciones = ({
                                             })}
                                             <th style={{ width: '80px', color: '#f39c12' }}>Prom</th>
                                             {/* Botón +5 en el header */}
-                                            <th style={{ minWidth: '100px', textAlign: 'center' }}>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'center' }}>
-                                                    <div style={{ display: 'flex', gap: '5px' }}>
-                                                        <button
-                                                            className="btn btn-secondary"
-                                                            style={{ padding: '0 8px', height: '30px', opacity: history.past.length === 0 ? 0.5 : 1 }}
-                                                            onClick={handleUndo}
-                                                            title="Deshacer (Ctrl+Z)"
-                                                            disabled={history.past.length === 0}
-                                                        >
-                                                            <FaArrowLeft />
-                                                        </button>
-                                                        <button
-                                                            className="btn btn-secondary"
-                                                            style={{ padding: '0 8px', height: '30px', opacity: history.future.length === 0 ? 0.5 : 1 }}
-                                                            onClick={handleRedo}
-                                                            title="Rehacer"
-                                                            disabled={history.future.length === 0}
-                                                        >
-                                                            <FaArrowRight />
-                                                        </button>
-                                                    </div>
-                                                    <button
-                                                        className="btn btn-agregar-dias"
-                                                        style={{ width: '40px', height: '30px', padding: 0, fontSize: '0.9rem' }}
-                                                        onClick={() => agregarTareas(criterioSeleccionadoGlobal)}
-                                                        title="Agregar 5 columnas más"
-                                                    >
-                                                        +5
-                                                    </button>
-                                                </div>
+                                            <th>
+                                                <button
+                                                    className="btn btn-agregar-dias"
+                                                    style={{ width: '40px', height: '30px', padding: 0, fontSize: '0.9rem' }}
+                                                    onClick={() => agregarTareas(criterioSeleccionadoGlobal)}
+                                                    title="Agregar 5 columnas más"
+                                                >
+                                                    +5
+                                                </button>
                                             </th>
                                         </tr>
                                     </thead>
