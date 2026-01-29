@@ -370,10 +370,13 @@ body {
 }
 
 .grupo-componente .alumno-form {
-  background-color: var(--dark-color);
+  background-color: var(--dark-color-alt);
+  /* Lighter background to distinguish from modal */
   padding: 1.5rem;
   border-radius: 8px;
-  margin: 1.5rem 0;
+  margin: 0;
+  /* Remove margin as it's now inside the grid column */
+  border: 1px solid #444;
 }
 
 .grupo-componente .form-subtitle {
@@ -392,12 +395,18 @@ body {
 .grupo-componente .alumno-form-actions {
   display: flex;
   gap: 10px;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
+  width: 100%;
 }
 
 .grupo-componente .alumno-form-actions .btn {
   flex-grow: 1;
+  padding: 12px;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
+
+
 
 .grupo-componente .alumnos-list,
 .grupo-componente .profesores-list {
