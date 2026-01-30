@@ -775,9 +775,9 @@ function Grupo({ user }) {
                   <div className="alumnos-list">
                     <div className="alumnos-count-header">Alumnos en el grupo: {nuevoGrupo.alumnos.length}</div>
                     <ul>
-                      {nuevoGrupo.alumnos.map(a => (
+                      {nuevoGrupo.alumnos.map((a, index) => (
                         <li key={a._id}>
-                          <span className="alumno-nombre-display">{`${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`}</span>
+                          <span className="alumno-nombre-display">{`${index + 1}. ${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`}</span>
                           <div className="alumno-actions">
                             <button className="btn-edit-alumno" onClick={() => abrirModal('editarAlumno', a)}><FaPencilAlt /></button>
                             <button className="btn-delete-alumno" onClick={() => handleDeleteAlumno(a)}><FaTrash /></button>
@@ -894,13 +894,13 @@ function Grupo({ user }) {
 
               <div className="asistencia-grid">
                 <div className="asistencia-body">
-                  {grupoSeleccionado?.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => {
+                  {grupoSeleccionado?.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map((alumno, index) => {
                     const totales = calcularTotales(alumno._id, bimestreActivo, asistencia, diasPorBimestre);
                     return (
                       <React.Fragment key={alumno._id}>
                         <div className="asistencia-row" style={{ display: 'block', padding: '15px' }}> {/* Cambio de estilo para acomodar mejor */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                            <div className="alumno-nombre">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
+                            <div className="alumno-nombre">{`${index + 1}. ${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
                             <div className="asistencia-totales" style={{ fontSize: '0.9rem' }}>
                               <span className="total-presentes" style={{ marginRight: '10px' }}>✅ {totales.presentes}</span>
                               <span className="total-faltas" style={{ marginRight: '10px' }}>❌ {totales.faltas}</span>

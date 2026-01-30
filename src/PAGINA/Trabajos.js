@@ -1868,6 +1868,7 @@ const PanelCalificaciones = ({
                                 <table className="tabla-global">
                                     <thead>
                                         <tr>
+                                            <th className="num-col" style={{ width: '40px', textAlign: 'center' }}>#</th>
                                             <th className="alumno-col">Alumno</th>
                                             {/* Columnas de Tareas */}
                                             {Array.from({ length: numTareas[criterioSeleccionadoGlobal] || 10 }).map((_, tareaIndex) => {
@@ -1912,8 +1913,9 @@ const PanelCalificaciones = ({
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => (
+                                        {grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map((alumno, index) => (
                                             <tr key={alumno._id}>
+                                                <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{index + 1}</td>
                                                 <td className="alumno-col">
                                                     {`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}
                                                 </td>
@@ -1975,10 +1977,10 @@ const PanelCalificaciones = ({
                             /* --- VISTA 2: LISTA DE ALUMNOS (ORIGINAL - VISTA GENERAL) --- */
                             <div className="asistencia-grid">
                                 <div className="asistencia-body">
-                                    {grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => (
+                                    {grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map((alumno, index) => (
                                         <React.Fragment key={alumno._id}>
                                             <div className="asistencia-row">
-                                                <div className="alumno-nombre">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
+                                                <div className="alumno-nombre">{`${index + 1}. ${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
                                                 <div className="bimestres-container">
                                                     {criteriosActivos.map(criterio => (
                                                         <div
