@@ -2498,29 +2498,63 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onRename, onClose, se
                             </div>
 
                             <div className="criterio-form" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-                                <label style={{ fontSize: '0.9rem', marginBottom: '5px', color: '#aaa' }}>Nuevo Criterio:</label>
-                                <input type="text" placeholder="Nombre (Ej: Tareas)" value={nombre} onChange={e => setNombre(e.target.value)} style={{ marginBottom: '10px' }} />
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    <div className="porcentaje-wrapper" style={{ flexGrow: 1 }}>
-                                        <input type="number" placeholder="%" min="1" max="100" value={porcentaje} onChange={e => setPorcentaje(e.target.value)} />
+                                {/* 🌟 UX MEASURE: Hide inputs if 100% complete and not editing */}
+                                {totalPorcentaje === 100 && editingIndex === null ? (
+                                    <div style={{
+                                        textAlign: 'center',
+                                        padding: '20px',
+                                        border: '1px dashed #27ae60',
+                                        borderRadius: '8px',
+                                        color: '#27ae60',
+                                        marginBottom: '10px'
+                                    }}>
+                                        <h4 style={{ margin: 0 }}>✅ Criterios Completos</h4>
+                                        <p style={{ fontSize: '0.85rem', marginTop: '5px', color: '#999' }}>
+                                            Total: 100%. Para modificar, edita (✏️) o elimina (🗑️) un criterio.
+                                        </p>
                                     </div>
-                                    <button
-                                        className="btn"
-                                        onClick={addCriterio}
-                                        disabled={(editingIndex === null && (totalPorcentaje + (parseInt(porcentaje) || 0) > 100)) || !nombre.trim() || !porcentaje}
-                                        style={{ flexGrow: 1, backgroundColor: editingIndex !== null ? '#f39c12' : 'var(--main-color)' }}
-                                    >
-                                        {editingIndex !== null ? 'Actualizar' : 'Añadir'}
-                                    </button>
-                                </div>
-                                {editingIndex !== null && (
-                                    <button
-                                        className="btn-cancel"
-                                        onClick={() => { setEditingIndex(null); setNombre(''); setPorcentaje(''); }}
-                                        style={{ marginTop: '5px', width: '100%', borderRadius: '6px', fontSize: '0.9rem', padding: '5px' }}
-                                    >
-                                        Cancelar Edición
-                                    </button>
+                                ) : (
+                                    <>
+                                        <label style={{ fontSize: '0.9rem', marginBottom: '5px', color: '#aaa' }}>{editingIndex !== null ? 'Editar Criterio:' : 'Nuevo Criterio:'}</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Nombre (Ej: Tareas)"
+                                            value={nombre}
+                                            onChange={e => setNombre(e.target.value)}
+                                            style={{ marginBottom: '10px' }}
+                                            onKeyDown={(e) => e.key === 'Enter' && addCriterio()}
+                                        />
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <div className="porcentaje-wrapper" style={{ flexGrow: 1 }}>
+                                                <input
+                                                    type="number"
+                                                    placeholder="%"
+                                                    min="1"
+                                                    max="100"
+                                                    value={porcentaje}
+                                                    onChange={e => setPorcentaje(e.target.value)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && addCriterio()}
+                                                />
+                                            </div>
+                                            <button
+                                                className="btn"
+                                                onClick={addCriterio}
+                                                disabled={(editingIndex === null && (totalPorcentaje + (parseInt(porcentaje) || 0) > 100)) || !nombre.trim() || !porcentaje}
+                                                style={{ flexGrow: 1, backgroundColor: editingIndex !== null ? '#f39c12' : 'var(--main-color)' }}
+                                            >
+                                                {editingIndex !== null ? 'Actualizar' : 'Añadir'}
+                                            </button>
+                                        </div>
+                                        {editingIndex !== null && (
+                                            <button
+                                                className="btn-cancel"
+                                                onClick={() => { setEditingIndex(null); setNombre(''); setPorcentaje(''); }}
+                                                style={{ marginTop: '5px', width: '100%', borderRadius: '6px', fontSize: '0.9rem', padding: '5px' }}
+                                            >
+                                                Cancelar Edición
+                                            </button>
+                                        )}
+                                    </>
                                 )}
                             </div>
 
@@ -2546,7 +2580,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onRename, onClose, se
                             </div>
 
                             <div className="modal-actions" style={{ marginTop: 'auto', paddingTop: '20px' }}>
-                                <button className="btn btn-cancel" onClick={onClose} style={{ marginRight: '10px' }}>Cancelar</button>
+                                <button className="btn btn-cancel" onClick={onClose} style={{ marginRight: '10px' }}>Cerrar</button>
                                 <button
                                     className="btn btn-primary"
                                     onClick={handleGuardar}
