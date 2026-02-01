@@ -2500,18 +2500,8 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onRename, onClose, se
                             <div className="criterio-form" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
                                 {/* 🌟 UX MEASURE: Hide inputs if 100% complete and not editing */}
                                 {totalPorcentaje === 100 && editingIndex === null ? (
-                                    <div style={{
-                                        textAlign: 'center',
-                                        padding: '20px',
-                                        border: '1px dashed #27ae60',
-                                        borderRadius: '8px',
-                                        color: '#27ae60',
-                                        marginBottom: '10px'
-                                    }}>
-                                        <h4 style={{ margin: 0 }}>✅ Criterios Completos</h4>
-                                        <p style={{ fontSize: '0.85rem', marginTop: '5px', color: '#999' }}>
-                                            Total: 100%. Para modificar, edita (✏️) o elimina (🗑️) un criterio.
-                                        </p>
+                                    <div style={{ textAlign: 'center', marginTop: '10px', color: '#888', fontStyle: 'italic', fontSize: '0.9rem' }}>
+                                        (Trimestre al 100%)
                                     </div>
                                 ) : (
                                     <>
@@ -2580,11 +2570,12 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onRename, onClose, se
                             </div>
 
                             <div className="modal-actions" style={{ marginTop: 'auto', paddingTop: '20px' }}>
-                                <button className="btn btn-cancel" onClick={onClose} style={{ marginRight: '10px' }}>Cerrar</button>
+                                <button type="button" className="btn btn-cancel" onClick={() => onClose()} style={{ marginRight: '10px' }}>Cerrar</button>
                                 <button
+                                    type="button"
                                     className="btn btn-primary"
                                     onClick={handleGuardar}
-                                    disabled={criteriosDelBimestre.length > 0 && totalPorcentaje !== 100}
+                                    style={{ opacity: (criteriosDelBimestre.length > 0 && totalPorcentaje !== 100) ? 0.5 : 1 }}
                                 >
                                     Guardar Todos
                                 </button>
