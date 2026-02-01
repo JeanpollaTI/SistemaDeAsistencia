@@ -2218,13 +2218,15 @@ const PanelCalificaciones = ({
                     <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
                 </div>
 
-                <ModalCriterios
-                    criteriosPorBimestre={criteriosPorBimestre}
-                    onGuardar={handleGuardarCriterios} // Usamos la nueva función de auto-save
-                    onRename={handleRenameCriterio} // 🌟 Prop para renombrar sin perder datos
-                    onClose={() => setModalCriterios(false)}
-                    setNotificacion={setNotificacion}
-                />
+                {modalCriterios && (
+                    <ModalCriterios
+                        criteriosPorBimestre={criteriosPorBimestre}
+                        onGuardar={handleGuardarCriterios} // Usamos la nueva función de auto-save
+                        onRename={handleRenameCriterio} // 🌟 Prop para renombrar sin perder datos
+                        onClose={() => setModalCriterios(false)}
+                        setNotificacion={setNotificacion}
+                    />
+                )}
             </div>
         </div>
     );
