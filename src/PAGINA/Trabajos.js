@@ -864,8 +864,9 @@ function Trabajos({ user }) {
                 }
 
                 .grupo-componente .cuadrito-calificacion {
-                    width: 60px;
-                    height: 38px;
+                    width: 70px; /* Ancho ligeramente mayor */
+                    height: 42px; /* Altura suficiente para ver el texto completo */
+                    line-height: 40px; /* Centrado vertical del texto */
                     background-color: #4a4a4a;
                     border: 1px solid #777;
                     border-radius: 6px;
@@ -873,7 +874,8 @@ function Trabajos({ user }) {
                     text-align: center;
                     font-weight: 600;
                     font-family: var(--body-font);
-                    font-size: 1rem;
+                    font-size: 1.1rem; /* Importante: tamaño legible */
+                    padding: 0; /* Evitar padding interno que desplace el texto */
                     transition: all 0.2s;
                 }
                 .grupo-componente .cuadrito-calificacion::placeholder {
@@ -2315,7 +2317,12 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onRename, onClose, se
     const addCriterio = () => {
         const porciento = parseInt(porcentaje, 10);
 
-        if (!nombre.trim() || isNaN(porciento) || porciento <= 0 || totalPorcentaje + porciento > 100) {
+        // 🌟 CORRECCIÓN: Si estamos editando, restar el valor anterior del total para validar
+        const currentTotal = editingIndex !== null
+            ? totalPorcentaje - (criteriosDelBimestre[editingIndex].porcentaje || 0)
+            : totalPorcentaje;
+
+        if (!nombre.trim() || isNaN(porciento) || porciento <= 0 || currentTotal + porciento > 100) {
             setNotificacion({
                 mensaje: 'Verifica los datos. El porcentaje debe ser positivo y el total no debe exceder 100%.',
                 tipo: 'error'
