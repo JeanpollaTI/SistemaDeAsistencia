@@ -2423,7 +2423,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onRename, onClose, se
             {/* WRAPPER CLAVE: Aplicamos la clase grupo-componente aquí para heredar estilos */}
             <div className="grupo-componente" style={{ display: 'contents' }}>
                 <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                    <h2>Definir Criterios de Evaluación por Trimestre</h2>
+                    <h2>Definir Criterios de Evaluación por Trimestre (v2.0)</h2>
 
                     <div className="bimestre-selector" style={{ justifyContent: 'center', borderBottom: 'none' }}>
                         {[1, 2, 3].map(bim => (
