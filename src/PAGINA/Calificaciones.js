@@ -418,6 +418,23 @@ function Calificaciones({ user }) {
     const footerY = pageHeight - 15;
 
     doc.setFontSize(8);
+    // 🌟 LEYENDA PADRES DE FAMILIA
+    const leyenda = "Sr. Padre de familia, esta calificacion es el avance parcial del trimestre, en la siguientes semanas puede subir o bajar porque los docentes no han incluido la calificacion del examen, proyectos u otros aspectos.";
+
+    // Ajustar tamaño para la leyenda
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'italic');
+
+    // Dividir texto para que quepa en el ancho
+    const splitLeyenda = doc.splitTextToSize(leyenda, pageWidth - (margin * 2));
+    const leyendaY = footerY - 15; // Un poco antes del footer
+
+    // Color grisáceo para diferenciar
+    doc.setTextColor(100);
+    doc.text(splitLeyenda, margin, leyendaY);
+    doc.setTextColor(0); // Restaurar negro
+    doc.setFont(undefined, 'normal');
+
     doc.text("LUGAR DE EXPEDICIÓN:     AGUASCALIENTES, AGUASCALIENTES", pageWidth / 2, footerY, { align: 'center' });
 
     if (outputType === 'save') {

@@ -144,10 +144,10 @@ const CriterioCell = React.memo(({
             let nextRow = rowIndex;
             let nextCol = colIndex;
 
-            if (e.key === 'ArrowUp') nextRow = Math.max(0, rowIndex - 1);
-            if (e.key === 'ArrowDown') nextRow = rowIndex + 1; // Limit checked by existence
-            if (e.key === 'ArrowLeft') nextCol = Math.max(0, colIndex - 1);
-            if (e.key === 'ArrowRight') nextCol = colIndex + 1; // Limit checked by existence
+            if (e.key === 'ArrowUp') nextRow = rowIndex - 1; // Allow going up freely (checked by getElementById)
+            if (e.key === 'ArrowDown') nextRow = rowIndex + 1;
+            if (e.key === 'ArrowLeft') nextCol = colIndex - 1; // Allow negative for Obs column
+            if (e.key === 'ArrowRight') nextCol = colIndex + 1;
 
             const nextId = `cell-${nextRow}-${nextCol}`;
             const nextElement = document.getElementById(nextId);
@@ -688,6 +688,7 @@ function Trabajos({ user }) {
                     width: 98%;
                     max-width: 98%;
                     margin: 0;
+                    padding-bottom: 8rem; /* 🌟 FIX: Extra space for Save button on Tablets/Mobile */
                 }
 
                 .grupo-componente .bimestre-selector {
@@ -1162,20 +1163,66 @@ function Trabajos({ user }) {
                     min-width: 280px;
                     padding-left: 15px;
                     position: sticky;
-                    left: 0;
-                    z-index: 30; /* Mayor z-index para cruzar con el header top */
+                    left: 40px; /* 🌟 Offset for Number Column */
+                    z-index: 30;
                     border-right: 2px solid #666;
                 }
                 .grupo-componente .tabla-global td.alumno-col {
                     text-align: left;
                     padding-left: 15px;
                     position: sticky;
-                    left: 0;
-                    background-color: var(--dark-color-alt); /* Fondo sólido para tapar scroll */
+                    left: 40px; /* 🌟 Offset for Number Column */
+                    background-color: var(--dark-color-alt);
                     z-index: 10;
                     border-right: 2px solid #666;
                     font-weight: 500;
                     color: var(--text-color);
+                }
+                .grupo-componente .tabla-global .num-col {
+                    position: sticky;
+                    left: 0;
+                    z-index: 31; /* Higher than alumno body, lower than alumno header? Same level */
+                    background-color: #2c3e50;
+                    border-right: 1px solid #444;
+                }
+                .grupo-componente .tabla-global tbody td:first-child {
+                    position: sticky;
+                    left: 0;
+                    z-index: 11;
+                    background-color: var(--dark-color-alt);
+                    border-right: 1px solid #444;
+                }
+                
+                /* 🌟 OFFSETS FOR TECNOLOGIA (Approx +50px for Obs column) */
+                .grupo-componente .tabla-global.with-obs th.alumno-col,
+                .grupo-componente .tabla-global.with-obs td.alumno-col {
+                    left: 90px !important;
+                }
+                
+                .grupo-componente .tabla-global .obs-col {
+                    position: sticky;
+                    left: 40px;
+                    z-index: 31;
+                    background-color: #2c3e50;
+                    border-right: 1px solid #444;
+                    width: 50px;
+                }
+                .grupo-componente .tabla-global tbody td.obs-col-body {
+                     position: sticky;
+                     left: 40px;
+                     z-index: 11;
+                     background-color: var(--dark-color-alt);
+                     border-right: 1px solid #444;
+                     padding: 0;
+                }
+                .grupo-componente .tabla-global tbody td.obs-col-body input {
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                    background: transparent;
+                    color: var(--warning-color);
+                    text-align: center;
+                    font-size: 1.2rem;
                 }
                 .grupo-componente .tabla-global tr:hover td {
                     background-color: rgba(185, 151, 43, 0.05);
@@ -1262,6 +1309,8 @@ const PanelCalificaciones = ({
     const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: '', onConfirm: null });
     // 🌟 ESTADO AGREGADO: Criterio seleccionado para vista masiva (null = vista lista, string = vista tabla)
     const [criterioSeleccionadoGlobal, setCriterioSeleccionadoGlobal] = useState(null);
+    // 🌟 ESTADO AGREGADO: Zoom (Escala)
+    const [zoomLevel, setZoomLevel] = useState(1);
 
     // 🌟 ESTADO AGREGADO: Historial para Deshacer/Rehacer (Undo/Redo)
     const [history, setHistory] = useState({ past: [], future: [] });
@@ -1433,6 +1482,20 @@ const PanelCalificaciones = ({
         setNotificacion({ mensaje: `Se asignó el nombre "${nuevoNombre}" a la Tarea ${tareaIndex + 1}.`, tipo: 'exito' });
     };
 
+    // 🌟 MANEJO DE OBSERVACIONES (TECNOLOGIA)
+    const handleObservacionChange = (alumnoId, bimestre, val) => {
+        setCalificaciones(prev => ({
+            ...prev,
+            [alumnoId]: {
+                ...prev[alumnoId],
+                [bimestre]: {
+                    ...prev[alumnoId]?.[bimestre],
+                    OBSERVACIONES: val
+                }
+            }
+        }));
+    };
+
     // 🌟 FUNCIÓN NUEVA: Eliminar nombre y calificaciones de una columna
     const handleEliminarTarea = (criterioNombre, tareaIndex) => {
         const alumnosIds = grupo.alumnos.map(a => a._id);
@@ -1455,6 +1518,24 @@ const PanelCalificaciones = ({
 
         setTareaPorNombrar(null);
         setNotificacion({ mensaje: `Se eliminó la Tarea ${tareaIndex + 1} y sus calificaciones.`, tipo: 'exito' });
+    };
+
+    // 🌟 FUNCIÓN RENOMBRE SEGURO: Actualizar keys en calificaciones cuando cambia el nombre del criterio
+    const handleRenameCriterio = (bimestre, oldName, newName) => {
+        if (oldName === newName) return;
+        setCalificaciones(prev => {
+            const nextCalificaciones = { ...prev };
+            Object.keys(nextCalificaciones).forEach(alumnoId => {
+                const aluBim = nextCalificaciones[alumnoId]?.[bimestre];
+                if (aluBim && aluBim[oldName]) {
+                    // Mover datos a la nueva key
+                    aluBim[newName] = aluBim[oldName];
+                    delete aluBim[oldName];
+                    // También actualizar el nombre registrado dentro de las tareas si fuera necesario (opcional)
+                }
+            });
+            return nextCalificaciones;
+        });
     };
 
 
@@ -1505,6 +1586,10 @@ const PanelCalificaciones = ({
         const count = updates.length;
         setNotificacion({ mensaje: `Se pegaron ${count} calificaciones correctamente.`, tipo: 'exito' });
     };
+
+    // 🌟 ZOOM HANDLERS
+    const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.1, 1.5));
+    const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.2, 0.6));
 
     // Lógica de manipulación de calificaciones (MODIFICADA para preservar el nombre)
     const handleCalificacionChange = (alumnoId, bimestre, criterioNombre, tareaIndex, valor) => {
@@ -1833,6 +1918,13 @@ const PanelCalificaciones = ({
                         <button className="btn btn-cancel" onClick={onVolver} style={{ marginLeft: '10px' }}>Cerrar</button>
                     </div>
                 </header>
+
+                {/* 🌟 ZOOM CONTROLS */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingRight: '20px', marginBottom: '10px', gap: '10px' }}>
+                    <button className="btn btn-secondary" onClick={handleZoomOut} style={{ padding: '5px 10px' }}>🔍 -</button>
+                    <span style={{ alignSelf: 'center', color: '#ccc' }}>{Math.round(zoomLevel * 100)}%</span>
+                    <button className="btn btn-secondary" onClick={handleZoomIn} style={{ padding: '5px 10px' }}>🔍 +</button>
+                </div>
                 <div className="bimestre-selector">
                     {[1, 2, 3].map(bim => (
                         <button key={bim} className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} onClick={() => { setBimestreActivo(bim); setCriterioSeleccionadoGlobal(null); }}>Trimestre {bim}</button>
@@ -1864,11 +1956,12 @@ const PanelCalificaciones = ({
                     <>
                         {/* --- VISTA 1: TABLA MASIVA (SI HAY UN CRITERIO SELECCIONADO) --- */}
                         {criterioSeleccionadoGlobal ? (
-                            <div className="tabla-global-container">
-                                <table className="tabla-global">
+                            <div className="tabla-global-container" style={{ fontSize: `${zoomLevel}rem` }}>
+                                <table className={`tabla-global ${asignatura === 'Tecnologia' ? 'with-obs' : ''}`}>
                                     <thead>
                                         <tr>
                                             <th className="num-col" style={{ width: '40px', textAlign: 'center' }}>#</th>
+                                            {asignatura === 'Tecnologia' && <th className="obs-col">Obs.</th>}
                                             <th className="alumno-col">Alumno</th>
                                             {/* Columnas de Tareas */}
                                             {Array.from({ length: numTareas[criterioSeleccionadoGlobal] || 10 }).map((_, tareaIndex) => {
@@ -1916,6 +2009,34 @@ const PanelCalificaciones = ({
                                         {grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map((alumno, index) => (
                                             <tr key={alumno._id}>
                                                 <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{index + 1}</td>
+                                                {asignatura === 'Tecnologia' && (
+                                                    <td className="obs-col-body">
+                                                        <input
+                                                            id={`cell-${index}--1`}
+                                                            type="text"
+                                                            maxLength="3"
+                                                            placeholder="..."
+                                                            value={calificaciones[alumno._id]?.[bimestreActivo]?.OBSERVACIONES || ''}
+                                                            onChange={(e) => handleObservacionChange(alumno._id, bimestreActivo, e.target.value)}
+                                                            onKeyDown={(e) => {
+                                                                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                                                                    e.preventDefault();
+                                                                    let nextRow = index;
+                                                                    let nextCol = -1;
+                                                                    if (e.key === 'ArrowUp') nextRow = index - 1;
+                                                                    if (e.key === 'ArrowDown') nextRow = index + 1;
+                                                                    if (e.key === 'ArrowLeft') return;
+                                                                    if (e.key === 'ArrowRight') nextCol = 0;
+
+                                                                    const nextId = `cell-${nextRow}-${nextCol}`;
+                                                                    const el = document.getElementById(nextId);
+                                                                    if (el) { el.focus(); setTimeout(() => el.select(), 0); }
+                                                                }
+                                                            }}
+                                                            style={{ textAlign: 'center', width: '100%', border: 'none', background: 'transparent', color: 'var(--warning-color)' }}
+                                                        />
+                                                    </td>
+                                                )}
                                                 <td className="alumno-col">
                                                     {`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}
                                                 </td>
@@ -2048,6 +2169,8 @@ const PanelCalificaciones = ({
                                                                 handleCalificacionChange={handleCalificacionChange}
                                                                 formatFechaTooltip={formatFechaTooltip}
                                                                 setTareaPorNombrar={setTareaPorNombrar}
+                                                                rowIndex={0} // Fila única en vista lista
+                                                                colIndex={tareaIndex} // Indice para navegar izquierda/derecha
                                                                 onPasteValues={(rIndex, cIndex, matrix) => {
                                                                     // En vista LISTA, el 'rowIndex' es relativo al alumno (siempre 0 o irrelevante si no cruzamos alumnos) via props?
                                                                     // No, CriterioCell no recibe rowIndex en este loop, asi que es undefined.
@@ -2095,15 +2218,13 @@ const PanelCalificaciones = ({
                     <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
                 </div>
 
-                {/* 🌟 Modal de Criterios RENDERIZADO AQUÍ para tener acceso al contexto de guardado */}
-                {modalCriterios && (
-                    <ModalCriterios
-                        criteriosPorBimestre={criteriosPorBimestre}
-                        onGuardar={handleGuardarCriterios} // Usamos la nueva función de auto-save
-                        onClose={() => setModalCriterios(false)}
-                        setNotificacion={setNotificacion}
-                    />
-                )}
+                <ModalCriterios
+                    criteriosPorBimestre={criteriosPorBimestre}
+                    onGuardar={handleGuardarCriterios} // Usamos la nueva función de auto-save
+                    onRename={handleRenameCriterio} // 🌟 Prop para renombrar sin perder datos
+                    onClose={() => setModalCriterios(false)}
+                    setNotificacion={setNotificacion}
+                />
             </div>
         </div>
     );
@@ -2167,13 +2288,17 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
 // ======================================
 // --- 5. Componente: Modal para Criterios de Evaluación (Original) ---
 // ======================================
-const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificacion }) => {
+const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onRename, onClose, setNotificacion }) => {
     // 1. Estado para manejar los criterios internamente, clonando el prop inicial.
     const [criteriosLocales, setCriteriosLocales] = useState(criteriosPorBimestre || { 1: [], 2: [], 3: [] });
     // 2. Estado para el bimestre actualmente seleccionado en el modal.
     const [bimestreActivo, setBimestreActivo] = useState(1);
     const [nombre, setNombre] = useState('');
     const [porcentaje, setPorcentaje] = useState('');
+
+    // 🌟 Estado para edición
+    const [editingIndex, setEditingIndex] = useState(null);
+    const [originalNameEditing, setOriginalNameEditing] = useState(null);
 
     // Criterios del bimestre activo
     const criteriosDelBimestre = criteriosLocales[bimestreActivo] || [];
@@ -2196,7 +2321,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
             return;
         }
 
-        if (criteriosDelBimestre.some(c => c.nombre.toLowerCase() === nombre.trim().toLowerCase())) {
+        if (criteriosDelBimestre.some((c, i) => i !== editingIndex && c.nombre.toLowerCase() === nombre.trim().toLowerCase())) {
             setNotificacion({
                 mensaje: 'Ya existe un criterio con ese nombre en este trimestre.',
                 tipo: 'error'
@@ -2206,14 +2331,43 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
 
         const nuevoCriterio = { nombre: nombre.trim(), porcentaje: porciento };
 
-        setCriteriosLocales(prev => ({
-            ...prev,
-            [bimestreActivo]: [...criteriosDelBimestre, nuevoCriterio]
-        }));
+        if (editingIndex !== null) {
+            // 🌟 MODIFICAR EXISTENTE
+            setCriteriosLocales(prev => {
+                const updatedList = [...criteriosDelBimestre];
+                updatedList[editingIndex] = nuevoCriterio;
+                return { ...prev, [bimestreActivo]: updatedList };
+            });
+
+            // Si el nombre cambió, notificar al padre para migrar calificaciones
+            if (originalNameEditing && originalNameEditing !== nuevoCriterio.nombre && onRename) {
+                onRename(bimestreActivo, originalNameEditing, nuevoCriterio.nombre);
+            }
+
+            setEditingIndex(null);
+            setOriginalNameEditing(null);
+            setNotificacion({ mensaje: 'Criterio actualizado. Se conservaron las calificaciones.', tipo: 'exito' });
+        } else {
+            // 🌟 AGREGAR NUEVO
+            setCriteriosLocales(prev => ({
+                ...prev,
+                [bimestreActivo]: [...criteriosDelBimestre, nuevoCriterio]
+            }));
+        }
 
         setNombre('');
         setPorcentaje('');
     };
+
+    const handleEdit = (index) => {
+        const c = criteriosDelBimestre[index];
+        setNombre(c.nombre);
+        setPorcentaje(c.porcentaje);
+        setEditingIndex(index);
+        setOriginalNameEditing(c.nombre);
+    };
+
+
 
     // Función para eliminar un criterio del bimestre activo
     const removeCriterio = (index) => {
@@ -2292,18 +2446,35 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                                 {criteriosDelBimestre.map((c, index) => (
                                     <div key={index} className="criterio-item">
                                         <span>{c.nombre} - <strong>{c.porcentaje}%</strong></span>
-                                        <button
-                                            onClick={() => removeCriterio(index)}
-                                            style={{
-                                                background: 'none',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                marginLeft: '15px',
-                                                lineHeight: 1
-                                            }}
-                                        >
-                                            <span role="img" aria-label="eliminar">🗑️</span>
-                                        </button>
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <button
+                                                onClick={() => handleEdit(index)}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    marginLeft: '10px',
+                                                    marginRight: '5px',
+                                                    fontSize: '1.2rem'
+                                                }}
+                                                title="Editar (Conserva Calificaciones)"
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                onClick={() => removeCriterio(index)}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    fontSize: '1.2rem',
+                                                    color: '#e74c3c'
+                                                }}
+                                                title="Eliminar"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                                 {criteriosDelBimestre.length === 0 && <p style={{ textAlign: 'center', color: '#999', marginTop: '20px' }}>No hay criterios definidos para este Trimestre.</p>}
@@ -2336,12 +2507,21 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onClose, setNotificac
                                     <button
                                         className="btn"
                                         onClick={addCriterio}
-                                        disabled={totalPorcentaje >= 100 || !nombre.trim() || !porcentaje}
-                                        style={{ flexGrow: 1 }}
+                                        disabled={(editingIndex === null && (totalPorcentaje + (parseInt(porcentaje) || 0) > 100)) || !nombre.trim() || !porcentaje}
+                                        style={{ flexGrow: 1, backgroundColor: editingIndex !== null ? '#f39c12' : 'var(--main-color)' }}
                                     >
-                                        Añadir
+                                        {editingIndex !== null ? 'Actualizar' : 'Añadir'}
                                     </button>
                                 </div>
+                                {editingIndex !== null && (
+                                    <button
+                                        className="btn-cancel"
+                                        onClick={() => { setEditingIndex(null); setNombre(''); setPorcentaje(''); }}
+                                        style={{ marginTop: '5px', width: '100%', borderRadius: '6px', fontSize: '0.9rem', padding: '5px' }}
+                                    >
+                                        Cancelar Edición
+                                    </button>
+                                )}
                             </div>
 
                             <div className={`criterio-total ${totalPorcentaje !== 100 ? 'error' : 'success'}`}
