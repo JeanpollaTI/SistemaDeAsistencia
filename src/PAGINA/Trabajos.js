@@ -1172,6 +1172,8 @@ function Trabajos({ user }) {
                     left: 40px; /* 🌟 Offset for Number Column */
                     z-index: 110; /* 🌟 FIX: Even higher z-index (Top + Left Sticky) */
                     border-right: 2px solid #666;
+                    box-shadow: 4px 0 8px rgba(0,0,0,0.3); /* 🌟 FIX: Shadow to show it's on top */
+                    clip-path: inset(0 -15px 0 0); /* Ensure shadow is visible only on right */
                 }
                 .grupo-componente .tabla-global td.alumno-col {
                     text-align: left;
@@ -1183,6 +1185,8 @@ function Trabajos({ user }) {
                     border-right: 2px solid #666;
                     font-weight: 500;
                     color: var(--text-color);
+                    box-shadow: 4px 0 8px rgba(0,0,0,0.3); /* 🌟 FIX: Shadow to show it's on top */
+                    clip-path: inset(0 -15px 0 0); /* Ensure shadow is visible only on right */
                 }
                 .grupo-componente .tabla-global .num-col {
                     position: sticky;
