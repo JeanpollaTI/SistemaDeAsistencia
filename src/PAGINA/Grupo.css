@@ -973,6 +973,7 @@ body {
   background: transparent;
 }
 
+
 /* ======================================= */
 /* VISTAS: TABLA DE TRABAJOS (FIX)         */
 /* ======================================= */
@@ -1005,16 +1006,15 @@ body {
 .grupo-componente .tabla-global td:nth-child(1) {
   position: sticky;
   left: 0;
-  z-index: 30;
-  /* Increased to stay above standard cells */
+  z-index: 100;
+  /* HIGH Z-INDEX to prevent leaks */
   width: 40px;
   min-width: 40px;
   max-width: 40px;
-  background-color: var(--dark-color);
-  /* Ensure opacity */
+  background-color: #191D28;
+  /* HARDCODED OPACITY (matches --dark-color) */
   border-right: 1px solid #555;
   box-shadow: 1px 0 0 #444;
-  /* Subtle separator */
 }
 
 /* Col 2: Student Name (Alumno) */
@@ -1023,17 +1023,18 @@ body {
   position: sticky;
   left: 40px;
   /* Starts exactly after Col 1 */
-  z-index: 30;
-  /* Same level as Col 1 */
+  z-index: 100;
+  /* Same high level */
   width: 250px;
   /* FIXED WIDTH for elegance and consistency */
   min-width: 250px;
   max-width: 250px;
-  background-color: var(--dark-color);
+  background-color: #191D28;
+  /* HARDCODED OPACITY */
   border-right: 1px solid #555;
 
-  /* SHADOW for depth and separation from scrollable content */
-  box-shadow: 4px 0 8px rgba(0, 0, 0, 0.4);
+  /* Robust Shadow */
+  box-shadow: 6px 0 10px -2px rgba(0, 0, 0, 0.6);
 
   /* Text styling */
   white-space: normal;
@@ -1047,11 +1048,11 @@ body {
 .grupo-componente .tabla-global thead th {
   position: sticky;
   top: 0;
-  z-index: 40;
-  /* Higher than sticky body columns (30) */
+  z-index: 200;
+  /* Higher than sticky body columns (100) */
   background-color: var(--main-color);
   color: var(--dark-color);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   border-bottom: 2px solid #b39028;
   /* Definition line */
 }
@@ -1060,8 +1061,8 @@ body {
 /* This ensures the top-left headers don't scroll under other headers or columns */
 .grupo-componente .tabla-global thead th.num-col,
 .grupo-componente .tabla-global thead th.alumno-col {
-  z-index: 50;
-  /* Top of the stack */
+  z-index: 300;
+  /* Top of the stack, absolute highest */
   background-color: var(--main-color);
   color: var(--dark-color);
 }
