@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -1135,6 +1135,9 @@ function Trabajos({ user }) {
                 .grupo-componente .tabla-global-container {
                     overflow-x: auto;
                     padding: 0 20px 40px 20px;
+                    max-height: 75vh; /* 🌟 FIX: Limit height for vertical scroll */
+                    overflow-y: auto; /* 🌟 FIX: Enable vertical scroll */
+                    border-bottom: 1px solid #444;
                 }
                 .grupo-componente .tabla-global {
                     width: 100%;
@@ -1157,8 +1160,9 @@ function Trabajos({ user }) {
                     font-size: 0.9rem;
                     position: sticky;
                     top: 0;
-                    z-index: 20;
+                    z-index: 100; /* 🌟 FIX: Higher z-index to stay on top */
                     height: 50px;
+                    box-shadow: 0 2px 2px rgba(0,0,0,0.1); /* Optional shadow */
                 }
                 .grupo-componente .tabla-global th.alumno-col {
                     text-align: left;
@@ -1166,7 +1170,7 @@ function Trabajos({ user }) {
                     padding-left: 15px;
                     position: sticky;
                     left: 40px; /* 🌟 Offset for Number Column */
-                    z-index: 30;
+                    z-index: 110; /* 🌟 FIX: Even higher z-index (Top + Left Sticky) */
                     border-right: 2px solid #666;
                 }
                 .grupo-componente .tabla-global td.alumno-col {
@@ -1316,6 +1320,15 @@ const PanelCalificaciones = ({
 
     // 🌟 ESTADO AGREGADO: Historial para Deshacer/Rehacer (Undo/Redo)
     const [history, setHistory] = useState({ past: [], future: [] });
+
+    // 🌟 MEMOIZED SORTED ALUMNOS
+    // Fixes the issue where students shuffle randomly during render or updates.
+    const sortedAlumnos = useMemo(() => {
+        if (!grupo || !grupo.alumnos) return [];
+        return [...grupo.alumnos].sort((a, b) =>
+            a.apellidoPaterno.localeCompare(b.apellidoPaterno, 'es', { sensitivity: 'base' })
+        );
+    }, [grupo]);
 
     // 🌟 FUNCIONES UNDO/REDO
     const saveToHistory = () => {
@@ -1651,7 +1664,7 @@ const PanelCalificaciones = ({
     const handlePasteFromCell = (startRowIndex, startColIndex, matrix) => {
         // Necesitamos la lista de alumnos ORDENADA exactamente igual que en el render
         // Esta misma lógica de ordenamiento se usa en el map del JSX
-        const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno));
+        const alumnosOrdenados = sortedAlumnos;
 
         // Determinar si estamos en vista global (tabla) o vista lista (cuadritos)
         // La prop 'criterioNombre' se infiere.
@@ -1968,9 +1981,13 @@ const PanelCalificaciones = ({
                                             {/* Columnas de Tareas */}
                                             {Array.from({ length: numTareas[criterioSeleccionadoGlobal] || 10 }).map((_, tareaIndex) => {
                                                 // Buscar nombre de tarea (scan all students)
-                                                const nombreTarea = Object.values(calificaciones).find(
-                                                    alumnoCal => alumnoCal?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[tareaIndex]?.nombre
-                                                )?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[tareaIndex]?.nombre;
+                                                // 🌟 OPTIMIZATION: Look at the first student's record since names are synced.
+                                                // Falls back to scanning if first student has no entry, but much safer/stable.
+                                                const primerAlumnoId = sortedAlumnos[0]?._id;
+                                                const nombreTarea = calificaciones[primerAlumnoId]?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[tareaIndex]?.nombre
+                                                    || Object.values(calificaciones).find(
+                                                        alumnoCal => alumnoCal?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[tareaIndex]?.nombre
+                                                    )?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[tareaIndex]?.nombre;
 
                                                 return (
                                                     <th key={tareaIndex}>
@@ -2008,7 +2025,7 @@ const PanelCalificaciones = ({
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map((alumno, index) => (
+                                        {sortedAlumnos.map((alumno, index) => (
                                             <tr key={alumno._id}>
                                                 <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{index + 1}</td>
                                                 {asignatura === 'Tecnologia' && (
@@ -2055,10 +2072,10 @@ const PanelCalificaciones = ({
                                                             formatFechaTooltip={formatFechaTooltip}
                                                             setTareaPorNombrar={setTareaPorNombrar}
 
-                                                            rowIndex={grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).findIndex(x => x._id === alumno._id)} // 🌟 Pass row index
+                                                            rowIndex={index} // 🌟 Passed stable index from map
                                                             colIndex={tareaIndex} // 🌟 Pass column index
                                                             onPasteValues={(rIndex, cIndex, matrix) => {
-                                                                const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno));
+                                                                const alumnosOrdenados = sortedAlumnos;
                                                                 const updates = [];
 
                                                                 matrix.forEach((rowVals, rOffset) => {
@@ -2100,7 +2117,7 @@ const PanelCalificaciones = ({
                             /* --- VISTA 2: LISTA DE ALUMNOS (ORIGINAL - VISTA GENERAL) --- */
                             <div className="asistencia-grid">
                                 <div className="asistencia-body">
-                                    {grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map((alumno, index) => (
+                                    {sortedAlumnos.map((alumno, index) => (
                                         <React.Fragment key={alumno._id}>
                                             <div className="asistencia-row">
                                                 <div className="alumno-nombre">{`${index + 1}. ${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
@@ -2138,9 +2155,12 @@ const PanelCalificaciones = ({
                                                         <div className="task-header-row" style={{ gridColumn: '1 / -1' }}>
                                                             {Array.from({ length: numTareas[criterioAbierto.criterioNombre] || 10 }).map((_, tareaIndex) => {
                                                                 // Buscar si alguna calificación en esta columna tiene nombre
-                                                                const nombreTarea = Object.values(calificaciones).find(
-                                                                    alumnoCal => alumnoCal?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex]?.nombre
-                                                                )?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex]?.nombre;
+                                                                // 🌟 OPTIMIZATION: Look up locally if possible or scan safely
+                                                                const primerAlumnoId = sortedAlumnos[0]?._id;
+                                                                const nombreTarea = calificaciones[primerAlumnoId]?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex]?.nombre
+                                                                    || Object.values(calificaciones).find(
+                                                                        alumnoCal => alumnoCal?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex]?.nombre
+                                                                    )?.[bimestreActivo]?.[criterioAbierto.criterioNombre]?.[tareaIndex]?.nombre;
 
                                                                 return (
                                                                     <div
