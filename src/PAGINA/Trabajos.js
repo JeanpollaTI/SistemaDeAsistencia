@@ -73,9 +73,10 @@ const ModalNombreTarea = ({ criterioNombre, tareaIndex, nombreActual, onGuardar,
                         marginBottom: '1.5rem',
                         fontSize: '1.1rem',
                         borderRadius: '6px',
-                        border: '1px solid #555',
-                        backgroundColor: '#333',
-                        color: 'white',
+                        border: '1px solid #ccc',
+                        backgroundColor: '#ffffff', /* WHITE BACKGROUND */
+                        color: '#000000', /* BLACK TEXT */
+                        fontWeight: 'bold'
                     }}
                 />
 
@@ -1978,9 +1979,9 @@ const PanelCalificaciones = ({
                                 <table className={`tabla-global ${asignatura === 'Tecnologia' ? 'with-obs' : ''}`}>
                                     <thead>
                                         <tr>
-                                            <th className="num-col" style={{ width: '40px', textAlign: 'center' }}>#</th>
+                                            <th className="num-col" style={{ width: '40px', minWidth: '40px', textAlign: 'center' }}>#</th>
                                             {asignatura === 'Tecnologia' && <th className="obs-col">Obs.</th>}
-                                            <th className="alumno-col">Alumno</th>
+                                            <th className="alumno-col" style={{ width: '250px', minWidth: '250px' }}>Alumno</th>
                                             {/* Columnas de Tareas */}
                                             {Array.from({ length: numTareas[criterioSeleccionadoGlobal] || 10 }).map((_, tareaIndex) => {
                                                 // Buscar nombre de tarea (scan all students)

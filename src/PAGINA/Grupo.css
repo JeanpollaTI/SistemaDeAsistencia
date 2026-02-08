@@ -1066,3 +1066,9 @@ body {
   background-color: var(--main-color);
   color: var(--dark-color);
 }
+
+.grupo-componente .task-name {
+  color: #000 !important;
+  font-weight: 800 !important;
+  text-transform: uppercase;
+}
