@@ -1170,10 +1170,10 @@ function Trabajos({ user }) {
                     padding-left: 15px;
                     position: sticky;
                     left: 40px; /* 🌟 Offset for Number Column */
-                    z-index: 110; /* 🌟 FIX: Even higher z-index (Top + Left Sticky) */
-                    border-right: 2px solid #666;
-                    box-shadow: 4px 0 8px rgba(0,0,0,0.3); /* 🌟 FIX: Shadow to show it's on top */
-                    clip-path: inset(0 -15px 0 0); /* Ensure shadow is visible only on right */
+                    top: 0; /* 🌟 Ensure vertical stickiness matches general headers */
+                    z-index: 120; /* 🌟 Increase z-index to be safe */
+                    border-right: 2px solid #555; /* Softer border */
+                    box-shadow: 6px 0 10px -2px rgba(0,0,0,0.5); /* 🌟 Stronger, softer shadow */
                 }
                 .grupo-componente .tabla-global td.alumno-col {
                     text-align: left;
@@ -1181,12 +1181,11 @@ function Trabajos({ user }) {
                     position: sticky;
                     left: 40px; /* 🌟 Offset for Number Column */
                     background-color: var(--dark-color-alt);
-                    z-index: 10;
-                    border-right: 2px solid #666;
+                    z-index: 15; /* Ensure above normal cells */
+                    border-right: 2px solid #555;
                     font-weight: 500;
                     color: var(--text-color);
-                    box-shadow: 4px 0 8px rgba(0,0,0,0.3); /* 🌟 FIX: Shadow to show it's on top */
-                    clip-path: inset(0 -15px 0 0); /* Ensure shadow is visible only on right */
+                    box-shadow: 6px 0 10px -2px rgba(0,0,0,0.5); /* 🌟 Stronger, softer shadow */
                 }
                 .grupo-componente .tabla-global .num-col {
                     position: sticky;
