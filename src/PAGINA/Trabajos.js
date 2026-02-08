@@ -54,9 +54,9 @@ const ModalNombreTarea = ({ criterioNombre, tareaIndex, nombreActual, onGuardar,
 
     return (
         <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1060 }}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
-                <h3 style={{ textAlign: 'center' }}>Asignar Nombre a Trabajo</h3>
-                <p style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#ccc', fontSize: '0.9rem' }}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: '900px', maxWidth: '95vw', padding: '40px' }}>
+                <h2 style={{ textAlign: 'center', fontSize: '2rem', marginBottom: '20px' }}>Asignar Nombre a Trabajo</h2>
+                <p style={{ textAlign: 'center', marginBottom: '2.5rem', color: '#ccc', fontSize: '1.2rem' }}>
                     Asignarás el nombre a la **Tarea {tareaIndex + 1}** del criterio **{criterioNombre}** para **todos** los alumnos.
                 </p>
 
