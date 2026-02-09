@@ -2143,16 +2143,7 @@ const PanelCalificaciones = ({
                                             {/* Desplegable en Vista General */}
                                             {criterioAbierto?.alumnoId === alumno._id && (
                                                 <div className={`bimestre-desplegable desplegado`}>
-                                                    <div className="criterio-resumen-wrapper">
-                                                        <div className="criterio-resumen">
-                                                            <span className="criterio-info">
-                                                                {criterioAbierto.criterioNombre} ({criteriosActivos.find(c => c.nombre === criterioAbierto.criterioNombre)?.porcentaje}%)
-                                                            </span>
-                                                            <span className="criterio-prom" style={{ color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre) >= 6 ? 'var(--dark-color)' : 'var(--danger-color)' }}>
-                                                                Prom: {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioAbierto.criterioNombre).toFixed(2)}
-                                                            </span>
-                                                        </div>
-                                                    </div>
+
 
                                                     <div className="cuadritos-grid">
                                                         {/* 🌟 HEADER ROW PARA TAREAS */}
