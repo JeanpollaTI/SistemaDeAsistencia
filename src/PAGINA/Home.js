@@ -148,6 +148,7 @@ function Home({ user }) {
   };
   // --- Novedades Carousel ---
   const novedadesList = [
+    { icon: "🚀", text: "Mejoras en Trabajos: Visualización Full HD, modales más grandes y correcciones visuales." },
     { icon: "📅", text: "Asignación de Asesores: Ahora puedes asignar un asesor a cada grupo." },
     { icon: "🎓", text: "Director Global: Configura el director una vez para todas las boletas." },
     { icon: "📄", text: "Boletas PDF: Firmas automáticas y diseño mejorado." },
