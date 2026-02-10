@@ -442,9 +442,7 @@ function Grupo({ user }) {
       const key = `${alumnoId}-b${bimestre}-d${i}`;
       const registro = (asistenciaData || asistencia)[key];
       if (registro?.estado === 'P' || registro?.estado === 'J') presentes++; // P y J cuentan como asistencia
-      if (registro?.estado === 'R') { countRetardoAsFalta ? null : presentes++; retardos++; } // Retardo cuenta como asistencia? Normalmente si, pero con nota.
-      // Ajuste: Retardo 'R' cuenta como asistencia EN PARTE, pero aqui lo contamos separado.
-      // Si el usuario quiere que sume a presentes, descomentar arriba. Por ahora lo mostramos separado.
+      if (registro?.estado === 'R') { presentes++; retardos++; } // Ajuste: Retardo 'R' cuenta como asistencia (Presente) y se suma a Retardos.
       if (registro?.estado === 'F') faltas++;
       if (registro?.estado === 'J') justificados++;
     }
