@@ -94,13 +94,16 @@ body {
 
 /* --- CONTENEDOR PRINCIPAL --- */
 .grupo-componente .page-container {
-  max-width: 1200px;
+  max-width: 98%;
+  /* UNLOCKED WIDTH from 1200px */
   margin: 0 auto;
   padding: 2rem;
   padding-top: 6rem;
   /* Espacio para navbar fija si existe */
   animation: fadeIn 0.8s ease-out;
 }
+
+
 
 /* --- TÍTULOS --- */
 .grupo-componente h1,
@@ -723,6 +726,25 @@ body {
   align-items: center;
   padding: 0;
   font-size: 0.8rem;
+}
+
+.grupo-componente .cuadrito.estado-p {
+  background-color: var(--success-color);
+}
+
+.grupo-componente .cuadrito.estado-f {
+  background-color: var(--danger-color);
+}
+
+.grupo-componente .cuadrito.estado-j {
+  background-color: var(--warning-color);
+  color: black;
+}
+
+.grupo-componente .cuadrito.estado-r {
+  background-color: #ff9800;
+  /* ORANGE for Retardo */
+  color: white;
 }
 
 .grupo-componente .btn-agregar-dias:hover {

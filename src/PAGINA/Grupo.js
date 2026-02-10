@@ -297,7 +297,7 @@ function Grupo({ user }) {
 
   const handleMarcarAsistencia = (alumnoId, bimestre, diaIndex) => {
     const key = `${alumnoId}-b${bimestre}-d${diaIndex}`;
-    const estados = ['', 'P', 'F', 'J']; // NUEVO: Incluye 'J'
+    const estados = ['', 'P', 'F', 'J', 'R']; // NUEVO: Incluye 'R' (Retardo)
     const estadoActual = asistencia[key]?.estado || '';
     const siguienteEstadoIndex = (estados.indexOf(estadoActual) + 1) % estados.length;
     const nuevoEstado = estados[siguienteEstadoIndex];
@@ -435,16 +435,20 @@ function Grupo({ user }) {
   const calcularTotales = useMemo(() => (alumnoId, bimestre, asistenciaData, diasData) => {
     let presentes = 0;
     let faltas = 0;
-    let justificados = 0; // NUEVO
+    let justificados = 0;
+    let retardos = 0; // NUEVO
     const diasDelBimestre = (diasData || diasPorBimestre)[bimestre] || DIAS_INICIALES;
     for (let i = 1; i <= diasDelBimestre; i++) {
       const key = `${alumnoId}-b${bimestre}-d${i}`;
       const registro = (asistenciaData || asistencia)[key];
       if (registro?.estado === 'P' || registro?.estado === 'J') presentes++; // P y J cuentan como asistencia
+      if (registro?.estado === 'R') { countRetardoAsFalta ? null : presentes++; retardos++; } // Retardo cuenta como asistencia? Normalmente si, pero con nota.
+      // Ajuste: Retardo 'R' cuenta como asistencia EN PARTE, pero aqui lo contamos separado.
+      // Si el usuario quiere que sume a presentes, descomentar arriba. Por ahora lo mostramos separado.
       if (registro?.estado === 'F') faltas++;
       if (registro?.estado === 'J') justificados++;
     }
-    return { presentes, faltas, justificados };
+    return { presentes, faltas, justificados, retardos };
   }, [asistencia, diasPorBimestre]);
 
   const handleAddAsignatura = (profesorId, nuevaAsignatura) => {
@@ -893,46 +897,61 @@ function Grupo({ user }) {
               </div>
 
               <div className="asistencia-grid">
-                <div className="asistencia-body">
-                  {grupoSeleccionado?.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map((alumno, index) => {
-                    const totales = calcularTotales(alumno._id, bimestreActivo, asistencia, diasPorBimestre);
-                    return (
-                      <React.Fragment key={alumno._id}>
-                        <div className="asistencia-row" style={{ display: 'block', padding: '15px' }}> {/* Cambio de estilo para acomodar mejor */}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                            <div className="alumno-nombre">{`${index + 1}. ${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
-                            <div className="asistencia-totales" style={{ fontSize: '0.9rem' }}>
-                              <span className="total-presentes" style={{ marginRight: '10px' }}>✅ {totales.presentes}</span>
-                              <span className="total-faltas" style={{ marginRight: '10px' }}>❌ {totales.faltas}</span>
-                              <span className="total-justificados" style={{ color: '#ffc107' }}>⚠️ {totales.justificados}</span>
-                            </div>
-                          </div>
-
-                          <div className="cuadritos-grid">
+                <div className="tabla-global-container" style={{ maxHeight: '70vh', overflow: 'auto' }}>
+                  <table className="tabla-global">
+                    <thead>
+                      <tr>
+                        <th className="num-col" style={{ width: '40px', minWidth: '40px', textAlign: 'center' }}>#</th>
+                        <th className="alumno-col" style={{ width: '250px', minWidth: '250px' }}>Alumno</th>
+                        <th style={{ width: '120px', minWidth: '120px', textAlign: 'center' }}>Totales</th>
+                        {Array.from({ length: diasPorBimestre[bimestreActivo] || DIAS_INICIALES }).map((_, i) => (
+                          <th key={i} style={{ width: '30px', minWidth: '30px', textAlign: 'center', fontSize: '0.8rem' }}>{i + 1}</th>
+                        ))}
+                        <th style={{ width: '40px', minWidth: '40px' }}>
+                          <button className="btn-agregar-dias" onClick={() => agregarDias(bimestreActivo)} title="Agregar días">+5</button>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {grupoSeleccionado?.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map((alumno, index) => {
+                        const totales = calcularTotales(alumno._id, bimestreActivo, asistencia, diasPorBimestre);
+                        return (
+                          <tr key={alumno._id}>
+                            <td className="num-col" style={{ textAlign: 'center' }}>{index + 1}</td>
+                            <td className="alumno-col">
+                              {alumno.apellidoPaterno} {alumno.apellidoMaterno || ''} {alumno.nombre}
+                            </td>
+                            <td style={{ textAlign: 'center', fontSize: '0.85rem' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <span style={{ color: 'var(--success-color)' }}>✅ {totales.presentes}</span>
+                                <span style={{ color: 'var(--danger-color)' }}>❌ {totales.faltas}</span>
+                                <span style={{ color: 'var(--warning-color)' }}>⚠️ {totales.justificados}</span>
+                                <span style={{ color: '#ff9800' }}>🕒 {totales.retardos}</span>
+                              </div>
+                            </td>
                             {Array.from({ length: diasPorBimestre[bimestreActivo] || DIAS_INICIALES }).map((_, diaIndex) => {
                               const key = `${alumno._id}-b${bimestreActivo}-d${diaIndex + 1}`;
                               const registro = asistencia[key];
                               return (
-                                <div
-                                  key={diaIndex}
-                                  className={`cuadrito estado-${registro?.estado.toLowerCase() || ''}`}
-                                  // title={registro?.fecha ? `Fecha: ${registro.fecha}` : `Día ${diaIndex + 1}`} // REMOVIDO TITLE NATIVO
-                                  onClick={() => handleMarcarAsistencia(alumno._id, bimestreActivo, diaIndex + 1)}
-                                  onMouseEnter={(e) => handleMouseEnterCell(e, alumno._id, bimestreActivo, diaIndex + 1, registro?.fecha)}
-                                  onMouseLeave={handleMouseLeaveCell}
-                                >
-                                  {registro?.estado || ''}
-                                </div>
+                                <td key={diaIndex} style={{ padding: '2px', textAlign: 'center' }}>
+                                  <div
+                                    className={`cuadrito estado-${registro?.estado.toLowerCase() || ''}`}
+                                    style={{ margin: '0 auto' }}
+                                    onClick={() => handleMarcarAsistencia(alumno._id, bimestreActivo, diaIndex + 1)}
+                                    onMouseEnter={(e) => handleMouseEnterCell(e, alumno._id, bimestreActivo, diaIndex + 1, registro?.fecha)}
+                                    onMouseLeave={handleMouseLeaveCell}
+                                  >
+                                    {registro?.estado || ''}
+                                  </div>
+                                </td>
                               );
                             })}
-                            <button className="btn-agregar-dias" onClick={() => agregarDias(bimestreActivo)}>
-                              +5
-                            </button>
-                          </div>
-                        </div>
-                      </React.Fragment>
-                    )
-                  })}
+                            <td></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
 
                 {/* 🌟 RENDERIZADO DEL TOOLTIP PERSONALIZADO */}
