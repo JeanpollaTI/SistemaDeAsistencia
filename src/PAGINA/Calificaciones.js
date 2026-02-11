@@ -419,10 +419,10 @@ function Calificaciones({ user }) {
 
     doc.setFontSize(8);
     // 🌟 LEYENDA PADRES DE FAMILIA
-    const leyenda = "Sr. Padre de familia, esta calificacion es el avance parcial del trimestre, en la siguientes semanas puede subir o bajar porque los docentes no han incluido la calificacion del examen, proyectos u otros aspectos.";
+    const leyenda = "Sr. Padre de familia, esta calificación es el avance parcial del trimestre le solicitamos apoyar a su hij@, el propósito fundamental de este reporte es que suba su promedio de calificación al finalizar el trimestre en el que estamos, les solicitamos asistir a la secundaria a informarse sobre el avance académico de su hij@.";
 
-    // Ajustar tamaño para la leyenda
-    doc.setFontSize(8);
+    // Ajustar tamaño para la leyenda (Antes 8, ahora 10)
+    doc.setFontSize(10);
     doc.setFont(undefined, 'italic');
 
     // Dividir texto para que quepa en el ancho
