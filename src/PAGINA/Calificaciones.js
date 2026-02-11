@@ -237,61 +237,57 @@ function Calificaciones({ user }) {
     return bimestresConCalificacion > 0 ? Math.round(sumaDePromedios / bimestresConCalificacion) : 0;
   };
 
-  const generatePdfIndividual = async (alumno, bimestresSeleccionados, outputType = 'save', datosFirmas = {}) => {
-    // Si no vienen datosFirmas (ej: uso directo), intentamos sacar del localStorage o del grupo
+
+  // --- FUNCIÓN REUTILIZABLE PARA DIBUJAR UNA BOLETA EN UNA PÁGINA EXISTENTE ---
+  const drawReportCard = async (doc, alumno, bimestresSeleccionados, datosFirmas = {}) => {
     let { nombreDirector = '', nombreDocente = '' } = datosFirmas;
 
     if (!nombreDirector) {
-      // Intentar leer el director global "current" (si implementamos esa lógica) o el último usado
-      // Para simplificar, usamos el último seleccionado en el modal global o localStorage
       nombreDirector = localStorage.getItem('current_director_name') || '';
     }
     if (!nombreDocente) {
-      // Usar el asesor del grupo
       nombreDocente = selectedGrupo?.asesor || '';
     }
-    const doc = new jsPDF();
+
     const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
 
+    // Logo (Simulado o real si cargado previamente, para optimizar en loop)
+    // Para simplificar en batch, idealmente cargar imagen una vez fuera. 
+    // Pero jsPDF addImage maneja cache o base64 bien.
     const img = new Image();
     img.src = logoImage;
-    await img.decode();
+    // await img.decode(); // En batch puede ser lento, pero necesario para layout.
+    // Hack: Asumimos que ya cargó o usamos dimensiones fijas si es posible.
+    // Para asegurar sin await en cada uno, podríamos precargar, pero mantengamos await por seguridad visual.
+    await img.decode().catch(() => { }); // Catch error si ya está decodificada o falla
+
     const logoWidth = 25, margin = 14;
     const logoHeight = (img.height * logoWidth) / img.width;
     const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+
     doc.addImage(logoImage, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
 
     doc.setFontSize(12);
-
-    // --- AJUSTES DE POSICIÓN Y ESPACIADO ---
     let yPos = margin + 5;
 
     // 1. Escuela Secundaria
     doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, yPos);
-
-    // Incremento para la siguiente línea (e.g., 7mm)
     yPos += 7;
 
     // 2. Boleta de Calificaciones
-    doc.setFont(undefined, 'bold'); // Poner el título en negrita para resaltarlo
+    doc.setFont(undefined, 'bold');
     doc.text('Boleta parcial de calificaciones', margin, yPos);
-    doc.setFont(undefined, 'normal'); // Volver a normal
-
-    // Incremento
+    doc.setFont(undefined, 'normal');
     yPos += 7;
 
     // 3. Alumno
     doc.text(`Alumno: ${nombreCompleto}`, margin, yPos);
-
-    // Incremento
     yPos += 7;
 
     // 4. Grupo
     doc.text(`Grupo: ${selectedGrupo.nombre}`, margin, yPos);
-
-    // 5. Espacio de separación antes de la tabla
-    yPos += 5; // Espacio extra de 5mm antes de la tabla
-    // --- FIN AJUSTES DE POSICIÓN ---
+    yPos += 5; // Espacio antes de tabla
 
     const tableHeaders = ['Materia'];
     if (bimestresSeleccionados[0]) tableHeaders.push("Trim. 1");
@@ -304,7 +300,6 @@ function Calificaciones({ user }) {
       const row = [materia];
       cals.forEach((cal, index) => {
         if (bimestresSeleccionados[index]) {
-          // APLICAR CLAMPGRADE TAMBIÉN AL PDF
           const clampedCal = clampGrade(cal);
           row.push(clampedCal !== null ? clampedCal.toFixed(1) : '-');
         }
@@ -322,7 +317,6 @@ function Calificaciones({ user }) {
     tableBody.push(promedioRow);
 
     autoTable(doc, {
-      // *** USAR LA POSICIÓN Y CALCULADA Y CORREGIDA ***
       startY: yPos,
       head: [tableHeaders],
       body: tableBody,
@@ -336,35 +330,28 @@ function Calificaciones({ user }) {
       }
     });
 
-    // --- SECCIÓN DE FIRMAS Y PIE DE PÁGINA (LAYOUT DIVIDIDO) ---
-    // Usamos finalY de la última tabla dibujada
-    let finalY = doc.lastAutoTable.finalY + 15; // Espacio de separación (15mm)
-
-    // pageWidth y margin ya están definidos al inicio de la función
+    // --- SECCIÓN DE FIRMAS Y PIE DE PÁGINA ---
+    let finalY = doc.lastAutoTable.finalY + 15;
     const availableWidth = pageWidth - (margin * 2);
-    const halfWidth = availableWidth / 2 - 5; // Ancho de columna (menos un pequeño gap)
-    const rightColX = margin + halfWidth + 10; // Posición X para columna derecha (más gap)
+    const halfWidth = availableWidth / 2 - 5;
+    const rightColX = margin + halfWidth + 10;
 
-    // --- COLUMNA IZQUIERDA: Docente y Director (Apilados) ---
     let ySignatures = finalY;
-
     doc.setFontSize(8);
     doc.setTextColor(0, 0, 0);
 
-    // 1. Docente (Ahora Asesor)
+    // 1. Docente
     doc.text("Nombre y firma del asesor (a)", margin, ySignatures);
-    ySignatures += 10; // Espacio para firma
-    // Nombre (si existe)
+    ySignatures += 10;
     if (nombreDocente) {
       doc.setFont(undefined, 'bold');
       doc.text(nombreDocente.toUpperCase(), margin, ySignatures);
       doc.setFont(undefined, 'normal');
     }
-    // Línea de firma
-    doc.line(margin, ySignatures + 1, margin + 80, ySignatures + 1); // Línea de 80mm
+    doc.line(margin, ySignatures + 1, margin + 80, ySignatures + 1);
 
-    // 2. Director (Más abajo)
-    ySignatures += 25; // Separación vertical entre firmas
+    // 2. Director
+    ySignatures += 25;
     doc.text("Nombre y firma del director (a)", margin, ySignatures);
     ySignatures += 10;
     if (nombreDirector) {
@@ -374,25 +361,23 @@ function Calificaciones({ user }) {
     }
     doc.line(margin, ySignatures + 1, margin + 80, ySignatures + 1);
 
-
-    // --- COLUMNA DERECHA: Tabla de Firmas de Padres ---
-    // Usamos autoTable pero lo posicionamos a la derecha
+    // Tabla Firmas Padres (Derecha)
     autoTable(doc, {
-      startY: finalY - 4, // Alineado un poco más arriba para compensar header
-      margin: { left: rightColX }, // IMPORTANTE: Margen izquierdo para empujar la tabla
-      tableWidth: halfWidth, // Ancho restringido a la mitad
+      startY: finalY - 4,
+      margin: { left: rightColX },
+      tableWidth: halfWidth,
       head: [[{ content: 'FIRMA DE LA MADRE O PADRE DE FAMILIA O PERSONA TUTORA', colSpan: 3 }]],
       body: [
         ['1er periodo', '2º periodo', '3er periodo'],
-        ['\n\n\n\n', '\n\n\n\n', '\n\n\n\n'] // Espacio vertical para firmar
+        ['\n\n\n\n', '\n\n\n\n', '\n\n\n\n']
       ],
       theme: 'plain',
       styles: {
         lineColor: [0, 0, 0],
         lineWidth: 0.1,
-        halign: 'center', // Centrado dentro de las celdas
+        halign: 'center',
         valign: 'middle',
-        fontSize: 7, // Letra un poco más pequeña para que quepa
+        fontSize: 7,
         cellPadding: 2
       },
       headStyles: {
@@ -405,44 +390,65 @@ function Calificaciones({ user }) {
         fontSize: 7
       },
       columnStyles: {
-        0: { cellWidth: 'auto' }, // Distribución automática
+        0: { cellWidth: 'auto' },
         1: { cellWidth: 'auto' },
         2: { cellWidth: 'auto' }
       }
     });
 
-
-    // 3. Lugar de Expedición (Al final, centrado)
-    // Calculamos una posición Y segura, o usamos el final de la página menos margen
-    const pageHeight = doc.internal.pageSize.height;
     const footerY = pageHeight - 15;
-
-    doc.setFontSize(8);
-    // 🌟 LEYENDA PADRES DE FAMILIA
+    doc.setFontSize(10);
     const leyenda = "Sr. Padre de familia, esta calificación es el avance parcial del trimestre le solicitamos apoyar a su hij@, el propósito fundamental de este reporte es que suba su promedio de calificación al finalizar el trimestre en el que estamos, les solicitamos asistir a la secundaria a informarse sobre el avance académico de su hij@.";
 
-    // Ajustar tamaño para la leyenda (Antes 8, ahora 10)
-    doc.setFontSize(10);
     doc.setFont(undefined, 'italic');
-
-    // Dividir texto para que quepa en el ancho
     const splitLeyenda = doc.splitTextToSize(leyenda, pageWidth - (margin * 2));
-    const leyendaY = footerY - 15; // Un poco antes del footer
+    const leyendaY = footerY - 15;
 
-    // Color grisáceo para diferenciar
     doc.setTextColor(100);
     doc.text(splitLeyenda, margin, leyendaY);
-    doc.setTextColor(0); // Restaurar negro
+    doc.setTextColor(0);
     doc.setFont(undefined, 'normal');
 
     doc.text("LUGAR DE EXPEDICIÓN:     AGUASCALIENTES, AGUASCALIENTES", pageWidth / 2, footerY, { align: 'center' });
+  };
+
+  const generatePdfIndividual = async (alumno, bimestresSeleccionados, outputType = 'save', datosFirmas = {}) => {
+    const doc = new jsPDF();
+    await drawReportCard(doc, alumno, bimestresSeleccionados, datosFirmas);
 
     if (outputType === 'save') {
+      const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
       doc.save(`Boleta_${nombreCompleto.replace(/\s/g, '_')}.pdf`);
       setModalPdf({ visible: false, alumno: null });
     }
-
     return doc.output('datauristring');
+  };
+
+  // 🌟 NUEVA FUNCIÓN: Descargar todas las boletas en un solo PDF
+  const generatePdfGrupal = async () => {
+    if (!alumnos || alumnos.length === 0) {
+      mostrarNotificacion("No hay alumnos en el grupo.", "error");
+      return;
+    }
+
+    const doc = new jsPDF();
+    let isFirstPage = true;
+
+    // Mostramos loading o notificación...
+    mostrarNotificacion("Generando PDF grupal, por favor espere...", "info");
+
+    for (const alumno of alumnos) {
+      if (!isFirstPage) {
+        doc.addPage();
+      }
+      isFirstPage = false;
+      // Por defecto, incluimos los 3 trimestres en el reporte grupal
+      await drawReportCard(doc, alumno, [true, true, true]);
+    }
+
+    const nombreGrupo = selectedGrupo.nombre.replace(/\s/g, '_');
+    doc.save(`Boletas_Grupo_${nombreGrupo}.pdf`);
+    mostrarNotificacion("PDF grupal descargado correctamente.");
   };
 
   const generatePdfConsolidado = async () => {
@@ -610,6 +616,15 @@ function Calificaciones({ user }) {
           <div className="calificaciones-header">
             <h1 className="calificaciones-title">Calificaciones del Grupo {selectedGrupo.nombre}</h1>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px' }}>
+
+              <button
+                className="button"
+                onClick={generatePdfGrupal}
+                style={{ backgroundColor: '#8e44ad', color: 'white' }}
+                title="Generar un solo PDF con todas las boletas del grupo"
+              >
+                📄 Descargar Todo el Grupo
+              </button>
 
               <button
                 className="button"
