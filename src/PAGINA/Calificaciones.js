@@ -510,7 +510,7 @@ function Calificaciones({ user }) {
 
     autoTable(doc, {
       startY: 40,
-      head: [['#', 'Nombre del Alumno', 'Materias con Calificación <= 6']],
+      head: [['#', 'Nombre del Alumno', 'Materias en Riesgo o Reprobadas']],
       body: tableBody,
       theme: 'grid',
       headStyles: { fillColor: [231, 76, 60], textColor: 255, halign: 'center' }, // Rojo alerta
