@@ -528,7 +528,7 @@ function Calificaciones({ user }) {
 
     autoTable(doc, {
       startY: currentY,
-      head: [['#', 'Nombre del Alumno', 'Materias en Riesgo o Reprobadas']],
+      head: [['#', 'Nombre del Alumno', 'Materias en rezago']],
       body: tableBody,
       theme: 'grid',
       headStyles: { fillColor: [231, 76, 60], textColor: 255, halign: 'center' }, // Rojo alerta
