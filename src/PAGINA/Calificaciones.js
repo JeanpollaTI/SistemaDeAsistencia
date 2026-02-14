@@ -451,6 +451,86 @@ function Calificaciones({ user }) {
     mostrarNotificacion("PDF grupal descargado correctamente.");
   };
 
+  // 🌟 NUEVA FUNCIÓN: Generar reporte de bajo rendimiento (Promedios <= 6)
+  const generatePdfBajoRendimiento = async () => {
+    if (!alumnos || alumnos.length === 0) {
+      mostrarNotificacion("No hay alumnos en el grupo.", "error");
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+
+    // --- ENCABEZADO REPORTE ---
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text('Reporte de Bajo Rendimiento Académico', pageWidth / 2, 20, { align: 'center' });
+
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Grupo: ${selectedGrupo.nombre}`, 14, 30);
+    // Fecha actual
+    const fecha = new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+    doc.text(`Fecha: ${fecha}`, pageWidth - 14, 30, { align: 'right' });
+
+    // Filtrar alumnos con al menos una materia <= 6 en cualquier trimestre
+    const alumnosEnRiesgo = [];
+
+    alumnos.forEach(alumno => {
+      const materiasBajas = [];
+      materias.forEach(materia => {
+        [0, 1, 2].forEach(bim => {
+          const cal = calificaciones[alumno._id]?.[materia]?.[bim];
+          // Solo si existe calificación y es <= 6
+          if (cal !== undefined && cal !== null && cal <= 6) {
+            materiasBajas.push(`${materia} (T${bim + 1}: ${cal})`);
+          }
+        });
+      });
+
+      if (materiasBajas.length > 0) {
+        alumnosEnRiesgo.push({
+          nombre: `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`,
+          detalles: materiasBajas.join(', ') // Formato: "Matemáticas (T1: 5), Historia (T2: 6)"
+        });
+      }
+    });
+
+    if (alumnosEnRiesgo.length === 0) {
+      mostrarNotificacion("No se encontraron alumnos con calificaciones <= 6.", "info");
+      return;
+    }
+
+    // Generar tabla
+    const tableBody = alumnosEnRiesgo.map((item, index) => [
+      index + 1,
+      item.nombre,
+      item.detalles
+    ]);
+
+    autoTable(doc, {
+      startY: 40,
+      head: [['#', 'Nombre del Alumno', 'Materias con Calificación <= 6']],
+      body: tableBody,
+      theme: 'grid',
+      headStyles: { fillColor: [231, 76, 60], textColor: 255, halign: 'center' }, // Rojo alerta
+      styles: { fontSize: 10, cellPadding: 3 },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 10 },
+        1: { cellWidth: 60 },
+        2: { cellWidth: 'auto' } // El resto para los detalles
+      }
+    });
+
+    // Pie de página
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setFontSize(8);
+    doc.text("Este reporte incluye calificaciones reprobatorias (5) y mínimas aprobatorias (6).", 14, pageHeight - 10);
+
+    doc.save(`Reporte_Bajo_Rendimiento_${selectedGrupo.nombre.replace(/\s/g, '_')}.pdf`);
+    mostrarNotificacion(`Reporte generado: ${alumnosEnRiesgo.length} alumnos en riesgo.`);
+  };
+
   const generatePdfConsolidado = async () => {
     const doc = new jsPDF({ orientation: 'landscape' });
     doc.setFontSize(18);
@@ -624,6 +704,15 @@ function Calificaciones({ user }) {
                 title="Generar un solo PDF con todas las boletas del grupo"
               >
                 📄 Descargar Todo el Grupo
+              </button>
+
+              <button
+                className="button"
+                onClick={generatePdfBajoRendimiento}
+                style={{ backgroundColor: '#e74c3c', color: 'white' }}
+                title="Generar lista de alumnos con calificaciones <= 6"
+              >
+                ⚠️ Reporte Baja Calif.
               </button>
 
               <button
