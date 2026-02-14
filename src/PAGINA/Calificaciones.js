@@ -491,7 +491,7 @@ function Calificaciones({ user }) {
       if (materiasBajas.length > 0) {
         alumnosEnRiesgo.push({
           nombre: `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`,
-          detalles: materiasBajas.join(', ') // Formato: "Matemáticas (T1: 5), Historia (T2: 6)"
+          detalles: materiasBajas.join('\n') // Formato vertical para mejor legibilidad
         });
       }
     });
