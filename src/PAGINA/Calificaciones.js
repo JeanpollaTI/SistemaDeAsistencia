@@ -79,6 +79,11 @@ function Calificaciones({ user }) {
   const [notificacion, setNotificacion] = useState({ visible: false, mensaje: '', tipo: '' });
   const [isEditing, setIsEditing] = useState(false); // Estado para controlar el modo edición
   const [savedDirectores, setSavedDirectores] = useState([]); // Estado para directores guardados
+  // 🌟 NUEVO ESTADO: Modal para configurar el reporte de bajo rendimiento
+  const [modalBajoRendimiento, setModalBajoRendimiento] = useState({
+    visible: false,
+    seleccion: [true, true, true] // Por defecto todos seleccionados
+  });
 
 
   // --- DnD Sensors ---
@@ -452,7 +457,9 @@ function Calificaciones({ user }) {
   };
 
   // 🌟 NUEVA FUNCIÓN: Generar reporte de bajo rendimiento (Promedios <= 6)
-  const generatePdfBajoRendimiento = async () => {
+  // 🌟 NUEVA FUNCIÓN: Generar reporte de bajo rendimiento (Promedios <= 6)
+  // Acepta bimestresSeleccionados: array de booleans [T1, T2, T3]
+  const generatePdfBajoRendimiento = async (bimestresSeleccionados = [true, true, true]) => {
     if (!alumnos || alumnos.length === 0) {
       mostrarNotificacion("No hay alumnos en el grupo.", "error");
       return;
@@ -462,16 +469,24 @@ function Calificaciones({ user }) {
     const pageWidth = doc.internal.pageSize.width;
 
     // --- ENCABEZADO REPORTE ---
-    doc.setFontSize(16);
+    doc.setFontSize(14); // Un poco más pequeño para el título largo
     doc.setFont(undefined, 'bold');
-    doc.text('Reporte de Bajo Rendimiento Académico', pageWidth / 2, 20, { align: 'center' });
+    // Título actualizado
+    const titulo = "Registro de alumnos en riesgo de no alcanzar los procesos de desarrollo de aprendizaje";
+    const splitTitulo = doc.splitTextToSize(titulo, pageWidth - 40); // Ajustar márgenes
+    doc.text(splitTitulo, pageWidth / 2, 20, { align: 'center' });
+
+    // Ajustar Y basado en líneas del título
+    let currentY = 20 + (splitTitulo.length * 6);
 
     doc.setFontSize(12);
     doc.setFont(undefined, 'normal');
-    doc.text(`Grupo: ${selectedGrupo.nombre}`, 14, 30);
+    doc.text(`Grupo: ${selectedGrupo.nombre}`, 14, currentY + 10);
     // Fecha actual
     const fecha = new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
-    doc.text(`Fecha: ${fecha}`, pageWidth - 14, 30, { align: 'right' });
+    doc.text(`Fecha: ${fecha}`, pageWidth - 14, currentY + 10, { align: 'right' });
+
+    currentY += 20; // Espacio para la tabla
 
     // Filtrar alumnos con al menos una materia <= 6 en cualquier trimestre
     const alumnosEnRiesgo = [];
@@ -480,10 +495,13 @@ function Calificaciones({ user }) {
       const materiasBajas = [];
       materias.forEach(materia => {
         [0, 1, 2].forEach(bim => {
-          const cal = calificaciones[alumno._id]?.[materia]?.[bim];
-          // Solo si existe calificación y es <= 6
-          if (cal !== undefined && cal !== null && cal <= 6) {
-            materiasBajas.push(`${materia} (T${bim + 1}: ${cal})`);
+          // Solo si el bimestre fue seleccionado
+          if (bimestresSeleccionados[bim]) {
+            const cal = calificaciones[alumno._id]?.[materia]?.[bim];
+            // Solo si existe calificación y es <= 6
+            if (cal !== undefined && cal !== null && cal <= 6) {
+              materiasBajas.push(`${materia} (T${bim + 1}: ${cal})`);
+            }
           }
         });
       });
@@ -497,7 +515,7 @@ function Calificaciones({ user }) {
     });
 
     if (alumnosEnRiesgo.length === 0) {
-      mostrarNotificacion("No se encontraron alumnos con calificaciones <= 6.", "info");
+      mostrarNotificacion("No se encontraron alumnos con calificaciones <= 6 en los trimestres seleccionados.", "info");
       return;
     }
 
@@ -509,7 +527,7 @@ function Calificaciones({ user }) {
     ]);
 
     autoTable(doc, {
-      startY: 40,
+      startY: currentY,
       head: [['#', 'Nombre del Alumno', 'Materias en Riesgo o Reprobadas']],
       body: tableBody,
       theme: 'grid',
@@ -527,8 +545,9 @@ function Calificaciones({ user }) {
     doc.setFontSize(8);
     doc.text("Este reporte incluye calificaciones reprobatorias (5) y mínimas aprobatorias (6).", 14, pageHeight - 10);
 
-    doc.save(`Reporte_Bajo_Rendimiento_${selectedGrupo.nombre.replace(/\s/g, '_')}.pdf`);
+    doc.save(`Reporte_Riesgo_${selectedGrupo.nombre.replace(/\s/g, '_')}.pdf`);
     mostrarNotificacion(`Reporte generado: ${alumnosEnRiesgo.length} alumnos en riesgo.`);
+    setModalBajoRendimiento({ ...modalBajoRendimiento, visible: false }); // Cerrar modal al terminar
   };
 
   const generatePdfConsolidado = async () => {
@@ -708,7 +727,7 @@ function Calificaciones({ user }) {
 
               <button
                 className="button"
-                onClick={generatePdfBajoRendimiento}
+                onClick={() => setModalBajoRendimiento({ ...modalBajoRendimiento, visible: true })}
                 style={{ backgroundColor: '#e74c3c', color: 'white' }}
                 title="Generar lista de alumnos con calificaciones <= 6"
               >
@@ -765,6 +784,50 @@ function Calificaciones({ user }) {
                   <div className="modal-actions" style={{ marginTop: '20px' }}>
                     <button type="submit" className="button">Guardar</button>
                     <button type="button" className="button-secondary" onClick={() => setModalDirector(false)}>Cancelar</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* 🌟 MODAL REPORTE BAJO RENDIMIENTO */}
+          {modalBajoRendimiento.visible && (
+            <div className="modal-overlay" onClick={() => setModalBajoRendimiento({ ...modalBajoRendimiento, visible: false })}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+                <h3>Generar Reporte de Riesgo</h3>
+                <p>Selecciona los trimestres a evaluar:</p>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  generatePdfBajoRendimiento(modalBajoRendimiento.seleccion);
+                }}>
+                  <div className="checkbox-group" style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '20px 0' }}>
+                    {[0, 1, 2].map(index => (
+                      <label key={index} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={modalBajoRendimiento.seleccion[index]}
+                          onChange={(e) => {
+                            const newSeleccion = [...modalBajoRendimiento.seleccion];
+                            newSeleccion[index] = e.target.checked;
+                            setModalBajoRendimiento({ ...modalBajoRendimiento, seleccion: newSeleccion });
+                          }}
+                        />
+                        Trimestre {index + 1}
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="modal-actions">
+                    <button type="submit" className="button" style={{ backgroundColor: '#e74c3c', color: 'white' }}>
+                      Generar PDF
+                    </button>
+                    <button
+                      type="button"
+                      className="button-secondary"
+                      onClick={() => setModalBajoRendimiento({ ...modalBajoRendimiento, visible: false })}
+                    >
+                      Cancelar
+                    </button>
                   </div>
                 </form>
               </div>
