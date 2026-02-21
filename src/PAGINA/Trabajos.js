@@ -446,15 +446,15 @@ function Trabajos({ user }) {
                 .grupo-componente .modal-backdrop-solid {
                     position: fixed;
                     top: 0; left: 0;
-                    width: 100%; height: 100%;
+                    width: 100%; height: 100vh;
                     background-color: var(--dark-color);
                     display: flex;
                     justify-content: center;
-                    align-items: flex-start;
+                    align-items: center;
                     z-index: 1000;
-                    padding: 5rem 1rem 2rem 1rem;
+                    padding: 0;
                     box-sizing: border-box;
-                    overflow-y: auto;
+                    overflow: hidden; /* 🌟 FIX: Outer scroll removed */
                 }
 
                 /* ESTILOS EXCLUSIVOS PARA Trabajos.js               */
@@ -684,12 +684,16 @@ function Trabajos({ user }) {
                 .grupo-componente .modal-content.asistencia-modal-content {
                     background-color: var(--dark-color-alt);
                     border-radius: 12px;
-                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-                    padding: 20px;
-                    width: 98%;
-                    max-width: 98%;
+                    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.6);
+                    padding: 0;
+                    width: 98vw;
+                    height: 96vh;
+                    max-width: 98vw;
                     margin: 0;
-                    padding-bottom: 8rem; /* 🌟 FIX: Extra space for Save button on Tablets/Mobile */
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
+                    border: 1px solid #444;
                 }
 
                 .grupo-componente .bimestre-selector {
@@ -1134,19 +1138,19 @@ function Trabajos({ user }) {
                 }
 
                 .grupo-componente .sticky-context {
-                    position: sticky;
-                    top: 0;
+                    position: relative;
                     z-index: 200;
                     background-color: var(--dark-color);
                     padding-bottom: 5px;
                     border-bottom: 2px solid #edb92b;
                     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                    flex-shrink: 0;
                 }
                 .grupo-componente .tabla-global-container {
                     overflow-x: auto;
+                    overflow-y: auto;
                     padding: 0 20px 40px 20px;
-                    max-height: 70vh; /* 🌟 Limit height for vertical scroll */
-                    overflow-y: auto; /* 🌟 Enable vertical scroll */
+                    flex-grow: 1; /* fills remaining height */
                     border-bottom: 1px solid #444;
                     position: relative;
                 }
