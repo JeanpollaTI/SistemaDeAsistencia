@@ -1133,12 +1133,22 @@ function Trabajos({ user }) {
                     box-shadow: 0 0 10px rgba(185, 151, 43, 0.4);
                 }
 
+                .grupo-componente .sticky-context {
+                    position: sticky;
+                    top: 0;
+                    z-index: 200;
+                    background-color: var(--dark-color);
+                    padding-bottom: 5px;
+                    border-bottom: 2px solid #edb92b;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                }
                 .grupo-componente .tabla-global-container {
                     overflow-x: auto;
                     padding: 0 20px 40px 20px;
-                    max-height: 75vh; /* 🌟 FIX: Limit height for vertical scroll */
-                    overflow-y: auto; /* 🌟 FIX: Enable vertical scroll */
+                    max-height: 70vh; /* 🌟 Limit height for vertical scroll */
+                    overflow-y: auto; /* 🌟 Enable vertical scroll */
                     border-bottom: 1px solid #444;
+                    position: relative;
                 }
                 .grupo-componente .tabla-global {
                     width: 100%;
@@ -1255,16 +1265,20 @@ function Trabajos({ user }) {
                     text-decoration: underline;
                 }
                 .grupo-componente .tabla-header-task .task-name {
-                    font-size: 0.7rem;
+                    font-size: 0.8rem;
                     color: var(--main-color);
-                    margin-bottom: 2px;
-                    max-width: 80px;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
+                    margin-top: 4px;
+                    max-width: 100px;
+                    overflow: visible;
+                    white-space: normal;
+                    line-height: 1.1;
+                    text-align: center;
+                    word-wrap: break-word;
+                    font-weight: 500;
                 }
                 .grupo-componente .tabla-header-task .task-num {
-                    font-size: 1rem;
+                    font-size: 0.85rem;
+                    opacity: 0.8;
                 }
              `}</style>
             <div className="trabajos-container grupo-componente">
@@ -1900,76 +1914,78 @@ const PanelCalificaciones = ({
 
             {/* Contenido principal del panel de calificaciones */}
             <div className="asistencia-modal-content">
-                <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 20px' }}>
-                    <h2>Calificaciones: {grupo.nombre} - {asignatura}</h2>
-                    <div>
-                        {/* Botones de Acción Nuevos */}
-                        <div style={{ display: 'inline-flex', gap: '5px', marginRight: '15px', verticalAlign: 'middle' }}>
-                            <button
-                                className="btn"
-                                style={{ padding: '0 12px', height: '35px', backgroundColor: '#95a5a6', color: 'white', opacity: history.past.length === 0 ? 0.5 : 1, cursor: history.past.length === 0 ? 'not-allowed' : 'pointer' }}
-                                onClick={handleUndo}
-                                disabled={history.past.length === 0}
-                                title="Deshacer (Ctrl+Z)"
-                            >
-                                <FaArrowLeft />
-                            </button>
-                            <button
-                                className="btn"
-                                style={{ padding: '0 12px', height: '35px', backgroundColor: '#95a5a6', color: 'white', opacity: history.future.length === 0 ? 0.5 : 1, cursor: history.future.length === 0 ? 'not-allowed' : 'pointer' }}
-                                onClick={handleRedo}
-                                disabled={history.future.length === 0}
-                                title="Rehacer"
-                            >
-                                <FaArrowRight />
-                            </button>
-                        </div>
-                        <button className="btn" onClick={generateSubjectReport} style={{ marginRight: '10px', backgroundColor: '#2980b9', borderColor: '#2980b9', color: 'white' }}>
-                            📄 Reporte PDF
-                        </button>
-                        <button className="btn" onClick={handleLimpiarCalificaciones} style={{ marginRight: '10px', backgroundColor: '#c0392b', borderColor: '#c0392b', color: 'white' }}>
-                            🗑️ Limpiar Calificaciones
-                        </button>
-
-
-                        {/* Botón para abrir el modal de criterios */}
-                        <button className="btn" onClick={() => setModalCriterios(true)}>Criterios</button>
-                        <button className="btn btn-cancel" onClick={onVolver} style={{ marginLeft: '10px' }}>Cerrar</button>
-                    </div>
-                </header>
-
-                {/* 🌟 ZOOM CONTROLS */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingRight: '20px', marginBottom: '10px', gap: '10px' }}>
-                    <button className="btn btn-secondary" onClick={handleZoomOut} style={{ padding: '5px 10px' }}>🔍 -</button>
-                    <span style={{ alignSelf: 'center', color: '#ccc' }}>{Math.round(zoomLevel * 100)}%</span>
-                    <button className="btn btn-secondary" onClick={handleZoomIn} style={{ padding: '5px 10px' }}>🔍 +</button>
-                </div>
-                <div className="bimestre-selector">
-                    {[1, 2, 3].map(bim => (
-                        <button key={bim} className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} onClick={() => { setBimestreActivo(bim); setCriterioSeleccionadoGlobal(null); }}>Trimestre {bim}</button>
-                    ))}
-                </div>
-
-                {/* 🌟 SELECTOR DE CRITERIOS (TABS) */}
-                {criteriosActivos.length > 0 && (
-                    <div className="tabs-criterios">
-                        <div
-                            className={`tab-criterio ${criterioSeleccionadoGlobal === null ? 'activo' : ''}`}
-                            onClick={() => setCriterioSeleccionadoGlobal(null)}
-                        >
-                            📋 Vista General
-                        </div>
-                        {criteriosActivos.map(crit => (
-                            <div
-                                key={crit.nombre}
-                                className={`tab-criterio ${criterioSeleccionadoGlobal === crit.nombre ? 'activo' : ''}`}
-                                onClick={() => setCriterioSeleccionadoGlobal(crit.nombre)}
-                            >
-                                {crit.nombre} ({crit.porcentaje}%)
+                <div className="sticky-context">
+                    <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '10px 20px' }}>
+                        <h2>Calificaciones: {grupo.nombre} - {asignatura}</h2>
+                        <div>
+                            {/* Botones de Acción Nuevos */}
+                            <div style={{ display: 'inline-flex', gap: '5px', marginRight: '15px', verticalAlign: 'middle' }}>
+                                <button
+                                    className="btn"
+                                    style={{ padding: '0 12px', height: '35px', backgroundColor: '#95a5a6', color: 'white', opacity: history.past.length === 0 ? 0.5 : 1, cursor: history.past.length === 0 ? 'not-allowed' : 'pointer' }}
+                                    onClick={handleUndo}
+                                    disabled={history.past.length === 0}
+                                    title="Deshacer (Ctrl+Z)"
+                                >
+                                    <FaArrowLeft />
+                                </button>
+                                <button
+                                    className="btn"
+                                    style={{ padding: '0 12px', height: '35px', backgroundColor: '#95a5a6', color: 'white', opacity: history.future.length === 0 ? 0.5 : 1, cursor: history.future.length === 0 ? 'not-allowed' : 'pointer' }}
+                                    onClick={handleRedo}
+                                    disabled={history.future.length === 0}
+                                    title="Rehacer"
+                                >
+                                    <FaArrowRight />
+                                </button>
                             </div>
+                            <button className="btn" onClick={generateSubjectReport} style={{ marginRight: '10px', backgroundColor: '#2980b9', borderColor: '#2980b9', color: 'white' }}>
+                                📄 Reporte PDF
+                            </button>
+                            <button className="btn" onClick={handleLimpiarCalificaciones} style={{ marginRight: '10px', backgroundColor: '#c0392b', borderColor: '#c0392b', color: 'white' }}>
+                                🗑️ Limpiar Calificaciones
+                            </button>
+
+
+                            {/* Botón para abrir el modal de criterios */}
+                            <button className="btn" onClick={() => setModalCriterios(true)}>Criterios</button>
+                            <button className="btn btn-cancel" onClick={onVolver} style={{ marginLeft: '10px' }}>Cerrar</button>
+                        </div>
+                    </header>
+
+                    {/* 🌟 ZOOM CONTROLS */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', paddingRight: '20px', marginBottom: '10px', gap: '10px' }}>
+                        <button className="btn btn-secondary" onClick={handleZoomOut} style={{ padding: '5px 10px' }}>🔍 -</button>
+                        <span style={{ alignSelf: 'center', color: '#ccc' }}>{Math.round(zoomLevel * 100)}%</span>
+                        <button className="btn btn-secondary" onClick={handleZoomIn} style={{ padding: '5px 10px' }}>🔍 +</button>
+                    </div>
+                    <div className="bimestre-selector">
+                        {[1, 2, 3].map(bim => (
+                            <button key={bim} className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} onClick={() => { setBimestreActivo(bim); setCriterioSeleccionadoGlobal(null); }}>Trimestre {bim}</button>
                         ))}
                     </div>
-                )}
+
+                    {/* 🌟 SELECTOR DE CRITERIOS (TABS) */}
+                    {criteriosActivos.length > 0 && (
+                        <div className="tabs-criterios" style={{ marginBottom: 0 }}>
+                            <div
+                                className={`tab-criterio ${criterioSeleccionadoGlobal === null ? 'activo' : ''}`}
+                                onClick={() => setCriterioSeleccionadoGlobal(null)}
+                            >
+                                📋 Vista General
+                            </div>
+                            {criteriosActivos.map(crit => (
+                                <div
+                                    key={crit.nombre}
+                                    className={`tab-criterio ${criterioSeleccionadoGlobal === crit.nombre ? 'activo' : ''}`}
+                                    onClick={() => setCriterioSeleccionadoGlobal(crit.nombre)}
+                                >
+                                    {crit.nombre} ({crit.porcentaje}%)
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
                 {criteriosActivos.length > 0 ? (
                     <>
@@ -2004,11 +2020,9 @@ const PanelCalificaciones = ({
                                                                 nombreActual: nombreTarea
                                                             })}
                                                         >
-                                                            {/* 🌟 CAMBIO: Si tiene nombre, mostrar SOLO el nombre con fuente más grande. Si no, T + numero */}
-                                                            {nombreTarea ? (
-                                                                <span className="task-name" style={{ fontSize: '0.85rem', whiteSpace: 'normal', lineHeight: '1.2' }}>{nombreTarea}</span>
-                                                            ) : (
-                                                                <span className="task-num">T{tareaIndex + 1}</span>
+                                                            <span className="task-num">T{tareaIndex + 1}</span>
+                                                            {nombreTarea && (
+                                                                <span className="task-name">{nombreTarea}</span>
                                                             )}
                                                         </div>
                                                     </th>
