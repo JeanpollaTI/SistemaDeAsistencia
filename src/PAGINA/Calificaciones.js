@@ -201,6 +201,15 @@ function Calificaciones({ user }) {
     }
   };
 
+  // 🌟 Nueva función de redondeo según reglas del usuario
+  const redondearCalificacion = (val) => {
+    if (typeof val !== 'number' || val <= 0) return 0;
+    // Excepción: 5.0 a 5.9 se queda en 5
+    if (val >= 5 && val < 6) return 5;
+    // Redondeo estándar para el resto (>=6), .5 sube
+    return Math.max(5, Math.round(val));
+  };
+
   // Helper para "suelo" de calificación en 5
   // Si es null o 0 (sin calificar), se queda igual.
   // Si está entre 0.1 y 4.9, sube a 5.
@@ -225,7 +234,7 @@ function Calificaciones({ user }) {
         count++;
       }
     });
-    return count > 0 ? Math.round(suma / count) : 0;
+    return count > 0 ? redondearCalificacion(suma / count) : 0;
   };
 
   const calcularPromedioFinal = (alumnoId) => {
@@ -239,7 +248,7 @@ function Calificaciones({ user }) {
         bimestresConCalificacion++;
       }
     }
-    return bimestresConCalificacion > 0 ? Math.round(sumaDePromedios / bimestresConCalificacion) : 0;
+    return bimestresConCalificacion > 0 ? redondearCalificacion(sumaDePromedios / bimestresConCalificacion) : 0;
   };
 
 
@@ -305,8 +314,8 @@ function Calificaciones({ user }) {
       const row = [materia];
       cals.forEach((cal, index) => {
         if (bimestresSeleccionados[index]) {
-          const clampedCal = clampGrade(cal);
-          row.push(clampedCal !== null ? clampedCal.toFixed(1) : '-');
+          const clampedCal = redondearCalificacion(cal);
+          row.push(clampedCal > 0 ? clampedCal.toFixed(1) : '-');
         }
       });
       return row;
@@ -497,10 +506,11 @@ function Calificaciones({ user }) {
         [0, 1, 2].forEach(bim => {
           // Solo si el bimestre fue seleccionado
           if (bimestresSeleccionados[bim]) {
-            const cal = calificaciones[alumno._id]?.[materia]?.[bim];
+            const rawCal = calificaciones[alumno._id]?.[materia]?.[bim];
+            const roundedCal = redondearCalificacion(rawCal);
             // Solo si existe calificación y es <= 6
-            if (cal !== undefined && cal !== null && cal <= 6) {
-              materiasBajas.push(`${materia} (T${bim + 1}: ${cal})`);
+            if (rawCal !== undefined && rawCal !== null && roundedCal <= 6) {
+              materiasBajas.push(`${materia} (T${bim + 1}: ${roundedCal})`);
             }
           }
         });
@@ -568,8 +578,9 @@ function Calificaciones({ user }) {
       const row = [`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`];
       materias.forEach(materia => {
         [0, 1, 2].forEach(bim => {
-          const cal = calificaciones[alumno._id]?.[materia]?.[bim];
-          row.push(cal != null ? cal.toFixed(1) : '-');
+          const rawCal = calificaciones[alumno._id]?.[materia]?.[bim];
+          const roundedCal = redondearCalificacion(rawCal);
+          row.push(rawCal != null ? roundedCal : '-');
         });
       });
       [0, 1, 2].forEach(bim => {
@@ -577,7 +588,7 @@ function Calificaciones({ user }) {
         row.push(prom > 0 ? prom.toFixed(1) : '-');
       });
       const promFinal = calcularPromedioFinal(alumno._id);
-      row.push(promFinal > 0 ? promFinal.toFixed(2) : '-');
+      row.push(promFinal > 0 ? promFinal : '-');
       return row;
     });
 
@@ -887,7 +898,7 @@ function Calificaciones({ user }) {
                               const cal = clampGrade(rawCal);
                               return (
                                 <td key={`${materia}-b${bimestreIndex}`} className={typeof cal === 'number' ? (cal < 6 ? 'reprobado' : 'aprobado') : ''}>
-                                  {cal != null ? cal.toFixed(1) : '-'}
+                                  {cal != null ? redondearCalificacion(cal).toFixed(1) : '-'}
                                 </td>
                               )
                             })}

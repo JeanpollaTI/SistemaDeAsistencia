@@ -1729,6 +1729,15 @@ const PanelCalificaciones = ({
         return total / notasValidas.length;
     };
 
+    // 🌟 Nueva función de redondeo según reglas del usuario
+    const redondearCalificacion = (val) => {
+        if (typeof val !== 'number' || val <= 0) return 0;
+        // Excepción: 5.0 a 5.9 se queda en 5
+        if (val >= 5 && val < 6) return 5;
+        // Redondeo estándar para el resto (>=6), .5 sube
+        return Math.max(5, Math.round(val));
+    };
+
     const calcularPromedioBimestre = (alumnoId, bimestre) => {
         const criteriosDelBimestre = criteriosPorBimestre[bimestre] || [];
         if (criteriosDelBimestre.length === 0) return 0;
@@ -1761,8 +1770,8 @@ const PanelCalificaciones = ({
 
         // "La calificación mínima sea 5, no menos"
         // Si hay promedio (es decir, hubo calificaciones), el mínimo es 5.
-        const promedioRedondeado = Math.round(promedioFinal); // Redondeo estándar
-        return Math.max(5, promedioRedondeado); // Restaurada la restricción de mínimo 5
+        const promedioRedondeado = redondearCalificacion(promedioFinal);
+        return promedioRedondeado;
     };
 
     const formatFechaTooltip = (fechaISO) => {
@@ -1828,7 +1837,7 @@ const PanelCalificaciones = ({
             if (p1 > 0) { suma += parseFloat(p1); count++; }
             if (p2 > 0) { suma += parseFloat(p2); count++; }
             if (p3 > 0) { suma += parseFloat(p3); count++; }
-            const final = count > 0 ? Math.round(suma / count) : 0;
+            const final = count > 0 ? redondearCalificacion(suma / count) : 0;
 
             return [
                 nombreCompleto,
