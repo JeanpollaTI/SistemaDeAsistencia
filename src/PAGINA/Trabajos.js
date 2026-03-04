@@ -2140,8 +2140,8 @@ const PanelCalificaciones = ({
                                                     </td>
                                                 ))}
                                                 {/* Promedio del Alumno para este criterio */}
-                                                <td style={{ fontWeight: 'bold', color: calcularPromedioCriterio(alumno._id, bimestreActivo, criterioSeleccionadoGlobal) >= 6 ? 'var(--success-color)' : 'var(--danger-color)' }}>
-                                                    {calcularPromedioCriterio(alumno._id, bimestreActivo, criterioSeleccionadoGlobal).toFixed(1)}
+                                                <td style={{ fontWeight: 'bold', color: redondearCalificacion(calcularPromedioCriterio(alumno._id, bimestreActivo, criterioSeleccionadoGlobal)) >= 6 ? 'var(--success-color)' : 'var(--danger-color)' }}>
+                                                    {redondearCalificacion(calcularPromedioCriterio(alumno._id, bimestreActivo, criterioSeleccionadoGlobal))}
                                                 </td>
                                                 <td></td>
                                             </tr>
