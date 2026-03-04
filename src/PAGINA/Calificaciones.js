@@ -201,13 +201,17 @@ function Calificaciones({ user }) {
     }
   };
 
-  // 🌟 Nueva función de redondeo según reglas del usuario
+  // 🌟 Nueva función de redondeo según reglas del usuario (Refinada para precisión)
   const redondearCalificacion = (val) => {
     if (typeof val !== 'number' || val <= 0) return 0;
-    // Excepción: 5.0 a 5.9 se queda en 5
-    if (val >= 5 && val < 6) return 5;
-    // Redondeo estándar para el resto (>=6), .5 sube
-    return Math.max(5, Math.round(val));
+    // Paso 1: Redondear a una decimal primero (ej. 9.499 -> 9.5)
+    const valUnaDecimal = Math.round(val * 10) / 10;
+
+    // Paso 2: Excepción: 5.0 a 5.9 se queda en 5
+    if (valUnaDecimal >= 5 && valUnaDecimal < 6) return 5;
+
+    // Paso 3: Redondeo estándar para el resto (>=6), .5 sube
+    return Math.max(5, Math.round(valUnaDecimal));
   };
 
   // Helper para "suelo" de calificación en 5
