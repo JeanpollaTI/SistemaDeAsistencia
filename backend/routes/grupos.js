@@ -34,7 +34,12 @@ router.post("/", authMiddleware, isAdmin, async (req, res) => {
 
         await nuevoGrupo.save();
 
-        res.status(201).json(nuevoGrupo);
+        const grupoParaEnviar = await Grupo.findById(nuevoGrupo._id).populate({
+            path: 'profesoresAsignados.profesor',
+            select: 'nombre email foto'
+        });
+
+        res.status(201).json(grupoParaEnviar);
     } catch (err) {
         console.error("Error en [POST /grupos]:", err);
         res.status(500).json({ error: "Error en el servidor al crear el grupo." });

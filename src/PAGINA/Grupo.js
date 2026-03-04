@@ -94,9 +94,10 @@ function Grupo({ user }) {
       const asignacionesIniciales = {};
       // Agrupar asignaturas por profesor
       data.profesoresAsignados.forEach(asig => {
-        const pId = asig.profesor?.id || asig.profesor?._id;
-        if (pId) {
-          const profId = String(pId);
+        // CORRECCIÓN: Manejar tanto objetos poblados como IDs directos
+        const assignedId = asig.profesor?.id || asig.profesor?._id || asig.profesor;
+        if (assignedId) {
+          const profId = String(assignedId);
           if (!asignacionesIniciales[profId]) {
             asignacionesIniciales[profId] = [];
           }
@@ -686,7 +687,6 @@ function Grupo({ user }) {
                       {grupo.profesoresAsignados && grupo.profesoresAsignados.length > 0
                         ? <ul className="asignacion-lista">
                           {[...grupo.profesoresAsignados]
-                            .filter(asig => materiasDb.length === 0 || materiasDb.some(m => m.nombre === asig.asignatura)) // Filtrar si hay DB
                             .sort((a, b) => a.asignatura.localeCompare(b.asignatura))
                             .map((asig, index) => (
                               <li key={index}>
