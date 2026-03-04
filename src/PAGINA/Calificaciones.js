@@ -84,6 +84,7 @@ function Calificaciones({ user }) {
     visible: false,
     seleccion: [true, true, true] // Por defecto todos seleccionados
   });
+  const [activeTab, setActiveTab] = useState('detalle'); // 'detalle' o 'sabana'
 
 
   // --- DnD Sensors ---
@@ -566,17 +567,36 @@ function Calificaciones({ user }) {
 
   const generatePdfConsolidado = async () => {
     const doc = new jsPDF({ orientation: 'landscape' });
-    doc.setFontSize(18);
-    doc.text(`Reporte de Calificaciones del Grupo: ${selectedGrupo.nombre}`, 14, 20);
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const margin = 14;
+
+    // Logo
+    const img = new Image();
+    img.src = logoImage;
+    await img.decode().catch(() => { });
+
+    const logoWidth = 25;
+    const logoHeight = (img.height * logoWidth) / img.width;
+    doc.addImage(logoImage, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, margin + 5);
+    doc.setFontSize(12);
+    doc.text(`Sábana de Calificaciones - Grupo: ${selectedGrupo.nombre}`, margin, margin + 12);
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(10);
+    doc.text(`Asesor: ${selectedGrupo.asesor || 'N/A'}`, margin, margin + 18);
 
     const head = [
-      [{ content: 'Nombre del Alumno', rowSpan: 2 }],
-      ...materias.map(materia => [{ content: materia, colSpan: 3 }]),
-      [{ content: 'PROMEDIO TRIMESTRAL', colSpan: 3 }],
-      [{ content: 'FINAL', rowSpan: 2 }]
+      [{ content: 'Nombre del Alumno', rowSpan: 2, styles: { fillColor: [142, 68, 173] } }],
+      ...materias.map(materia => ({ content: materia, colSpan: 3, styles: { fillColor: [142, 68, 173], fontSize: 7 } })),
+      { content: 'PROMEDIO TRIMESTRAL', colSpan: 3, styles: { fillColor: [142, 68, 173] } },
+      { content: 'FINAL', rowSpan: 2, styles: { fillColor: [41, 128, 185] } }
     ];
     const subhead = [...materias.flatMap(() => ['T1', 'T2', 'T3']), 'T1', 'T2', 'T3'];
-    head.push(subhead);
+    head.push(subhead.map(text => ({ content: text, styles: { fillColor: [155, 89, 182], fontSize: 7 } })));
 
     const body = alumnos.map(alumno => {
       const row = [`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`];
@@ -597,12 +617,55 @@ function Calificaciones({ user }) {
     });
 
     autoTable(doc, {
-      startY: 30, head: head, body: body, theme: 'grid',
-      headStyles: { fillColor: [41, 128, 185], textColor: 255, halign: 'center' },
-      styles: { fontSize: 8, halign: 'center' },
-      columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } }
+      startY: margin + 25,
+      head: head,
+      body: body,
+      theme: 'grid',
+      headStyles: { textColor: 255, halign: 'center', valign: 'middle' },
+      styles: { fontSize: 7, halign: 'center', cellPadding: 1.5 },
+      columnStyles: { 0: { halign: 'left', fontStyle: 'bold', cellWidth: 50 } },
+      didParseCell: (data) => {
+        if (data.section === 'body' && data.column.index > 0) {
+          const val = parseFloat(data.cell.raw);
+          if (!isNaN(val) && val < 6) {
+            data.cell.styles.textColor = [231, 76, 60];
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
+      }
     });
 
+    // Signatures
+    let finalY = doc.lastAutoTable.finalY + 20;
+    if (finalY > pageHeight - 40) {
+      doc.addPage();
+      finalY = 30;
+    }
+
+    const colWidth = (pageWidth - margin * 3) / 2;
+    doc.setFontSize(9);
+
+    // Director
+    doc.text("Nombre y firma del director (a)", margin, finalY);
+    const directorName = localStorage.getItem('current_director_name') || '';
+    if (directorName) {
+      doc.setFont(undefined, 'bold');
+      doc.text(directorName.toUpperCase(), margin, finalY + 10);
+      doc.setFont(undefined, 'normal');
+    }
+    doc.line(margin, finalY + 11, margin + colWidth - 20, finalY + 11);
+
+    // Asesor
+    doc.text("Nombre y firma del asesor (a)", margin + colWidth + 10, finalY);
+    if (selectedGrupo.asesor) {
+      doc.setFont(undefined, 'bold');
+      doc.text(selectedGrupo.asesor.toUpperCase(), margin + colWidth + 10, finalY + 10);
+      doc.setFont(undefined, 'normal');
+    }
+    doc.line(margin + colWidth + 10, finalY + 11, margin + colWidth * 2 + 10 - 20, finalY + 11);
+
+    doc.save(`Sabana_Calificaciones_Grupo_${selectedGrupo.nombre.replace(/\s/g, '_')}.pdf`);
+    mostrarNotificacion("Sábana de calificaciones generada correctamente.");
   };
 
   const handleSendPdf = async (platform, recipient, alumno) => {
@@ -730,14 +793,24 @@ function Calificaciones({ user }) {
           <div className="calificaciones-header">
             <h1 className="calificaciones-title">Calificaciones del Grupo {selectedGrupo.nombre}</h1>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px' }}>
+              {activeTab === 'sabana' && (
+                <button
+                  className="button"
+                  onClick={generatePdfConsolidado}
+                  style={{ backgroundColor: '#8e44ad', color: 'white' }}
+                  title="Descargar Sábana en PDF"
+                >
+                  📊 Descargar Sábana PDF
+                </button>
+              )}
 
               <button
                 className="button"
                 onClick={generatePdfGrupal}
-                style={{ backgroundColor: '#8e44ad', color: 'white' }}
+                style={{ backgroundColor: '#2980b9', color: 'white' }}
                 title="Generar un solo PDF con todas las boletas del grupo"
               >
-                📄 Descargar Todo el Grupo
+                📄 Descargar Todas las Boletas
               </button>
 
               <button
@@ -746,17 +819,35 @@ function Calificaciones({ user }) {
                 style={{ backgroundColor: '#e74c3c', color: 'white' }}
                 title="Generar lista de alumnos con calificaciones <= 6"
               >
-                ⚠️ Reporte Baja Calif.
+                ⚠️ Reporte Riesgo
               </button>
 
-              <button
-                className="button"
-                onClick={() => setIsEditing(!isEditing)}
-                style={{ backgroundColor: isEditing ? '#27ae60' : '#f39c12' }}
-              >
-                {isEditing ? 'Terminar Edición' : 'Modificar Tabla'}
-              </button>
+              {activeTab === 'detalle' && (
+                <button
+                  className="button"
+                  onClick={() => setIsEditing(!isEditing)}
+                  style={{ backgroundColor: isEditing ? '#27ae60' : '#f39c12' }}
+                >
+                  {isEditing ? 'Terminar Edición' : 'Modificar Tabla'}
+                </button>
+              )}
             </div>
+          </div>
+
+          {/* Selector de Pestañas */}
+          <div className="tabs-navigation">
+            <button
+              className={`tab-button ${activeTab === 'detalle' ? 'active' : ''}`}
+              onClick={() => setActiveTab('detalle')}
+            >
+              Tabla de Detalle
+            </button>
+            <button
+              className={`tab-button ${activeTab === 'sabana' ? 'active tab-sabana' : 'tab-sabana-inactive'}`}
+              onClick={() => setActiveTab('sabana')}
+            >
+              Sábana de Calificaciones (Vista Compacta)
+            </button>
           </div>
 
           {modalDirector && (
@@ -854,7 +945,7 @@ function Calificaciones({ user }) {
 
           {loading ? (
             <div className="loading-spinner">Cargando calificaciones...</div>
-          ) : (
+          ) : activeTab === 'detalle' ? (
             <div className="table-wrapper">
               <table className="calificaciones-table">
                 <thead>
@@ -929,7 +1020,66 @@ function Calificaciones({ user }) {
                 </tbody>
               </table>
             </div>
-          )
+          ) : (
+            <div className="table-wrapper sabana-wrapper">
+              <table className="sabana-table">
+                <thead>
+                  <tr className="sabana-head-main">
+                    <th rowSpan="2" className="sabana-num">#</th>
+                    <th rowSpan="2" className="sabana-nombre">Nombre del Alumno</th>
+                    {materias.map(materia => (
+                      <th key={materia} colSpan="3" className="sabana-materia-header">{materia}</th>
+                    ))}
+                    <th colSpan="3" className="sabana-promedio-gral-header">PROM. TRIM</th>
+                    <th rowSpan="2" className="sabana-final-header">FINAL</th>
+                  </tr>
+                  <tr className="sabana-head-sub">
+                    {materias.map(materia => (
+                      <React.Fragment key={`${materia}-sub`}>
+                        <th>T1</th><th>T2</th><th>T3</th>
+                      </React.Fragment>
+                    ))}
+                    <th>T1</th><th>T2</th><th>T3</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {alumnos.map((alumno, idx) => {
+                    const promFinal = calcularPromedioFinal(alumno._id);
+                    return (
+                      <tr key={alumno._id}>
+                        <td className="sabana-num-cell">{idx + 1}</td>
+                        <td className="sabana-nombre-cell">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</td>
+                        {materias.map(materia => (
+                          <React.Fragment key={`${alumno._id}-${materia}`}>
+                            {[0, 1, 2].map(bim => {
+                              const rawCal = calificaciones[alumno._id]?.[materia]?.[bim];
+                              const cal = redondearCalificacion(rawCal);
+                              return (
+                                <td key={bim} className={cal > 0 ? (cal < 6 ? 'reprobado-sabana' : 'aprobado-sabana') : ''}>
+                                  {cal > 0 ? cal : '-'}
+                                </td>
+                              );
+                            })}
+                          </React.Fragment>
+                        ))}
+                        {[0, 1, 2].map(bim => {
+                          const prom = calcularPromedioBimestre(alumno._id, bim);
+                          return (
+                            <td key={`prom-${bim}`} className="sabana-prom-cell">
+                              {prom > 0 ? prom.toFixed(1) : '-'}
+                            </td>
+                          );
+                        })}
+                        <td className="sabana-final-cell">
+                          {promFinal > 0 ? promFinal.toFixed(1) : '-'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
           }
         </>
       )}
