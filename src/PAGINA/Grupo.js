@@ -75,17 +75,32 @@ function Grupo({ user }) {
             axios.get(`${API_URL}/profesores`, axiosConfig),
             axios.get(`${API_URL}/api/materias`, axiosConfig)
           ]);
-          const sortedGrupos = gruposRes.data.sort((a, b) =>
+
+          // Verificar si el middleware devolvió SCHOOL_REQUIRED
+          if (gruposRes.data?.error === "SCHOOL_REQUIRED") {
+            setError("SCHOOL_REQUIRED");
+            setLoading(false);
+            return;
+          }
+
+          const sortedGrupos = Array.isArray(gruposRes.data) ? gruposRes.data.sort((a, b) =>
             a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
-          );
+          ) : [];
           setGrupos(sortedGrupos);
-          setProfesores(profesoresRes.data);
+          setProfesores(profesoresRes.data || []);
           setMateriasDb(materiasRes.data || []);
         } else if (user.role === 'profesor') {
           const gruposRes = await axios.get(`${API_URL}/grupos/mis-grupos`, axiosConfig);
-          const sortedGrupos = gruposRes.data.sort((a, b) =>
+
+          if (gruposRes.data?.error === "SCHOOL_REQUIRED") {
+            setError("SCHOOL_REQUIRED");
+            setLoading(false);
+            return;
+          }
+
+          const sortedGrupos = Array.isArray(gruposRes.data) ? gruposRes.data.sort((a, b) =>
             a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
-          );
+          ) : [];
           setGrupos(sortedGrupos);
         }
       } catch (err) {
@@ -667,7 +682,23 @@ function Grupo({ user }) {
     </div>
   );
 
-  if (error) return <div className="grupo-componente"><p className="error-message">{error}</p></div>;
+  if (error) {
+    if (error === "SCHOOL_REQUIRED") {
+      return (
+        <div className="grupo-componente" style={{ padding: '50px', textAlign: 'center' }}>
+          <div className="card shadow p-5" style={{ maxWidth: '600px', margin: 'auto' }}>
+            <h2 className="text-warning">Configuración Requerida</h2>
+            <p>Para acceder a la gestión de grupos, primero debes inicializar tu institución.</p>
+            <p className="small text-muted">Ve a la sección de <strong>Calificaciones</strong> y usa el botón de reparación.</p>
+            <button className="btn btn-primary" onClick={() => window.location.href = '/calificaciones'}>
+              Ir a Calificaciones
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return <div className="grupo-componente"><p className="error-message">{error}</p></div>;
+  }
   if (!user) return <div className="grupo-componente"><p className="error-message">No se puede mostrar la información.</p></div>;
 
   return (

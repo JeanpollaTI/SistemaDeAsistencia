@@ -133,9 +133,15 @@ function Calificaciones({ user }) {
     try {
       setLoading(true);
       const res = await axios.get(`${API_URL}/grupos?populate=alumnos,profesoresAsignados`, getAxiosConfig());
-      const sortedGrupos = res.data.sort((a, b) =>
+
+      if (res.data?.error === "SCHOOL_REQUIRED") {
+        setError("REPAIR_REQUIRED");
+        return;
+      }
+
+      const sortedGrupos = Array.isArray(res.data) ? res.data.sort((a, b) =>
         a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
-      );
+      ) : [];
       setGrupos(sortedGrupos);
     } catch (err) {
       console.error("Error al cargar grupos:", err);
@@ -161,6 +167,10 @@ function Calificaciones({ user }) {
       }
 
       const res = await axios.get(`${API_URL}/schools/${schoolId}`, getAxiosConfig());
+      if (res.data?.error === "SCHOOL_REQUIRED" || res.data?.error === "SCHOOL_NOT_FOUND") {
+        setError("REPAIR_REQUIRED");
+        return;
+      }
       setSchoolConfig(res.data);
     } catch (err) {
       console.error("Error loading school config:", err);

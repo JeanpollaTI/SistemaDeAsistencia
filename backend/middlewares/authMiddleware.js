@@ -20,14 +20,7 @@ export const authMiddleware = async (req, res, next) => {
 
     // Inyectamos el school_id. Prioridad: token > database
     // Si el token es viejo (no tiene school_id), lo tomamos del documento del usuario.
-    const school_id = decoded.school_id || user.school_id;
-
-    if (!school_id) {
-      return res.status(401).json({
-        error: "Sesión incompleta",
-        msg: "No se ha asignado una institución a su cuenta. Por favor, contacte soporte."
-      });
-    }
+    const school_id = decoded.school_id || user.school_id || null;
 
     req.user = user;
     req.user.school_id = school_id;

@@ -2,17 +2,23 @@ import School from "../models/School.js";
 
 export const schoolMiddleware = async (req, res, next) => {
     try {
-        // El id de la escuela ya debería venir en el objeto req.user (inyectado por authMiddleware/verifyToken)
+        // El id de la escuela ya debería venir en el objeto req.user
         if (!req.user || !req.user.school_id) {
-            return res.status(401).json({ error: "Sesión inválida: No se ha identificado la escuela." });
+            return res.status(200).json({
+                error: "SCHOOL_REQUIRED",
+                msg: "No se ha identificado la escuela. Por favor, realice la migración inicial."
+            });
         }
 
         const schoolId = req.user.school_id;
 
-        // Verificar si la escuela existe y su suscripción está activa
+        // Verificar si la escuela existe
         const school = await School.findById(schoolId);
         if (!school) {
-            return res.status(404).json({ error: "Escuela no encontrada." });
+            return res.status(200).json({
+                error: "SCHOOL_NOT_FOUND",
+                msg: "La institución asignada no existe en el sistema."
+            });
         }
 
         if (school.subscription.status === "suspended") {
