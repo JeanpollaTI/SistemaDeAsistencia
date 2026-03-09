@@ -16,6 +16,8 @@ import Horario from "./PAGINA/Horario";
 import Grupo from "./PAGINA/Grupo";
 import Trabajos from "./PAGINA/Trabajos";
 import Calificaciones from "./PAGINA/Calificaciones";
+import LandingPage from "./PAGINA/LandingPage";
+import { FaGraduationCap } from 'react-icons/fa';
 
 // Estilos y logo (Asegúrate de que Home.css esté en PAGINA/ y logo.png en src/)
 import "./PAGINA/Home.css";
@@ -69,7 +71,25 @@ function App() {
 
     // Función para renderizar el menú de navegación dinámicamente según el rol
     const renderMenu = () => {
-        const baseSections = [{ id: "home", label: "INICIO" }];
+        if (!user) {
+            // Menú público (Scholaris)
+            return (
+                <div className="nav-menu-right">
+                    <ul className="nav-list">
+                        <li><button className="nav-button nav-link-button" onClick={(e) => handleNavClick(e, "home")}>INICIO</button></li>
+                        <li><button className="nav-button nav-link-button" onClick={(e) => handleNavClick(e, "precios")}>PRECIOS</button></li>
+                        <li><button className="nav-button nav-link-button" onClick={(e) => handleNavClick(e, "gestion")}>GESTIÓN</button></li>
+                        <li>
+                            <button className="nav-button nav-link-button login-btn-box" onClick={() => navigate("/login")}>
+                                INICIAR SESIÓN
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            );
+        }
+
+        const baseSections = [{ id: "home", label: "DASHBOARD" }];
         let roleSections = [];
 
         if (user?.role === "profesor") {
@@ -112,32 +132,16 @@ function App() {
                         </li>
                     )}
 
-                    {/* Mostrar INICIAR SESIÓN o Imagen de Perfil/Logout */}
-                    {!user ? (
-                        <li>
-                            <button className="nav-button nav-link-button" onClick={() => navigate("/login")}>
-                                INICIAR SESIÓN
-                            </button>
-                        </li>
-                    ) : (
-                        <>
-                            {/* Imagen de perfil que navega a /perfil */}
-                            <li className="nav-profile">
-                                <img
-                                    // Usamos getProfileImageUrl de AuthContext que debe manejar la URL de Cloudinary/servidor
-                                    src={getProfileImageUrl(user.foto)}
-                                    alt="Perfil"
-                                    className="profile-img-small"
-                                    onClick={() => navigate("/perfil")}
-                                    style={{ cursor: "pointer" }}
-                                />
-                            </li>
-
-                            <li>
-
-                            </li>
-                        </>
-                    )}
+                    {/* Imagen de Perfil/Logout */}
+                    <li className="nav-profile">
+                        <img
+                            src={getProfileImageUrl(user.foto)}
+                            alt="Perfil"
+                            className="profile-img-small"
+                            onClick={() => navigate("/perfil")}
+                            style={{ cursor: "pointer" }}
+                        />
+                    </li>
                 </ul>
             </div>
         );
@@ -148,9 +152,10 @@ function App() {
             {/* Header y Navigación */}
             <header className="header" id="header">
                 <nav className="nav container">
-                    {/* Logo que navega al inicio */}
-                    <a href="#home" className="nav-logo" onClick={(e) => handleNavClick(e, "home")}>
-                        <img src={logo} alt="logo" className="nav-logo-img" style={{ height: "120px" }} />
+                    {/* Logo SCHOLARIS */}
+                    <a href="#home" className="nav-logo" onClick={(e) => handleNavClick(e, "home")} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e40af', fontWeight: 'bold', fontSize: '1.5rem', textDecoration: 'none' }}>
+                        <FaGraduationCap style={{ color: '#f59e0b', fontSize: '2rem' }} />
+                        <span style={{ letterSpacing: '1px' }}>SCHOLARIS</span>
                     </a>
                     <div className="nav-menu" id="nav-menu">
                         {renderMenu()}
@@ -162,7 +167,7 @@ function App() {
             <main>
                 <Routes>
                     {/* Rutas Públicas */}
-                    <Route path="/" element={<Home user={user} />} />
+                    <Route path="/" element={user ? <Home user={user} /> : <LandingPage />} />
                     {/* Si el usuario está logueado, redirige a Home */}
                     <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
                     <Route path="/forgot-password" element={user ? <Navigate to="/" /> : <Password />} />

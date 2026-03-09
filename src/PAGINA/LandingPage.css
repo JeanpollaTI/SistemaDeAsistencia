@@ -1,0 +1,174 @@
+:root {
+    --scholaris-primary: #1e40af;
+    /* Deep Blue */
+    --scholaris-secondary: #3b82f6;
+    /* Lighter Blue */
+    --scholaris-accent: #f59e0b;
+    /* Yellow/Gold for graduation cap */
+    --scholaris-text: #1f2937;
+    --scholaris-bg: #ffffff;
+    --scholaris-gray: #f3f4f6;
+}
+
+.landing-container {
+    font-family: 'Inter', 'Outfit', sans-serif;
+    color: var(--scholaris-text);
+    background-color: var(--scholaris-bg);
+    min-height: 100vh;
+    padding-top: 80px;
+    /* Space for the header */
+}
+
+/* Header/Nav is handled by App.js but LandingPage has specific hero styles */
+
+.hero-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 80px 20px;
+    display: flex;
+    align-items: center;
+    gap: 50px;
+    justify-content: space-between;
+}
+
+.hero-content {
+    flex: 1;
+}
+
+.hero-content h1 {
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--scholaris-primary);
+    margin-bottom: 20px;
+    text-transform: uppercase;
+}
+
+.hero-content p {
+    font-size: 1.25rem;
+    color: #4b5563;
+    margin-bottom: 40px;
+    max-width: 600px;
+    line-height: 1.6;
+}
+
+.hero-visual {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hero-visual img {
+    width: 100%;
+    max-width: 500px;
+    filter: drop-shadow(0 20px 30px rgba(30, 64, 175, 0.1));
+}
+
+.cta-group {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.cta-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 30px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 400px;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.cta-button.primary {
+    background-color: var(--scholaris-primary);
+    color: white;
+    box-shadow: 0 10px 15px -3px rgba(30, 64, 175, 0.3);
+}
+
+.cta-button.primary:hover {
+    background-color: #1e3a8a;
+    transform: translateY(-2px);
+}
+
+.cta-button.secondary {
+    background-color: white;
+    color: var(--scholaris-primary);
+    border-color: var(--scholaris-primary);
+}
+
+.cta-button.secondary:hover {
+    background-color: var(--scholaris-gray);
+    transform: translateY(-2px);
+}
+
+.cta-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cta-arrow {
+    opacity: 0.7;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 992px) {
+    .hero-section {
+        flex-direction: column-reverse;
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .hero-content h1 {
+        font-size: 2.5rem;
+    }
+
+    .hero-content p {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .cta-button {
+        margin: 0 auto;
+    }
+}
+
+/* Additional sections based on the sketch */
+.features-section {
+    background-color: var(--scholaris-gray);
+    padding: 80px 20px;
+    text-align: center;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    max-width: 1200px;
+    margin: 40px auto 0;
+}
+
+.feature-card {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
