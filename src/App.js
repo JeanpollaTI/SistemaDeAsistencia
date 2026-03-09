@@ -77,7 +77,6 @@ function App() {
                 <div className="nav-menu-right">
                     <ul className="nav-list">
                         <li><button className="nav-button nav-link-button" onClick={(e) => handleNavClick(e, "home")}>INICIO</button></li>
-                        <li><button className="nav-button nav-link-button" onClick={(e) => handleNavClick(e, "precios")}>PRECIOS</button></li>
                         <li><button className="nav-button nav-link-button" onClick={(e) => handleNavClick(e, "gestion")}>GESTIÓN</button></li>
                         <li>
                             <button className="nav-button nav-link-button login-btn-box" onClick={() => navigate("/login")}>
@@ -153,8 +152,8 @@ function App() {
             <header className="header" id="header">
                 <nav className="nav container">
                     {/* Logo SCHOLARIS */}
-                    <a href="#home" className="nav-logo" onClick={(e) => handleNavClick(e, "home")} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e40af', fontWeight: 'bold', fontSize: '1.5rem', textDecoration: 'none' }}>
-                        <FaGraduationCap style={{ color: '#f59e0b', fontSize: '2rem' }} />
+                    <a href="#home" className="nav-logo" onClick={(e) => handleNavClick(e, "home")} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#007A7A', fontWeight: 'bold', fontSize: '1.5rem', textDecoration: 'none' }}>
+                        <FaGraduationCap style={{ color: '#ffffff', fontSize: '2rem' }} />
                         <span style={{ letterSpacing: '1px' }}>SCHOLARIS</span>
                     </a>
                     <div className="nav-menu" id="nav-menu">

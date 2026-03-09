@@ -18,7 +18,7 @@ const LandingPage = () => {
                         con padres de familia en una sola plataforma segura y en tiempo real.
                     </p>
 
-                    <div className="cta-group" style={{ margin: '0 auto' }}>
+                    <div className="cta-group" style={{ margin: '0 auto', alignItems: 'center' }}>
                         <button className="cta-button primary" onClick={() => navigate('/login')}>
                             <span className="cta-label">
                                 <FaSchool /> Registrar mi escuela
@@ -64,10 +64,10 @@ const LandingPage = () => {
             {/* Footer */}
             <footer style={{ padding: '40px 20px', background: '#111827', color: 'white', textAlign: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '1.5rem', marginBottom: '20px' }}>
-                    <FaGraduationCap style={{ color: '#f59e0b' }} />
-                    <strong>SCHOLARIS</strong>
+                    <FaGraduationCap style={{ color: '#ffffff' }} />
+                    <strong style={{ color: '#007A7A' }}>SCHOLARIS</strong>
                 </div>
-                <p style={{ opacity: 0.6 }}>© 2026 Scholaris MERN Platform. Todos los derechos reservados.</p>
+                <p style={{ opacity: 0.6 }}>© 2026 Scholaris. Todos los derechos reservados.</p>
             </footer>
         </div>
     );
