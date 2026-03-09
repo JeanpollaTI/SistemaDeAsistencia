@@ -84,7 +84,12 @@ router.post('/emergency-migrate', async (req, res) => {
 
         for (const Model of models) {
             const result = await Model.updateMany(
-                { school_id: { $exists: false } },
+                {
+                    $or: [
+                        { school_id: { $exists: false } },
+                        { school_id: null }
+                    ]
+                },
                 { $set: { school_id: schoolId } }
             );
             results[Model.modelName] = result.modifiedCount;
