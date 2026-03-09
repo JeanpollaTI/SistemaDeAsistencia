@@ -196,11 +196,14 @@ router.put("/admin/change-user-password", verifyAdmin, async (req, res) => {
 // GET: Obtener perfil propio
 router.get("/mi-perfil", verifyToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user.id).select("-password").populate('school_id');
     if (!user) {
       return res.status(404).json({ msg: "Usuario no encontrado" });
     }
-    res.json(user);
+    const userObj = user.toObject();
+    userObj.school_name = user.school_id?.name || "";
+    userObj.school_id = user.school_id?._id || user.school_id;
+    res.json(userObj);
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Error al obtener el perfil", error: err.message });
