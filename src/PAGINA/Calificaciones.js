@@ -160,39 +160,19 @@ function Calificaciones({ user }) {
 
       if (!schoolId) {
         console.warn("User has no school_id assigned.");
-        // Guardamos si es admin para mostrar el botón de reparación
-        const isAdmin = resProfile.data.role === 'admin';
-        setError(isAdmin ? "REPAIR_REQUIRED" : "Su cuenta no tiene una escuela asignada. Por favor, contacte al administrador.");
+        setError("Su cuenta no tiene una escuela asignada. Por favor, contacte al administrador.");
         return;
       }
 
       const res = await axios.get(`${API_URL}/schools/${schoolId}`, getAxiosConfig());
-      if (res.data?.error === "SCHOOL_REQUIRED" || res.data?.error === "SCHOOL_NOT_FOUND") {
-        setError("REPAIR_REQUIRED");
-        return;
-      }
       setSchoolConfig(res.data);
     } catch (err) {
       console.error("Error loading school config:", err);
     }
   };
 
-  const runEmergencyMigration = async () => {
-    try {
-      setLoading(true);
-      // Pedimos el secreto al usuario (JWT_SECRET) para esta operación sensible
-      const secret = prompt("Por seguridad, ingresa el JWT_SECRET de tu servidor para autorizar la migración:");
-      if (!secret) return;
+  // --- REPAIR TOOL REMOVED ---
 
-      const res = await axios.post(`${API_URL}/schools/emergency-migrate`, { secret });
-      mostrarNotificacion(`Éxito: Se migraron ${JSON.stringify(res.data.results)} registros.`, 'exito');
-      setTimeout(() => window.location.reload(), 2000);
-    } catch (err) {
-      mostrarNotificacion("Error en la migración: " + (err.response?.data?.msg || err.message), 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     fetchGrupos();
