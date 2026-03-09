@@ -185,7 +185,7 @@ button {
 }
 
 .nav-link-button:hover {
-    color: var(--scholaris-black, #000000);
+    color: var(--white-color, #ffffff);
 }
 
 .profile-img-small {
