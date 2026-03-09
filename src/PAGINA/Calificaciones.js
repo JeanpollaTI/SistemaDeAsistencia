@@ -129,6 +129,22 @@ function Calificaciones({ user }) {
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
   });
 
+  const fetchGrupos = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${API_URL}/grupos?populate=alumnos,profesoresAsignados`, getAxiosConfig());
+      const sortedGrupos = res.data.sort((a, b) =>
+        a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
+      );
+      setGrupos(sortedGrupos);
+    } catch (err) {
+      console.error("Error al cargar grupos:", err);
+      setError("No se pudieron cargar los grupos. Intenta de nuevo más tarde.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchSchoolConfig = async () => {
     try {
       const token = localStorage.getItem('token');
