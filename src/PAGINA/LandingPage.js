@@ -14,8 +14,8 @@ const LandingPage = () => {
                 <div className="hero-content">
                     <h1>Gestión Escolar Inteligente</h1>
                     <p>
-                        La plataforma MERN para controlar asistencias, calificaciones
-                        y mantener una comunicación fluida con los padres de familia.
+                        Controla asistencias, calificaciones y mantén una comunicación fluida
+                        con padres de familia en una sola plataforma segura y en tiempo real.
                     </p>
 
                     <div className="cta-group">

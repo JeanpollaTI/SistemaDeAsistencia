@@ -7,17 +7,21 @@
 :root {
     --header-height: 3.5rem;
 
-    /* Tema Principal Oscuro */
-    --dark-color: #191D28;
-    --dark-color-alt: #1E222D;
-    --title-color: #FFFFFF;
-    --text-color: #E9E9E9;
-    --body-font: 'Poppins', sans-serif;
-    --logo-font: 'Turret Road', sans-serif;
+    /* Tema Principal (Scholaris Light/Professional) */
+    --dark-color: #ffffff;
+    --dark-color-alt: #f8fafc;
+    --title-color: #000000;
+    --text-color: #333333;
+    --body-font: 'Inter', 'Poppins', sans-serif;
+    --logo-font: 'Outfit', 'Turret Road', sans-serif;
 
-    /* Acentos y Colores Específicos */
-    --gold-color: #d4af37;
-    --primary-color: #4a90e2;
+    /* Acentos y Colores Específicos (Scholaris Palette) */
+    --gold-color: #007A7A;
+    /* Replaced with Teal */
+    --primary-color: #007A7A;
+    /* Teal */
+    --secondary-blue: #B8E2F2;
+    /* Light Blue */
     --danger-color: #e74c3c;
     --success-color: #28a745;
     /* Añadido */
@@ -171,9 +175,9 @@ button {
 .nav-link-button {
     background: none;
     border: none;
-    color: var(--white-color);
+    color: var(--scholaris-teal, #007A7A);
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 600;
     padding: 0.3rem 0;
     transition: color 0.3s;
     text-transform: uppercase;
@@ -181,7 +185,7 @@ button {
 }
 
 .nav-link-button:hover {
-    color: var(--gold-color);
+    color: var(--scholaris-black, #000000);
 }
 
 .profile-img-small {

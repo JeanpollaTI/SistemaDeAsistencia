@@ -1,13 +1,16 @@
 :root {
-    --scholaris-primary: #1e40af;
-    /* Deep Blue */
-    --scholaris-secondary: #3b82f6;
-    /* Lighter Blue */
-    --scholaris-accent: #f59e0b;
-    /* Yellow/Gold for graduation cap */
-    --scholaris-text: #1f2937;
-    --scholaris-bg: #ffffff;
-    --scholaris-gray: #f3f4f6;
+    --scholaris-teal: #007A7A;
+    --scholaris-light-blue: #B8E2F2;
+    --scholaris-black: #000000;
+    --scholaris-gray: #C0C0C0;
+    --scholaris-white: #ffffff;
+
+    /* Semantic Aliases */
+    --scholaris-primary: var(--scholaris-teal);
+    --scholaris-secondary: var(--scholaris-light-blue);
+    --scholaris-accent: var(--scholaris-teal);
+    --scholaris-text: var(--scholaris-black);
+    --scholaris-bg: var(--scholaris-white);
 }
 
 .landing-container {
@@ -16,10 +19,7 @@
     background-color: var(--scholaris-bg);
     min-height: 100vh;
     padding-top: 80px;
-    /* Space for the header */
 }
-
-/* Header/Nav is handled by App.js but LandingPage has specific hero styles */
 
 .hero-section {
     max-width: 1200px;
@@ -46,14 +46,15 @@
 
 .hero-content p {
     font-size: 1.25rem;
-    color: #4b5563;
+    color: var(--scholaris-black);
     margin-bottom: 40px;
     max-width: 600px;
     line-height: 1.6;
+    opacity: 0.8;
 }
 
 .hero-visual {
-    flex: 1;
+    flex: 1.2;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -61,8 +62,8 @@
 
 .hero-visual img {
     width: 100%;
-    max-width: 500px;
-    filter: drop-shadow(0 20px 30px rgba(30, 64, 175, 0.1));
+    max-width: 700px;
+    filter: drop-shadow(0 10px 20px rgba(0, 122, 122, 0.15));
 }
 
 .cta-group {
@@ -77,24 +78,26 @@
     justify-content: space-between;
     padding: 18px 30px;
     font-size: 1.1rem;
-    font-weight: 600;
-    border-radius: 12px;
+    font-weight: 700;
+    border-radius: 8px;
     text-decoration: none;
     transition: all 0.3s ease;
     width: 100%;
     max-width: 400px;
     cursor: pointer;
     border: 2px solid transparent;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .cta-button.primary {
     background-color: var(--scholaris-primary);
     color: white;
-    box-shadow: 0 10px 15px -3px rgba(30, 64, 175, 0.3);
+    box-shadow: 0 4px 14px rgba(0, 122, 122, 0.4);
 }
 
 .cta-button.primary:hover {
-    background-color: #1e3a8a;
+    background-color: #005a5a;
     transform: translateY(-2px);
 }
 
@@ -105,14 +108,14 @@
 }
 
 .cta-button.secondary:hover {
-    background-color: var(--scholaris-gray);
+    background-color: var(--scholaris-light-blue);
     transform: translateY(-2px);
 }
 
 .cta-label {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .cta-arrow {
@@ -141,9 +144,8 @@
     }
 }
 
-/* Additional sections based on the sketch */
 .features-section {
-    background-color: var(--scholaris-gray);
+    background-color: var(--scholaris-light-blue);
     padding: 80px 20px;
     text-align: center;
 }
@@ -158,10 +160,11 @@
 
 .feature-card {
     background: white;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    padding: 40px 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     transition: transform 0.3s ease;
+    border-bottom: 4px solid var(--scholaris-primary);
 }
 
 .feature-card:hover {
@@ -169,6 +172,11 @@
 }
 
 .feature-icon {
-    font-size: 2.5rem;
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.feature-card h3 {
+    color: var(--scholaris-primary);
     margin-bottom: 15px;
 }
