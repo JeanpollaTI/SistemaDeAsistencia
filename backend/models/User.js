@@ -43,9 +43,24 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["admin", "profesor"],
+      enum: ["admin", "profesor", "padre"],
       default: "profesor",
     },
+    school_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "School",
+      required: true,
+      index: true,
+    },
+    // Solo para el rol 'padre'
+    student_ids: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User", // En este sistema, los alumnos no son modelos separados por ahora, pero el requerimiento pide vincularlos. 
+        // Nota: El diseño actual tiene alumnos dentro de Grupo.js. 
+        // Si el usuario confirma, podríamos necesitar un modelo Student o usar IDs de alumnos dentro de grupos.
+      },
+    ],
     password: {
       type: String,
       required: [true, "La contraseña es obligatoria"],

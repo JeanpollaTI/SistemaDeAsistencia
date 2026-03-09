@@ -18,8 +18,9 @@ export const authMiddleware = async (req, res, next) => {
     const user = await User.findById(decoded.id);
     if (!user) return res.status(401).json({ error: "Usuario no encontrado" });
 
-    // Garantizamos que _id siempre exista
+    // Garantizamos que _id siempre exista y guardamos el school_id para aislamiento
     req.user = user;
+    req.user.school_id = decoded.school_id; // Inyectamos desde el token para rapidez
 
     next();
   } catch (err) {

@@ -2,6 +2,7 @@ import express from "express";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import { authMiddleware, isAdmin } from "../middlewares/authMiddleware.js";
+import { schoolMiddleware } from "../middlewares/schoolMiddleware.js";
 import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import { v2 as cloudinary } from "cloudinary";
@@ -45,7 +46,7 @@ const getCloudinaryPublicId = (url) => {
 // ---------------------------------------------------------------
 
 // POST: Registrar un nuevo profesor (admin)
-router.post("/registrar-profesor", authMiddleware, isAdmin, upload.single("foto"), async (req, res) => {
+router.post("/registrar-profesor", authMiddleware, isAdmin, schoolMiddleware, upload.single("foto"), async (req, res) => {
   try {
     // 1. Obtener datos del cuerpo de la solicitud
     const { nombre, email, password, edad, sexo, celular } = req.body;
@@ -56,6 +57,8 @@ router.post("/registrar-profesor", authMiddleware, isAdmin, upload.single("foto"
     }
 
     // 3. Revisar si ya existe un usuario con ese email o celular
+    // 3. Revisar si ya existe un usuario con ese email o celular (en cualquier escuela por seguridad de unicidad global de email/cel)
+    // Pero la búsqueda para ver si existe debería ser global, pero el registro lleva school_id
     const existingUser = await User.findOne({ $or: [{ email }, { celular }] });
     if (existingUser) {
       return res.status(400).json({ msg: "El email o el celular ya están registrados." });
@@ -64,6 +67,8 @@ router.post("/registrar-profesor", authMiddleware, isAdmin, upload.single("foto"
     // 4. Encriptar la contraseña antes de guardarla
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
+
+    const school_id = req.user.school_id;
 
     // 5. Crear el nuevo usuario
     const newUser = new User({
@@ -74,7 +79,8 @@ router.post("/registrar-profesor", authMiddleware, isAdmin, upload.single("foto"
       sexo,
       celular,
       role: 'profesor', // Rol fijo para esta ruta
-      foto: req.file ? req.file.path : undefined // Asigna la URL de Cloudinary o usa el default del modelo
+      foto: req.file ? req.file.path : undefined,
+      school_id
     });
 
     // 6. Guardar el usuario en la base de datos
@@ -114,9 +120,10 @@ router.get("/mi-perfil", authMiddleware, async (req, res) => {
 // ----------------- RUTAS EXISTENTES -----------------
 
 // GET: Todos los profesores (admin)
-router.get("/profesores", authMiddleware, isAdmin, async (req, res) => {
+router.get("/profesores", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
   try {
-    const profesores = await User.find({ role: "profesor" }).select(
+    const school_id = req.user.school_id;
+    const profesores = await User.find({ role: "profesor", school_id }).select(
       "nombre email celular edad sexo foto asignaturas createdAt"
     );
 
@@ -133,12 +140,13 @@ router.get("/profesores", authMiddleware, isAdmin, async (req, res) => {
 });
 
 // PUT: Actualizar asignaturas de un profesor (admin)
-router.put("/profesores/:id/asignaturas", authMiddleware, isAdmin, async (req, res) => {
+router.put("/profesores/:id/asignaturas", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { asignaturas } = req.body;
+    const school_id = req.user.school_id;
 
-    const profesor = await User.findById(id);
+    const profesor = await User.findOne({ _id: id, school_id, role: "profesor" });
     if (!profesor) return res.status(404).json({ msg: "Profesor no encontrado" });
 
     profesor.asignaturas = asignaturas || [];
@@ -152,10 +160,11 @@ router.put("/profesores/:id/asignaturas", authMiddleware, isAdmin, async (req, r
 });
 
 // DELETE: Eliminar profesor (admin)
-router.delete("/profesores/:id", authMiddleware, isAdmin, async (req, res) => {
+router.delete("/profesores/:id", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const profesor = await User.findById(id);
+    const school_id = req.user.school_id;
+    const profesor = await User.findOne({ _id: id, school_id, role: "profesor" });
     if (!profesor) return res.status(404).json({ msg: "Profesor no encontrado" });
 
     // LÓGICA CLOUDINARY: Borrar la foto de la nube

@@ -3,14 +3,16 @@ import Materia from "../models/Materia.js";
 import User from "../models/User.js";
 import Grupo from "../models/Grupo.js"; // Importar modelo Grupo para actualizaciones en cascada
 import { authMiddleware, isAdmin } from "../middlewares/authMiddleware.js";
+import { schoolMiddleware } from "../middlewares/schoolMiddleware.js";
 
 const materiasRouter = express.Router();
 
 // GET all materias
-materiasRouter.get("/", authMiddleware, async (req, res) => {
+materiasRouter.get("/", authMiddleware, schoolMiddleware, async (req, res) => {
     try {
-        // Si no hay materias, poblamos con las de por defecto
-        const count = await Materia.countDocuments();
+        const school_id = req.user.school_id;
+        // Si no hay materias para ESTA escuela, poblamos con las de por defecto
+        const count = await Materia.countDocuments({ school_id });
         if (count === 0) {
             const defaultMaterias = [
                 "ESPAÑOL I", "ESPAÑOL II", "ESPAÑOL III", "INGLES I", "INGLES II", "INGLES III", "ARTES I", "ARTES II", "ARTES III",
@@ -21,10 +23,10 @@ materiasRouter.get("/", authMiddleware, async (req, res) => {
                 "TUTORIA I", "TUTORIA II", "TUTORIA III"
             ];
             // Insertamos ignorando duplicados (aunque está vacío)
-            await Materia.insertMany(defaultMaterias.map(nombre => ({ nombre })));
+            await Materia.insertMany(defaultMaterias.map(nombre => ({ nombre, school_id })));
         }
 
-        const materias = await Materia.find().sort({ nombre: 1 });
+        const materias = await Materia.find({ school_id }).sort({ nombre: 1 });
         res.json(materias);
     } catch (error) {
         console.error(error);
@@ -33,12 +35,13 @@ materiasRouter.get("/", authMiddleware, async (req, res) => {
 });
 
 // POST new materia (admin only)
-materiasRouter.post("/", authMiddleware, isAdmin, async (req, res) => {
+materiasRouter.post("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
     try {
         const { nombre } = req.body;
+        const school_id = req.user.school_id;
         if (!nombre) return res.status(400).json({ error: "Nombre es requerido" });
 
-        const nuevaMateria = new Materia({ nombre });
+        const nuevaMateria = new Materia({ nombre, school_id });
         await nuevaMateria.save();
         res.status(201).json(nuevaMateria);
     } catch (error) {
@@ -50,14 +53,15 @@ materiasRouter.post("/", authMiddleware, isAdmin, async (req, res) => {
 });
 
 // PUT update materia (admin only) - CASCADING UPDATE
-materiasRouter.put("/:id", authMiddleware, isAdmin, async (req, res) => {
+materiasRouter.put("/:id", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const { nombre } = req.body; // Nuevo nombre
+        const school_id = req.user.school_id;
 
         if (!nombre) return res.status(400).json({ error: "Nombre es requerido" });
 
-        const materia = await Materia.findById(id);
+        const materia = await Materia.findOne({ _id: id, school_id });
         if (!materia) return res.status(404).json({ error: "Materia no encontrada" });
 
         const oldName = materia.nombre;
@@ -68,18 +72,18 @@ materiasRouter.put("/:id", authMiddleware, isAdmin, async (req, res) => {
 
         // Actualizar el nombre en todos los usuarios (profesores) que tengan esta materia asignada
         await User.updateMany(
-            { asignaturas: oldName },
+            { asignaturas: oldName, school_id },
             { $set: { "asignaturas.$": nombre } }
         );
 
         // Actualizar el nombre en GRUPOS (profesoresAsignados)
         await Grupo.updateMany(
-            { "profesoresAsignados.asignatura": oldName },
+            { "profesoresAsignados.asignatura": oldName, school_id },
             { $set: { "profesoresAsignados.$.asignatura": nombre } }
         );
         // Actualizar el nombre en GRUPOS (ordenMaterias)
         await Grupo.updateMany(
-            { ordenMaterias: oldName },
+            { ordenMaterias: oldName, school_id },
             { $set: { "ordenMaterias.$": nombre } }
         );
 
@@ -94,32 +98,33 @@ materiasRouter.put("/:id", authMiddleware, isAdmin, async (req, res) => {
 });
 
 // DELETE materia (admin only) - CASCADING DELETE
-materiasRouter.delete("/:id", authMiddleware, isAdmin, async (req, res) => {
+materiasRouter.delete("/:id", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
+        const school_id = req.user.school_id;
 
-        const materia = await Materia.findById(id);
+        const materia = await Materia.findOne({ _id: id, school_id });
         if (!materia) return res.status(404).json({ error: "Materia no encontrada" });
 
         const materiaName = materia.nombre;
 
         // Eliminamos la materia de la colección principal
-        await Materia.findByIdAndDelete(id);
+        await Materia.findOneAndDelete({ _id: id, school_id });
 
         // Eliminamos la materia de los arrays 'asignaturas' de todos los profesores
         await User.updateMany(
-            { asignaturas: materiaName },
+            { asignaturas: materiaName, school_id },
             { $pull: { asignaturas: materiaName } }
         );
 
         // Eliminamos la materia de las asignaciones de todos los GRUPOS y del ordenMaterias
         await Grupo.updateMany(
-            { "profesoresAsignados.asignatura": materiaName },
+            { "profesoresAsignados.asignatura": materiaName, school_id },
             { $pull: { profesoresAsignados: { asignatura: materiaName } } }
         );
         // También quitamos del ordenMaterias si existe
         await Grupo.updateMany(
-            { ordenMaterias: materiaName },
+            { ordenMaterias: materiaName, school_id },
             { $pull: { ordenMaterias: materiaName } }
         );
 

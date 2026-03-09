@@ -3,19 +3,21 @@ import mongoose from "mongoose";
 import Grupo from "../models/Grupo.js";
 import Calificacion from "../models/Calificacion.js";
 import { authMiddleware, isAdmin } from "../middlewares/authMiddleware.js";
+import { schoolMiddleware } from "../middlewares/schoolMiddleware.js";
 
 const router = express.Router();
 
 // [POST] /grupos - Crear un nuevo grupo (Admin)
-router.post("/", authMiddleware, isAdmin, async (req, res) => {
+router.post("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
     try {
         const { nombre, alumnos } = req.body;
+        const school_id = req.user.school_id;
         if (!nombre) {
             return res.status(400).json({ error: "El nombre del grupo es obligatorio." });
         }
-        const grupoExistente = await Grupo.findOne({ nombre });
+        const grupoExistente = await Grupo.findOne({ nombre, school_id });
         if (grupoExistente) {
-            return res.status(400).json({ error: "Ya existe un grupo con ese nombre." });
+            return res.status(400).json({ error: "Ya existe un grupo con ese nombre en esta escuela." });
         }
 
         const alumnosProcesados = (alumnos || []).map(alumno => {
@@ -29,7 +31,8 @@ router.post("/", authMiddleware, isAdmin, async (req, res) => {
         const nuevoGrupo = new Grupo({
             nombre,
             asesor: req.body.asesor || '',
-            alumnos: alumnosProcesados
+            alumnos: alumnosProcesados,
+            school_id
         });
 
         await nuevoGrupo.save();
@@ -47,9 +50,10 @@ router.post("/", authMiddleware, isAdmin, async (req, res) => {
 });
 
 // [GET] /grupos - Obtener todos los grupos (Admin)
-router.get("/", authMiddleware, isAdmin, async (req, res) => {
+router.get("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
     try {
-        const grupos = await Grupo.find().populate({
+        const school_id = req.user.school_id;
+        const grupos = await Grupo.find({ school_id }).populate({
             path: 'profesoresAsignados.profesor',
             select: 'nombre email foto'
         });
@@ -143,18 +147,19 @@ router.put("/:id", authMiddleware, isAdmin, async (req, res) => {
 });
 
 // [DELETE] /grupos/:id - Eliminar un grupo (Admin)
-router.delete("/:id", authMiddleware, isAdmin, async (req, res) => {
+router.delete("/:id", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
     try {
+        const school_id = req.user.school_id;
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
             return res.status(400).json({ error: "ID de grupo no válido." });
         }
 
-        const grupo = await Grupo.findByIdAndDelete(req.params.id);
+        const grupo = await Grupo.findOneAndDelete({ _id: req.params.id, school_id });
         if (!grupo) {
-            return res.status(404).json({ error: "Grupo no encontrado." });
+            return res.status(404).json({ error: "Grupo no encontrado o no pertenece a su escuela." });
         }
         // Opcional: Eliminar calificaciones asociadas
-        await Calificacion.deleteMany({ grupo: req.params.id });
+        await Calificacion.deleteMany({ grupo: req.params.id, school_id });
         res.json({ msg: "Grupo y calificaciones asociadas eliminados correctamente." });
     } catch (err) {
         console.error("Error en [DELETE /grupos/:id]:", err);

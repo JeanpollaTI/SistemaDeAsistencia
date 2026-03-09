@@ -22,9 +22,18 @@ const HorarioSchema = new mongoose.Schema(
       type: String,
       default: null, // URL de la imagen del horario (Almacena la URL de Cloudinary)
     },
+    school_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'School',
+      required: true,
+      index: true,
+    },
   },
   { timestamps: true } // createdAt y updatedAt automáticos
 );
+
+// ÍNDICE COMPUESTO: Un horario por año por escuela
+HorarioSchema.index({ anio: 1, school_id: 1 }, { unique: true });
 
 // 🔹 Virtual opcional: fecha de creación legible
 HorarioSchema.virtual("fechaCreacionLegible").get(function () {

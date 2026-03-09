@@ -27,6 +27,12 @@ const CalificacionSchema = new mongoose.Schema({
   numTareas: {
     type: mongoose.Schema.Types.Mixed,
     default: {}
+  },
+  school_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'School',
+    required: true,
+    index: true,
   }
 }, {
   timestamps: true

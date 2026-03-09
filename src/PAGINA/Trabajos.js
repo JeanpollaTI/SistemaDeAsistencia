@@ -1331,6 +1331,7 @@ const PanelCalificaciones = ({
     const [isSaving, setIsSaving] = useState(false);
     const [criterioAbierto, setCriterioAbierto] = useState(null);
     const [numTareas, setNumTareas] = useState({});
+    const [schoolConfig, setSchoolConfig] = useState(null);
     // 🌟 ESTADO AGREGADO: Para controlar cuándo y qué tarea necesita un nombre.
     const [tareaPorNombrar, setTareaPorNombrar] = useState(null);
     // 🌟 ESTADO AGREGADO: Para el modal de confirmación personalizado
@@ -1413,6 +1414,23 @@ const PanelCalificaciones = ({
         }
     }, [grupo._id, asignatura, calificaciones, setCriteriosPorBimestre, setModalCriterios, setNotificacion]);
 
+    const getPeriodCount = () => {
+        if (!schoolConfig) return 3;
+        switch (schoolConfig.evaluationPeriod) {
+            case 'Bimestre': return 5;
+            case 'Trimestre':
+            case 'Cuatrimestre': return 3;
+            case 'Semestre': return 2;
+            default: return 3;
+        }
+    };
+
+    const getPeriodLabel = (index) => {
+        const type = schoolConfig?.evaluationPeriod || 'Trimestre';
+        const label = type === 'Bimestre' ? 'Bim' : (type === 'Semestre' ? 'Sem' : 'Trim');
+        return `${label} ${index + 1}`;
+    };
+
 
     useEffect(() => {
         const fetchGrupos = async () => {
@@ -1459,6 +1477,10 @@ const PanelCalificaciones = ({
                 }, {});
 
                 setNumTareas(initialNumTareas);
+
+                // Fetch School Config
+                const schoolRes = await axios.get(`${API_URL}/schools/${user.school_id}`, config);
+                setSchoolConfig(schoolRes.data);
 
                 // Abrir el modal de criterios si el bimestre 1 no tiene ninguno.
                 // if (fetchedCriterios[1]?.length === 0) {
@@ -1978,9 +2000,22 @@ const PanelCalificaciones = ({
                         <button className="btn btn-secondary" onClick={handleZoomIn} style={{ padding: '5px 10px' }}>🔍 +</button>
                     </div>
                     <div className="bimestre-selector">
-                        {[1, 2, 3].map(bim => (
-                            <button key={bim} className={`btn ${bimestreActivo === bim ? 'btn-primary' : ''}`} onClick={() => { setBimestreActivo(bim); setCriterioSeleccionadoGlobal(null); }}>Trimestre {bim}</button>
-                        ))}
+                        {(() => {
+                            const buttons = [];
+                            const count = getPeriodCount();
+                            for (let i = 1; i <= count; i++) {
+                                buttons.push(
+                                    <button
+                                        key={i}
+                                        className={`btn ${bimestreActivo === i ? 'btn-primary' : ''}`}
+                                        onClick={() => { setBimestreActivo(i); setCriterioSeleccionadoGlobal(null); }}
+                                    >
+                                        {getPeriodLabel(i - 1)}
+                                    </button>
+                                );
+                            }
+                            return buttons;
+                        })()}
                     </div>
 
                     {/* 🌟 SELECTOR DE CRITERIOS (TABS) */}

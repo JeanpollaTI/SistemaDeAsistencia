@@ -37,14 +37,19 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ----------------- RUTAS DE LA API -----------------
+import { schoolMiddleware } from "./middlewares/schoolMiddleware.js";
+
 app.use("/auth", authRouter);
-app.use("/horario", horarioRouter);
+app.use("/horario", horarioRouter); // Los filtros ya se agregaron en las rutas, pero podríamos ponerlo aquí si todas requieren suscripción activa
 app.use("/profesores", profesoresRouter);
 app.use("/grupos", gruposRouter);
 app.use("/asistencia", asistenciaRouter);
 app.use("/calificaciones", calificacionesRouter);
+// <-- AÑADIDO: Rutas de Escuelas -->
+import schoolRoutes from "./routes/schools.js";
+app.use("/schools", schoolRoutes);
 // <-- AÑADIDO: Usar la nueva ruta para el envío de boletas -->
-app.use("/api", emailRouter);
+app.use("/api", schoolMiddleware, emailRouter);
 app.use("/api/materias", materiasRouter);
 
 // ----------------- MANEJO DE ERRORES -----------------

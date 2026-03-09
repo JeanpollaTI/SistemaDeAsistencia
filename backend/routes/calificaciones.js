@@ -2,6 +2,7 @@ import express from 'express';
 // ✅ CORRECCIÓN FINAL: Usamos importación por defecto, ya que models/Calificacion.js usa 'export default'.
 import Calificacion from '../models/Calificacion.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
+import { schoolMiddleware } from '../middlewares/schoolMiddleware.js';
 
 const router = express.Router();
 
@@ -10,9 +11,10 @@ const router = express.Router();
  * @desc    Obtiene los criterios y calificaciones para una materia específica de un grupo (Vista Profesor).
  * @access  Private (Profesores)
  */
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, schoolMiddleware, async (req, res) => {
   try {
     const { grupoId, asignatura } = req.query;
+    const school_id = req.user.school_id;
     if (!grupoId || !asignatura) {
       return res.status(400).json({ msg: 'Se requieren los parámetros grupoId y asignatura' });
     }
@@ -20,7 +22,8 @@ router.get('/', authMiddleware, async (req, res) => {
     // Busca el documento de calificación que coincida con el grupo Y la asignatura
     const registroDeCalificaciones = await Calificacion.findOne({
       grupo: grupoId,
-      asignatura: asignatura
+      asignatura: asignatura,
+      school_id
     });
 
     if (!registroDeCalificaciones) {
@@ -44,8 +47,9 @@ router.get('/', authMiddleware, async (req, res) => {
  * @desc    Guarda o actualiza los criterios y calificaciones para una materia de un grupo (Vista Profesor).
  * @access  Private (Profesores)
  */
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, schoolMiddleware, async (req, res) => {
   const { grupoId, asignatura, criterios, calificaciones, numTareas } = req.body;
+  const school_id = req.user.school_id;
 
   if (!grupoId || !asignatura || !criterios || calificaciones === undefined) {
     return res.status(400).json({ msg: 'Faltan datos requeridos (grupoId, asignatura, criterios, calificaciones)' });
@@ -53,8 +57,8 @@ router.post('/', authMiddleware, async (req, res) => {
 
   try {
     const registroActualizado = await Calificacion.findOneAndUpdate(
-      { grupo: grupoId, asignatura: asignatura },
-      { criterios, calificaciones, numTareas, grupo: grupoId, asignatura: asignatura },
+      { grupo: grupoId, asignatura: asignatura, school_id },
+      { criterios, calificaciones, numTareas, grupo: grupoId, asignatura: asignatura, school_id },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 

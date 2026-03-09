@@ -5,6 +5,7 @@ import { CloudinaryStorage } from "multer-storage-cloudinary";
 
 import Horario from "../models/Horario.js";
 import { verifyToken, verifyAdmin } from "./auth.js";
+import { schoolMiddleware } from "../middlewares/schoolMiddleware.js";
 
 const router = express.Router();
 
@@ -41,14 +42,15 @@ const parseJSON = (input) => {
 // ----------------- CRUD Horario ------------------
 
 // Crear o actualizar horario (con imagen opcional)
-router.post("/", verifyAdmin, uploadImage.single("imagen"), async (req, res) => {
+router.post("/", verifyAdmin, schoolMiddleware, uploadImage.single("imagen"), async (req, res) => {
   try {
     const { anio, datos, leyenda } = req.body;
+    const school_id = req.user.school_id;
     // Debes enviar anio en el body, incluso si subes solo la imagen
     if (!anio) return res.status(400).json({ msg: "Debe especificar el año" });
 
     // Usamos findOne para evitar duplicados, y luego actualizamos o creamos
-    let horario = await Horario.findOne({ anio }) || new Horario({ anio });
+    let horario = await Horario.findOne({ anio, school_id }) || new Horario({ anio, school_id });
     horario.datos = parseJSON(datos);
     horario.leyenda = parseJSON(leyenda);
 
@@ -77,9 +79,10 @@ router.post("/", verifyAdmin, uploadImage.single("imagen"), async (req, res) => 
   }
 });
 
-router.get("/:anio", verifyToken, async (req, res) => {
+router.get("/:anio", verifyToken, schoolMiddleware, async (req, res) => {
   try {
-    const horario = await Horario.findOne({ anio: req.params.anio });
+    const school_id = req.user.school_id;
+    const horario = await Horario.findOne({ anio: req.params.anio, school_id });
     if (!horario) return res.json({ datos: {}, leyenda: {}, imageUrl: null });
     res.json({ datos: horario.datos, leyenda: horario.leyenda, imageUrl: horario.imageUrl || null });
   } catch (err) {
@@ -88,9 +91,10 @@ router.get("/:anio", verifyToken, async (req, res) => {
   }
 });
 
-router.get("/", verifyToken, async (req, res) => {
+router.get("/", verifyToken, schoolMiddleware, async (req, res) => {
   try {
-    const horarios = await Horario.find().select("anio imageUrl").sort({ anio: -1 });
+    const school_id = req.user.school_id;
+    const horarios = await Horario.find({ school_id }).select("anio imageUrl").sort({ anio: -1 });
     res.json(horarios);
   } catch (err) {
     console.error(err);
@@ -98,9 +102,10 @@ router.get("/", verifyToken, async (req, res) => {
   }
 });
 
-router.delete("/:anio", verifyAdmin, async (req, res) => {
+router.delete("/:anio", verifyAdmin, schoolMiddleware, async (req, res) => {
   try {
-    const horario = await Horario.findOne({ anio: req.params.anio });
+    const school_id = req.user.school_id;
+    const horario = await Horario.findOne({ anio: req.params.anio, school_id });
     if (!horario) return res.status(404).json({ msg: "Horario no encontrado" });
 
     // LÓGICA CLOUDINARY: Eliminar Imagen de la nube
@@ -114,7 +119,7 @@ router.delete("/:anio", verifyAdmin, async (req, res) => {
       await cloudinary.uploader.destroy(fullPublicId, { resource_type: 'image' });
     }
 
-    await Horario.deleteOne({ anio: req.params.anio });
+    await Horario.deleteOne({ anio: req.params.anio, school_id });
     res.json({ msg: `Horario del año ${req.params.anio} eliminado correctamente` });
   } catch (err) {
     console.error(err);

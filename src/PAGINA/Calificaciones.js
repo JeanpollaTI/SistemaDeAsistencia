@@ -85,6 +85,7 @@ function Calificaciones({ user }) {
     seleccion: [true, true, true] // Por defecto todos seleccionados
   });
   const [activeTab, setActiveTab] = useState('detalle'); // 'detalle' o 'sabana'
+  const [schoolConfig, setSchoolConfig] = useState(null);
 
 
   // --- DnD Sensors ---
@@ -128,24 +129,23 @@ function Calificaciones({ user }) {
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
   });
 
-  const fetchGrupos = async () => {
+  const fetchSchoolConfig = async () => {
     try {
-      setLoading(true);
-      const res = await axios.get(`${API_URL}/grupos?populate=alumnos,profesoresAsignados`, getAxiosConfig());
-      const sortedGrupos = res.data.sort((a, b) =>
-        a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
-      );
-      setGrupos(sortedGrupos);
+      const token = localStorage.getItem('token');
+      // Primero obtenemos el perfil para tener el school_id
+      const profileRes = await axios.get(`${API_URL}/auth/mi-perfil`, getAxiosConfig());
+      const schoolId = profileRes.data.school_id;
+
+      const res = await axios.get(`${API_URL}/schools/${schoolId}`, getAxiosConfig());
+      setSchoolConfig(res.data);
     } catch (err) {
-      console.error("Error al cargar grupos:", err);
-      setError("No se pudieron cargar los grupos. Intenta de nuevo más tarde.");
-    } finally {
-      setLoading(false);
+      console.error("Error loading school config:", err);
     }
   };
 
   useEffect(() => {
     fetchGrupos();
+    fetchSchoolConfig();
     // Cargar directores guardados y el director actual
     const saved = localStorage.getItem('saved_directores');
     if (saved) {
@@ -245,7 +245,8 @@ function Calificaciones({ user }) {
   const calcularPromedioFinal = (alumnoId) => {
     let sumaDePromedios = 0;
     let bimestresConCalificacion = 0;
-    for (let i = 0; i < 3; i++) {
+    const periodCount = getPeriodCount();
+    for (let i = 0; i < periodCount; i++) {
       // calcularPromedioBimestre ya devuelve un valor redondeado (y clamp implicitamente si sus inputs lo son, pero aseguramos)
       const promedioBim = calcularPromedioBimestre(alumnoId, i);
       if (promedioBim > 0) {
@@ -254,6 +255,23 @@ function Calificaciones({ user }) {
       }
     }
     return bimestresConCalificacion > 0 ? redondearCalificacion(sumaDePromedios / bimestresConCalificacion) : 0;
+  };
+
+  const getPeriodCount = () => {
+    if (!schoolConfig) return 3; // Default
+    switch (schoolConfig.evaluationPeriod) {
+      case 'Bimestre': return 5;
+      case 'Trimestre':
+      case 'Cuatrimestre': return 3;
+      case 'Semestre': return 2;
+      default: return 3;
+    }
+  };
+
+  const getPeriodLabel = (index) => {
+    const type = schoolConfig?.evaluationPeriod || 'Trimestre';
+    const label = type === 'Bimestre' ? 'Bim' : (type === 'Semestre' ? 'Sem' : 'Trim');
+    return `${label} ${index + 1}`;
   };
 
 
@@ -968,15 +986,25 @@ function Calificaciones({ user }) {
                         ))}
                       </SortableContext>
                     </DndContext>
-                    <th colSpan="3" className="promedio-header">PROMEDIO TRIMESTRAL</th>
+                    <th colSpan={getPeriodCount()} className="promedio-header">PROMEDIO {schoolConfig?.evaluationPeriod?.toUpperCase() || 'PERIODICO'}</th>
                     <th rowSpan="2" className="promedio-header-final">FINAL</th>
                     <th rowSpan="2" className="actions-header">Acciones</th>
                   </tr>
                   <tr>
-                    {materias.flatMap(materia => [<th key={`${materia}-b1`}>T1</th>, <th key={`${materia}-b2`}>T2</th>, <th key={`${materia}-b3`}>T3</th>])}
-                    <th className="promedio-header">T1</th>
-                    <th className="promedio-header">T2</th>
-                    <th className="promedio-header">T3</th>
+                    {materias.flatMap(materia => {
+                      const columns = [];
+                      for (let i = 0; i < getPeriodCount(); i++) {
+                        columns.push(<th key={`${materia}-p${i}`}>{getPeriodLabel(i)}</th>);
+                      }
+                      return columns;
+                    })}
+                    {(() => {
+                      const columns = [];
+                      for (let i = 0; i < getPeriodCount(); i++) {
+                        columns.push(<th key={`prom-h-${i}`} className="promedio-header">{getPeriodLabel(i)}</th>);
+                      }
+                      return columns;
+                    })()}
                   </tr>
                 </thead>
                 <tbody>
@@ -999,14 +1027,18 @@ function Calificaciones({ user }) {
                             })}
                           </React.Fragment>
                         ))}
-                        {[0, 1, 2].map(bimestreIndex => {
-                          const promedio = calcularPromedioBimestre(alumno._id, bimestreIndex);
-                          return (
-                            <td key={`prom-${bimestreIndex}`} className={`promedio-cell ${promedio > 0 && promedio < 6 ? 'reprobado' : 'aprobado'}`}>
-                              <strong>{promedio > 0 ? promedio.toFixed(1) : '-'}</strong>
-                            </td>
-                          )
-                        })}
+                        {(() => {
+                          const columns = [];
+                          for (let i = 0; i < getPeriodCount(); i++) {
+                            const promedio = calcularPromedioBimestre(alumno._id, i);
+                            columns.push(
+                              <td key={`prom-${i}`} className={`promedio-cell ${promedio > 0 && promedio < 6 ? 'reprobado' : 'aprobado'}`}>
+                                <strong>{promedio > 0 ? promedio.toFixed(1) : '-'}</strong>
+                              </td>
+                            );
+                          }
+                          return columns;
+                        })()}
                         <td className={`promedio-final-cell ${promFinal > 0 && promFinal < 6 ? 'reprobado' : 'aprobado'}`}>
                           <strong>{promFinal > 0 ? promFinal.toFixed(2) : '-'}</strong>
                         </td>
@@ -1028,18 +1060,30 @@ function Calificaciones({ user }) {
                     <th rowSpan="2" className="sabana-num">#</th>
                     <th rowSpan="2" className="sabana-nombre">Nombre del Alumno</th>
                     {materias.map(materia => (
-                      <th key={materia} colSpan="3" className="sabana-materia-header">{materia}</th>
+                      <th key={materia} colSpan={getPeriodCount()} className="sabana-materia-header">{materia}</th>
                     ))}
-                    <th colSpan="3" className="sabana-promedio-gral-header">PROM. TRIM</th>
+                    <th colSpan={getPeriodCount()} className="sabana-promedio-gral-header">PROM. {schoolConfig?.evaluationPeriod?.toUpperCase()}</th>
                     <th rowSpan="2" className="sabana-final-header">FINAL</th>
                   </tr>
                   <tr className="sabana-head-sub">
                     {materias.map(materia => (
                       <React.Fragment key={`${materia}-sub`}>
-                        <th>T1</th><th>T2</th><th>T3</th>
+                        {(() => {
+                          const headers = [];
+                          for (let i = 0; i < getPeriodCount(); i++) {
+                            headers.push(<th key={`${materia}-h-${i}`}>{getPeriodLabel(i)}</th>);
+                          }
+                          return headers;
+                        })()}
                       </React.Fragment>
                     ))}
-                    <th>T1</th><th>T2</th><th>T3</th>
+                    {(() => {
+                      const headers = [];
+                      for (let i = 0; i < getPeriodCount(); i++) {
+                        headers.push(<th key={`sabana-h-gral-${i}`}>{getPeriodLabel(i)}</th>);
+                      }
+                      return headers;
+                    })()}
                   </tr>
                 </thead>
                 <tbody>
@@ -1080,10 +1124,9 @@ function Calificaciones({ user }) {
               </table>
             </div>
           )}
-          }
         </>
       )}
-    </div >
+    </div>
   );
 }
 

@@ -59,6 +59,12 @@ const GrupoSchema = new mongoose.Schema(
       type: [String], // Array de nombres de materias en orden
       default: [],
     },
+    school_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'School',
+      required: true,
+      index: true,
+    },
 
     // --- IMPORTANTE ---
     // Los campos 'criterios' y 'calificaciones' han sido eliminados de este modelo.

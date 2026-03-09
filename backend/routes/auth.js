@@ -60,7 +60,15 @@ const verifyAdmin = (req, res, next) => {
 // Register
 router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, res) => {
   try {
-    let { nombre, edad, sexo, email, celular, password, role } = req.body;
+    let { nombre, edad, sexo, email, celular, password, role, school_id } = req.body;
+
+    // Si el que registra es un admin de escuela, heredamos su school_id si no se provee
+    if (!school_id && req.user && req.user.school_id) {
+      school_id = req.user.school_id;
+    }
+
+    if (!school_id) return res.status(400).json({ msg: "El ID de la escuela es obligatorio" });
+
     email = email.toLowerCase();
     let fotoUrl = "/uploads/fotos/default.png"; // Valor por defecto
 
@@ -84,7 +92,7 @@ router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, re
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new User({ nombre, edad, sexo, email, celular, password: hashedPassword, role: role || "profesor", foto: fotoUrl });
+    const newUser = new User({ nombre, edad, sexo, email, celular, password: hashedPassword, role: role || "profesor", foto: fotoUrl, school_id });
     await newUser.save();
 
     res.status(201).json({ msg: "Usuario registrado correctamente", user: newUser });
@@ -104,7 +112,7 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: "Contraseña incorrecta" });
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign({ id: user._id, role: user.role, school_id: user.school_id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     // Devolvemos el usuario formateado explícitamente para asegurar compatibilidad
     res.json({
@@ -118,6 +126,7 @@ router.post("/login", async (req, res) => {
         celular: user.celular,
         role: user.role,
         foto: user.foto,
+        school_id: user.school_id,
         asignaturas: user.asignaturas || [],
         fechaRegistro: formatDate(user.createdAt)
       }
