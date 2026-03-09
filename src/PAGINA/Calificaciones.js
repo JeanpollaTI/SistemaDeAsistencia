@@ -149,8 +149,14 @@ function Calificaciones({ user }) {
     try {
       const token = localStorage.getItem('token');
       // Primero obtenemos el perfil para tener el school_id
-      const profileRes = await axios.get(`${API_URL}/auth/mi-perfil`, getAxiosConfig());
-      const schoolId = profileRes.data.school_id;
+      const resProfile = await axios.get(`${API_URL}/auth/mi-perfil`, getAxiosConfig());
+      const schoolId = resProfile.data.school_id;
+
+      if (!schoolId) {
+        console.warn("User has no school_id assigned.");
+        setError("Su cuenta no tiene una escuela asignada. Por favor, contacte al administrador.");
+        return;
+      }
 
       const res = await axios.get(`${API_URL}/schools/${schoolId}`, getAxiosConfig());
       setSchoolConfig(res.data);

@@ -14,13 +14,23 @@ export const authMiddleware = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Traemos el usuario completo, sin excluir nada
+    // Traemos el usuario completo
     const user = await User.findById(decoded.id);
     if (!user) return res.status(401).json({ error: "Usuario no encontrado" });
 
-    // Garantizamos que _id siempre exista y guardamos el school_id para aislamiento
+    // Inyectamos el school_id. Prioridad: token > database
+    // Si el token es viejo (no tiene school_id), lo tomamos del documento del usuario.
+    const school_id = decoded.school_id || user.school_id;
+
+    if (!school_id) {
+      return res.status(401).json({
+        error: "Sesión incompleta",
+        msg: "No se ha asignado una institución a su cuenta. Por favor, contacte soporte."
+      });
+    }
+
     req.user = user;
-    req.user.school_id = decoded.school_id; // Inyectamos desde el token para rapidez
+    req.user.school_id = school_id;
 
     next();
   } catch (err) {
