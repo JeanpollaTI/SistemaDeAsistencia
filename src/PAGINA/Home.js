@@ -14,6 +14,7 @@ function Home({ user }) {
 
   const [profesores, setProfesores] = useState([]);
   const [schoolData, setSchoolData] = useState(null);
+  const [selectedProfesor, setSelectedProfesor] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [asignaturasSelect, setAsignaturasSelect] = useState([]);
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
