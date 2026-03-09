@@ -13,13 +13,13 @@ const LandingPage = () => {
             <section className="hero-section" id="home">
                 <div className="hero-content" style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
                     <h1>Gestión Escolar Inteligente</h1>
-                    <p>
+                    <p style={{ textAlign: 'center', margin: '0 auto 40px auto' }}>
                         Controla asistencias, calificaciones y mantén una comunicación fluida
                         con padres de familia en una sola plataforma segura y en tiempo real.
                     </p>
 
-                    <div className="cta-group" style={{ margin: '0 auto', alignItems: 'center' }}>
-                        <button className="cta-button primary" onClick={() => navigate('/register-school')}>
+                    <div className="cta-group" style={{ margin: '0 auto', alignItems: 'center', justifyContent: 'center' }}>
+                        <button className="cta-button primary" onClick={() => navigate('/register-school')} style={{ margin: '0 auto' }}>
                             <span className="cta-label">
                                 <FaSchool /> Registrar mi escuela
                             </span>

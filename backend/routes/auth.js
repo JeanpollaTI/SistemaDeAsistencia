@@ -106,7 +106,7 @@ router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, re
 router.post("/login", async (req, res) => {
   try {
     const { identifier, password } = req.body;
-    const user = await User.findOne({ $or: [{ email: identifier }, { celular: identifier }] }).select('+password');
+    const user = await User.findOne({ $or: [{ email: identifier }, { celular: identifier }] }).select('+password').populate('school_id');
     if (!user) return res.status(400).json({ msg: "Usuario no encontrado" });
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -126,7 +126,8 @@ router.post("/login", async (req, res) => {
         celular: user.celular,
         role: user.role,
         foto: user.foto,
-        school_id: user.school_id,
+        school_id: user.school_id?._id || user.school_id,
+        school_name: user.school_id?.name || "",
         asignaturas: user.asignaturas || [],
         fechaRegistro: formatDate(user.createdAt)
       }

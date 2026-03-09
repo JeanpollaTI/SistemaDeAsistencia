@@ -46,6 +46,15 @@ function App() {
         }
     }, [location]);
 
+    // Efecto para el título dinámico
+    useEffect(() => {
+        if (user && user.school_name) {
+            document.title = user.school_name;
+        } else {
+            document.title = "Scholaris";
+        }
+    }, [user, location.pathname]);
+
     // Muestra un loader mientras se verifica la sesión inicial (especialmente útil para Firebase/Auth)
     if (loading) {
         return (
