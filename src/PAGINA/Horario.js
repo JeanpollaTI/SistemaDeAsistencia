@@ -54,32 +54,53 @@ function Horario({ user }) {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
-    axios.get(`${API_URL}/auth/profesores`, {
-      headers: { Authorization: `Bearer ${token}` }
-    }).then(res => {
-      if (Array.isArray(res.data)) setProfesores(res.data);
-    }).catch(console.error);
+
+    const fetchProf = async () => {
+      try {
+        // Primero verificamos el perfil para que el middleware de auth cargue el school_id
+        await axios.get(`${API_URL}/auth/mi-perfil`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const res = await axios.get(`${API_URL}/auth/profesores`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (Array.isArray(res.data)) setProfesores(res.data);
+      } catch (err) {
+        console.error("Error al cargar profesores en Horario:", err);
+      }
+    };
+
+    fetchProf();
   }, []);
 
   // --- Carga de horario (Usando API_URL) ---
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
-    setLoadingMessage("Cargando horario...");
-    setIsLoading(true);
-    setProgress(20);
-    axios.get(`${API_URL}/horario/${anio}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => {
+
+    const fetchHorario = async () => {
+      setLoadingMessage("Cargando horario...");
+      setIsLoading(true);
+      setProgress(20);
+      try {
+        // Aseguramos sesión sincronizada
+        await axios.get(`${API_URL}/auth/mi-perfil`, { headers: { Authorization: `Bearer ${token}` } });
+
+        const res = await axios.get(`${API_URL}/horario/${anio}`, { headers: { Authorization: `Bearer ${token}` } });
         setProgress(75);
         if (res.data?.datos) setHorario(res.data.datos);
         if (res.data?.leyenda) setLeyenda(res.data.leyenda);
-      }).catch(error => {
+      } catch (error) {
         console.error("Error al cargar el horario:", error);
         mostrarAlerta("Error al cargar el horario ❌", "error");
         setProgress(100);
-      }).finally(() => {
+      } finally {
         setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 300);
-      });
+      }
+    };
+
+    fetchHorario();
   }, [anio, mostrarAlerta]);
 
   const generarHorarioVacio = useCallback(() => {

@@ -44,23 +44,43 @@ function Grupo({ user }) {
   // --- LÓGICA DE CARGA DE DATOS ---
   useEffect(() => {
     if (!user) { setLoading(false); setError("Información de usuario no disponible."); return; }
+
     const fetchData = async () => {
       const token = localStorage.getItem('token');
       if (!token) { setError("No autorizado. Por favor, inicia sesión."); setLoading(false); return; }
+
       const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
+
       try {
+        // --- ROBUST SCHOOL ID FETCH ---
+        let schoolId = user.school_id;
+        if (!schoolId) {
+          try {
+            const profileRes = await axios.get(`${API_URL}/auth/mi-perfil`, axiosConfig);
+            schoolId = profileRes.data.school_id;
+          } catch (profileErr) {
+            console.error("Error fetching profile for school_id:", profileErr);
+          }
+        }
+
+        if (!schoolId) {
+          setError("Tu cuenta no tiene una institución asignada. Por favor, realiza la REPARACIÓN en la sección de Calificaciones.");
+          setLoading(false);
+          return;
+        }
+
         if (user.role === 'admin') {
           const [gruposRes, profesoresRes, materiasRes] = await Promise.all([
             axios.get(`${API_URL}/grupos`, axiosConfig),
             axios.get(`${API_URL}/profesores`, axiosConfig),
-            axios.get(`${API_URL}/api/materias`, axiosConfig) // NUEVO: Fetch materias
+            axios.get(`${API_URL}/api/materias`, axiosConfig)
           ]);
           const sortedGrupos = gruposRes.data.sort((a, b) =>
             a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
           );
           setGrupos(sortedGrupos);
           setProfesores(profesoresRes.data);
-          setMateriasDb(materiasRes.data || []); // Guardar materias
+          setMateriasDb(materiasRes.data || []);
         } else if (user.role === 'profesor') {
           const gruposRes = await axios.get(`${API_URL}/grupos/mis-grupos`, axiosConfig);
           const sortedGrupos = gruposRes.data.sort((a, b) =>

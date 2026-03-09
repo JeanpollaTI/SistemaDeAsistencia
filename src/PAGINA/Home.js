@@ -67,18 +67,20 @@ function Home({ user }) {
   const [materiaToEdit, setMateriaToEdit] = useState(null); // Materia a editar (objeto)
   const [editMateriaName, setEditMateriaName] = useState(""); // Nombre nuevo para edición
 
-  const fetchMaterias = () => {
+  const fetchMaterias = async () => {
     const token = localStorage.getItem("token");
-    axios.get(`${API_URL}/api/materias`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => {
-        setMateriasDb(res.data || []);
-      })
-      .catch((err) => {
-        console.error("Error al cargar materias:", err);
-        if (err.response && err.response.status === 401) {
-          // No need to alert twice, fetchProfesores will handle it or user will see empty state
-        }
-      });
+    const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
+
+    try {
+      // Robustez: Obtener perfil primero para asegurar school_id en sesión de backend
+      await axios.get(`${API_URL}/auth/mi-perfil`, axiosConfig);
+
+      const res = await axios.get(`${API_URL}/api/materias`, axiosConfig);
+      setMateriasDb(res.data || []);
+    } catch (err) {
+      console.error("Error al cargar materias:", err);
+      // No alert twice
+    }
   };
 
   const handleAddMateria = () => {
