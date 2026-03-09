@@ -154,7 +154,9 @@ function Calificaciones({ user }) {
 
       if (!schoolId) {
         console.warn("User has no school_id assigned.");
-        setError("Su cuenta no tiene una escuela asignada. Por favor, contacte al administrador.");
+        // Guardamos si es admin para mostrar el botón de reparación
+        const isAdmin = resProfile.data.role === 'admin';
+        setError(isAdmin ? "REPAIR_REQUIRED" : "Su cuenta no tiene una escuela asignada. Por favor, contacte al administrador.");
         return;
       }
 
@@ -162,6 +164,23 @@ function Calificaciones({ user }) {
       setSchoolConfig(res.data);
     } catch (err) {
       console.error("Error loading school config:", err);
+    }
+  };
+
+  const runEmergencyMigration = async () => {
+    try {
+      setLoading(true);
+      // Pedimos el secreto al usuario (JWT_SECRET) para esta operación sensible
+      const secret = prompt("Por seguridad, ingresa el JWT_SECRET de tu servidor para autorizar la migración:");
+      if (!secret) return;
+
+      const res = await axios.post(`${API_URL}/schools/emergency-migrate`, { secret });
+      mostrarNotificacion(`Éxito: Se migraron ${JSON.stringify(res.data.results)} registros.`, 'exito');
+      setTimeout(() => window.location.reload(), 2000);
+    } catch (err) {
+      mostrarNotificacion("Error en la migración: " + (err.response?.data?.msg || err.message), 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -730,7 +749,36 @@ function Calificaciones({ user }) {
 
 
   if (loading && !selectedGrupo) return <div className="calificaciones-container">Cargando grupos...</div>;
-  if (error) return <div className="calificaciones-container error-message">{error}</div>;
+  if (error) {
+    return (
+      <div className="calificaciones-container">
+        {error === "REPAIR_REQUIRED" ? (
+          <div className="card shadow-lg p-5 text-center mt-5" style={{ maxWidth: '600px', margin: 'auto', borderTop: '5px solid #f1c40f' }}>
+            <h1 className="text-warning" style={{ fontSize: '3rem' }}>⚠️</h1>
+            <h2 className="mb-3">Configuración de Institución Pendiente</h2>
+            <p className="text-muted mb-4">
+              Hemos detectado que tu cuenta no está vinculada a una institución.
+              Esto es normal durante la migración a la nueva plataforma SaaS.
+            </p>
+            <div className="alert alert-info py-2 small">
+              <strong>Admin:</strong> Presiona el botón de abajo para inicializar tu escuela y etiquetar tus datos.
+            </div>
+            <button
+              className="button"
+              onClick={runEmergencyMigration}
+              style={{ padding: '15px 30px', fontSize: '1.1rem', backgroundColor: '#f39c12', border: 'none', color: 'white', borderRadius: '8px', cursor: 'pointer', transition: 'transform 0.2s' }}
+              onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
+              onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+            >
+              🛠️ Reparar / Inicializar Base de Datos
+            </button>
+          </div>
+        ) : (
+          <div className="error-message">{error}</div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="calificaciones-container section">
