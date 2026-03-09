@@ -11,14 +11,14 @@ const LandingPage = () => {
         <div className="landing-container">
             {/* Hero Section */}
             <section className="hero-section" id="home">
-                <div className="hero-content">
+                <div className="hero-content" style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
                     <h1>Gestión Escolar Inteligente</h1>
                     <p>
                         Controla asistencias, calificaciones y mantén una comunicación fluida
                         con padres de familia en una sola plataforma segura y en tiempo real.
                     </p>
 
-                    <div className="cta-group">
+                    <div className="cta-group" style={{ margin: '0 auto' }}>
                         <button className="cta-button primary" onClick={() => navigate('/login')}>
                             <span className="cta-label">
                                 <FaSchool /> Registrar mi escuela
@@ -33,13 +33,6 @@ const LandingPage = () => {
                             <span className="cta-arrow">PADRES <FaArrowRight /></span>
                         </button>
                     </div>
-                </div>
-
-                <div className="hero-visual">
-                    <img
-                        src={scholarisHero}
-                        alt="Scholaris Illustration"
-                    />
                 </div>
             </section>
 
@@ -67,18 +60,6 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* Pricing Teaser */}
-            <section style={{ padding: '80px 20px', textAlign: 'center' }} id="precios">
-                <h2>Planes a la medida de tu escuela</h2>
-                <p className="text-muted">Desde pequeñas academias hasta grandes instituciones universitarias.</p>
-                <button
-                    className="button primary"
-                    style={{ marginTop: '20px', padding: '12px 30px' }}
-                    onClick={() => navigate('/login')}
-                >
-                    Consultar Precios
-                </button>
-            </section>
 
             {/* Footer */}
             <footer style={{ padding: '40px 20px', background: '#111827', color: 'white', textAlign: 'center' }}>
