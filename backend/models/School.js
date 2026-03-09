@@ -29,6 +29,7 @@ const schoolSchema = new mongoose.Schema(
                 default: "active",
             },
             stripeId: { type: String, default: "" },
+            currentPeriodEnd: { type: Date },
             nextBilling: { type: Date },
         },
     },

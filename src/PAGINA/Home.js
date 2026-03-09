@@ -3,6 +3,7 @@ import axios from "axios";
 import "./Home.css";
 import { useNavigate } from "react-router-dom";
 import ConfirmacionModal from "./ConfirmacionModal";
+import { FaCalendarAlt } from 'react-icons/fa';
 
 // La URL de tu backend ahora se leerá desde las variables de entorno
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
@@ -12,7 +13,7 @@ function Home({ user }) {
 
 
   const [profesores, setProfesores] = useState([]);
-  const [selectedProfesor, setSelectedProfesor] = useState(null);
+  const [schoolData, setSchoolData] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [asignaturasSelect, setAsignaturasSelect] = useState([]);
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
@@ -30,11 +31,25 @@ function Home({ user }) {
 
   // Se mantiene el useEffect para cargar profesores solo si es admin
   useEffect(() => {
+    fetchSchoolInfo();
     if (user?.role === "admin") {
       fetchProfesores();
       fetchMaterias(); // NUEVO: Cargar materias
     }
   }, [user]);
+
+  const fetchSchoolInfo = async () => {
+    const token = localStorage.getItem("token");
+    if (!token || !user?.school_id) return;
+    try {
+      const res = await axios.get(`${API_URL}/schools/${user.school_id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSchoolData(res.data);
+    } catch (err) {
+      console.error("Error al obtener info de la escuela:", err);
+    }
+  };
 
   // Se omite el useEffect de navegación/scroll del código viejo para centrarse en la funcionalidad principal.
 
@@ -267,6 +282,27 @@ function Home({ user }) {
       {alerta && <div className={`alerta-fixed ${alerta.tipo}`}>{alerta.mensaje}</div>}
 
       <section className="home section" id="home">
+        {/* Alerta de Suscripción */}
+        {schoolData?.subscription?.nextBilling && (
+          (() => {
+            const nextBillingDate = new Date(schoolData.subscription.nextBilling);
+            const today = new Date();
+            const timeDiff = nextBillingDate - today;
+            const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+            if (daysLeft <= 3 && daysLeft >= 0) {
+              return (
+                <div className="subscription-warning-banner">
+                  <FaCalendarAlt />
+                  <span>Tu suscripción de Scholaris vence en <b>{daysLeft} días</b> ({nextBillingDate.toLocaleDateString()}). Renueva ahora para mantener el acceso.</span>
+                  <button onClick={() => window.location.href = '#pagar'}>RENOVAR</button>
+                </div>
+              );
+            }
+            return null;
+          })()
+        )}
+
         <div className="home-container container grid">
           <div className="home-data">
             <h1 className="home-title">

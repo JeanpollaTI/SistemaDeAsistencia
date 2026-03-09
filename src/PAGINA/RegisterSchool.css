@@ -1,0 +1,239 @@
+.register-school-wrapper {
+    background-color: #f8fafc;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+    font-family: 'Inter', sans-serif;
+}
+
+.register-card {
+    background: white;
+    width: 100%;
+    max-width: 650px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.wizard-header {
+    background-color: #007A7A;
+    padding: 30px;
+    color: white;
+    text-align: center;
+}
+
+.wizard-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 25px;
+    letter-spacing: 1px;
+}
+
+.step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.dot.active {
+    background: white;
+    color: #007A7A;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+}
+
+.line {
+    width: 40px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.line.active {
+    background: white;
+}
+
+.wizard-body {
+    padding: 40px;
+    min-height: 350px;
+}
+
+.form-step h3 {
+    color: #007A7A;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.step-desc {
+    color: #64748b;
+    margin-bottom: 30px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.input-group input,
+.input-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    border-color: #007A7A;
+    box-shadow: 0 0 0 3px rgba(0, 122, 122, 0.1);
+}
+
+.input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.payment-preview {
+    margin-top: 30px;
+    padding: 25px;
+    background: #f0f9f9;
+    border-radius: 12px;
+    border: 1px solid #ccfbf1;
+}
+
+.price-tag {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #007A7A;
+    margin: 10px 0;
+}
+
+.price-tag span {
+    font-size: 1rem;
+    opacity: 0.7;
+}
+
+.wizard-footer {
+    padding: 20px 40px;
+    background: #f8fafc;
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #e2e8f0;
+}
+
+.nav-btn {
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+}
+
+.nav-btn.prev {
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+}
+
+.nav-btn.prev:hover {
+    background: #f1f5f9;
+}
+
+.nav-btn.next {
+    background: #007A7A;
+    color: white;
+    border: none;
+    margin-left: auto;
+}
+
+.nav-btn.next:hover {
+    background: #005a5a;
+    transform: translateX(3px);
+}
+
+.nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.error-message {
+    background: #fef2f2;
+    color: #b91c1c;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    border: 1px solid #fee2e2;
+}
+
+.success-step {
+    text-align: center;
+}
+
+.success-icon {
+    font-size: 4rem;
+    color: #10b981;
+    margin-bottom: 20px;
+}
+
+.fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 480px) {
+    .input-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wizard-body {
+        padding: 25px;
+    }
+}

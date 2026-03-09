@@ -102,6 +102,55 @@ button {
     padding: 8rem 0 1rem;
 }
 
+/* Subscription Warning Banner */
+.subscription-warning-banner {
+    background-color: var(--warning-bg);
+    border: 1px solid var(--warning-border);
+    color: var(--warning-text);
+    padding: 15px 25px;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: 500;
+    box-shadow: 0 4px 6px rgba(154, 52, 18, 0.05);
+    animation: slideDown 0.5s ease-out;
+}
+
+.subscription-warning-banner b {
+    color: #c2410c;
+}
+
+.subscription-warning-banner button {
+    background-color: #c2410c;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    margin-left: auto;
+    transition: background 0.2s;
+}
+
+.subscription-warning-banner button:hover {
+    background-color: #9a3412;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* --- Header & Nav --- */
 .header {
     width: 100%;

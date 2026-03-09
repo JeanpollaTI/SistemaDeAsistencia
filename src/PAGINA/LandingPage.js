@@ -19,7 +19,7 @@ const LandingPage = () => {
                     </p>
 
                     <div className="cta-group" style={{ margin: '0 auto', alignItems: 'center' }}>
-                        <button className="cta-button primary" onClick={() => navigate('/login')}>
+                        <button className="cta-button primary" onClick={() => navigate('/register-school')}>
                             <span className="cta-label">
                                 <FaSchool /> Registrar mi escuela
                             </span>

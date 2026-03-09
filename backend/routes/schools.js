@@ -71,8 +71,17 @@ router.post('/emergency-migrate', async (req, res) => {
                 name: "Secundaria General Número 9",
                 type: "Secundaria",
                 evaluationPeriod: "Trimestre",
-                config: { scaleMax: 10 }
+                config: { scaleMax: 10 },
+                subscription: {
+                    status: "active",
+                    nextBilling: new Date("2026-03-15T00:00:00Z")
+                }
             });
+            await school.save();
+        } else {
+            // Asegurar que la fecha sea la solicitada incluso si ya existe
+            school.subscription.nextBilling = new Date("2026-03-15T00:00:00Z");
+            school.subscription.status = "active";
             await school.save();
         }
 

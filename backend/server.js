@@ -15,6 +15,8 @@ import { calificacionesRouter } from "./routes/calificaciones.js";
 // <-- AÑADIDO: Importar la nueva ruta para enviar correos -->
 import { emailRouter } from "./routes/emailSender.js";
 import { materiasRouter } from "./routes/materias.js";
+import registrationRouter from "./routes/registration.js";
+import stripeRouter from "./routes/stripe.js";
 
 // --- CONFIGURACIÓN INICIAL ---
 dotenv.config();
@@ -48,6 +50,8 @@ app.use("/calificaciones", calificacionesRouter);
 // <-- AÑADIDO: Rutas de Escuelas -->
 import schoolRoutes from "./routes/schools.js";
 app.use("/schools", schoolRoutes);
+app.use("/api/register-school", registrationRouter);
+app.use("/api/stripe", stripeRouter);
 // <-- AÑADIDO: Usar la nueva ruta para el envío de boletas -->
 app.use("/api", schoolMiddleware, emailRouter);
 app.use("/api/materias", materiasRouter);

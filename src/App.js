@@ -17,6 +17,7 @@ import Grupo from "./PAGINA/Grupo";
 import Trabajos from "./PAGINA/Trabajos";
 import Calificaciones from "./PAGINA/Calificaciones";
 import LandingPage from "./PAGINA/LandingPage";
+import RegisterSchool from "./PAGINA/RegisterSchool";
 import { FaGraduationCap } from 'react-icons/fa';
 
 // Estilos y logo (Asegúrate de que Home.css esté en PAGINA/ y logo.png en src/)
@@ -167,6 +168,7 @@ function App() {
                 <Routes>
                     {/* Rutas Públicas */}
                     <Route path="/" element={user ? <Home user={user} /> : <LandingPage />} />
+                    <Route path="/register-school" element={user ? <Navigate to="/" /> : <RegisterSchool />} />
                     {/* Si el usuario está logueado, redirige a Home */}
                     <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
                     <Route path="/forgot-password" element={user ? <Navigate to="/" /> : <Password />} />
