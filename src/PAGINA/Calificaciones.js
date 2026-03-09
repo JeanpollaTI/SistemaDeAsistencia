@@ -739,36 +739,7 @@ function Calificaciones({ user }) {
 
 
   if (loading && !selectedGrupo) return <div className="calificaciones-container">Cargando grupos...</div>;
-  if (error) {
-    return (
-      <div className="calificaciones-container">
-        {error === "REPAIR_REQUIRED" ? (
-          <div className="card shadow-lg p-5 text-center mt-5" style={{ maxWidth: '600px', margin: 'auto', borderTop: '5px solid #f1c40f' }}>
-            <h1 className="text-warning" style={{ fontSize: '3rem' }}>⚠️</h1>
-            <h2 className="mb-3">Configuración de Institución Pendiente</h2>
-            <p className="text-muted mb-4">
-              Hemos detectado que tu cuenta no está vinculada a una institución.
-              Esto es normal durante la migración a la nueva plataforma SaaS.
-            </p>
-            <div className="alert alert-info py-2 small">
-              <strong>Admin:</strong> Presiona el botón de abajo para inicializar tu escuela y etiquetar tus datos.
-            </div>
-            <button
-              className="button"
-              onClick={runEmergencyMigration}
-              style={{ padding: '15px 30px', fontSize: '1.1rem', backgroundColor: '#f39c12', border: 'none', color: 'white', borderRadius: '8px', cursor: 'pointer', transition: 'transform 0.2s' }}
-              onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
-              onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
-            >
-              🛠️ Reparar / Inicializar Base de Datos
-            </button>
-          </div>
-        ) : (
-          <div className="error-message">{error}</div>
-        )}
-      </div>
-    );
-  }
+  if (error) return <div className="calificaciones-container"><p className="error-message">{error}</p></div>;
 
   return (
     <div className="calificaciones-container section">
