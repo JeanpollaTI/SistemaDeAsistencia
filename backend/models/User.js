@@ -10,19 +10,17 @@ const userSchema = new mongoose.Schema(
     },
     edad: {
       type: Number,
-      required: [true, "La edad es obligatoria"],
       min: [18, "La edad mínima es 18"],
     },
     sexo: {
       type: String,
       enum: ["Masculino", "Femenino", "Otro"],
-      required: [true, "El sexo es obligatorio"],
     },
     celular: {
       type: String,
-      required: [true, "El celular es obligatorio"],
       trim: true,
       unique: true,
+      sparse: true,
       match: [/^\d+$/, "El celular debe contener solo dígitos"],
     },
     email: {
