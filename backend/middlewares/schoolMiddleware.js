@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import School from "../models/School.js";
 
 export const schoolMiddleware = async (req, res, next) => {
@@ -12,6 +13,15 @@ export const schoolMiddleware = async (req, res, next) => {
         }
 
         const schoolId = req.user.school_id;
+
+        // Validar si el ID es un ObjectId válido para evitar CastError 500
+        if (schoolId && !mongoose.Types.ObjectId.isValid(schoolId)) {
+            console.error("schoolMiddleware: Invalid schoolId format:", schoolId);
+            return res.status(200).json({
+                error: "INVALID_SCHOOL_ID",
+                msg: "El ID de la institución no es válido. Por favor, contacte a soporte."
+            });
+        }
 
         // Verificar si la escuela existe
         const school = await School.findById(schoolId);
