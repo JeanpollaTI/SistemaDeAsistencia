@@ -1,7 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import dotenv from "dotenv";
+import "dotenv/config";
 import path from "path";
 import { fileURLToPath } from "url"; // Necesario para __dirname en ES Modules
 
@@ -20,7 +20,6 @@ import stripeRouter from "./routes/stripe.js";
 import { schoolMiddleware } from "./middlewares/schoolMiddleware.js";
 
 // --- CONFIGURACIÓN INICIAL ---
-dotenv.config();
 const app = express();
 
 // Configuración para obtener __dirname en ES Modules

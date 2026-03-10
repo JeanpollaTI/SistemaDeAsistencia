@@ -4,7 +4,18 @@ import School from '../models/School.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+let stripe;
+
+const getStripe = () => {
+    if (!stripe) {
+        if (!process.env.STRIPE_SECRET_KEY) {
+            console.error("❌ STRIPE_SECRET_KEY no está definida en las variables de entorno.");
+            throw new Error("Stripe API Key missing");
+        }
+        stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    }
+    return stripe;
+};
 
 /**
  * @route   POST /api/stripe/create-checkout-session
@@ -14,10 +25,10 @@ router.post('/create-checkout-session', authMiddleware, async (req, res) => {
     try {
         const { schoolId } = req.body;
         const school = await School.findById(schoolId);
-
         if (!school) return res.status(404).json({ msg: "Escuela no encontrada" });
 
-        const session = await stripe.checkout.sessions.create({
+        const stripeClient = getStripe();
+        const session = await stripeClient.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [
                 {
@@ -56,7 +67,8 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     let event;
 
     try {
-        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        const stripeClient = getStripe();
+        event = stripeClient.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } catch (err) {
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
