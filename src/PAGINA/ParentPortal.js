@@ -23,15 +23,18 @@ function ParentPortal() {
 
     useEffect(() => {
         if (token) {
-            fetchData();
+            fetchData(token);
         }
     }, [token]);
 
-    const fetchData = async () => {
+    const fetchData = async (tokenOverride) => {
+        const activeToken = tokenOverride || token;
+        if (!activeToken) return;
+
         setLoading(true);
         try {
             const res = await axios.get(`${API_URL}/api/portal-padres/mis-datos`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${activeToken}` }
             });
             setData(res.data);
         } catch (err) {
@@ -53,6 +56,8 @@ function ParentPortal() {
             setAlumno(res.data.alumno);
             sessionStorage.setItem('parentToken', res.data.token);
             sessionStorage.setItem('alumnoData', JSON.stringify(res.data.alumno));
+            // Fetch data immediately with the new token
+            fetchData(res.data.token);
         } catch (err) {
             setError(err.response?.data?.msg || "Error al iniciar sesión.");
         } finally {

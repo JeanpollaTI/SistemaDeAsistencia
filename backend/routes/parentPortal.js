@@ -97,8 +97,30 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
                 const criteriosActivos = criteriosPorBimestre?.[bimestreKey] || [];
                 const calificacionesAlumnoEnBimestre = calificacionesMateria?.[id]?.[bimestreKey];
 
-                if (!criteriosActivos || criteriosActivos.length === 0 || !calificacionesAlumnoEnBimestre) {
+                if (!calificacionesAlumnoEnBimestre || Object.keys(calificacionesAlumnoEnBimestre).length === 0) {
                     bimestres[bimestre] = null;
+                    return;
+                }
+
+                if (!criteriosActivos || criteriosActivos.length === 0) {
+                    // Fallback: Si no hay criterios pero hay notas, promediar todo lo que haya
+                    let sumaTotal = 0;
+                    let numNotas = 0;
+
+                    Object.values(calificacionesAlumnoEnBimestre).forEach(criterioGrades => {
+                        Object.values(criterioGrades).forEach(entrada => {
+                            if (entrada && typeof entrada.nota === 'number') {
+                                sumaTotal += entrada.nota;
+                                numNotas++;
+                            }
+                        });
+                    });
+
+                    if (numNotas === 0) {
+                        bimestres[bimestre] = null;
+                    } else {
+                        bimestres[bimestre] = redondearCalificacion(sumaTotal / numNotas);
+                    }
                     return;
                 }
 
@@ -121,7 +143,23 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
                 });
 
                 if (pesoTotalAplicable === 0) {
-                    bimestres[bimestre] = null;
+                    // Si hay criterios pero ninguna nota les corresponde, intentar el fallback de promediar todo
+                    let sumaTotal = 0;
+                    let numNotas = 0;
+                    Object.values(calificacionesAlumnoEnBimestre).forEach(criterioGrades => {
+                        Object.values(criterioGrades).forEach(entrada => {
+                            if (entrada && typeof entrada.nota === 'number') {
+                                sumaTotal += entrada.nota;
+                                numNotas++;
+                            }
+                        });
+                    });
+
+                    if (numNotas === 0) {
+                        bimestres[bimestre] = null;
+                    } else {
+                        bimestres[bimestre] = redondearCalificacion(sumaTotal / numNotas);
+                    }
                 } else {
                     const promedioFinal = promedioPonderado / pesoTotalAplicable;
                     bimestres[bimestre] = redondearCalificacion(promedioFinal);
