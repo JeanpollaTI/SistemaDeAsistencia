@@ -726,7 +726,6 @@ function Grupo({ user }) {
             <table className="grupos-table">
               <thead>
                 <tr>
-                  <th>Matrícula</th>
                   <th>Nombre del Grupo</th>
                   <th>Asesor</th>
                   <th>N° Alumnos</th>

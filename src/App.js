@@ -42,7 +42,7 @@ function App() {
     const location = useLocation();
 
     // Estado para el Tema (Claro/Oscuro)
-    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
     // Aplicar el tema al root del documento
@@ -197,9 +197,7 @@ function App() {
                         <FaUserCircle /> MI PERFIL
                     </button>
 
-                    <button className="nav-link-dropdown" onClick={() => { toggleTheme(); closeDropdown(); }}>
-                        {theme === 'light' ? <FaMoon /> : <FaSun />} {theme === 'light' ? 'MODO OSCURO' : 'MODO CLARO'}
-                    </button>
+
 
                     <button className="nav-link-dropdown logout" onClick={() => { logout(); closeDropdown(); }}>
                         <FaSignOutAlt /> CERRAR SESIÓN

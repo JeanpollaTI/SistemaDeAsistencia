@@ -277,7 +277,7 @@ button {
 
 .btn-ver-perfil {
     background-color: var(--primary-color);
-    color: var(--white-color);
+    color: #ffffff;
     border: none;
     padding: 8px 12px;
     border-radius: 5px;
