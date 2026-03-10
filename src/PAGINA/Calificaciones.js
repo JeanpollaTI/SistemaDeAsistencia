@@ -994,94 +994,84 @@ function Calificaciones({ user }) {
             <div className="loading-spinner">Cargando calificaciones...</div>
           ) : activeTab === 'detalle' ? (
             <div className="table-wrapper">
-              <table className="calificaciones-table">
-                <thead>
-                  <tr>
-                    <th rowSpan="2" className="num-header corner-header">#</th>
-                    <th rowSpan="2" className="matricula-header corner-header">ID/Matrícula</th>
-                    <th rowSpan="2" className="nombre-header corner-header">Nombre del Alumno</th>
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleDragEnd}
-                    >
-                      <SortableContext
-                        items={materias}
-                        strategy={horizontalListSortingStrategy}
-                      >
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={materias}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  <table className="calificaciones-table">
+                    <thead>
+                      <tr>
+                        <th rowSpan="2" className="num-header corner-header">#</th>
+                        <th rowSpan="2" className="matricula-header corner-header">ID/Matrícula</th>
+                        <th rowSpan="2" className="nombre-header corner-header">Nombre del Alumno</th>
                         {materias.map(materia => (
                           <SortableHeader key={materia} id={materia} disabled={!isEditing} colSpan={getPeriodCount()}>
                             {materia}
                           </SortableHeader>
                         ))}
-                      </SortableContext>
-                    </DndContext>
-                    <th colSpan={getPeriodCount()} className="promedio-header">PROMEDIO {schoolConfig?.evaluationPeriod?.toUpperCase() || 'PERIODICO'}</th>
-                    <th rowSpan="2" className="promedio-header-final">FINAL</th>
-                    <th rowSpan="2" className="actions-header">Acciones</th>
-                  </tr>
-                  <tr>
-                    {materias.flatMap(materia => {
-                      const columns = [];
-                      for (let i = 0; i < getPeriodCount(); i++) {
-                        columns.push(<th key={`${materia}-p${i}`} className="sticky-trim">{getPeriodLabel(i)}</th>);
-                      }
-                      return columns;
-                    })}
-                    {(() => {
-                      const columns = [];
-                      for (let i = 0; i < getPeriodCount(); i++) {
-                        columns.push(<th key={`prom-h-${i}`} className="promedio-header sticky-trim">{getPeriodLabel(i)}</th>);
-                      }
-                      return columns;
-                    })()}
-                  </tr>
-                </thead>
-                <tbody>
-                  {alumnos.map(alumno => {
-                    const promFinal = calcularPromedioFinal(alumno._id);
-                    return (
-                      <tr key={alumno._id}>
-                        <td>{alumnos.indexOf(alumno) + 1}</td>
-                        <td className="matricula-cell">{alumno.matricula || '---'}</td>
-                        <td className="nombre-cell">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</td>
-                        {materias.map(materia => (
-                          <React.Fragment key={`${alumno._id}-${materia}`}>
-                            {getPeriodsArray().map(bimestreIndex => {
-                              const rawCal = calificaciones[alumno._id]?.[materia]?.[bimestreIndex];
-                              const cal = clampGrade(rawCal);
-                              return (
-                                <td key={`${materia}-b${bimestreIndex}`} className={typeof cal === 'number' ? (cal < 6 ? 'reprobado' : 'aprobado') : ''}>
-                                  {cal != null ? redondearCalificacion(cal) : '-'}
-                                </td>
-                              )
-                            })}
-                          </React.Fragment>
-                        ))}
-                        {(() => {
-                          const columns = [];
-                          for (let i = 0; i < getPeriodCount(); i++) {
-                            const promedio = calcularPromedioBimestre(alumno._id, i);
-                            columns.push(
-                              <td key={`prom-${i}`} className={`promedio-cell ${promedio > 0 && promedio < 6 ? 'reprobado' : 'aprobado'}`}>
-                                <strong>{promedio > 0 ? promedio.toFixed(1) : '-'}</strong>
-                              </td>
-                            );
-                          }
-                          return columns;
-                        })()}
-                        <td className={`promedio-final-cell ${promFinal > 0 && promFinal < 6 ? 'reprobado' : 'aprobado'}`}>
-                          <strong>{promFinal > 0 ? promFinal.toFixed(2) : '-'}</strong>
-                        </td>
-                        <td className="actions-cell">
-                          <button onClick={() => setModalPdf({ visible: true, alumno })} title="Descargar Boleta Individual">📄</button>
-                          <button onClick={() => setModalShare({ visible: true, alumno: alumno })} title="Compartir Boleta">🔗</button>
-                        </td>
+                        <th colSpan={getPeriodCount()} className="promedio-header">PROMEDIO {schoolConfig?.evaluationPeriod?.toUpperCase() || 'PERIODICO'}</th>
+                        <th rowSpan="2" className="promedio-header-final">FINAL</th>
+                        <th rowSpan="2" className="actions-header">Acciones</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                      <tr>
+                        {materias.flatMap(materia =>
+                          getPeriodsArray().map(i => (
+                            <th key={`${materia}-p${i}`} className="sticky-trim">{getPeriodLabel(i)}</th>
+                          ))
+                        )}
+                        {getPeriodsArray().map(i => (
+                          <th key={`prom-h-${i}`} className="promedio-header sticky-trim">{getPeriodLabel(i)}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {alumnos.map(alumno => {
+                        const promFinal = calcularPromedioFinal(alumno._id);
+                        return (
+                          <tr key={alumno._id}>
+                            <td>{alumnos.indexOf(alumno) + 1}</td>
+                            <td className="matricula-cell">{alumno.matricula || '---'}</td>
+                            <td className="nombre-cell">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</td>
+                            {materias.map(materia => (
+                              <React.Fragment key={`${alumno._id}-${materia}`}>
+                                {getPeriodsArray().map(bimestreIndex => {
+                                  const rawCal = calificaciones[alumno._id]?.[materia]?.[bimestreIndex];
+                                  const cal = clampGrade(rawCal);
+                                  return (
+                                    <td key={`${materia}-b${bimestreIndex}`} className={typeof cal === 'number' ? (cal < 6 ? 'reprobado' : 'aprobado') : ''}>
+                                      {cal != null ? redondearCalificacion(cal) : '-'}
+                                    </td>
+                                  )
+                                })}
+                              </React.Fragment>
+                            ))}
+                            {getPeriodsArray().map(i => {
+                              const promedio = calcularPromedioBimestre(alumno._id, i);
+                              return (
+                                <td key={`prom-${i}`} className={`promedio-cell ${promedio > 0 && promedio < 6 ? 'reprobado' : 'aprobado'}`}>
+                                  <strong>{promedio > 0 ? promedio.toFixed(1) : '-'}</strong>
+                                </td>
+                              );
+                            })}
+                            <td className={`promedio-final-cell ${promFinal > 0 && promFinal < 6 ? 'reprobado' : 'aprobado'}`}>
+                              <strong>{promFinal > 0 ? promFinal.toFixed(2) : '-'}</strong>
+                            </td>
+                            <td className="actions-cell">
+                              <button onClick={() => setModalPdf({ visible: true, alumno })} title="Descargar Boleta Individual">📄</button>
+                              <button onClick={() => setModalShare({ visible: true, alumno: alumno })} title="Compartir Boleta">🔗</button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </SortableContext>
+              </DndContext>
             </div>
           ) : (
             <div className="table-wrapper sabana-wrapper">
@@ -1098,24 +1088,14 @@ function Calificaciones({ user }) {
                     <th rowSpan="2" className="sabana-final-header">FINAL</th>
                   </tr>
                   <tr className="sabana-head-sub">
-                    {materias.map(materia => (
-                      <React.Fragment key={`${materia}-sub`}>
-                        {(() => {
-                          const headers = [];
-                          for (let i = 0; i < getPeriodCount(); i++) {
-                            headers.push(<th key={`${materia}-h-${i}`}>{getPeriodLabel(i)}</th>);
-                          }
-                          return headers;
-                        })()}
-                      </React.Fragment>
+                    {materias.flatMap(materia =>
+                      getPeriodsArray().map(i => (
+                        <th key={`${materia}-h-${i}`}>{getPeriodLabel(i)}</th>
+                      ))
+                    )}
+                    {getPeriodsArray().map(i => (
+                      <th key={`sabana-h-gral-${i}`}>{getPeriodLabel(i)}</th>
                     ))}
-                    {(() => {
-                      const headers = [];
-                      for (let i = 0; i < getPeriodCount(); i++) {
-                        headers.push(<th key={`sabana-h-gral-${i}`}>{getPeriodLabel(i)}</th>);
-                      }
-                      return headers;
-                    })()}
                   </tr>
                 </thead>
                 <tbody>
@@ -1163,7 +1143,6 @@ function Calificaciones({ user }) {
   );
 }
 
-// --- Componente: Modal para Compartir ---
 // --- Componente: Modal para Compartir ---
 function ModalShare({ alumno, onClose, onSend }) {
   const [recipientPhone, setRecipientPhone] = useState('');

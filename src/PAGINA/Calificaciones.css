@@ -179,7 +179,8 @@
   width: max-content;
   border-collapse: separate;
   border-spacing: 0;
-  table-layout: fixed;
+  table-layout: auto;
+  /* Change from fixed to auto */
   min-width: 100%;
 }
 
