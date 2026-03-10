@@ -61,7 +61,7 @@
 
 /* Se unifican los estilos del botón al usar .btn-admin en el JSX */
 .btn-admin {
-    background-color: #d4af37;
+    background-color: #007A7A;
     color: #fff;
     border: none;
     padding: 8px 15px;
@@ -155,7 +155,7 @@
 }
 
 .horario-table th {
-    background: linear-gradient(to bottom, #f5d88b, #d4af37);
+    background: linear-gradient(to bottom, #f5d88b, #007A7A);
     color: #000;
     font-weight: bold;
     font-size: 13px;
@@ -246,7 +246,7 @@
 }
 
 .hora-box-horizontal input:focus {
-    border-color: #d4af37;
+    border-color: #007A7A;
     box-shadow: 0 0 2px rgba(212, 175, 55, 0.6);
     outline: none;
 }

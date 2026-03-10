@@ -26,7 +26,7 @@ const LandingPage = () => {
                             <span className="cta-arrow">NUEVA ESCUELA <FaArrowRight /></span>
                         </button>
 
-                        <button className="cta-button secondary" onClick={() => navigate('/portal-padres')} style={{ background: '#d4af37', color: 'white', borderColor: '#d4af37' }}>
+                        <button className="cta-button secondary" onClick={() => navigate('/portal-padres')} style={{ background: '#007A7A', color: 'white', borderColor: '#007A7A' }}>
                             <span className="cta-label">
                                 <FaUsers /> Portal de Padres
                             </span>

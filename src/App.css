@@ -11,7 +11,8 @@
     --z-fixed: 100;
 
     /* Shared Colors */
-    --gold-color: #d4af37;
+    --gold-color: #007A7A;
+    /* Cambiado de dorado a Teal */
     --primary-color: #007A7A;
     /* Teal from Scholaris brand */
     --danger-color: #e74c3c;
@@ -216,7 +217,8 @@ button {
 
 .home-title {
     font-size: 3rem;
-    color: var(--white-color);
+    color: var(--title-color);
+    /* Cambiado de white a title-color para visibilidad */
 }
 
 .home-title span {
