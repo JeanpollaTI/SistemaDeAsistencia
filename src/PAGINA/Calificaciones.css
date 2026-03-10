@@ -190,13 +190,13 @@
 
 
 
-
-
 /* --- NOBLE STICKY HIERARCHY (4 TIERS) --- */
 
-/* TIER 4: CORNERS (Top & Left Sticky) - HIGHEST PRIORITY */
+/* TIER 4: CORNERS (Top & Left/Right Sticky) - HIGHEST PRIORITY */
 .calificaciones-table thead .corner-header,
-.sabana-table thead .corner-header {
+.sabana-table thead .corner-header,
+.promedio-header-final,
+.actions-header {
   position: sticky !important;
   top: 0 !important;
   z-index: 1000 !important;
@@ -204,14 +204,13 @@
   color: #000000 !important;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1) !important;
   height: 50px !important;
-  /* ULTRA COMPACT ROW 1 */
   border-bottom: 2px solid #ddd !important;
   border-right: 1px solid #eee !important;
   font-weight: 700 !important;
   font-size: 12px !important;
 }
 
-/* Tier 4 Left Offsets (Ultra Compact) */
+/* Tier 4 Left Offsets */
 .num-header.corner-header,
 .sabana-num.corner-header {
   left: 0 !important;
@@ -238,9 +237,22 @@
   width: 180px !important;
 }
 
-/* TIER 3: TOP HEADERS (Vertical Sticky Only) */
-.calificaciones-table thead tr:first-child th:not(.corner-header),
-.sabana-table thead tr:first-child th:not(.corner-header) {
+/* Tier 4 Right Offsets (COINCIDENCE FIX) */
+.actions-header {
+  right: 0 !important;
+  width: 100px !important;
+  border-left: 2px solid #ddd !important;
+}
+
+.promedio-header-final {
+  right: 100px !important;
+  width: 80px !important;
+  border-left: 1px solid #ddd !important;
+}
+
+/* TIER 3: TOP HEADERS */
+.calificaciones-table thead tr:first-child th:not(.corner-header):not(.promedio-header-final):not(.actions-header),
+.sabana-table thead tr:first-child th:not(.corner-header):not(.sabana-final-header) {
   position: sticky !important;
   top: 0 !important;
   z-index: 900 !important;
@@ -251,8 +263,15 @@
   border-bottom: 2px solid rgba(0, 0, 0, 0.2) !important;
 }
 
-.sabana-table thead tr:first-child th:not(.corner-header) {
-  background-color: #8e44ad !important;
+/* Group Average Header (Need to Coincide) */
+.promedio-header:not(.promedio-header-final) {
+  position: sticky !important;
+  top: 0 !important;
+  right: 180px !important;
+  width: 165px !important;
+  z-index: 950 !important;
+  background-color: #34495e !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
 /* Row 2 Top Headers */
@@ -260,20 +279,33 @@
 .sabana-table thead tr:nth-child(2) th {
   position: sticky !important;
   top: 50px !important;
-  /* MATCH ROW 1 HEIGHT */
   z-index: 850 !important;
   background-color: #2c3e50 !important;
   color: white !important;
   height: 40px !important;
-  /* COMPACT ROW 2 */
   font-size: 11px !important;
 }
 
-.sabana-table thead tr:nth-child(2) th {
-  background-color: #9b59b6 !important;
+/* Row 2 Right Sticky Offsets */
+.promedio-header.sticky-trim:nth-last-child(1) {
+  right: 180px !important;
+  position: sticky !important;
+  width: 55px !important;
 }
 
-/* TIER 2: LEFT COLUMNS (Horizontal Sticky Only) */
+.promedio-header.sticky-trim:nth-last-child(2) {
+  right: 235px !important;
+  position: sticky !important;
+  width: 55px !important;
+}
+
+.promedio-header.sticky-trim:nth-last-child(3) {
+  right: 290px !important;
+  position: sticky !important;
+  width: 55px !important;
+}
+
+/* TIER 2: LEFT COLUMNS */
 .calificaciones-table tbody td:first-child,
 .calificaciones-table tbody td.matricula-cell,
 .calificaciones-table tbody td.nombre-cell,
@@ -281,17 +313,8 @@
 .sabana-table tbody .sabana-matricula-cell,
 .sabana-table tbody .sabana-nombre-cell {
   position: sticky !important;
-  z-index: 800 !important;
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  /* FORCE BLACK */
-  font-weight: 600 !important;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-  border-right: 1px solid #eee !important;
-}
-
-.sabana-table tbody .sabana-nombre-cell {
-  position: sticky !important;
+  left: auto;
+  /* Managed below */
   z-index: 800 !important;
   background-color: #ffffff !important;
   color: #000000 !important;
@@ -300,17 +323,14 @@
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   border-right: 1px solid #eee !important;
   white-space: nowrap !important;
-  /* NO JUMPING LINES */
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Tier 2 Left Offsets (Refined widths) */
 .calificaciones-table tbody td:first-child,
 .sabana-table tbody .sabana-num-cell {
   left: 0 !important;
   width: 30px !important;
-  color: #000 !important;
 }
 
 .calificaciones-table tbody td.matricula-cell {
@@ -322,47 +342,82 @@
 .sabana-table tbody .sabana-matricula-cell {
   left: 30px !important;
   width: 60px !important;
-  color: #000 !important;
 }
 
 .calificaciones-table tbody td.nombre-cell {
   left: 95px !important;
   width: 200px !important;
   text-align: left !important;
-  color: #000 !important;
 }
 
 .sabana-table tbody .sabana-nombre-cell {
   left: 90px !important;
   width: 180px !important;
   text-align: left !important;
-  color: #000 !important;
 }
 
-/* TIER 1: STICKY RIGHT (Only Actions stays fixed) */
-.calificaciones-table .actions-header,
-.calificaciones-table .actions-cell {
+/* TIER 1: STICKY RIGHT BODY */
+.actions-cell {
   position: sticky !important;
   right: 0 !important;
   width: 100px !important;
-  /* SLIGHTLY NARROWER */
-  min-width: 100px !important;
-  z-index: 900 !important;
+  z-index: 800 !important;
   background-color: white !important;
-  border-left: 2px solid #ddd;
+  border-left: 2px solid #ddd !important;
 }
 
-/* PROM. & FINAL now scroll HORIZONTALLY, but stay sticky on TOP */
-.calificaciones-table .promedio-header-final,
-.calificaciones-table .promedio-final-cell,
-.calificaciones-table .promedio-header,
-.calificaciones-table .promedio-cell,
+.promedio-final-cell {
+  position: sticky !important;
+  right: 100px !important;
+  width: 80px !important;
+  z-index: 800 !important;
+  background-color: white !important;
+  border-left: 1px solid #ddd !important;
+}
+
+/* Body Averages (T1, T2, T3) */
+.promedio-cell:nth-last-child(3) {
+  position: sticky !important;
+  right: 180px !important;
+  width: 55px !important;
+  z-index: 750 !important;
+  background-color: #fff !important;
+}
+
+.promedio-cell:nth-last-child(4) {
+  position: sticky !important;
+  right: 235px !important;
+  width: 55px !important;
+  z-index: 750 !important;
+  background-color: #fff !important;
+}
+
+.promedio-cell:nth-last-child(5) {
+  position: sticky !important;
+  right: 290px !important;
+  width: 55px !important;
+  z-index: 750 !important;
+  background-color: #fff !important;
+  border-left: 1px solid #eee !important;
+}
+
+/* Sábana Right Block Sync */
 .sabana-table .sabana-final-header,
-.sabana-table .sabana-final-cell,
+.sabana-table .sabana-final-cell {
+  position: sticky !important;
+  right: 0 !important;
+  width: 60px !important;
+  z-index: 900 !important;
+  background-color: #ebf5fb !important;
+  border-left: 1px solid #ddd;
+}
+
 .sabana-table .sabana-promedio-gral-header,
 .sabana-table .sabana-prom-cell {
-  position: static !important;
-  /* RESET HORIZONTAL STICKY */
+  position: sticky !important;
+  right: 60px !important;
+  z-index: 850 !important;
+  background-color: #fff !important;
 }
 
 /* But ensure they still stick TOP implicitly by Tier 3 rules or explicit override */
