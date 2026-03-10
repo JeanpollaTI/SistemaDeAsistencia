@@ -39,7 +39,7 @@ router.post('/register-institutional', async (req, res) => {
             return res.status(400).json({ msg: "El correo ya está registrado en la plataforma." });
         }
 
-        // 2. Crear la Institución (Cerrada inicialmente hasta el pago, o activa por defecto si así se prefiere)
+        // 2. Crear la Institución (Activa por defecto para demostración/pago simulado)
         const school = new School({
             name: schoolName,
             type: schoolType,
@@ -49,8 +49,8 @@ router.post('/register-institutional', async (req, res) => {
                 scaleMax: 10
             },
             subscription: {
-                status: "suspended", // Se activa tras el pago exitoso en Stripe
-                nextBilling: null
+                status: "active", // SE CAMBIA A ACTIVE PARA PERMITIR ACCESO INMEDIATO
+                nextBilling: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 días después
             }
         });
 

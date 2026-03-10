@@ -183,148 +183,154 @@ const RegisterSchool = () => {
                         </div>
                         <div className="payment-preview">
                             <p>Costo de suscripción mensual:</p>
-                            <div className="price-tag">$700 <span>MXN</span></div>
-                            <small>Facturación recurrente. Cancela en cualquier momento.</small>
+                            <button className="cta-button secondary" onClick={prevStep}>Anterior</button>
+                            <button className="cta-button primary" onClick={nextStep}>
+                                Continuar al Pago
+                            </button>
                         </div>
-                    </div>
-                );
-            case 4:
-                return (
-                    <div className="form-step fade-in">
-                        <h3><FaCheckCircle style={{ color: '#007a7a' }} /> Pago de Activación</h3>
-                        <p className="step-desc">Completa el pago para activar tu institución en Scholaris.</p>
+                        );
+                        case 4:
+                        return (
+                        <div className="form-step fade-in">
+                            <h3><FaCheckCircle style={{ color: '#007a7a' }} /> Pago de Activación</h3>
+                            <p className="step-desc">Completa el pago para activar tu institución en Scholaris.</p>
 
-                        <div className="card-wrapper">
-                            <div className={`credit-card ${cardData.isFlipped ? 'flipped' : ''}`}>
-                                <div className="card-front">
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <div className="card-chip"></div>
-                                        <div className="card-type">{getCardType(cardData.number)}</div>
-                                    </div>
-                                    <div className="card-number">
-                                        {cardData.number || "#### #### #### ####"}
-                                    </div>
-                                    <div className="card-bottom">
-                                        <div>
-                                            <div className="card-label">Titular</div>
-                                            <div className="card-holder">{cardData.name.toUpperCase() || "NOMBRE COMPLETO"}</div>
+                            <div className="card-wrapper">
+                                <div className={`credit-card ${cardData.isFlipped ? 'flipped' : ''}`}>
+                                    <div className="card-front">
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div className="card-chip"></div>
+                                            <div className="card-type">{getCardType(cardData.number)}</div>
                                         </div>
-                                        <div>
-                                            <div className="card-label">Expira</div>
-                                            <div className="card-date">{cardData.expiry || "MM/YY"}</div>
+                                        <div className="card-number">
+                                            {cardData.number || "#### #### #### ####"}
+                                        </div>
+                                        <div className="card-bottom">
+                                            <div>
+                                                <div className="card-label">Titular</div>
+                                                <div className="card-holder">{cardData.name.toUpperCase() || "NOMBRE COMPLETO"}</div>
+                                            </div>
+                                            <div>
+                                                <div className="card-label">Expira</div>
+                                                <div className="card-date">{cardData.expiry || "MM/YY"}</div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="card-back">
-                                    <div className="card-black-bar"></div>
-                                    <div className="card-label" style={{ textAlign: 'right', marginRight: '30px', marginTop: '15px' }}>CVV</div>
-                                    <div className="card-signature-bar">
-                                        {cardData.cvv}
+                                    <div className="card-back">
+                                        <div className="card-black-bar"></div>
+                                        <div className="card-label" style={{ textAlign: 'right', marginRight: '30px', marginTop: '15px' }}>CVV</div>
+                                        <div className="card-signature-bar">
+                                            {cardData.cvv}
+                                        </div>
+                                        <div className="card-back-type">{getCardType(cardData.number)}</div>
                                     </div>
-                                    <div className="card-back-type">{getCardType(cardData.number)}</div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="input-group">
-                            <label>Número de Tarjeta</label>
-                            <input
-                                type="text"
-                                name="number"
-                                value={cardData.number}
-                                onChange={handleCardChange}
-                                placeholder="#### #### #### ####"
-                                autoComplete="off"
-                            />
-                        </div>
-                        <div className="input-group">
-                            <label>Nombre en la Tarjeta</label>
-                            <input
-                                type="text"
-                                name="name"
-                                value={cardData.name}
-                                onChange={handleCardChange}
-                                placeholder="J. PÉREZ"
-                                autoComplete="off"
-                            />
-                        </div>
-                        <div className="input-grid" style={{ marginTop: '1rem' }}>
                             <div className="input-group">
-                                <label>Fecha (MM/YY)</label>
+                                <label>Número de Tarjeta</label>
                                 <input
                                     type="text"
-                                    name="expiry"
-                                    value={cardData.expiry}
+                                    name="number"
+                                    value={cardData.number}
                                     onChange={handleCardChange}
-                                    placeholder="MM/YY"
+                                    placeholder="#### #### #### ####"
                                     autoComplete="off"
                                 />
                             </div>
                             <div className="input-group">
-                                <label>CVV</label>
+                                <label>Nombre en la Tarjeta</label>
                                 <input
                                     type="text"
-                                    name="cvv"
-                                    value={cardData.cvv}
+                                    name="name"
+                                    value={cardData.name}
                                     onChange={handleCardChange}
-                                    onFocus={() => setCardData({ ...cardData, isFlipped: true })}
-                                    onBlur={() => setCardData({ ...cardData, isFlipped: false })}
-                                    placeholder="123"
+                                    placeholder="J. PÉREZ"
                                     autoComplete="off"
                                 />
                             </div>
-                        </div>
+                            <div className="input-grid" style={{ marginTop: '1rem' }}>
+                                <div className="input-group">
+                                    <label>Fecha (MM/YY)</label>
+                                    <input
+                                        type="text"
+                                        name="expiry"
+                                        value={cardData.expiry}
+                                        onChange={handleCardChange}
+                                        placeholder="MM/YY"
+                                        autoComplete="off"
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>CVV</label>
+                                    <input
+                                        type="text"
+                                        name="cvv"
+                                        value={cardData.cvv}
+                                        onChange={handleCardChange}
+                                        onFocus={() => setCardData({ ...cardData, isFlipped: true })}
+                                        onBlur={() => setCardData({ ...cardData, isFlipped: false })}
+                                        placeholder="123"
+                                        autoComplete="off"
+                                    />
+                                </div>
+                            </div>
 
-                        <button className="cta-button primary" style={{ marginTop: '2rem', width: '100%' }} onClick={() => navigate('/login')}>
-                            Confirmar y Pagar $700 MXN
-                        </button>
-                    </div>
-                );
-            default:
-                return null;
+                            <button
+                                className="cta-button primary"
+                                style={{ marginTop: '2rem', width: '100%' }}
+                                onClick={handleSubmit}
+                                disabled={loading || !cardData.number || !cardData.name || !cardData.expiry || !cardData.cvv}
+                            >
+                                {loading ? "Procesando..." : "Confirmar y Pagar $700 MXN"}
+                            </button>
+                        </div>
+                        );
+                        default:
+                        return null;
         }
     };
 
-    return (
-        <div className="register-school-wrapper">
-            <div className="register-card">
-                <div className="wizard-header">
-                    <div className="wizard-logo">
-                        <FaGraduationCap /> <span>SCHOLARIS</span>
-                    </div>
-                    <div className="step-indicator">
-                        <div className={`dot ${step >= 1 ? 'active' : ''}`}>1</div>
-                        <div className={`line ${step >= 2 ? 'active' : ''}`}></div>
-                        <div className={`dot ${step >= 2 ? 'active' : ''}`}>2</div>
-                        <div className={`line ${step >= 3 ? 'active' : ''}`}></div>
-                        <div className={`dot ${step >= 3 ? 'active' : ''}`}>3</div>
-                    </div>
-                </div>
+                        return (
+                        <div className="register-school-wrapper">
+                            <div className="register-card">
+                                <div className="wizard-header">
+                                    <div className="wizard-logo">
+                                        <FaGraduationCap /> <span>SCHOLARIS</span>
+                                    </div>
+                                    <div className="step-indicator">
+                                        <div className={`dot ${step >= 1 ? 'active' : ''}`}>1</div>
+                                        <div className={`line ${step >= 2 ? 'active' : ''}`}></div>
+                                        <div className={`dot ${step >= 2 ? 'active' : ''}`}>2</div>
+                                        <div className={`line ${step >= 3 ? 'active' : ''}`}></div>
+                                        <div className={`dot ${step >= 3 ? 'active' : ''}`}>3</div>
+                                    </div>
+                                </div>
 
-                <div className="wizard-body">
-                    {error && <div className="error-message">{error}</div>}
-                    {renderStep()}
-                </div>
+                                <div className="wizard-body">
+                                    {error && <div className="error-message">{error}</div>}
+                                    {renderStep()}
+                                </div>
 
-                {step < 4 && (
-                    <div className="wizard-footer">
-                        {step > 1 && (
-                            <button className="nav-btn prev" onClick={prevStep}>
-                                <FaArrowLeft /> Atrás
-                            </button>
-                        )}
-                        <button
-                            className="nav-btn next"
-                            onClick={step === 3 ? handleSubmit : nextStep}
-                            disabled={loading}
-                        >
-                            {loading ? "Procesando..." : (step === 3 ? "Finalizar y Pagar" : "Siguiente")} <FaArrowRight />
-                        </button>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
+                                {step < 4 && (
+                                    <div className="wizard-footer">
+                                        {step > 1 && (
+                                            <button className="nav-btn prev" onClick={prevStep}>
+                                                <FaArrowLeft /> Atrás
+                                            </button>
+                                        )}
+                                        <button
+                                            className="nav-btn next"
+                                            onClick={step === 3 ? handleSubmit : nextStep}
+                                            disabled={loading}
+                                        >
+                                            {loading ? "Procesando..." : (step === 3 ? "Finalizar y Pagar" : "Siguiente")} <FaArrowRight />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        );
 };
 
-export default RegisterSchool;
+                        export default RegisterSchool;

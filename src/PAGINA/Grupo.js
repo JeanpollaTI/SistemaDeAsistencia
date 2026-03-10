@@ -105,7 +105,11 @@ function Grupo({ user }) {
         }
       } catch (err) {
         console.error("Error al cargar datos:", err);
-        setError("No se pudieron cargar los datos.");
+        if (err.response?.status === 403) {
+          setError("SUSPENDED");
+        } else {
+          setError("No se pudieron cargar los datos.");
+        }
       } finally {
         setLoading(false);
       }
@@ -689,6 +693,27 @@ function Grupo({ user }) {
   );
 
   if (error) {
+    if (error === "SUSPENDED") {
+      return (
+        <div className="grupo-componente" style={{ padding: '50px', textAlign: 'center' }}>
+          <div className="card shadow p-5 border-danger" style={{ maxWidth: '600px', margin: 'auto', backgroundColor: '#fff5f5' }}>
+            <h2 className="text-danger" style={{ color: '#c53030' }}>Suscripción Suspendida</h2>
+            <div style={{ fontSize: '1.2rem', margin: '20px 0', color: '#742a2a' }}>
+              El acceso a la gestión de grupos ha sido pausado.
+              Para continuar usando Scholaris, es necesario renovar la suscripción de la institución.
+            </div>
+            <button
+              className="btn"
+              style={{ backgroundColor: '#c53030', color: 'white', fontWeight: 'bold', padding: '12px 24px' }}
+              onClick={() => window.location.href = '#pagar'}
+            >
+              RENOVAR AHORA
+            </button>
+            <p className="mt-4 small text-muted">Si acabas de realizar el pago, espera unos minutos a que se procese.</p>
+          </div>
+        </div>
+      );
+    }
     if (error === "SCHOOL_REQUIRED") {
       return (
         <div className="grupo-componente" style={{ padding: '50px', textAlign: 'center' }}>
