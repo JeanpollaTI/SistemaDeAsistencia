@@ -286,22 +286,15 @@
   min-width: 100%;
 }
 
-/* Sábana Right Block Sync */
+/* Sábana Right Block Sync - REMOVED HORIZONTAL STICKINESS as requested */
 .sabana-table .sabana-final-header,
 .sabana-table .sabana-final-cell {
-  position: sticky !important;
-  right: 0 !important;
-  width: 60px !important;
-  z-index: 900 !important;
   background-color: #ebf5fb !important;
   border-left: 1px solid #ddd;
 }
 
 .sabana-table .sabana-promedio-gral-header,
 .sabana-table .sabana-prom-cell {
-  position: sticky !important;
-  right: 60px !important;
-  z-index: 850 !important;
   background-color: #fff !important;
 }
 
