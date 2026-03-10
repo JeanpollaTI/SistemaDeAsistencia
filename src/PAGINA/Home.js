@@ -101,6 +101,8 @@ function Home({ user }) {
       }
     } catch (err) {
       console.error("Error al cargar materias:", err);
+      const detailMsg = err.response?.data?.details ? `: ${err.response.data.details}` : "";
+      mostrarAlerta(`Error al cargar materias${detailMsg}`, "error");
     }
   };
 

@@ -108,7 +108,8 @@ function Grupo({ user }) {
         if (err.response?.status === 403) {
           setError("SUSPENDED");
         } else {
-          setError("No se pudieron cargar los datos.");
+          const detailMsg = err.response?.data?.details ? `: ${err.response.data.details}` : "";
+          setError(`No se pudieron cargar los datos${detailMsg}`);
         }
       } finally {
         setLoading(false);
