@@ -200,9 +200,12 @@
   position: sticky !important;
   top: 0 !important;
   z-index: 1000 !important;
-  background-color: #2c3e50 !important;
-  color: white !important;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2) !important;
+  background-color: #ffffff !important;
+  /* BACK TO WHITE */
+  color: #000000 !important;
+  /* BLACK TEXT */
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1) !important;
+  border-bottom: 2px solid #ddd !important;
 }
 
 /* Tier 4 Left Offsets */
@@ -248,6 +251,7 @@
   top: 45px !important;
   z-index: 850 !important;
   background-color: #2c3e50 !important;
+  color: white !important;
 }
 
 .sabana-table thead tr:nth-child(2) th {
@@ -264,7 +268,14 @@
   position: sticky !important;
   z-index: 800 !important;
   background-color: #ffffff !important;
+  color: #000000 !important;
+  /* FORCE BLACK */
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.calificaciones-table tbody td:first-child {
+  font-weight: bold;
+  color: #666 !important;
 }
 
 /* Tier 2 Left Offsets */
@@ -276,6 +287,7 @@
 .calificaciones-table tbody td.matricula-cell {
   left: 40px !important;
   background-color: #f8f9fa !important;
+  color: #16a085 !important;
 }
 
 .sabana-table tbody .sabana-matricula-cell {
@@ -285,13 +297,14 @@
 
 .calificaciones-table tbody td.nombre-cell {
   left: 110px !important;
+  text-align: left !important;
 }
 
 .sabana-table tbody .sabana-nombre-cell {
   left: 90px !important;
 }
 
-/* TIER 1: STICKY RIGHT (Averages) */
+/* TIER 1: STICKY RIGHT (Averages restricted to Final/Actions) */
 .calificaciones-table .actions-header,
 .calificaciones-table .actions-cell {
   position: sticky !important;
@@ -312,26 +325,11 @@
   border-left: 1px solid #ddd;
 }
 
+/* Intermediate averages should NOT be sticky to avoid "disaster" overlapping */
 .calificaciones-table .promedio-header,
 .calificaciones-table .promedio-cell {
-  position: sticky !important;
-  z-index: 850 !important;
-}
-
-.calificaciones-table .promedio-cell:nth-last-child(3) {
-  right: 200px !important;
-  background-color: #fdf2f2 !important;
-}
-
-.calificaciones-table .promedio-cell:nth-last-child(4) {
-  right: 250px !important;
-  background-color: #fdf2f2 !important;
-}
-
-.calificaciones-table .promedio-cell:nth-last-child(5) {
-  right: 300px !important;
-  background-color: #fdf2f2 !important;
-  border-left: 1px solid #ccc !important;
+  position: static !important;
+  /* RESET STICKY */
 }
 
 .sabana-table .sabana-final-header,
@@ -346,24 +344,8 @@
 
 .sabana-table .sabana-promedio-gral-header,
 .sabana-table .sabana-prom-cell {
-  position: sticky !important;
-  z-index: 850 !important;
-}
-
-.sabana-table .sabana-prom-cell:nth-last-child(2) {
-  right: 60px !important;
-  background-color: #f4ecf7 !important;
-}
-
-.sabana-table .sabana-prom-cell:nth-last-child(3) {
-  right: 110px !important;
-  background-color: #f4ecf7 !important;
-}
-
-.sabana-table .sabana-prom-cell:nth-last-child(4) {
-  right: 160px !important;
-  background-color: #f4ecf7 !important;
-  border-left: 1px solid #ccc !important;
+  position: static !important;
+  /* RESET STICKY */
 }
 
 
