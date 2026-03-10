@@ -15,11 +15,41 @@ const RegisterSchool = () => {
         schoolName: "",
         schoolType: "Secundaria",
         evaluationPeriod: "Trimestre",
-        logoUrl: "" // Simularemos la subida o pediremos una URL
+        logoUrl: ""
+    });
+
+    const [cardData, setCardData] = useState({
+        number: "",
+        name: "",
+        expiry: "",
+        cvv: "",
+        isFlipped: false
     });
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleCardChange = (e) => {
+        let { name, value } = e.target;
+        if (name === 'number') {
+            value = value.replace(/\D/g, '').substring(0, 16);
+            value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+        }
+        if (name === 'expiry') {
+            value = value.replace(/\D/g, '').substring(0, 4);
+            if (value.length >= 3) value = value.substring(0, 2) + '/' + value.substring(2);
+        }
+        if (name === 'cvv') value = value.replace(/\D/g, '').substring(0, 4);
+
+        setCardData({ ...cardData, [name]: value });
+    };
+
+    const getCardType = (num) => {
+        if (/^4/.test(num)) return "VISA";
+        if (/^5[1-5]/.test(num)) return "MASTERCARD";
+        if (/^3[47]/.test(num)) return "AMEX";
+        return "VISA";
     };
 
     const nextStep = () => {
@@ -61,8 +91,8 @@ const RegisterSchool = () => {
                 throw new Error(detailedError);
             }
 
-            // Si el registro es exitoso, pasamos al paso de pago (simulado o Stripe redirección)
-            setStep(4);
+            alert("¡Institución registrada y activada con éxito!");
+            navigate('/login');
         } catch (err) {
             setError(err.message);
         } finally {
@@ -70,37 +100,6 @@ const RegisterSchool = () => {
         }
     };
 
-    const [cardData, setCardData] = useState({
-        number: "",
-        name: "",
-        expiry: "",
-        cvv: "",
-        isFlipped: false
-    });
-
-    const handleCardChange = (e) => {
-        let { name, value } = e.target;
-        if (name === 'number') {
-            value = value.replace(/\D/g, '').substring(0, 16);
-            value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-        }
-        if (name === 'expiry') {
-            value = value.replace(/\D/g, '').substring(0, 4);
-            if (value.length >= 3) value = value.substring(0, 2) + '/' + value.substring(2);
-        }
-        if (name === 'cvv') value = value.replace(/\D/g, '').substring(0, 4);
-
-        setCardData({ ...cardData, [name]: value });
-    };
-
-    const getCardType = (num) => {
-        if (/^4/.test(num)) return "VISA";
-        if (/^5[1-5]/.test(num)) return "MASTERCARD";
-        if (/^3[47]/.test(num)) return "AMEX";
-        return "VISA";
-    };
-
-    // Renderizado de Pasos
     const renderStep = () => {
         switch (step) {
             case 1:
@@ -184,9 +183,6 @@ const RegisterSchool = () => {
                         <div className="payment-preview">
                             <p>Costo de suscripción mensual:</p>
                             <div className="price-tag" style={{ fontSize: '2rem', color: '#007a7a', fontWeight: 'bold', margin: '1rem 0' }}>$700 <span>MXN</span></div>
-                            <button className="cta-button primary" onClick={nextStep}>
-                                Continuar al Pago
-                            </button>
                         </div>
                     </div>
                 );
@@ -281,7 +277,7 @@ const RegisterSchool = () => {
                             className="cta-button primary"
                             style={{ marginTop: '2rem', width: '100%' }}
                             onClick={handleSubmit}
-                            disabled={loading}
+                            disabled={loading || !cardData.number || !cardData.name || !cardData.expiry || !cardData.cvv}
                         >
                             {loading ? "Procesando..." : "Confirmar y Pagar $700 MXN"}
                         </button>
@@ -337,4 +333,3 @@ const RegisterSchool = () => {
 };
 
 export default RegisterSchool;
-```
