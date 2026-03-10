@@ -51,7 +51,8 @@
   border-radius: 20px;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
   width: 100%;
-  max-width: 450px;
+  max-width: 900px;
+  /* Wider container */
   text-align: center;
   color: #f5f5f5;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -131,11 +132,30 @@ input[type="file"] {
   box-shadow: 0 6px 15px rgba(0, 122, 122, 0.4);
 }
 
+/* Grid for side-by-side layout */
+.register-grid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  /* Fields on left, photo on right */
+  gap: 2.5rem;
+  align-items: start;
+  text-align: left;
+}
+
 /* Formulario */
 .register-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  /* Two columns for inputs */
+  gap: 1.2rem;
+}
+
+/* Photo area container */
+.photo-upload-area {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  align-items: center;
+  gap: 1rem;
 }
 
 .register-form input,

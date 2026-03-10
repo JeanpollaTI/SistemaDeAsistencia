@@ -114,42 +114,45 @@ export default function RegisterProfesor() {
                                         </p>
                                 )}
 
-                                <div className="profile-section">
-                                        {foto ? (
-                                                <img src={URL.createObjectURL(foto)} alt="Perfil" className="profile-img" />
-                                        ) : (
-                                                <div className="profile-img placeholder">
-                                                        <FaCamera size={40} />
-                                                </div>
-                                        )}
-                                </div>
-
-                                <label htmlFor="file-upload" className="upload-label">Seleccionar foto</label>
-                                <input id="file-upload" type="file" onChange={handleFile} />
-
-                                <form className="register-form" onSubmit={handleSubmit}>
-                                        <input placeholder="Nombre" name="nombre" value={form.nombre} onChange={handleChange} required />
-                                        <input placeholder="Edad" name="edad" type="number" value={form.edad} onChange={handleChange} required />
-                                        <select name="sexo" value={form.sexo} onChange={handleChange}>
-                                                <option value="Masculino">Masculino</option>
-                                                <option value="Femenino">Femenino</option>
-                                                <option value="Otro">Otro</option>
-                                        </select>
-                                        <input placeholder="Email" name="email" type="email" value={form.email} onChange={handleChange} required />
-                                        <input placeholder="Celular" name="celular" value={form.celular} onChange={handleChange} />
-                                        <input placeholder="Password" name="password" type="password" value={form.password} onChange={handleChange} required />
-
-                                        {!firstAdmin && (
-                                                <select name="role" value={form.role} onChange={handleChange}>
-                                                        <option value="profesor">Profesor</option>
-                                                        <option value="admin">Admin</option>
+                                <div className="register-grid">
+                                        <form className="register-form" onSubmit={handleSubmit}>
+                                                <input placeholder="Nombre" name="nombre" value={form.nombre} onChange={handleChange} required />
+                                                <input placeholder="Edad" name="edad" type="number" value={form.edad} onChange={handleChange} required />
+                                                <select name="sexo" value={form.sexo} onChange={handleChange}>
+                                                        <option value="Masculino">Masculino</option>
+                                                        <option value="Femenino">Femenino</option>
+                                                        <option value="Otro">Otro</option>
                                                 </select>
-                                        )}
+                                                <input placeholder="Email" name="email" type="email" value={form.email} onChange={handleChange} required />
+                                                <input placeholder="Celular" name="celular" value={form.celular} onChange={handleChange} />
+                                                <input placeholder="Password" name="password" type="password" value={form.password} onChange={handleChange} required />
 
-                                        <button type="submit" disabled={isSubmitting}>
-                                                {isSubmitting ? "Registrando..." : "Registrar"}
-                                        </button>
-                                </form>
+                                                {!firstAdmin && (
+                                                        <select name="role" value={form.role} onChange={handleChange}>
+                                                                <option value="profesor">Profesor</option>
+                                                                <option value="admin">Admin</option>
+                                                        </select>
+                                                )}
+
+                                                <button type="submit" disabled={isSubmitting} style={{ gridColumn: 'span 2' }}>
+                                                        {isSubmitting ? "Registrando..." : "Registrar"}
+                                                </button>
+                                        </form>
+
+                                        <div className="photo-upload-area">
+                                                <div className="profile-section">
+                                                        {foto ? (
+                                                                <img src={URL.createObjectURL(foto)} alt="Perfil" className="profile-img" />
+                                                        ) : (
+                                                                <div className="profile-img placeholder">
+                                                                        <FaCamera size={40} />
+                                                                </div>
+                                                        )}
+                                                </div>
+                                                <label htmlFor="file-upload" className="upload-label">Seleccionar foto</label>
+                                                <input id="file-upload" type="file" onChange={handleFile} />
+                                        </div>
+                                </div>
 
                                 {msg && <p className="message">{msg}</p>}
                         </div>
