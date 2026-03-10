@@ -5,6 +5,7 @@ import multer from "multer";
 
 // Importaciones
 import User from "../models/User.js";
+import School from "../models/School.js";
 import cloudinary from '../config/cloudinary.js';
 
 const router = express.Router();
