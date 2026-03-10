@@ -18,6 +18,7 @@ import Trabajos from "./PAGINA/Trabajos";
 import Calificaciones from "./PAGINA/Calificaciones";
 import LandingPage from "./PAGINA/LandingPage";
 import RegisterSchool from "./PAGINA/RegisterSchool";
+import ParentPortal from "./PAGINA/ParentPortal";
 import { FaGraduationCap } from 'react-icons/fa';
 
 // Estilos y logo (Asegúrate de que Home.css esté en PAGINA/ y logo.png en src/)
@@ -182,6 +183,7 @@ function App() {
                     <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
                     <Route path="/forgot-password" element={user ? <Navigate to="/" /> : <Password />} />
                     <Route path="/no-autorizado" element={<div>No tienes permiso para ver esta página.</div>} />
+                    <Route path="/portal-padres" element={<ParentPortal />} />
 
                     {/* Rutas Protegidas (Requieren autenticación) */}
                     <Route path="/perfil" element={<PrivateRoute><Perfil user={user} logout={logout} getProfileImageUrl={getProfileImageUrl} /></PrivateRoute>} />

@@ -2,10 +2,21 @@ import express from "express";
 import mongoose from "mongoose";
 import Grupo from "../models/Grupo.js";
 import Calificacion from "../models/Calificacion.js";
+import Counter from "../models/Counter.js";
 import { authMiddleware, isAdmin } from "../middlewares/authMiddleware.js";
 import { schoolMiddleware } from "../middlewares/schoolMiddleware.js";
 
 const router = express.Router();
+
+// Función auxiliar para obtener la siguiente matrícula formateada (0001, 0002...)
+const getNextMatricula = async () => {
+    const counter = await Counter.findOneAndUpdate(
+        { id: 'alumnos' },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+    );
+    return counter.seq.toString().padStart(4, '0');
+};
 
 // [POST] /grupos - Crear un nuevo grupo (Admin)
 router.post("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
@@ -20,13 +31,17 @@ router.post("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => 
             return res.status(400).json({ error: "Ya existe un grupo con ese nombre en esta escuela." });
         }
 
-        const alumnosProcesados = (alumnos || []).map(alumno => {
-            if (alumno._id && String(alumno._id).startsWith('new-')) {
-                const { _id, ...restoDelAlumno } = alumno;
-                return restoDelAlumno;
+        const alumnosProcesados = await Promise.all((alumnos || []).map(async alumno => {
+            const data = { ...alumno };
+            // Si es un alumno nuevo o no tiene matrícula, le asignamos una
+            if (!data.matricula) {
+                data.matricula = await getNextMatricula();
             }
-            return alumno;
-        });
+            if (data._id && String(data._id).startsWith('new-')) {
+                delete data._id;
+            }
+            return data;
+        }));
 
         const nuevoGrupo = new Grupo({
             nombre,
@@ -115,13 +130,17 @@ router.put("/:id", authMiddleware, isAdmin, async (req, res) => {
         }
 
         if (alumnos) {
-            const alumnosProcesados = alumnos.map(alumno => {
-                if (alumno._id && String(alumno._id).startsWith('new-')) {
-                    const { _id, ...restoDelAlumno } = alumno;
-                    return restoDelAlumno;
+            const alumnosProcesados = await Promise.all(alumnos.map(async alumno => {
+                const data = { ...alumno };
+                // Asignar matrícula a alumnos nuevos que no la tengan
+                if (!data.matricula) {
+                    data.matricula = await getNextMatricula();
                 }
-                return alumno;
-            });
+                if (data._id && String(data._id).startsWith('new-')) {
+                    delete data._id;
+                }
+                return data;
+            }));
             grupo.alumnos = alumnosProcesados;
         }
 

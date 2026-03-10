@@ -17,6 +17,7 @@ import { emailRouter } from "./routes/emailSender.js";
 import { materiasRouter } from "./routes/materias.js";
 import registrationRouter from "./routes/registration.js";
 import stripeRouter from "./routes/stripe.js";
+import parentPortalRouter from "./routes/parentPortal.js";
 import { schoolMiddleware } from "./middlewares/schoolMiddleware.js";
 
 // --- CONFIGURACIÓN INICIAL ---
@@ -54,6 +55,7 @@ app.use("/api/stripe", stripeRouter);
 // <-- AÑADIDO: Usar la nueva ruta para el envío de boletas -->
 app.use("/api", schoolMiddleware, emailRouter);
 app.use("/api/materias", materiasRouter);
+app.use("/api/portal-padres", parentPortalRouter);
 
 // ----------------- MANEJO DE ERRORES -----------------
 // Middleware para rutas no encontradas (404 Fallback)

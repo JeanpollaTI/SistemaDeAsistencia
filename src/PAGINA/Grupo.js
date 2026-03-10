@@ -27,7 +27,7 @@ function Grupo({ user }) {
   const [modalVisible, setModalVisible] = useState(null);
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null);
   const [nuevoGrupo, setNuevoGrupo] = useState({ nombre: '', asesor: '', alumnos: [] });
-  const [alumnoInput, setAlumnoInput] = useState({ nombre: '', apellidoPaterno: '', apellidoMaterno: '' });
+  const [alumnoInput, setAlumnoInput] = useState({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '' });
   const [asistencia, setAsistencia] = useState({});
   const [diasPorBimestre, setDiasPorBimestre] = useState({});
   const [bimestreAbierto, setBimestreAbierto] = useState({});
@@ -187,7 +187,12 @@ function Grupo({ user }) {
       }
     } else if (tipo === 'editarAlumno') {
       setEditingAlumno(data);
-      setAlumnoInput({ nombre: data.nombre, apellidoPaterno: data.apellidoPaterno, apellidoMaterno: data.apellidoMaterno || '' });
+      setAlumnoInput({
+        nombre: data.nombre,
+        apellidoPaterno: data.apellidoPaterno,
+        apellidoMaterno: data.apellidoMaterno || '',
+        emailPadre: data.emailPadre || ''
+      });
       setModalVisible('editarAlumno');
     } else if (tipo === 'importar') {
       setModalVisible('importar');
@@ -198,7 +203,7 @@ function Grupo({ user }) {
     setModalVisible(null);
     setGrupoSeleccionado(null);
     setNuevoGrupo({ nombre: '', asesor: '', alumnos: [] });
-    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '' });
+    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '' });
     setBimestreAbierto({});
     setAsignaciones({});
     setEditingAlumno(null);
@@ -217,7 +222,7 @@ function Grupo({ user }) {
     const alumnoId = `new-${Date.now()}`;
     const nuevoAlumno = { _id: alumnoId, ...alumnoInput };
     setNuevoGrupo(prev => ({ ...prev, alumnos: [...prev.alumnos, nuevoAlumno].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)) }));
-    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '' });
+    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '' });
   };
 
   const handleUpdateAlumno = () => {
@@ -721,6 +726,7 @@ function Grupo({ user }) {
             <table className="grupos-table">
               <thead>
                 <tr>
+                  <th>Matrícula</th>
                   <th>Nombre del Grupo</th>
                   <th>Asesor</th>
                   <th>N° Alumnos</th>
@@ -817,6 +823,7 @@ function Grupo({ user }) {
                       <input type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} />
                       <input type="text" placeholder="Apellido Paterno" value={alumnoInput.apellidoPaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoPaterno: e.target.value })} />
                       <input type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} />
+                      <input type="email" placeholder="Correo del Padre/Alumno" value={alumnoInput.emailPadre} onChange={(e) => setAlumnoInput({ ...alumnoInput, emailPadre: e.target.value })} />
                     </div>
                     <div className="alumno-form-actions">
                       <button className="btn btn-add" onClick={handleAgregarAlumno}>Agregar Alumno</button>
@@ -830,7 +837,11 @@ function Grupo({ user }) {
                     <ul>
                       {nuevoGrupo.alumnos.map((a, index) => (
                         <li key={a._id}>
-                          <span className="alumno-nombre-display">{`${index + 1}. ${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`}</span>
+                          <span className="alumno-nombre-display">
+                            <strong>{a.matricula || '---'}</strong> - {`${index + 1}. ${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`}
+                            <br />
+                            <small style={{ color: '#666' }}>{a.emailPadre || 'Sin correo'}</small>
+                          </span>
                           <div className="alumno-actions">
                             <button className="btn-edit-alumno" onClick={() => abrirModal('editarAlumno', a)}><FaPencilAlt /></button>
                             <button className="btn-delete-alumno" onClick={() => handleDeleteAlumno(a)}><FaTrash /></button>
@@ -860,6 +871,7 @@ function Grupo({ user }) {
                   <input type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} />
                   <input type="text" placeholder="Apellido Paterno" value={alumnoInput.apellidoPaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoPaterno: e.target.value })} />
                   <input type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} />
+                  <input type="email" placeholder="Correo del Padre/Alumno" value={alumnoInput.emailPadre} onChange={(e) => setAlumnoInput({ ...alumnoInput, emailPadre: e.target.value })} />
                 </div>
               </div>
               <div className="modal-actions">

@@ -17,6 +17,18 @@ const AlumnoSchema = new mongoose.Schema({
     trim: true,
     default: "",
   },
+  emailPadre: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    default: "",
+  },
+  matricula: {
+    type: String,
+    unique: true,
+    sparse: true, // Permite nulos para alumnos antiguos sin matrícula todavía
+    trim: true,
+  }
 });
 
 // Define el esquema para una asignación (Profesor + Asignatura).
