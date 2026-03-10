@@ -588,13 +588,40 @@ body {
 /* ASISTENCIA (ESTILO ACORDEÓN)            */
 /* ======================================= */
 .grupo-componente .asistencia-modal-content {
-  max-width: 90vw;
-  width: 1000px;
+  max-width: 98vw;
+  width: 98%;
+}
+
+.grupo-componente .bimestre-selector {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
 }
 
 .grupo-componente .asistencia-body {
-  max-height: 70vh;
+  max-height: 75vh;
   overflow-y: auto;
+}
+
+.grupo-componente .tabla-global-container::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.grupo-componente .tabla-global-container::-webkit-scrollbar-track {
+  background: var(--dark-color-alt);
+  border-radius: 10px;
+}
+
+.grupo-componente .tabla-global-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, var(--main-color), var(--main-color-hover));
+  border-radius: 10px;
+  border: 2px solid var(--dark-color-alt);
+}
+
+.grupo-componente .tabla-global-container::-webkit-scrollbar-thumb:hover {
+  background: var(--main-color-hover);
 }
 
 .grupo-componente .asistencia-row {

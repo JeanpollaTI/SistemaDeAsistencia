@@ -944,7 +944,7 @@ function Grupo({ user }) {
               <h2>Toma de Asistencia: {grupoSeleccionado?.nombre} - {asignaturaActual}</h2>
 
               {/* NUEVO: Selector de Trimestre Global */}
-              <div className="bimestre-selector" style={{ justifyContent: 'center', borderBottom: 'none', marginBottom: '1rem' }}>
+              <div className="bimestre-selector">
                 {[1, 2, 3].map(bim => (
                   <button
                     key={bim}
