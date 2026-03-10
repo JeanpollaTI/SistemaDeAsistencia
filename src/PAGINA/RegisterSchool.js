@@ -56,7 +56,10 @@ const RegisterSchool = () => {
             });
 
             const data = await response.json();
-            if (!response.ok) throw new Error(data.msg || "Error al registrar");
+            if (!response.ok) {
+                const detailedError = data.details ? `${data.msg || data.error}: ${data.details}` : (data.msg || data.error || "Error al registrar");
+                throw new Error(detailedError);
+            }
 
             // Si el registro es exitoso, pasamos al paso de pago (simulado o Stripe redirección)
             setStep(4);

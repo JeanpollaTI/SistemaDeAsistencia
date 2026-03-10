@@ -78,8 +78,13 @@ router.post('/register-institutional', async (req, res) => {
         });
 
     } catch (err) {
-        console.error("Error en registro institucional:", err);
-        res.status(500).json({ error: "Error interno del servidor al registrar la escuela." });
+        console.error("CRITICAL error en registro institucional:", err);
+        // Retornar el mensaje específico del error para facilitar el debug en el frontend
+        res.status(500).json({
+            error: "Error interno del servidor",
+            details: err.message,
+            msg: "No se pudo completar el registro. Revise los datos o intente más tarde."
+        });
     }
 });
 
