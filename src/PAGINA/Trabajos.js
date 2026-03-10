@@ -1212,6 +1212,7 @@ function Trabajos({ user }) {
                     z-index: 250; 
                     top: 0;
                     background-color: #2c3e50 !important;
+                    color: white !important;
                     border-right: 1px solid #444;
                 }
                 .grupo-componente .tabla-global tbody td:first-child {
