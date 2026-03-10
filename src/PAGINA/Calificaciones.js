@@ -1000,6 +1000,7 @@ function Calificaciones({ user }) {
                 <thead>
                   <tr>
                     <th rowSpan="2" className="num-header">#</th>
+                    <th rowSpan="2" className="matricula-header">ID/Matrícula</th>
                     <th rowSpan="2" className="nombre-header">Nombre del Alumno</th>
                     <DndContext
                       sensors={sensors}
@@ -1044,6 +1045,7 @@ function Calificaciones({ user }) {
                     return (
                       <tr key={alumno._id}>
                         <td>{alumnos.indexOf(alumno) + 1}</td>
+                        <td style={{ fontWeight: 'bold', color: 'var(--scholaris-teal)' }}>{alumno.matricula || '---'}</td>
                         <td>{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</td>
                         {materias.map(materia => (
                           <React.Fragment key={`${alumno._id}-${materia}`}>
@@ -1089,6 +1091,7 @@ function Calificaciones({ user }) {
                 <thead>
                   <tr className="sabana-head-main">
                     <th rowSpan="2" className="sabana-num">#</th>
+                    <th rowSpan="2" className="sabana-matricula">ID</th>
                     <th rowSpan="2" className="sabana-nombre">Nombre del Alumno</th>
                     {materias.map(materia => (
                       <th key={materia} colSpan={getPeriodCount()} className="sabana-materia-header">{materia}</th>
@@ -1123,6 +1126,7 @@ function Calificaciones({ user }) {
                     return (
                       <tr key={alumno._id}>
                         <td className="sabana-num-cell">{idx + 1}</td>
+                        <td className="sabana-matricula-cell" style={{ fontWeight: 'bold' }}>{alumno.matricula || '---'}</td>
                         <td className="sabana-nombre-cell">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</td>
                         {materias.map(materia => (
                           <React.Fragment key={`${alumno._id}-${materia}`}>

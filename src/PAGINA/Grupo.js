@@ -962,6 +962,7 @@ function Grupo({ user }) {
                     <thead>
                       <tr>
                         <th className="num-col" style={{ width: '40px', minWidth: '40px', textAlign: 'center' }}>#</th>
+                        <th className="matricula-col" style={{ width: '80px', minWidth: '80px', textAlign: 'center' }}>ID</th>
                         <th className="alumno-col" style={{ width: '250px', minWidth: '250px' }}>Alumno</th>
                         <th style={{ width: '120px', minWidth: '120px', textAlign: 'center' }}>Totales</th>
                         {Array.from({ length: diasPorBimestre[bimestreActivo] || DIAS_INICIALES }).map((_, i) => (
@@ -978,6 +979,7 @@ function Grupo({ user }) {
                         return (
                           <tr key={alumno._id}>
                             <td className="num-col" style={{ textAlign: 'center' }}>{index + 1}</td>
+                            <td className="matricula-col" style={{ textAlign: 'center', fontWeight: 'bold' }}>{alumno.matricula || '---'}</td>
                             <td className="alumno-col">
                               {alumno.apellidoPaterno} {alumno.apellidoMaterno || ''} {alumno.nombre}
                             </td>
