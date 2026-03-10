@@ -76,7 +76,7 @@
 }
 
 .btn-admin:hover:not(:disabled) {
-    background-color: #b8972b;
+    background-color: #00CBCB;
     transform: translateY(-1px);
 }
 
@@ -155,7 +155,7 @@
 }
 
 .horario-table th {
-    background: linear-gradient(to bottom, #f5d88b, #007A7A);
+    background: linear-gradient(to bottom, #00CBCB, #007A7A);
     color: #000;
     font-weight: bold;
     font-size: 13px;
@@ -247,7 +247,7 @@
 
 .hora-box-horizontal input:focus {
     border-color: #007A7A;
-    box-shadow: 0 0 2px rgba(212, 175, 55, 0.6);
+    box-shadow: 0 0 2px rgba(0, 203, 203, 0.6);
     outline: none;
 }
 
@@ -356,7 +356,7 @@
 }
 
 .progress-bar-fill {
-    background: linear-gradient(45deg, #ffb347, #ffcc33);
+    background: linear-gradient(45deg, #00CBCB, #007A7A);
     height: 100%;
     border-radius: 16px;
     display: flex;

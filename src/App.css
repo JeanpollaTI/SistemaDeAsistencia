@@ -120,7 +120,7 @@ button {
 }
 
 .scroll-header {
-    box-shadow: 0 1px 4px rgba(212, 175, 55, .3);
+    box-shadow: 0 1px 4px rgba(0, 203, 203, .3);
 }
 
 /* <-- INICIO DE CAMBIOS PARA CENTRAR MENÚ --> */
@@ -268,12 +268,12 @@ button {
 
 .profesores-table th {
     background-color: var(--gold-color);
-    color: #1a2a4a;
+    color: #ffffff;
     font-weight: 600;
 }
 
 .profesores-table tbody tr:hover {
-    background-color: #fdf5e6;
+    background-color: rgba(0, 122, 122, 0.05);
 }
 
 .btn-ver-perfil {
@@ -336,7 +336,7 @@ button {
     border-radius: 50%;
     object-fit: cover;
     margin: 0 auto 1rem auto;
-    border: 4px solid var(--gold-color);
+    border: 4px solid var(--highlight-color);
 }
 
 .modal-content h3 {
@@ -529,8 +529,8 @@ button {
     height: 2em;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid var(--gold-color);
-    box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+    border: 2px solid var(--highlight-color);
+    box-shadow: 0 0 10px rgba(0, 203, 203, 0.3);
 }
 
 .user-pill-name {

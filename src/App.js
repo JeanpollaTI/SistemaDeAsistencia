@@ -125,12 +125,6 @@ function App() {
                                 INICIAR SESIÓN
                             </button>
                         </li>
-                        {/* Toggle de Tema Público */}
-                        <li>
-                            <button className="nav-button theme-toggle-btn" onClick={toggleTheme} title="Cambiar Tema">
-                                {theme === 'light' ? <FaMoon /> : <FaSun />}
-                            </button>
-                        </li>
                     </ul>
                 </div>
             );
@@ -165,11 +159,6 @@ function App() {
 
         return (
             <div className="nav-right-container">
-                {/* Toggle de Tema Circular Style */}
-                <button className="theme-toggle-btn" onClick={toggleTheme} title="Cambiar Tema">
-                    {theme === 'light' ? <FaMoon /> : <FaSun />}
-                </button>
-
                 {/* User Pill Button */}
                 <div className={`user-pill ${dropdownOpen ? 'active' : ''}`} onClick={toggleDropdown}>
                     <img
@@ -208,6 +197,10 @@ function App() {
                         <FaUserCircle /> MI PERFIL
                     </button>
 
+                    <button className="nav-link-dropdown" onClick={() => { toggleTheme(); closeDropdown(); }}>
+                        {theme === 'light' ? <FaMoon /> : <FaSun />} {theme === 'light' ? 'MODO OSCURO' : 'MODO CLARO'}
+                    </button>
+
                     <button className="nav-link-dropdown logout" onClick={() => { logout(); closeDropdown(); }}>
                         <FaSignOutAlt /> CERRAR SESIÓN
                     </button>
@@ -223,7 +216,7 @@ function App() {
                 <nav className="nav container">
                     {/* Logo SCHOLARIS */}
                     <a href="#home" className="nav-logo" onClick={(e) => handleNavClick(e, "home")} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ffffff', fontWeight: 'bold', fontSize: '1.5rem', textDecoration: 'none' }}>
-                        <FaGraduationCap style={{ color: '#ffffff', fontSize: '1.8rem' }} />
+                        <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Scholaris Logo" style={{ width: '40px', height: 'auto' }} />
                         <span style={{ letterSpacing: '1px', fontSize: '1rem', fontWeight: '500' }}>{user && user.school_name ? user.school_name.toUpperCase() : "SCHOLARIS"}</span>
                     </a>
                     <div className="nav-menu" id="nav-menu">

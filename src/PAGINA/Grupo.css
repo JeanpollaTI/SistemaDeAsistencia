@@ -8,7 +8,7 @@
 :root {
   --main-color: #007A7A;
   /* Dorado elegante */
-  --main-color-hover: #b39028;
+  --main-color-hover: #00CBCB;
   --secondary-color: #2c3e50;
   /* Azul oscuro */
   --bg-color: #1a1a1a;
@@ -75,7 +75,7 @@ body {
 .grupo-componente {
   --dark-color: #191D28;
   --dark-color-alt: #1E222D;
-  --main-color: #b9972b;
+  --main-color: #007A7A;
   --title-color: #FFFFFF;
   --text-color: #E9E9E9;
   --danger-color: #d32f2f;
@@ -170,12 +170,12 @@ body {
 }
 
 .grupo-componente .btn-primary {
-  background: linear-gradient(135deg, var(--main-color), var(--main-color-hover));
+  background: linear-gradient(135deg, var(--main-color), #00CBCB);
   color: #1a1a1a;
 }
 
 .grupo-componente .btn-primary:hover {
-  background: linear-gradient(135deg, var(--main-color-hover), var(--main-color));
+  background: linear-gradient(135deg, #00CBCB, var(--main-color));
 }
 
 .grupo-componente .btn-secondary {
@@ -455,7 +455,7 @@ body {
 .grupo-componente .alumnos-list li.editing {
   background-color: var(--dark-color);
   border-color: var(--main-color);
-  box-shadow: 0 0 8px rgba(185, 151, 43, 0.3);
+  box-shadow: 0 0 8px rgba(0, 203, 203, 0.3);
 }
 
 .grupo-componente .alumno-actions {
