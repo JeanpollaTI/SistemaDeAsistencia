@@ -180,7 +180,7 @@ button {
 .nav-link-button {
     background: none;
     border: none;
-    color: var(--scholaris-teal, #007A7A);
+    color: #ffffff;
     cursor: pointer;
     font-weight: 600;
     padding: 0.3rem 0;

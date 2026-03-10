@@ -190,7 +190,7 @@ button {
 .nav-link-button {
     background: none;
     border: none;
-    color: var(--white-color);
+    color: #ffffff;
     cursor: pointer;
     font-weight: 500;
     padding: 0.3rem 0;

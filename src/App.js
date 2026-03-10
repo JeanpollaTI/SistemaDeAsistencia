@@ -214,7 +214,7 @@ function App() {
                 <nav className="nav container">
                     {/* Logo SCHOLARIS */}
                     <a href="#home" className="nav-logo" onClick={(e) => handleNavClick(e, "home")} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ffffff', fontWeight: 'bold', fontSize: '1.5rem', textDecoration: 'none' }}>
-                        <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Scholaris Logo" style={{ width: '40px', height: 'auto' }} />
+                        <FaGraduationCap style={{ fontSize: '1.5rem', color: '#ffffff' }} />
                         <span style={{ letterSpacing: '1px', fontSize: '1rem', fontWeight: '500' }}>{user && user.school_name ? user.school_name.toUpperCase() : "SCHOLARIS"}</span>
                     </a>
                     <div className="nav-menu" id="nav-menu">
