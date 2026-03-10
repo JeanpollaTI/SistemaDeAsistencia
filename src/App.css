@@ -489,127 +489,184 @@ button {
 
 /* Estilo de la Píldora de Usuario (basado en el código del usuario) */
 .user-pill {
-    background: #3b3b3b;
-    min-height: 3em;
-    padding: 0.5em 1em;
-    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.08);
+    /* Fondo sutil translúcido */
+    min-height: 2.8em;
+    padding: 0.4em 1em 0.4em 0.6em;
+    border-radius: 100px;
+    /* Bordes circulares totales */
     display: flex;
     align-items: center;
     gap: 12px;
     cursor: pointer;
     color: white;
     position: relative;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    /* Glassmorphism en el header */
 }
 
 .user-pill:hover {
-    background: #555555;
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.user-pill.active {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--gold-color);
 }
 
 .user-pill-img {
-    width: 1.8em;
-    height: 1.8em;
+    width: 2em;
+    height: 2em;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--gold-color);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
 }
 
 .user-pill-name {
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.3px;
 }
 
 .user-pill-arrow {
-    font-size: 0.8rem;
-    transition: transform 0.4s ease;
+    font-size: 0.7rem;
+    opacity: 0.7;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .user-pill.active .user-pill-arrow {
     transform: rotate(180deg);
+    opacity: 1;
 }
 
-/* Dropdown Menu (basado en el estilo vertical solicitado) */
+/* Dropdown Menu (Premium Glassmorphism) */
 .dropdown-menu {
     position: absolute;
-    top: calc(3em + 10px);
+    top: calc(100% + 12px);
     right: 0;
-    background: #3b3b3b;
-    width: 220px;
-    border-radius: 15px;
+    background: rgba(28, 31, 40, 0.92);
+    /* Fondo oscuro translúcido */
+    width: 260px;
+    border-radius: 20px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
     opacity: 0;
     visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform: translateY(15px) scale(0.95);
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
     z-index: 1000;
+    backdrop-filter: blur(25px) saturate(180%);
+    transform-origin: top right;
 }
 
 .dropdown-menu.show {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
 }
 
 .dropdown-header {
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.05);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.03), transparent);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .dropdown-header-name {
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #fff;
     margin: 0;
 }
 
 .dropdown-header-email {
-    font-size: 0.75rem;
-    color: #ccc;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
     margin: 0;
+    font-weight: 400;
 }
 
 .nav-link-dropdown {
     width: 100%;
-    padding: 12px 15px;
+    padding: 12px 20px;
     background: none;
     border: none;
-    color: white;
+    color: rgba(255, 255, 255, 0.8);
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     font-size: 0.9rem;
+    font-weight: 500;
     text-align: left;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-link-dropdown::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background-color: var(--gold-color);
+    border-radius: 10px;
+    transition: height 0.3s ease;
 }
 
 .nav-link-dropdown:hover {
-    background: #555555;
-    color: var(--gold-color);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    padding-left: 24px;
+}
+
+.nav-link-dropdown:hover::before {
+    height: 60%;
 }
 
 .nav-link-dropdown svg {
     font-size: 1.1rem;
     min-width: 1.25em;
-    color: #00cbcb;
-    /* Color cian para los iconos */
+    color: var(--gold-color);
+    transition: transform 0.3s ease;
+}
+
+.nav-link-dropdown:hover svg {
+    transform: scale(1.1);
 }
 
 .nav-link-dropdown.logout {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    color: #ff5f5f;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    color: #ff6b6b;
     margin-top: 5px;
+    background: rgba(255, 107, 107, 0.02);
+}
+
+.nav-link-dropdown.logout:hover {
+    background: rgba(255, 107, 107, 0.08);
+}
+
+.nav-link-dropdown.logout::before {
+    background-color: #ff6b6b;
 }
 
 .nav-link-dropdown.logout svg {
-    color: #ff5f5f;
+    color: #ff6b6b;
 }
+
 
 /* --- Media Queries --- */
 @media screen and (max-width: 992px) {

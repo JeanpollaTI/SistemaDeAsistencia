@@ -26,6 +26,7 @@ import {
 } from 'react-icons/fa';
 
 // Estilos y logo (Asegúrate de que Home.css esté en PAGINA/ y logo.png en src/)
+import "./App.css";
 import "./PAGINA/Home.css";
 import logo from "./logo.png";
 
