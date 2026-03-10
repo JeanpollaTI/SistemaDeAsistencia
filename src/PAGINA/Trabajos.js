@@ -1144,7 +1144,7 @@ function Trabajos({ user }) {
                     z-index: 200;
                     background-color: var(--dark-color);
                     padding-bottom: 5px;
-                    border-bottom: 2px solid var(--main-color);
+                    border-bottom: 2px solid #00CBCB; /* Teal más brillante para visibilidad */
                     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
                     flex-shrink: 0;
                 }
@@ -1190,6 +1190,7 @@ function Trabajos({ user }) {
                     top: 0; 
                     z-index: 250; /* Mayor que el resto de headers */
                     background-color: #2c3e50 !important;
+                    color: white !important;
                     border-right: 2px solid #555; 
                     box-shadow: 6px 0 10px -2px rgba(0,0,0,0.5); 
                 }
@@ -1202,7 +1203,7 @@ function Trabajos({ user }) {
                     z-index: 150; 
                     border-right: 2px solid #555;
                     font-weight: 500;
-                    color: var(--text-color);
+                    color: white !important;
                     box-shadow: 6px 0 10px -2px rgba(0,0,0,0.5); 
                 }
                 .grupo-componente .tabla-global .num-col {
@@ -1218,6 +1219,7 @@ function Trabajos({ user }) {
                     left: 0;
                     z-index: 150; 
                     background-color: #1E222D !important;
+                    color: white !important;
                     border-right: 1px solid #444;
                 }
                 
