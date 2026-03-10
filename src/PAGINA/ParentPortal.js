@@ -132,6 +132,11 @@ function ParentPortal() {
                         <h2>Calificaciones</h2>
                     </div>
 
+                    <div className="portal-student-name-display">
+                        <FaUser className="student-icon" />
+                        <span>{alumno?.nombre} {alumno?.apellidoPaterno} {alumno?.apellidoMaterno}</span>
+                    </div>
+
                     {loading ? <p>Cargando calificaciones...</p> : (
                         <div className="portal-table-container">
                             <table className="portal-table">

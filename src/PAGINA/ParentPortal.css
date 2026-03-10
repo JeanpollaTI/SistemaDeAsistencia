@@ -5,6 +5,7 @@
     --portal-card: #ffffff;
     --portal-text: #333333;
     --portal-muted: #666666;
+    --portal-black: #222222;
 }
 
 /* Login View */
@@ -180,7 +181,26 @@
 .section-header h2 {
     margin: 0;
     font-size: 1.25rem;
-    color: var(--portal-text);
+    color: var(--portal-text) !important;
+}
+
+.portal-student-name-display {
+    background: #f0f4f4;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--portal-primary);
+    font-weight: 600;
+    font-size: 1.1rem;
+    border-left: 4px solid var(--portal-primary);
+}
+
+.portal-student-name-display .student-icon {
+    font-size: 1rem;
+    opacity: 0.8;
 }
 
 .portal-table-container {
@@ -196,7 +216,7 @@
     text-align: left;
     padding: 12px;
     background: #f8f9fa;
-    color: var(--portal-muted);
+    color: var(--portal-muted) !important;
     font-size: 0.9rem;
 }
 
@@ -204,6 +224,7 @@
     padding: 15px 12px;
     border-bottom: 1px solid #eee;
     font-size: 0.95rem;
+    color: var(--portal-black) !important;
 }
 
 .final-grade {
@@ -217,7 +238,7 @@
 
 .placeholder-text {
     font-style: italic;
-    color: var(--portal-muted);
+    color: var(--portal-muted) !important;
 }
 
 @media (max-width: 600px) {
