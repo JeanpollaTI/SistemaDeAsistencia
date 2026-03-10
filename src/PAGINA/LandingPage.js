@@ -18,7 +18,7 @@ const LandingPage = () => {
                         con padres de familia en una sola plataforma segura y en tiempo real.
                     </p>
 
-                    <div className="cta-group" style={{ margin: '0 auto', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <div className="cta-group" style={{ margin: '0 auto', gap: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                         <button className="cta-button primary" onClick={() => navigate('/register-school')}>
                             <span className="cta-label">
                                 <FaSchool /> Registrar mi escuela
