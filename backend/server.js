@@ -53,9 +53,10 @@ app.use("/schools", schoolRoutes);
 app.use("/api/register-school", registrationRouter);
 app.use("/api/stripe", stripeRouter);
 // <-- AÑADIDO: Usar la nueva ruta para el envío de boletas -->
-app.use("/api", schoolMiddleware, emailRouter);
 app.use("/api/materias", materiasRouter);
 app.use("/api/portal-padres", parentPortalRouter);
+// Esta ruta es genérica para /api y aplica el schoolMiddleware, debe ir después de rutas específicas
+app.use("/api", schoolMiddleware, emailRouter);
 
 // ----------------- MANEJO DE ERRORES -----------------
 // Middleware para rutas no encontradas (404 Fallback)

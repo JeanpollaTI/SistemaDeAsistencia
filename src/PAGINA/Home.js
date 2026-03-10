@@ -88,12 +88,10 @@ function Home({ user }) {
     const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
 
     try {
-      console.log("Current user object:", user); // DEBUG
       const res = await axios.get(`${API_URL}/api/materias`, axiosConfig);
-      console.log("Materias fetched:", res.data); // DEBUG
 
       if (res.data && res.data.error) {
-        alert(`Error de materias: ${res.data.error} - ${res.data.msg || ''}`);
+        console.error(`Error de materias: ${res.data.error} - ${res.data.msg || ''}`);
       }
 
       if (Array.isArray(res.data)) {
@@ -103,7 +101,6 @@ function Home({ user }) {
       }
     } catch (err) {
       console.error("Error al cargar materias:", err);
-      alert("Error crítico al cargar materias. Revisa la consola.");
     }
   };
 
@@ -388,14 +385,14 @@ function Home({ user }) {
                   alt={selectedProfesor.nombre}
                   className="profile-img-modal"
                 />
-                <h3>{selectedProfesor.nombre}</h3>
+                <h3 style={{ color: '#ffffff !important', fontWeight: 'bold' }}>{selectedProfesor.nombre}</h3>
 
-                <div className="profesor-details" style={{ width: '100%', textAlign: 'left' }}>
-                  <p><b>Correo:</b> {selectedProfesor.email}</p>
-                  <p><b>Celular:</b> {selectedProfesor.celular}</p>
+                <div className="profesor-details" style={{ width: '100%', textAlign: 'left', backgroundColor: '#ffffff !important', color: '#000000 !important', padding: '1rem', borderRadius: '8px' }}>
+                  <p style={{ color: '#000000 !important' }}><b style={{ color: '#000000 !important' }}>Correo:</b> {selectedProfesor.email}</p>
+                  <p style={{ color: '#000000 !important' }}><b style={{ color: '#000000 !important' }}>Celular:</b> {selectedProfesor.celular}</p>
                   {/* <p><b>Edad:</b> {selectedProfesor.edad}</p> */}
                   {/* <p><b>Sexo:</b> {selectedProfesor.sexo}</p> */}
-                  <p><b>Registro:</b> {selectedProfesor.fechaRegistro && !isNaN(new Date(selectedProfesor.fechaRegistro)) ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
+                  <p style={{ color: '#000000 !important' }}><b style={{ color: '#000000 !important' }}>Registro:</b> {selectedProfesor.fechaRegistro && !isNaN(new Date(selectedProfesor.fechaRegistro)) ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
                 </div>
 
                 <div style={{ width: '100%', marginTop: '1rem', textAlign: 'left' }}>
