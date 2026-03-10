@@ -862,15 +862,15 @@ function Trabajos({ user }) {
 
                 .grupo-componente .cuadritos-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+                    grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
                     gap: 6px;
                     align-items: center;
                     padding: 10px 0;
                 }
 
                 .grupo-componente .cuadrito-calificacion {
-                    width: 44px; /* Ancho más compacto */
-                    height: 38px;
+                    width: 34px; /* Aún más compacto */
+                    height: 34px;
                     line-height: 40px; /* Centrado vertical del texto */
                     background-color: #4a4a4a;
                     border: 1px solid #777;
@@ -879,9 +879,10 @@ function Trabajos({ user }) {
                     text-align: center;
                     font-weight: 600;
                     font-family: var(--body-font);
-                    font-size: 1rem;
+                    font-size: 0.9rem;
                     padding: 0;
                     transition: all 0.2s;
+                    box-sizing: border-box; /* Ensure border doesn't add to width */
                 }
                 .grupo-componente .cuadrito-calificacion::placeholder {
                     color: #999;
@@ -907,7 +908,7 @@ function Trabajos({ user }) {
                     font-weight: bold;
                     cursor: pointer;
                     transition: transform 0.2s, background-color 0.2s;
-                    font-size: 1rem;
+                    font-size: 0.9rem;
                 }
                 .grupo-componente .btn-agregar-dias:hover {
                     transform: scale(1.05);
@@ -917,14 +918,14 @@ function Trabajos({ user }) {
                 /* --- TASK HEADERS --- */
                 .grupo-componente .task-header-row {
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+                    grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
                     gap: 6px;
                     margin-bottom: 5px;
-                    padding-right: 48px; /* Space for the +5 button */
+                    padding-right: 38px; /* Space for the +5 button */
                 }
 
                 .grupo-componente .task-header-cell {
-                    width: 40px;
+                    width: 30px;
                     font-size: 0.7rem;
                     text-align: center;
                     color: #aaa;
@@ -1175,44 +1176,45 @@ function Trabajos({ user }) {
                     font-size: 0.9rem;
                     position: sticky;
                     top: 0;
-                    z-index: 100; /* 🌟 FIX: Higher z-index to stay on top */
+                    z-index: 100; /* Horizontal headers */
                     height: 50px;
-                    box-shadow: 0 2px 2px rgba(0,0,0,0.1); /* Optional shadow */
+                    box-shadow: 0 2px 2px rgba(0,0,0,0.1); 
                 }
                 .grupo-componente .tabla-global th.alumno-col {
                     text-align: left;
                     min-width: 280px;
                     padding-left: 15px;
                     position: sticky;
-                    left: 40px; /* 🌟 Offset for Number Column */
-                    top: 0; /* 🌟 Ensure vertical stickiness matches general headers */
-                    z-index: 120; /* 🌟 Increase z-index to be safe */
-                    border-right: 2px solid #555; /* Softer border */
-                    box-shadow: 6px 0 10px -2px rgba(0,0,0,0.5); /* 🌟 Stronger, softer shadow */
+                    left: 40px; 
+                    top: 0; 
+                    z-index: 150; /* Above horizontal headers */
+                    background-color: #2c3e50; /* Ensure solid background */
+                    border-right: 2px solid #555; 
+                    box-shadow: 6px 0 10px -2px rgba(0,0,0,0.5); 
                 }
                 .grupo-componente .tabla-global td.alumno-col {
                     text-align: left;
                     padding-left: 15px;
                     position: sticky;
-                    left: 40px; /* 🌟 Offset for Number Column */
+                    left: 40px; 
                     background-color: var(--dark-color-alt);
-                    z-index: 15; /* Ensure above normal cells */
+                    z-index: 50; /* Above regular cells */
                     border-right: 2px solid #555;
                     font-weight: 500;
                     color: var(--text-color);
-                    box-shadow: 6px 0 10px -2px rgba(0,0,0,0.5); /* 🌟 Stronger, softer shadow */
+                    box-shadow: 6px 0 10px -2px rgba(0,0,0,0.5); 
                 }
                 .grupo-componente .tabla-global .num-col {
                     position: sticky;
                     left: 0;
-                    z-index: 31; /* Higher than alumno body, lower than alumno header? Same level */
+                    z-index: 150; /* Corner headers */
                     background-color: #2c3e50;
                     border-right: 1px solid #444;
                 }
                 .grupo-componente .tabla-global tbody td:first-child {
                     position: sticky;
                     left: 0;
-                    z-index: 11;
+                    z-index: 50; /* Above regular cells */
                     background-color: var(--dark-color-alt);
                     border-right: 1px solid #444;
                 }
@@ -1226,7 +1228,7 @@ function Trabajos({ user }) {
                 .grupo-componente .tabla-global .obs-col {
                     position: sticky;
                     left: 40px;
-                    z-index: 31;
+                    z-index: 150; 
                     background-color: #2c3e50;
                     border-right: 1px solid #444;
                     width: 50px;
@@ -1234,7 +1236,7 @@ function Trabajos({ user }) {
                 .grupo-componente .tabla-global tbody td.obs-col-body {
                      position: sticky;
                      left: 40px;
-                     z-index: 11;
+                     z-index: 50;
                      background-color: var(--dark-color-alt);
                      border-right: 1px solid #444;
                      padding: 0;
