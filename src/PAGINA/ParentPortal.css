@@ -184,23 +184,42 @@
     color: var(--portal-text) !important;
 }
 
+.portal-brand h1 {
+    font-size: 1.4rem;
+    color: var(--portal-text);
+    margin: 0;
+}
+
 .portal-student-name-display {
-    background: #f0f4f4;
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
+    background: #f8fafc;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 2rem;
     display: flex;
     align-items: center;
-    gap: 10px;
-    color: var(--portal-primary);
-    font-weight: 600;
-    font-size: 1.1rem;
-    border-left: 4px solid var(--portal-primary);
+    gap: 1.2rem;
+}
+
+.student-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.student-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--portal-black);
+}
+
+.student-group {
+    font-size: 0.9rem;
+    color: var(--portal-muted);
 }
 
 .portal-student-name-display .student-icon {
-    font-size: 1rem;
-    opacity: 0.8;
+    font-size: 1.8rem;
+    color: var(--portal-primary);
 }
 
 .portal-table-container {

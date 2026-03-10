@@ -1,6 +1,8 @@
 import express from "express";
 import Grupo from "../models/Grupo.js";
 import Calificacion from "../models/Calificacion.js";
+import Asistencia from "../models/Asistencia.js";
+import School from "../models/School.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 
@@ -33,6 +35,9 @@ router.post("/login", async (req, res) => {
             (a.emailPadre === loginId || a.telefonoPadre === loginId) && a.matricula === matricula
         );
 
+        // Obtener nombre de la escuela
+        const school = await School.findById(grupo.school_id).select('name');
+
         // Generar un token especial para el padre
         const token = jwt.sign(
             {
@@ -54,7 +59,8 @@ router.post("/login", async (req, res) => {
                 apellidoPaterno: alumno.apellidoPaterno,
                 apellidoMaterno: alumno.apellidoMaterno,
                 matricula: alumno.matricula,
-                grupo: grupo.nombre
+                grupo: grupo.nombre,
+                escuela: school?.name || "Institución no encontrada"
             }
         });
     } catch (err) {
@@ -81,17 +87,18 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
     try {
         const { id, grupo_id, school_id } = req.user;
 
-        // Convert strings to ObjectId to be safe across different Mongoose/MongoDB versions
         const gId = new mongoose.Types.ObjectId(grupo_id);
         const sId = new mongoose.Types.ObjectId(school_id);
 
-        // 1. Obtener calificaciones y configuración de la escuela
+        // Fetch School name
+        const school = await School.findById(sId).select('name');
+
+        // 1. Obtener calificaciones
         const calificacionesRaw = await Calificacion.find({
             grupo: gId,
             school_id: sId
         });
 
-        // Función de redondeo idéntica a la del frontend/admin
         const redondearCalificacion = (val) => {
             if (typeof val !== 'number' || val <= 0) return 0;
             const valUnaDecimal = Math.round(val * 10) / 10;
@@ -99,7 +106,6 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
             return Math.max(5, Math.round(valUnaDecimal));
         };
 
-        // Formatear las calificaciones calculando el promedio real
         const calificaciones = calificacionesRaw.map(reg => {
             const bimestres = {};
             const { criterios: criteriosPorBimestre, calificaciones: calificacionesMateria, numTareas: numTareasConfig } = reg;
@@ -115,10 +121,8 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
                 }
 
                 if (!criteriosActivos || criteriosActivos.length === 0) {
-                    // Fallback: Si no hay criterios pero hay notas, promediar todo lo que haya
                     let sumaTotal = 0;
                     let numNotas = 0;
-
                     Object.values(calificacionesAlumnoEnBimestre).forEach(criterioGrades => {
                         Object.values(criterioGrades).forEach(entrada => {
                             if (entrada && typeof entrada.nota === 'number') {
@@ -127,12 +131,7 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
                             }
                         });
                     });
-
-                    if (numNotas === 0) {
-                        bimestres[bimestre] = null;
-                    } else {
-                        bimestres[bimestre] = redondearCalificacion(sumaTotal / numNotas);
-                    }
+                    bimestres[bimestre] = numNotas === 0 ? null : redondearCalificacion(sumaTotal / numNotas);
                     return;
                 }
 
@@ -142,7 +141,6 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
                 criteriosActivos.forEach(criterio => {
                     const calificacionesCriterio = calificacionesAlumnoEnBimestre[criterio.nombre] || {};
                     const maxTareas = numTareasConfig?.[criterio.nombre] || 999;
-
                     const notasValidas = Object.keys(calificacionesCriterio)
                         .filter(index => parseInt(index) < maxTareas && calificacionesCriterio[index] && typeof calificacionesCriterio[index].nota === 'number')
                         .map(index => calificacionesCriterio[index].nota);
@@ -154,44 +152,50 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
                     }
                 });
 
-                if (pesoTotalAplicable === 0) {
-                    // Si hay criterios pero ninguna nota les corresponde, intentar el fallback de promediar todo
-                    let sumaTotal = 0;
-                    let numNotas = 0;
-                    Object.values(calificacionesAlumnoEnBimestre).forEach(criterioGrades => {
-                        Object.values(criterioGrades).forEach(entrada => {
-                            if (entrada && typeof entrada.nota === 'number') {
-                                sumaTotal += entrada.nota;
-                                numNotas++;
-                            }
-                        });
-                    });
-
-                    if (numNotas === 0) {
-                        bimestres[bimestre] = null;
-                    } else {
-                        bimestres[bimestre] = redondearCalificacion(sumaTotal / numNotas);
-                    }
-                } else {
-                    const promedioFinal = promedioPonderado / pesoTotalAplicable;
-                    bimestres[bimestre] = redondearCalificacion(promedioFinal);
-                }
+                bimestres[bimestre] = pesoTotalAplicable === 0 ? null : redondearCalificacion(promedioPonderado / pesoTotalAplicable);
             });
 
+            return { asignatura: reg.asignatura, bimestres };
+        });
+
+        // 2. Obtener asistencias detalladas
+        const asistenciasRaw = await Asistencia.find({
+            grupo: gId,
+            school_id: sId
+        });
+
+        const asistenciasDetalle = asistenciasRaw.map(asis => {
+            let faltas = 0;
+            let retardos = 0;
+            let justificados = 0;
+            let totales = 0;
+
+            // Iterar sobre los registros mapeados del alumno
+            // El formato de clave es: alumnoId-b{bimestre}-d{dia}
+            if (asis.registros) {
+                asis.registros.forEach((valor, clave) => {
+                    if (clave.startsWith(String(id))) {
+                        totales++;
+                        if (valor.estado === 'F') faltas++;
+                        if (valor.estado === 'R') retardos++;
+                        if (valor.estado === 'J') justificados++;
+                    }
+                });
+            }
+
             return {
-                asignatura: reg.asignatura,
-                bimestres
+                asignatura: asis.asignatura,
+                faltas,
+                retardos,
+                justificados,
+                totales
             };
         });
 
-        // 2. Obtener asistencias (simplificado)
-        // Podríamos importar el modelo Asistencia si es necesario, pero 
-        // vamos a hacer un mock simple o una query si el modelo existe.
-        // Dado que el usuario no pidió un detalle diario pesado, enviaremos resumen si es posible.
-
         res.json({
+            escuela: school?.name || "Institución",
             calificaciones,
-            asistencias: [] // Implementar detalle si es requerido específicamente
+            asistencias: asistenciasDetalle
         });
 
     } catch (err) {

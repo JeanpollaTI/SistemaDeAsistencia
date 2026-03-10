@@ -103,14 +103,16 @@ function ParentPortal() {
     return (
         <div className="portal-dashboard">
             <header className="portal-header">
-                <div className="portal-user-info">
-                    <div className="avatar">{(alumno?.nombre || "A").substring(0, 1)}</div>
-                    <div>
-                        <h3>{alumno?.nombre} {alumno?.apellidoPaterno}</h3>
-                        <p>Matrícula: {alumno?.matricula} | Grupo: {alumno?.grupo}</p>
+                <div className="portal-logo-section">
+                    <FaSchool className="portal-logo" />
+                    <div className="portal-brand">
+                        <h1>{data?.escuela || alumno?.escuela || "Portal de Padres"}</h1>
+                        <span>Sistema de Gestión Escolar</span>
                     </div>
                 </div>
-                <button onClick={handleLogout} className="logout-btn">Cerrar Consulta</button>
+                <button onClick={handleLogout} className="logout-btn">
+                    <FaSignOutAlt /> Cerrar Consulta
+                </button>
             </header>
 
             <main className="portal-content">
@@ -122,7 +124,10 @@ function ParentPortal() {
 
                     <div className="portal-student-name-display">
                         <FaUser className="student-icon" />
-                        <span>{alumno?.nombre} {alumno?.apellidoPaterno} {alumno?.apellidoMaterno}</span>
+                        <div className="student-details">
+                            <span className="student-name">{alumno?.nombre} {alumno?.apellidoPaterno} {alumno?.apellidoMaterno}</span>
+                            <span className="student-group">{alumno?.grupo} | Matrícula: {alumno?.matricula}</span>
+                        </div>
                     </div>
 
                     {loading ? <p>Cargando calificaciones...</p> : (
@@ -161,12 +166,38 @@ function ParentPortal() {
                     )}
                 </section>
 
-                <section className="portal-section inactive">
+                <section className="portal-section">
                     <div className="section-header">
                         <FaCalendarAlt className="section-icon" />
-                        <h2>Asistencia (Próximamente)</h2>
+                        <h2>Asistencia Detallada</h2>
                     </div>
-                    <p className="placeholder-text">El detalle de asistencia se habilitará en la siguiente actualización.</p>
+                    <div className="portal-table-container">
+                        <table className="portal-table">
+                            <thead>
+                                <tr>
+                                    <th>Asignatura</th>
+                                    <th style={{ textAlign: 'center' }}>Faltas</th>
+                                    <th style={{ textAlign: 'center' }}>Retardos</th>
+                                    <th style={{ textAlign: 'center' }}>Justificados</th>
+                                    <th style={{ textAlign: 'center' }}>Total Reg.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data?.asistencias?.map((asis, idx) => (
+                                    <tr key={idx}>
+                                        <td>{asis.asignatura}</td>
+                                        <td style={{ textAlign: 'center', color: '#e74c3c', fontWeight: 'bold' }}>{asis.faltas}</td>
+                                        <td style={{ textAlign: 'center', color: '#f39c12', fontWeight: 'bold' }}>{asis.retardos}</td>
+                                        <td style={{ textAlign: 'center', color: '#3498db', fontWeight: 'bold' }}>{asis.justificados}</td>
+                                        <td style={{ textAlign: 'center' }}>{asis.totales}</td>
+                                    </tr>
+                                ))}
+                                {(!data?.asistencias || data.asistencias.length === 0) && (
+                                    <tr><td colSpan="5" className="placeholder-text">No hay registros de asistencia aún.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </section>
 
                 <div className="portal-footer-actions">
