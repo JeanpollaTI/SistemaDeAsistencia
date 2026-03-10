@@ -164,7 +164,7 @@ function App() {
                     {/* Logo SCHOLARIS */}
                     <a href="#home" className="nav-logo" onClick={(e) => handleNavClick(e, "home")} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#007A7A', fontWeight: 'bold', fontSize: '1.5rem', textDecoration: 'none' }}>
                         <FaGraduationCap style={{ color: '#ffffff', fontSize: '2rem' }} />
-                        <span style={{ letterSpacing: '1px' }}>SCHOLARIS</span>
+                        <span style={{ letterSpacing: '1px' }}>{user && user.school_name ? user.school_name.toUpperCase() : "SCHOLARIS"}</span>
                     </a>
                     <div className="nav-menu" id="nav-menu">
                         {renderMenu()}
