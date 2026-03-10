@@ -1,6 +1,9 @@
 {
   "name": "backend",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=22.22.0"
+  },
   "description": "API para el sistema de gestión escolar. Maneja la autenticación, horarios, profesores y más.",
   "main": "server.js",
   "type": "module",
