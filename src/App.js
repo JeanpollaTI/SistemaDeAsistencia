@@ -215,9 +215,25 @@ function App() {
             <header className="header" id="header">
                 <nav className="nav container">
                     {/* Logo SCHOLARIS */}
-                    <a href="#home" className="nav-logo" onClick={(e) => handleNavClick(e, "home")} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ffffff', fontWeight: 'bold', fontSize: '1.5rem', textDecoration: 'none' }}>
-                        <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Scholaris Logo" style={{ width: '40px', height: 'auto' }} />
-                        <span style={{ letterSpacing: '1px', fontSize: '1rem', fontWeight: '500' }}>{user && user.school_name ? user.school_name.toUpperCase() : "SCHOLARIS"}</span>
+                    <a href="#home" className="nav-logo" onClick={(e) => handleNavClick(e, "home")} style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#ffffff', textDecoration: 'none' }}>
+                        <img
+                            src={`${process.env.PUBLIC_URL}/logo.png`}
+                            alt="Scholaris Logo"
+                            style={{
+                                width: '50px',
+                                height: '50px',
+                                objectFit: 'contain',
+                                filter: 'drop-shadow(0 0 8px rgba(0, 203, 203, 0.4))'
+                            }}
+                        />
+                        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.1' }}>
+                            <span style={{ fontSize: '1.2rem', fontWeight: '800', letterSpacing: '1px' }}>
+                                SCHOLARIS
+                            </span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: '400', opacity: '0.8', letterSpacing: '0.5px' }}>
+                                {user && user.school_name ? user.school_name.toUpperCase() : "SISTEMA ACADÉMICO"}
+                            </span>
+                        </div>
                     </a>
                     <div className="nav-menu" id="nav-menu">
                         {renderMenu()}
