@@ -7,16 +7,8 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function ParentPortal() {
     const [loginData, setLoginData] = useState({ email: '', matricula: '' });
-    const [token, setToken] = useState(sessionStorage.getItem('parentToken'));
-    const [alumno, setAlumno] = useState(() => {
-        const saved = sessionStorage.getItem('alumnoData');
-        try {
-            return (saved && saved !== 'undefined') ? JSON.parse(saved) : null;
-        } catch (err) {
-            console.error("Error parsing alumnoData:", err);
-            return null;
-        }
-    });
+    const [token, setToken] = useState(null);
+    const [alumno, setAlumno] = useState(null);
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -39,7 +31,7 @@ function ParentPortal() {
             setData(res.data);
         } catch (err) {
             console.error("Error al obtener datos:", err);
-            setError("No se pudieron cargar los datos acadmicos.");
+            setError("No se pudieron cargar los datos académicos.");
             if (err.response?.status === 401) handleLogout();
         } finally {
             setLoading(false);
@@ -54,8 +46,6 @@ function ParentPortal() {
             const res = await axios.post(`${API_URL}/api/portal-padres/login`, loginData);
             setToken(res.data.token);
             setAlumno(res.data.alumno);
-            sessionStorage.setItem('parentToken', res.data.token);
-            sessionStorage.setItem('alumnoData', JSON.stringify(res.data.alumno));
             // Fetch data immediately with the new token
             fetchData(res.data.token);
         } catch (err) {
@@ -69,8 +59,6 @@ function ParentPortal() {
         setToken(null);
         setAlumno(null);
         setData(null);
-        sessionStorage.removeItem('parentToken');
-        sessionStorage.removeItem('alumnoData');
     };
 
     if (!token) {
@@ -122,7 +110,7 @@ function ParentPortal() {
                         <p>Matrícula: {alumno?.matricula} | Grupo: {alumno?.grupo}</p>
                     </div>
                 </div>
-                <button onClick={handleLogout} className="logout-btn">Cerrar Sesión</button>
+                <button onClick={handleLogout} className="logout-btn">Cerrar Consulta</button>
             </header>
 
             <main className="portal-content">
