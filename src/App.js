@@ -19,7 +19,7 @@ import Calificaciones from "./PAGINA/Calificaciones";
 import LandingPage from "./PAGINA/LandingPage";
 import RegisterSchool from "./PAGINA/RegisterSchool";
 import ParentPortal from "./PAGINA/ParentPortal";
-import { FaGraduationCap, FaMoon, FaSun } from 'react-icons/fa';
+import { FaGraduationCap, FaMoon, FaSun, FaBars, FaTimes, FaSignOutAlt, FaUserCircle } from 'react-icons/fa';
 
 // Estilos y logo (Asegúrate de que Home.css esté en PAGINA/ y logo.png en src/)
 import "./PAGINA/Home.css";
@@ -38,6 +38,7 @@ function App() {
 
     // Estado para el Tema (Claro/Oscuro)
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+    const [dropdownOpen, setDropdownOpen] = useState(false);
 
     // Aplicar el tema al root del documento
     useEffect(() => {
@@ -46,6 +47,8 @@ function App() {
     }, [theme]);
 
     const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    const toggleDropdown = () => setDropdownOpen(prev => !prev);
+    const closeDropdown = () => setDropdownOpen(false);
 
     // Hook para manejar el scroll a secciones específicas después de la navegación
     useEffect(() => {
@@ -56,6 +59,7 @@ function App() {
                 window.scrollTo({ top: section.offsetTop - 70, behavior: "smooth" });
             }
         }
+        closeDropdown(); // Cierra el menú al cambiar de ruta
     }, [location]);
 
     // Efecto para el título dinámico
@@ -134,49 +138,69 @@ function App() {
             ];
         }
 
+        const handleMenuAction = (sec) => {
+            if (sec.path) {
+                navigate(sec.path);
+            } else {
+                handleNavClick(null, sec.id);
+            }
+            closeDropdown();
+        };
+
         const sections = [...baseSections, ...roleSections];
 
         return (
-            <div className="nav-menu-right">
-                <ul className="nav-list">
+            <div className="nav-right-container">
+                {/* Toggle de Tema Privado */}
+                <button className="theme-toggle-btn" onClick={toggleTheme} title="Cambiar Tema">
+                    {theme === 'light' ? <FaMoon /> : <FaSun />}
+                </button>
+
+                {/* Imagen de Perfil */}
+                <img
+                    src={getProfileImageUrl(user.foto)}
+                    alt="Perfil"
+                    className="profile-img-small"
+                    onClick={() => navigate("/perfil")}
+                    style={{ cursor: "pointer" }}
+                />
+
+                {/* Icono Hamburguesa */}
+                <div className="hamburger-menu" onClick={toggleDropdown}>
+                    {dropdownOpen ? <FaTimes /> : <FaBars />}
+                </div>
+
+                {/* Menú Desplegable */}
+                <div className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}>
+                    <div className="dropdown-info" style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', marginBottom: '0.5rem' }}>
+                        <p style={{ fontWeight: 'bold', margin: '0', fontSize: '1rem' }}>{user.nombre}</p>
+                        <p style={{ margin: '0', fontSize: '0.8rem', opacity: '0.7' }}>{user.email}</p>
+                    </div>
+
                     {sections.map((sec) => (
-                        <li key={sec.id}>
-                            <button
-                                className="nav-button nav-link-button"
-                                onClick={(e) => sec.path ? navigate(sec.path) : handleNavClick(e, sec.id)}
-                            >
-                                {sec.label}
-                            </button>
-                        </li>
+                        <button
+                            key={sec.id}
+                            className="nav-link-dropdown"
+                            onClick={() => handleMenuAction(sec)}
+                        >
+                            {sec.label}
+                        </button>
                     ))}
 
-                    {/* Opción solo para Administradores */}
                     {user?.role === "admin" && (
-                        <li>
-                            <button className="nav-button nav-link-button" onClick={() => navigate("/register-profesor")}>
-                                REGISTRAR PROFESOR
-                            </button>
-                        </li>
+                        <button className="nav-link-dropdown" onClick={() => { navigate("/register-profesor"); closeDropdown(); }}>
+                            REGISTRAR PROFESOR
+                        </button>
                     )}
 
-                    {/* Toggle de Tema Privado */}
-                    <li className="nav-item">
-                        <button className="nav-button theme-toggle-btn" onClick={toggleTheme} title="Cambiar Tema" style={{ color: 'white', fontSize: '1.2rem', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                            {theme === 'light' ? <FaMoon /> : <FaSun />}
-                        </button>
-                    </li>
+                    <button className="nav-link-dropdown" onClick={() => { navigate("/perfil"); closeDropdown(); }}>
+                        <FaUserCircle /> MI PERFIL
+                    </button>
 
-                    {/* Imagen de Perfil/Logout */}
-                    <li className="nav-profile">
-                        <img
-                            src={getProfileImageUrl(user.foto)}
-                            alt="Perfil"
-                            className="profile-img-small"
-                            onClick={() => navigate("/perfil")}
-                            style={{ cursor: "pointer" }}
-                        />
-                    </li>
-                </ul>
+                    <button className="nav-link-dropdown logout" onClick={() => { logout(); closeDropdown(); }}>
+                        <FaSignOutAlt /> CERRAR SESIÓN
+                    </button>
+                </div>
             </div>
         );
     };
