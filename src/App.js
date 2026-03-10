@@ -54,6 +54,17 @@ function App() {
     const toggleDropdown = () => setDropdownOpen(prev => !prev);
     const closeDropdown = () => setDropdownOpen(false);
 
+    // Cerrar menú al hacer click fuera
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownOpen && !event.target.closest('.user-pill') && !event.target.closest('.dropdown-menu')) {
+                closeDropdown();
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [dropdownOpen]);
+
     // Hook para manejar el scroll a secciones específicas después de la navegación
     useEffect(() => {
         if (location.state?.scrollTo) {
@@ -153,13 +164,13 @@ function App() {
 
         return (
             <div className="nav-right-container">
-                {/* Toggle de Tema Privado */}
+                {/* Toggle de Tema Circular Style */}
                 <button className="theme-toggle-btn" onClick={toggleTheme} title="Cambiar Tema">
                     {theme === 'light' ? <FaMoon /> : <FaSun />}
                 </button>
 
                 {/* User Pill Button */}
-                <div className={`user-pill ${dropdownOpen ? 'open' : ''}`} onClick={toggleDropdown}>
+                <div className={`user-pill ${dropdownOpen ? 'active' : ''}`} onClick={toggleDropdown}>
                     <img
                         src={getProfileImageUrl(user.foto)}
                         alt="Perfil"
@@ -169,7 +180,7 @@ function App() {
                     <FaChevronDown className="user-pill-arrow" />
                 </div>
 
-                {/* Menú Desplegable */}
+                {/* Menú Desplegable Vertical */}
                 <div className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}>
                     <div className="dropdown-header">
                         <p className="dropdown-header-name">{user.nombre}</p>
