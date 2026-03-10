@@ -18,19 +18,26 @@ const LandingPage = () => {
                         con padres de familia en una sola plataforma segura y en tiempo real.
                     </p>
 
-                    <div className="cta-group" style={{ margin: '0 auto', alignItems: 'center', justifyContent: 'center' }}>
-                        <button className="cta-button primary" onClick={() => navigate('/register-school')} style={{ margin: '0 auto' }}>
+                    <div className="cta-group" style={{ margin: '0 auto', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                        <button className="cta-button primary" onClick={() => navigate('/register-school')}>
                             <span className="cta-label">
                                 <FaSchool /> Registrar mi escuela
                             </span>
-                            <span className="cta-arrow">ESCUELAS <FaArrowRight /></span>
+                            <span className="cta-arrow">NUEVA ESCUELA <FaArrowRight /></span>
+                        </button>
+
+                        <button className="cta-button secondary" onClick={() => navigate('/portal-padres')} style={{ background: '#d4af37', color: 'white', borderColor: '#d4af37' }}>
+                            <span className="cta-label">
+                                <FaUsers /> Portal de Padres
+                            </span>
+                            <span className="cta-arrow">ALUMNOS <FaArrowRight /></span>
                         </button>
 
                         <button className="cta-button secondary" onClick={() => navigate('/login')}>
                             <span className="cta-label">
-                                <FaUsers /> Ir al portal de padres
+                                <FaGraduationCap /> Portal de mi escuela
                             </span>
-                            <span className="cta-arrow">PADRES <FaArrowRight /></span>
+                            <span className="cta-arrow">ACCESO <FaArrowRight /></span>
                         </button>
                     </div>
                 </div>
