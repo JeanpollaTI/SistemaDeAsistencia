@@ -862,15 +862,15 @@ function Trabajos({ user }) {
 
                 .grupo-componente .cuadritos-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
-                    gap: 6px;
+                    grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+                    gap: 4px;
                     align-items: center;
                     padding: 10px 0;
                 }
 
                 .grupo-componente .cuadrito-calificacion {
-                    width: 34px; /* Aún más compacto */
-                    height: 34px;
+                    width: 30px; /* Miniatura */
+                    height: 30px;
                     line-height: 40px; /* Centrado vertical del texto */
                     background-color: #4a4a4a;
                     border: 1px solid #777;
@@ -879,10 +879,10 @@ function Trabajos({ user }) {
                     text-align: center;
                     font-weight: 600;
                     font-family: var(--body-font);
-                    font-size: 0.9rem;
+                    font-size: 0.85rem;
                     padding: 0;
                     transition: all 0.2s;
-                    box-sizing: border-box; /* Ensure border doesn't add to width */
+                    box-sizing: border-box;
                 }
                 .grupo-componente .cuadrito-calificacion::placeholder {
                     color: #999;
@@ -918,14 +918,14 @@ function Trabajos({ user }) {
                 /* --- TASK HEADERS --- */
                 .grupo-componente .task-header-row {
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
-                    gap: 6px;
+                    grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+                    gap: 4px;
                     margin-bottom: 5px;
-                    padding-right: 38px; /* Space for the +5 button */
+                    padding-right: 32px; /* Space for the +5 button */
                 }
 
                 .grupo-componente .task-header-cell {
-                    width: 30px;
+                    width: 28px;
                     font-size: 0.7rem;
                     text-align: center;
                     color: #aaa;
@@ -1187,8 +1187,8 @@ function Trabajos({ user }) {
                     position: sticky;
                     left: 40px; 
                     top: 0; 
-                    z-index: 150; /* Above horizontal headers */
-                    background-color: #2c3e50; /* Ensure solid background */
+                    z-index: 200; /* Headers on top of everything */
+                    background-color: #2c3e50;
                     border-right: 2px solid #555; 
                     box-shadow: 6px 0 10px -2px rgba(0,0,0,0.5); 
                 }
@@ -1197,8 +1197,8 @@ function Trabajos({ user }) {
                     padding-left: 15px;
                     position: sticky;
                     left: 40px; 
-                    background-color: var(--dark-color-alt);
-                    z-index: 50; /* Above regular cells */
+                    background-color: var(--dark-color-alt) !important;
+                    z-index: 100; /* Above regular cells */
                     border-right: 2px solid #555;
                     font-weight: 500;
                     color: var(--text-color);
@@ -1207,15 +1207,15 @@ function Trabajos({ user }) {
                 .grupo-componente .tabla-global .num-col {
                     position: sticky;
                     left: 0;
-                    z-index: 150; /* Corner headers */
+                    z-index: 200; 
                     background-color: #2c3e50;
                     border-right: 1px solid #444;
                 }
                 .grupo-componente .tabla-global tbody td:first-child {
                     position: sticky;
                     left: 0;
-                    z-index: 50; /* Above regular cells */
-                    background-color: var(--dark-color-alt);
+                    z-index: 100; 
+                    background-color: var(--dark-color-alt) !important;
                     border-right: 1px solid #444;
                 }
                 
@@ -1228,7 +1228,7 @@ function Trabajos({ user }) {
                 .grupo-componente .tabla-global .obs-col {
                     position: sticky;
                     left: 40px;
-                    z-index: 150; 
+                    z-index: 200; 
                     background-color: #2c3e50;
                     border-right: 1px solid #444;
                     width: 50px;
@@ -1236,8 +1236,8 @@ function Trabajos({ user }) {
                 .grupo-componente .tabla-global tbody td.obs-col-body {
                      position: sticky;
                      left: 40px;
-                     z-index: 50;
-                     background-color: var(--dark-color-alt);
+                     z-index: 100;
+                     background-color: var(--dark-color-alt) !important;
                      border-right: 1px solid #444;
                      padding: 0;
                 }
@@ -1253,9 +1253,11 @@ function Trabajos({ user }) {
                 .grupo-componente .tabla-global tr:hover td {
                     background-color: rgba(0, 122, 122, 0.1);
                 }
-                /* Asegurar que la primera columna mantenga el color al hover de la fila */
-                .grupo-componente .tabla-global tr:hover td.alumno-col {
-                    background-color: #2a2f3c; 
+                /* Asegurar que las columnas fijas no sean transparentes al hover */
+                .grupo-componente .tabla-global tr:hover td.alumno-col,
+                .grupo-componente .tabla-global tr:hover td:first-child,
+                .grupo-componente .tabla-global tr:hover td.obs-col-body {
+                    background-color: #2a2f3c !important; 
                 }
 
                 .grupo-componente .tabla-header-task {
