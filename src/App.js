@@ -16,10 +16,12 @@ import Horario from "./PAGINA/Horario";
 import Grupo from "./PAGINA/Grupo";
 import Trabajos from "./PAGINA/Trabajos";
 import Calificaciones from "./PAGINA/Calificaciones";
-import LandingPage from "./PAGINA/LandingPage";
-import RegisterSchool from "./PAGINA/RegisterSchool";
 import ParentPortal from "./PAGINA/ParentPortal";
-import { FaGraduationCap, FaMoon, FaSun, FaBars, FaTimes, FaSignOutAlt, FaUserCircle } from 'react-icons/fa';
+import {
+    FaGraduationCap, FaMoon, FaSun, FaSignOutAlt, FaUserCircle,
+    FaThLarge, FaUsers, FaCalendarAlt, FaChartBar, FaTasks,
+    FaUserPlus, FaChevronDown
+} from 'react-icons/fa';
 
 // Estilos y logo (Asegúrate de que Home.css esté en PAGINA/ y logo.png en src/)
 import "./PAGINA/Home.css";
@@ -120,21 +122,19 @@ function App() {
             );
         }
 
-        const baseSections = [{ id: "home", label: "DASHBOARD" }];
+        const baseSections = [{ id: "home", label: "DASHBOARD", icon: <FaThLarge /> }];
         let roleSections = [];
 
         if (user?.role === "profesor") {
-            // Menú para Profesores
             roleSections = [
-                { id: "trabajos", label: "TRABAJOS", path: "/trabajos" },
-                { id: "grupo", label: "ASISTENCIA", path: "/grupo" },
+                { id: "trabajos", label: "TRABAJOS", path: "/trabajos", icon: <FaTasks /> },
+                { id: "grupo", label: "ASISTENCIA", path: "/grupo", icon: <FaUsers /> },
             ];
         } else if (user?.role === "admin") {
-            // Menú para Administradores
             roleSections = [
-                { id: "grupo", label: "GRUPOS", path: "/grupo" },
-                { id: "horario", label: "HORARIO GENERAL", path: "/horario" },
-                { id: "calificaciones", label: "CALIFICACIONES", path: "/calificaciones" },
+                { id: "grupo", label: "GRUPOS", path: "/grupo", icon: <FaUsers /> },
+                { id: "horario", label: "HORARIO GENERAL", path: "/horario", icon: <FaCalendarAlt /> },
+                { id: "calificaciones", label: "CALIFICACIONES", path: "/calificaciones", icon: <FaChartBar /> },
             ];
         }
 
@@ -156,25 +156,22 @@ function App() {
                     {theme === 'light' ? <FaMoon /> : <FaSun />}
                 </button>
 
-                {/* Imagen de Perfil */}
-                <img
-                    src={getProfileImageUrl(user.foto)}
-                    alt="Perfil"
-                    className="profile-img-small"
-                    onClick={() => navigate("/perfil")}
-                    style={{ cursor: "pointer" }}
-                />
-
-                {/* Icono Hamburguesa */}
-                <div className="hamburger-menu" onClick={toggleDropdown}>
-                    {dropdownOpen ? <FaTimes /> : <FaBars />}
+                {/* User Pill Button */}
+                <div className={`user-pill ${dropdownOpen ? 'open' : ''}`} onClick={toggleDropdown}>
+                    <img
+                        src={getProfileImageUrl(user.foto)}
+                        alt="Perfil"
+                        className="user-pill-img"
+                    />
+                    <span className="user-pill-name">{user.nombre.split(' ')[0]}</span>
+                    <FaChevronDown className="user-pill-arrow" />
                 </div>
 
                 {/* Menú Desplegable */}
                 <div className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}>
-                    <div className="dropdown-info" style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', marginBottom: '0.5rem' }}>
-                        <p style={{ fontWeight: 'bold', margin: '0', fontSize: '1rem' }}>{user.nombre}</p>
-                        <p style={{ margin: '0', fontSize: '0.8rem', opacity: '0.7' }}>{user.email}</p>
+                    <div className="dropdown-header">
+                        <p className="dropdown-header-name">{user.nombre}</p>
+                        <p className="dropdown-header-email">{user.email}</p>
                     </div>
 
                     {sections.map((sec) => (
@@ -183,13 +180,13 @@ function App() {
                             className="nav-link-dropdown"
                             onClick={() => handleMenuAction(sec)}
                         >
-                            {sec.label}
+                            {sec.icon} {sec.label}
                         </button>
                     ))}
 
                     {user?.role === "admin" && (
                         <button className="nav-link-dropdown" onClick={() => { navigate("/register-profesor"); closeDropdown(); }}>
-                            REGISTRAR PROFESOR
+                            <FaUserPlus /> REGISTRAR PROFESOR
                         </button>
                     )}
 

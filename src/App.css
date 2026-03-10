@@ -460,90 +460,158 @@ button {
 .nav-right-container {
     display: flex;
     align-items: center;
-    gap: 1.2rem;
+    gap: 1.5rem;
 }
 
 .theme-toggle-btn {
     color: white;
     font-size: 1.2rem;
-    background: none;
+    background: rgba(255, 255, 255, 0.1);
     border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
-    transition: transform 0.3s;
+    justify-content: center;
+    transition: all 0.3s ease;
 }
 
 .theme-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
     transform: rotate(30deg);
 }
 
-.hamburger-menu {
-    color: white;
-    font-size: 1.8rem;
-    cursor: pointer;
+.user-pill {
     display: flex;
     align-items: center;
-    transition: transform 0.3s;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 6px 16px 6px 6px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.hamburger-menu:hover {
-    transform: scale(1.1);
+.user-pill:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.user-pill-img {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--gold-color);
+}
+
+.user-pill-name {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-pill-arrow {
+    color: white;
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+}
+
+.user-pill.open .user-pill-arrow {
+    transform: rotate(180deg);
 }
 
 .dropdown-menu {
     position: absolute;
-    top: calc(var(--header-height) + 1.5rem);
+    top: calc(var(--header-height) + 1rem);
     right: 0;
     background-color: var(--dark-color-alt);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    border-radius: 0 0 12px 12px;
-    padding: 1rem 0;
-    min-width: 250px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border-radius: 16px;
+    padding: 12px;
+    min-width: 240px;
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 4px;
     transform-origin: top right;
-    transform: scaleY(0);
+    transform: translateY(10px) scale(0.95);
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
     z-index: 1000;
     border: 1px solid var(--border-color);
 }
 
 .dropdown-menu.show {
-    transform: scaleY(1);
+    transform: translateY(0) scale(1);
     opacity: 1;
     visibility: visible;
 }
 
+.dropdown-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 8px;
+}
+
+.dropdown-header-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--title-color);
+    margin-bottom: 2px;
+}
+
+.dropdown-header-email {
+    font-size: 0.8rem;
+    color: var(--text-color);
+    opacity: 0.6;
+}
+
 .nav-link-dropdown {
-    padding: 1rem 1.5rem;
+    padding: 10px 16px;
     width: 100%;
     text-align: left;
     color: var(--text-color);
     font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    transition: background-color 0.3s, color 0.3s;
+    gap: 12px;
+    border-radius: 10px;
+    transition: all 0.2s ease;
     background: none;
     border: none;
-    text-transform: uppercase;
-    font-size: 0.9rem;
-    letter-spacing: 1px;
+    font-size: 0.95rem;
+    cursor: pointer;
 }
 
 .nav-link-dropdown:hover {
     background-color: var(--light-gray-color);
-    color: var(--gold-color);
+    color: var(--primary-color);
+}
+
+.nav-link-dropdown svg {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    width: 20px;
 }
 
 .nav-link-dropdown.logout {
     color: var(--danger-color);
+    margin-top: 4px;
     border-top: 1px solid var(--border-color);
-    margin-top: 0.5rem;
+    padding-top: 14px;
+    border-radius: 0 0 10px 10px;
+}
+
+.nav-link-dropdown.logout svg {
+    color: var(--danger-color);
 }
 
 /* --- Media Queries --- */
