@@ -303,6 +303,10 @@ function Calificaciones({ user }) {
     return `${label} ${index + 1}`;
   };
 
+  const getPeriodsArray = () => {
+    const count = getPeriodCount();
+    return Array.from({ length: count }, (_, i) => i);
+  };
 
   // --- FUNCIÓN REUTILIZABLE PARA DIBUJAR UNA BOLETA EN UNA PÁGINA EXISTENTE ---
   const drawReportCard = async (doc, alumno, bimestresSeleccionados, datosFirmas = {}) => {
@@ -1043,7 +1047,7 @@ function Calificaciones({ user }) {
                         <td className="nombre-cell">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</td>
                         {materias.map(materia => (
                           <React.Fragment key={`${alumno._id}-${materia}`}>
-                            {[0, 1, 2].map(bimestreIndex => {
+                            {getPeriodsArray().map(bimestreIndex => {
                               const rawCal = calificaciones[alumno._id]?.[materia]?.[bimestreIndex];
                               const cal = clampGrade(rawCal);
                               return (
@@ -1124,7 +1128,7 @@ function Calificaciones({ user }) {
                         <td className="sabana-nombre-cell">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</td>
                         {materias.map(materia => (
                           <React.Fragment key={`${alumno._id}-${materia}`}>
-                            {[0, 1, 2].map(bim => {
+                            {getPeriodsArray().map(bim => {
                               const rawCal = calificaciones[alumno._id]?.[materia]?.[bim];
                               const cal = redondearCalificacion(rawCal);
                               return (
@@ -1135,7 +1139,7 @@ function Calificaciones({ user }) {
                             })}
                           </React.Fragment>
                         ))}
-                        {[0, 1, 2].map(bim => {
+                        {getPeriodsArray().map(bim => {
                           const prom = calcularPromedioBimestre(alumno._id, bim);
                           return (
                             <td key={`prom-${bim}`} className="sabana-prom-cell">
