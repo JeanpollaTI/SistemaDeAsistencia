@@ -8,7 +8,15 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 function ParentPortal() {
     const [loginData, setLoginData] = useState({ email: '', matricula: '' });
     const [token, setToken] = useState(localStorage.getItem('parentToken'));
-    const [alumno, setAlumno] = useState(JSON.parse(localStorage.getItem('alumnoData')));
+    const [alumno, setAlumno] = useState(() => {
+        const saved = localStorage.getItem('alumnoData');
+        try {
+            return (saved && saved !== 'undefined') ? JSON.parse(saved) : null;
+        } catch (err) {
+            console.error("Error parsing alumnoData:", err);
+            return null;
+        }
+    });
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
