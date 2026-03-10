@@ -7,9 +7,9 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function ParentPortal() {
     const [loginData, setLoginData] = useState({ email: '', matricula: '' });
-    const [token, setToken] = useState(localStorage.getItem('parentToken'));
+    const [token, setToken] = useState(sessionStorage.getItem('parentToken'));
     const [alumno, setAlumno] = useState(() => {
-        const saved = localStorage.getItem('alumnoData');
+        const saved = sessionStorage.getItem('alumnoData');
         try {
             return (saved && saved !== 'undefined') ? JSON.parse(saved) : null;
         } catch (err) {
@@ -51,8 +51,8 @@ function ParentPortal() {
             const res = await axios.post(`${API_URL}/api/portal-padres/login`, loginData);
             setToken(res.data.token);
             setAlumno(res.data.alumno);
-            localStorage.setItem('parentToken', res.data.token);
-            localStorage.setItem('alumnoData', JSON.stringify(res.data.alumno));
+            sessionStorage.setItem('parentToken', res.data.token);
+            sessionStorage.setItem('alumnoData', JSON.stringify(res.data.alumno));
         } catch (err) {
             setError(err.response?.data?.msg || "Error al iniciar sesión.");
         } finally {
@@ -64,8 +64,8 @@ function ParentPortal() {
         setToken(null);
         setAlumno(null);
         setData(null);
-        localStorage.removeItem('parentToken');
-        localStorage.removeItem('alumnoData');
+        sessionStorage.removeItem('parentToken');
+        sessionStorage.removeItem('alumnoData');
     };
 
     if (!token) {

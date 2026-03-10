@@ -76,21 +76,58 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
     try {
         const { id, grupo_id, school_id } = req.user;
 
-        // 1. Obtener calificaciones
+        // 1. Obtener calificaciones y configuración de la escuela
         const calificacionesRaw = await Calificacion.find({ grupo: grupo_id, school_id });
 
-        // Formatear las calificaciones para enviarlas de forma sencilla
+        // Función de redondeo idéntica a la del frontend/admin
+        const redondearCalificacion = (val) => {
+            if (typeof val !== 'number' || val <= 0) return 0;
+            const valUnaDecimal = Math.round(val * 10) / 10;
+            if (valUnaDecimal >= 5 && valUnaDecimal < 6) return 5;
+            return Math.max(5, Math.round(valUnaDecimal));
+        };
+
+        // Formatear las calificaciones calculando el promedio real
         const calificaciones = calificacionesRaw.map(reg => {
             const bimestres = {};
-            [1, 2, 3].forEach(bim => {
-                const notas = reg.calificaciones?.[id]?.[String(bim)];
-                if (notas) {
-                    // Aquí podríamos calcular el promedio de nuevo o enviar el objeto
-                    bimestres[bim] = notas;
+            const { criterios: criteriosPorBimestre, calificaciones: calificacionesMateria, numTareas: numTareasConfig } = reg;
+
+            [1, 2, 3].forEach(bimestre => {
+                const bimestreKey = String(bimestre);
+                const criteriosActivos = criteriosPorBimestre?.[bimestreKey] || [];
+                const calificacionesAlumnoEnBimestre = calificacionesMateria?.[id]?.[bimestreKey];
+
+                if (!criteriosActivos || criteriosActivos.length === 0 || !calificacionesAlumnoEnBimestre) {
+                    bimestres[bimestre] = null;
+                    return;
+                }
+
+                let promedioPonderado = 0;
+                let pesoTotalAplicable = 0;
+
+                criteriosActivos.forEach(criterio => {
+                    const calificacionesCriterio = calificacionesAlumnoEnBimestre[criterio.nombre] || {};
+                    const maxTareas = numTareasConfig?.[criterio.nombre] || 999;
+
+                    const notasValidas = Object.keys(calificacionesCriterio)
+                        .filter(index => parseInt(index) < maxTareas && calificacionesCriterio[index] && typeof calificacionesCriterio[index].nota === 'number')
+                        .map(index => calificacionesCriterio[index].nota);
+
+                    if (notasValidas.length > 0) {
+                        const promedioCriterio = notasValidas.reduce((a, b) => a + b, 0) / notasValidas.length;
+                        promedioPonderado += promedioCriterio * (criterio.porcentaje / 100);
+                        pesoTotalAplicable += (criterio.porcentaje / 100);
+                    }
+                });
+
+                if (pesoTotalAplicable === 0) {
+                    bimestres[bimestre] = null;
                 } else {
-                    bimestres[bim] = null;
+                    const promedioFinal = promedioPonderado / pesoTotalAplicable;
+                    bimestres[bimestre] = redondearCalificacion(promedioFinal);
                 }
             });
+
             return {
                 asignatura: reg.asignatura,
                 bimestres
