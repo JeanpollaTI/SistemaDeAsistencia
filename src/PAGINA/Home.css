@@ -252,6 +252,27 @@ button {
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+/* Scrollbar mejorado para la tabla */
+.profesores-table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.profesores-table-container::-webkit-scrollbar-track {
+    background: var(--dark-color-alt);
+    border-radius: 10px;
+}
+
+.profesores-table-container::-webkit-scrollbar-thumb {
+    background: #00CBCB;
+    border-radius: 10px;
+    border: 2px solid var(--dark-color-alt);
+}
+
+.profesores-table-container::-webkit-scrollbar-thumb:hover {
+    background: #00afaf;
+}
+
 .profesores-table {
     width: 100%;
     border-collapse: collapse;
@@ -280,17 +301,21 @@ button {
 }
 
 .btn-ver-perfil {
-    background-color: var(--primary-color);
+    background-color: #00CBCB;
     color: #ffffff;
     border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
+    padding: 8px 16px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 203, 203, 0.2);
 }
 
 .btn-ver-perfil:hover {
-    background-color: #357abd;
+    background-color: #00afaf;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 203, 203, 0.3);
 }
 
 /* --- Estilos del Modal de Profesor --- */
