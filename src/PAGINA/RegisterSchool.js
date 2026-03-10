@@ -70,6 +70,36 @@ const RegisterSchool = () => {
         }
     };
 
+    const [cardData, setCardData] = useState({
+        number: "",
+        name: "",
+        expiry: "",
+        cvv: "",
+        isFlipped: false
+    });
+
+    const handleCardChange = (e) => {
+        let { name, value } = e.target;
+        if (name === 'number') {
+            value = value.replace(/\D/g, '').substring(0, 16);
+            value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+        }
+        if (name === 'expiry') {
+            value = value.replace(/\D/g, '').substring(0, 4);
+            if (value.length >= 3) value = value.substring(0, 2) + '/' + value.substring(2);
+        }
+        if (name === 'cvv') value = value.replace(/\D/g, '').substring(0, 4);
+
+        setCardData({ ...cardData, [name]: value });
+    };
+
+    const getCardType = (num) => {
+        if (/^4/.test(num)) return "VISA";
+        if (/^5[1-5]/.test(num)) return "MASTERCARD";
+        if (/^3[47]/.test(num)) return "AMEX";
+        return "VISA";
+    };
+
     // Renderizado de Pasos
     const renderStep = () => {
         switch (step) {
@@ -104,6 +134,7 @@ const RegisterSchool = () => {
                 return (
                     <div className="form-step fade-in">
                         <h3><FaSchool /> Datos de la Institución</h3>
+                        <p className="step-desc">Ingresa el nombre de tu escuela y sube un logo si lo tienes.</p>
                         <div className="input-group">
                             <label>Nombre Oficial</label>
                             <input
@@ -130,6 +161,7 @@ const RegisterSchool = () => {
                 return (
                     <div className="form-step fade-in">
                         <h3><FaGraduationCap /> Configuración Académica</h3>
+                        <p className="step-desc">Configura el nivel y los periodos de evaluación iniciales.</p>
                         <div className="input-grid">
                             <div className="input-group">
                                 <label>Nivel Educativo</label>
@@ -158,12 +190,93 @@ const RegisterSchool = () => {
                 );
             case 4:
                 return (
-                    <div className="form-step success-step fade-in">
-                        <FaCheckCircle className="success-icon" />
-                        <h3>¡Registro Iniciado!</h3>
-                        <p>Hemos configurado tu institución. Para activar todas las funciones y empezar a usar Scholaris, procede al pago seguro.</p>
-                        <button className="cta-button primary" onClick={() => window.location.href = '#stripe-link'}>
-                            Pagar $700 MXN con Stripe
+                    <div className="form-step fade-in">
+                        <h3><FaCheckCircle style={{ color: '#007a7a' }} /> Pago de Activación</h3>
+                        <p className="step-desc">Completa el pago para activar tu institución en Scholaris.</p>
+
+                        <div className="card-wrapper">
+                            <div className={`credit-card ${cardData.isFlipped ? 'flipped' : ''}`}>
+                                <div className="card-front">
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div className="card-chip"></div>
+                                        <div className="card-type">{getCardType(cardData.number)}</div>
+                                    </div>
+                                    <div className="card-number">
+                                        {cardData.number || "#### #### #### ####"}
+                                    </div>
+                                    <div className="card-bottom">
+                                        <div>
+                                            <div className="card-label">Titular</div>
+                                            <div className="card-holder">{cardData.name.toUpperCase() || "NOMBRE COMPLETO"}</div>
+                                        </div>
+                                        <div>
+                                            <div className="card-label">Expira</div>
+                                            <div className="card-date">{cardData.expiry || "MM/YY"}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="card-back">
+                                    <div className="card-black-bar"></div>
+                                    <div className="card-label" style={{ textAlign: 'right', marginRight: '30px', marginTop: '15px' }}>CVV</div>
+                                    <div className="card-signature-bar">
+                                        {cardData.cvv}
+                                    </div>
+                                    <div className="card-back-type">{getCardType(cardData.number)}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="input-group">
+                            <label>Número de Tarjeta</label>
+                            <input
+                                type="text"
+                                name="number"
+                                value={cardData.number}
+                                onChange={handleCardChange}
+                                placeholder="#### #### #### ####"
+                                autoComplete="off"
+                            />
+                        </div>
+                        <div className="input-group">
+                            <label>Nombre en la Tarjeta</label>
+                            <input
+                                type="text"
+                                name="name"
+                                value={cardData.name}
+                                onChange={handleCardChange}
+                                placeholder="J. PÉREZ"
+                                autoComplete="off"
+                            />
+                        </div>
+                        <div className="input-grid" style={{ marginTop: '1rem' }}>
+                            <div className="input-group">
+                                <label>Fecha (MM/YY)</label>
+                                <input
+                                    type="text"
+                                    name="expiry"
+                                    value={cardData.expiry}
+                                    onChange={handleCardChange}
+                                    placeholder="MM/YY"
+                                    autoComplete="off"
+                                />
+                            </div>
+                            <div className="input-group">
+                                <label>CVV</label>
+                                <input
+                                    type="text"
+                                    name="cvv"
+                                    value={cardData.cvv}
+                                    onChange={handleCardChange}
+                                    onFocus={() => setCardData({ ...cardData, isFlipped: true })}
+                                    onBlur={() => setCardData({ ...cardData, isFlipped: false })}
+                                    placeholder="123"
+                                    autoComplete="off"
+                                />
+                            </div>
+                        </div>
+
+                        <button className="cta-button primary" style={{ marginTop: '2rem', width: '100%' }} onClick={() => navigate('/login')}>
+                            Confirmar y Pagar $700 MXN
                         </button>
                     </div>
                 );
