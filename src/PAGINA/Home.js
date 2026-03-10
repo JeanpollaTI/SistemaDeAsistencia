@@ -311,9 +311,9 @@ function Home({ user }) {
 
         <div className="home-container container grid">
           <div className="home-data">
-            <h1 className="home-title" style={{ color: '#ffffff' }}>
+            <h1 className="home-title">
               {user ? (
-                <>Bienvenido <span style={{ color: '#ffffff' }}>{primerNombre}</span> al sistema de <span>gestión académica</span></>
+                <>Bienvenido <span className="user-name-gold">{primerNombre}</span> al sistema de <span>gestión académica</span></>
               ) : (
                 <>Bienvenido al sistema de <span>gestión académica</span></>
               )}
