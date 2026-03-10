@@ -39,14 +39,14 @@
 
 .calificaciones-title {
   font-size: 2.5rem;
-  color: var(--text-color-dark);
+  color: #000000 !important;
   margin-bottom: 0.5rem;
   text-align: center;
 }
 
 .calificaciones-subtitle {
   font-size: 1.1rem;
-  color: var(--text-color-light);
+  color: #333333 !important;
   max-width: 600px;
   margin: 0 auto 2.5rem auto;
   text-align: center;
@@ -105,13 +105,13 @@
 .grupo-card h2 {
   margin: 0.5rem 0;
   font-size: 1.4rem;
-  color: var(--text-color-dark);
+  color: #000000 !important;
 }
 
 .grupo-card p {
   margin: 0;
   font-size: 0.9rem;
-  color: var(--text-color-light);
+  color: #333333 !important;
 }
 
 
@@ -124,19 +124,25 @@
 }
 
 .back-button {
-  padding: 0.7rem 1.4rem;
-  border: 1px solid var(--border-color);
+  padding: 8px 15px;
+  border: 1px solid #ddd;
   border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
+  font-size: 1.2rem;
+  font-weight: bold;
   cursor: pointer;
-  background-color: #ecf0f1;
-  color: var(--text-color-dark);
+  background-color: #f8f9fa;
+  color: #000000 !important;
   transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
 }
 
 .back-button:hover {
-  background-color: #d8e0e2;
+  background-color: #e9ecef;
+  transform: scale(1.05);
 }
 
 .button-export {
@@ -835,6 +841,7 @@
   border: 1px solid #ddd;
   padding: 6px 4px;
   text-align: center;
+  color: #000000 !important;
 }
 
 .sabana-head-main th {
@@ -929,12 +936,15 @@
 .sabana-prom-cell {
   font-weight: bold;
   background-color: #f4ecf7;
+  color: #4a148c !important;
+  /* Dark purple for visibility */
 }
 
 .sabana-final-cell {
   font-weight: bold;
   background-color: #ebf5fb;
-  color: #2980b9;
+  color: #0d47a1 !important;
+  /* Dark blue for visibility */
 }
 
 .reprobado-sabana {

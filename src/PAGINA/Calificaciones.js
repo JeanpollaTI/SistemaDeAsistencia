@@ -807,8 +807,8 @@ function Calificaciones({ user }) {
             />
           )}
 
-          <div className="header-controls" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <button onClick={handleBackToGrupos} className="back-button">&larr; Volver a Grupos</button>
+          <div className="header-controls" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+            <button onClick={handleBackToGrupos} className="back-button" style={{ position: 'absolute', left: 0 }}>&larr;</button>
 
             {/* 🌟 BOTÓN DIRECTOR GLOBAL */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: '#2c3e50', padding: '8px 15px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
@@ -839,9 +839,9 @@ function Calificaciones({ user }) {
             </div>
           </div>
 
-          <div className="calificaciones-header">
+          <div className="calificaciones-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
             <h1 className="calificaciones-title">Calificaciones del Grupo {selectedGrupo.nombre}</h1>
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
               {activeTab === 'sabana' && (
                 <button
                   className="button"
