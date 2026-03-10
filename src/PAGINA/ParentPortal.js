@@ -73,8 +73,8 @@ function ParentPortal() {
                         <div className="input-group">
                             <FaUser className="input-icon" />
                             <input
-                                type="email"
-                                placeholder="Correo registrado"
+                                type="text"
+                                placeholder="Correo o Teléfono registrado"
                                 value={loginData.email}
                                 onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                                 required
@@ -168,6 +168,13 @@ function ParentPortal() {
                     </div>
                     <p className="placeholder-text">El detalle de asistencia se habilitará en la siguiente actualización.</p>
                 </section>
+
+                <div className="portal-footer-actions">
+                    <button onClick={handleLogout} className="logout-btn-large">
+                        Cerrar Consulta
+                    </button>
+                    <p className="footer-note">Cierre la consulta si está en un equipo compartido.</p>
+                </div>
             </main>
         </div>
     );

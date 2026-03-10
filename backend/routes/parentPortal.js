@@ -9,15 +9,19 @@ const router = express.Router();
 // [POST] /portal-padres/login
 router.post("/login", async (req, res) => {
     try {
-        const { email, matricula } = req.body;
+        const { email, identifier, matricula } = req.body;
+        const loginId = (identifier || email || "").toLowerCase().trim();
 
-        if (!email || !matricula) {
-            return res.status(400).json({ msg: "Correo y Matrícula son obligatorios." });
+        if (!loginId || !matricula) {
+            return res.status(400).json({ msg: "Correo/Teléfono y Matrícula son obligatorios." });
         }
 
-        // Buscar el grupo que contenga al alumno con ese email y matrícula
+        // Buscar el grupo que contenga al alumno con ese email/teléfono y matrícula
         const grupo = await Grupo.findOne({
-            "alumnos.emailPadre": email.toLowerCase(),
+            $or: [
+                { "alumnos.emailPadre": loginId },
+                { "alumnos.telefonoPadre": loginId }
+            ],
             "alumnos.matricula": matricula
         });
 
@@ -26,7 +30,7 @@ router.post("/login", async (req, res) => {
         }
 
         const alumno = grupo.alumnos.find(a =>
-            a.emailPadre === email.toLowerCase() && a.matricula === matricula
+            (a.emailPadre === loginId || a.telefonoPadre === loginId) && a.matricula === matricula
         );
 
         // Generar un token especial para el padre

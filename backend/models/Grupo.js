@@ -23,6 +23,11 @@ const AlumnoSchema = new mongoose.Schema({
     lowercase: true,
     default: "",
   },
+  telefonoPadre: {
+    type: String,
+    trim: true,
+    default: "",
+  },
   matricula: {
     type: String,
     unique: true,

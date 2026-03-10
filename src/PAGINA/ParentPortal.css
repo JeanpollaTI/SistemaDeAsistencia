@@ -241,6 +241,38 @@
     color: var(--portal-muted) !important;
 }
 
+.portal-footer-actions {
+    margin-top: 3rem;
+    padding-bottom: 4rem;
+    text-align: center;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    padding-top: 2rem;
+}
+
+.logout-btn-large {
+    background: #e74c3c;
+    color: white;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background 0.3s, transform 0.2s;
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+}
+
+.logout-btn-large:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+}
+
+.footer-note {
+    margin-top: 10px;
+    color: var(--portal-muted);
+    font-size: 0.85rem;
+}
+
 @media (max-width: 600px) {
     .portal-header {
         flex-direction: column;
