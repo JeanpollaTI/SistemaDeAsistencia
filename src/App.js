@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 
 // Componentes y Contexto (Asegúrate de que AuthContext.js y PrivateRoute.js estén en la carpeta PAGINA/)
@@ -19,7 +19,7 @@ import Calificaciones from "./PAGINA/Calificaciones";
 import LandingPage from "./PAGINA/LandingPage";
 import RegisterSchool from "./PAGINA/RegisterSchool";
 import ParentPortal from "./PAGINA/ParentPortal";
-import { FaGraduationCap } from 'react-icons/fa';
+import { FaGraduationCap, FaMoon, FaSun } from 'react-icons/fa';
 
 // Estilos y logo (Asegúrate de que Home.css esté en PAGINA/ y logo.png en src/)
 import "./PAGINA/Home.css";
@@ -35,6 +35,17 @@ function App() {
     const { user, loading, getProfileImageUrl, logout } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
+
+    // Estado para el Tema (Claro/Oscuro)
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+    // Aplicar el tema al root del documento
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
     // Hook para manejar el scroll a secciones específicas después de la navegación
     useEffect(() => {
@@ -94,6 +105,12 @@ function App() {
                                 INICIAR SESIÓN
                             </button>
                         </li>
+                        {/* Toggle de Tema Público */}
+                        <li>
+                            <button className="nav-button theme-toggle-btn" onClick={toggleTheme} title="Cambiar Tema">
+                                {theme === 'light' ? <FaMoon /> : <FaSun />}
+                            </button>
+                        </li>
                     </ul>
                 </div>
             );
@@ -142,6 +159,13 @@ function App() {
                         </li>
                     )}
 
+                    {/* Toggle de Tema Privado */}
+                    <li className="nav-item">
+                        <button className="nav-button theme-toggle-btn" onClick={toggleTheme} title="Cambiar Tema" style={{ color: 'white', fontSize: '1.2rem', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                            {theme === 'light' ? <FaMoon /> : <FaSun />}
+                        </button>
+                    </li>
+
                     {/* Imagen de Perfil/Logout */}
                     <li className="nav-profile">
                         <img
@@ -163,9 +187,9 @@ function App() {
             <header className="header" id="header">
                 <nav className="nav container">
                     {/* Logo SCHOLARIS */}
-                    <a href="#home" className="nav-logo" onClick={(e) => handleNavClick(e, "home")} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#007A7A', fontWeight: 'bold', fontSize: '1.5rem', textDecoration: 'none' }}>
-                        <FaGraduationCap style={{ color: '#ffffff', fontSize: '2rem' }} />
-                        <span style={{ letterSpacing: '1px' }}>{user && user.school_name ? user.school_name.toUpperCase() : "SCHOLARIS"}</span>
+                    <a href="#home" className="nav-logo" onClick={(e) => handleNavClick(e, "home")} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ffffff', fontWeight: 'bold', fontSize: '1.5rem', textDecoration: 'none' }}>
+                        <FaGraduationCap style={{ color: '#ffffff', fontSize: '1.8rem' }} />
+                        <span style={{ letterSpacing: '1px', fontSize: '1rem', fontWeight: '500' }}>{user && user.school_name ? user.school_name.toUpperCase() : "SCHOLARIS"}</span>
                     </a>
                     <div className="nav-menu" id="nav-menu">
                         {renderMenu()}
