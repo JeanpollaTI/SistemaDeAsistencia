@@ -204,7 +204,7 @@ function Grupo({ user }) {
     setModalVisible(null);
     setGrupoSeleccionado(null);
     setNuevoGrupo({ nombre: '', asesor: '', alumnos: [] });
-    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '' });
+    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '' });
     setBimestreAbierto({});
     setAsignaciones({});
     setEditingAlumno(null);
@@ -223,7 +223,7 @@ function Grupo({ user }) {
     const alumnoId = `new-${Date.now()}`;
     const nuevoAlumno = { _id: alumnoId, ...alumnoInput };
     setNuevoGrupo(prev => ({ ...prev, alumnos: [...prev.alumnos, nuevoAlumno].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)) }));
-    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '' });
+    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '' });
   };
 
   const handleUpdateAlumno = () => {
