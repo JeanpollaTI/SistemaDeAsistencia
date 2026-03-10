@@ -165,6 +165,7 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
         });
 
         const asistenciasDetalle = asistenciasRaw.map(asis => {
+            let presentes = 0;
             let faltas = 0;
             let retardos = 0;
             let justificados = 0;
@@ -176,6 +177,7 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
                 asis.registros.forEach((valor, clave) => {
                     if (clave.startsWith(String(id))) {
                         totales++;
+                        if (valor.estado === 'P') presentes++;
                         if (valor.estado === 'F') faltas++;
                         if (valor.estado === 'R') retardos++;
                         if (valor.estado === 'J') justificados++;
@@ -185,6 +187,7 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
 
             return {
                 asignatura: asis.asignatura,
+                presentes,
                 faltas,
                 retardos,
                 justificados,

@@ -185,9 +185,12 @@
 }
 
 .portal-brand h1 {
-    font-size: 1.4rem;
-    color: var(--portal-text);
+    font-size: 1.6rem;
+    color: #ffffff;
+    font-weight: 700;
     margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .portal-student-name-display {

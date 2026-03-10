@@ -38,6 +38,16 @@ function ParentPortal() {
         }
     };
 
+    useEffect(() => {
+        if (data?.escuela) {
+            document.title = data.escuela;
+        } else if (alumno?.escuela) {
+            document.title = alumno.escuela;
+        } else {
+            document.title = "Portal de Padres";
+        }
+    }, [data, alumno]);
+
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -176,6 +186,7 @@ function ParentPortal() {
                             <thead>
                                 <tr>
                                     <th>Asignatura</th>
+                                    <th style={{ textAlign: 'center' }}>Presentes</th>
                                     <th style={{ textAlign: 'center' }}>Faltas</th>
                                     <th style={{ textAlign: 'center' }}>Retardos</th>
                                     <th style={{ textAlign: 'center' }}>Justificados</th>
@@ -186,6 +197,7 @@ function ParentPortal() {
                                 {data?.asistencias?.map((asis, idx) => (
                                     <tr key={idx}>
                                         <td>{asis.asignatura}</td>
+                                        <td style={{ textAlign: 'center', color: '#27ae60', fontWeight: 'bold' }}>{asis.presentes}</td>
                                         <td style={{ textAlign: 'center', color: '#e74c3c', fontWeight: 'bold' }}>{asis.faltas}</td>
                                         <td style={{ textAlign: 'center', color: '#f39c12', fontWeight: 'bold' }}>{asis.retardos}</td>
                                         <td style={{ textAlign: 'center', color: '#3498db', fontWeight: 'bold' }}>{asis.justificados}</td>
