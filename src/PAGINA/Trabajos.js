@@ -282,7 +282,7 @@ function Trabajos({ user }) {
                 .grupo-componente {
                     --dark-color: #191D28;
                     --dark-color-alt: #1E222D;
-                    --main-color: #b9972b; /* Tono Dorado/Amarillo formal */
+                    --main-color: #007A7A; /* Teal/Aqua formal */
                     --title-color: #FFFFFF;
                     --text-color: #E9E9E9;
                     --danger-color: #d32f2f; /* Rojo formal */
@@ -464,7 +464,7 @@ function Trabajos({ user }) {
                 .grupo-componente {
                     --dark-color: #191D28;
                     --dark-color-alt: #1E222D;
-                    --main-color: #b9972b; /* Tono Dorado/Amarillo formal */
+                    --main-color: #007A7A; /* Teal/Aqua formal */
                     --title-color: #FFFFFF;
                     --text-color: #E9E9E9;
                     --danger-color: #d32f2f; /* Rojo formal */
@@ -490,7 +490,7 @@ function Trabajos({ user }) {
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); opacity: 0; visibility: hidden;
                     animation: fadeInOut 3.5s ease-in-out forwards;
                 }
-                .notificacion-flotante.exito { background-color: var(--success-color); color: var(--dark-color); border: 1px solid #1a8a49; }
+                .notificacion-flotante.exito { background-color: var(--main-color); color: white; border: 1px solid #005f5f; }
                 .notificacion-flotante.error { background-color: var(--danger-color); color: var(--title-color); border: 1px solid #a32222; }
                 @keyframes fadeInOut {
                     0% { opacity: 0; visibility: hidden; transform: translate(-50%, -20px); }
@@ -619,7 +619,7 @@ function Trabajos({ user }) {
                 }
                 .grupo-componente .criterio-form input:focus {
                     border-color: var(--main-color);
-                    box-shadow: 0 0 3px rgba(185, 151, 43, 0.8);
+                    box-shadow: 0 0 3px rgba(0, 122, 122, 0.8);
                     background-color: #242935;
                 }
                 .grupo-componente .criterio-form input[type="text"] {
@@ -770,7 +770,7 @@ function Trabajos({ user }) {
                     color: var(--dark-color);
                     font-weight: bold;
                     border-color: var(--main-color);
-                    box-shadow: 0 0 8px rgba(185, 151, 43, 0.7);
+                    box-shadow: 0 0 8px rgba(0, 122, 122, 0.7);
                 }
 
                 .grupo-componente .promedio-final-display {
@@ -862,15 +862,15 @@ function Trabajos({ user }) {
 
                 .grupo-componente .cuadritos-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-                    gap: 8px;
+                    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+                    gap: 6px;
                     align-items: center;
                     padding: 10px 0;
                 }
 
                 .grupo-componente .cuadrito-calificacion {
-                    width: 70px; /* Ancho ligeramente mayor */
-                    height: 42px; /* Altura suficiente para ver el texto completo */
+                    width: 44px; /* Ancho más compacto */
+                    height: 38px;
                     line-height: 40px; /* Centrado vertical del texto */
                     background-color: #4a4a4a;
                     border: 1px solid #777;
@@ -879,8 +879,8 @@ function Trabajos({ user }) {
                     text-align: center;
                     font-weight: 600;
                     font-family: var(--body-font);
-                    font-size: 1.1rem; /* Importante: tamaño legible */
-                    padding: 0; /* Evitar padding interno que desplace el texto */
+                    font-size: 1rem;
+                    padding: 0;
                     transition: all 0.2s;
                 }
                 .grupo-componente .cuadrito-calificacion::placeholder {
@@ -907,7 +907,7 @@ function Trabajos({ user }) {
                     font-weight: bold;
                     cursor: pointer;
                     transition: transform 0.2s, background-color 0.2s;
-                    font-size: 1.1rem;
+                    font-size: 1rem;
                 }
                 .grupo-componente .btn-agregar-dias:hover {
                     transform: scale(1.05);
@@ -917,14 +917,14 @@ function Trabajos({ user }) {
                 /* --- TASK HEADERS --- */
                 .grupo-componente .task-header-row {
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-                    gap: 8px;
+                    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+                    gap: 6px;
                     margin-bottom: 5px;
-                    padding-right: 68px; /* Space for the +5 button */
+                    padding-right: 48px; /* Space for the +5 button */
                 }
 
                 .grupo-componente .task-header-cell {
-                    width: 60px;
+                    width: 40px;
                     font-size: 0.7rem;
                     text-align: center;
                     color: #aaa;
@@ -1017,7 +1017,7 @@ function Trabajos({ user }) {
                 }
                 .grupo-componente .criterio-form input:focus {
                     border-color: var(--main-color);
-                    box-shadow: 0 0 5px rgba(185, 151, 43, 0.5); /* Sombra al enfocar */
+                    box-shadow: 0 0 5px rgba(0, 122, 122, 0.5); /* Sombra al enfocar */
                 }
 
                 .grupo-componente .porcentaje-wrapper {
@@ -1042,18 +1042,18 @@ function Trabajos({ user }) {
                 .grupo-componente .criterio-form .btn {
                     padding: 14px 25px; /* Más ancho para que no se vea apretado */
                     background-color: var(--main-color);
-                    color: var(--dark-color);
-                    font-weight: 700; /* Botón de acción principal muy visible */
+                    color: white;
+                    font-weight: 700;
                     border: none;
                     border-radius: 8px;
                     line-height: 1;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.3); /* Sombra más suave */
-                    transition: background-color 0.2s, transform 0.2s;
-                    margin-left: 10px; /* Separación extra */
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+                    transition: all 0.2s;
+                    margin-left: 10px;
                 }
                 .grupo-componente .criterio-form .btn:hover {
-                    background-color: #d4b03f;
-                    transform: none
+                    background-color: #00cbcb;
+                    transform: translateY(-2px);
                 }
                 .grupo-componente .criterio-total {
                     text-align: right; font-size: 1.3rem; font-weight: bold;
@@ -1100,7 +1100,7 @@ function Trabajos({ user }) {
                     border: 2px solid var(--dark-color-alt);
                 }
                 .grupo-componente .modal-backdrop-solid::-webkit-scrollbar-thumb:hover {
-                    background-color: #d4b03f;
+                    background-color: #00cbcb;
                 }
 
                 /* --- VISTA GLOBAL DE CRITERIOS (TABLA MASIVA) --- */
@@ -1134,7 +1134,7 @@ function Trabajos({ user }) {
                     color: var(--dark-color);
                     font-weight: 700;
                     border-color: var(--main-color);
-                    box-shadow: 0 0 10px rgba(185, 151, 43, 0.4);
+                    box-shadow: 0 0 10px rgba(0, 122, 122, 0.4);
                 }
 
                 .grupo-componente .sticky-context {
@@ -1142,7 +1142,7 @@ function Trabajos({ user }) {
                     z-index: 200;
                     background-color: var(--dark-color);
                     padding-bottom: 5px;
-                    border-bottom: 2px solid #edb92b;
+                    border-bottom: 2px solid var(--main-color);
                     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
                     flex-shrink: 0;
                 }
@@ -1249,7 +1249,7 @@ function Trabajos({ user }) {
                     font-size: 1.2rem;
                 }
                 .grupo-componente .tabla-global tr:hover td {
-                    background-color: rgba(185, 151, 43, 0.05);
+                    background-color: rgba(0, 122, 122, 0.1);
                 }
                 /* Asegurar que la primera columna mantenga el color al hover de la fila */
                 .grupo-componente .tabla-global tr:hover td.alumno-col {
