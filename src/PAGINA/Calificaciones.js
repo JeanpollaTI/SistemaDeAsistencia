@@ -10,7 +10,7 @@ import './Calificaciones.css';
 import logoImage from './Logoescuela.png';
 
 // --- Sortable Header Component ---
-function SortableHeader({ id, children, disabled }) {
+function SortableHeader({ id, children, disabled, colSpan }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
 
   const style = {
@@ -19,22 +19,20 @@ function SortableHeader({ id, children, disabled }) {
     transition,
     cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
     touchAction: 'none',
-    backgroundColor: isDragging ? '#2c3e50' : undefined, // Color oscuro al arrastrar
-    color: isDragging ? 'white' : undefined,
-    zIndex: isDragging ? 100 : undefined,
+    backgroundColor: isDragging ? '#2c3e50' : '#2c3e50', // Solid background always to fix transparency
+    color: 'white',
+    zIndex: isDragging ? 200 : 110, // Higher than sub-headers
     // 🌟 FIX: 'relative' overrides 'sticky' from CSS. Only use relative when dragging.
-    position: isDragging ? 'relative' : undefined,
-    // Removed fixed minWidth to allow CSS to control it better, or use auto. 
-    // The CSS defines 35px for sub-columns (grades), but this is a main column.
-    // Let's set it to 'auto' or match the table style unless dragging.
+    position: isDragging ? 'relative' : 'sticky',
+    top: 0,
     minWidth: isDragging ? '105px' : 'auto',
-    border: isDragging ? '2px dashed #f1c40f' : (disabled ? undefined : '1px solid #dfe6e9'),
-    opacity: isDragging ? 0.9 : 1
+    border: isDragging ? '2px dashed #f1c40f' : '1px solid #1a252f',
+    opacity: 1
   };
 
   return (
-    <th ref={setNodeRef} style={style} {...attributes} {...listeners} colSpan="3">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+    <th ref={setNodeRef} style={style} {...attributes} {...listeners} colSpan={colSpan}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px' }}>
         {!disabled && <span style={{ fontSize: '1.2em', opacity: 0.5, cursor: 'grab' }}>⋮⋮</span>}
         <span style={{ whiteSpace: 'nowrap' }}>{children}</span>
       </div>
@@ -808,40 +806,36 @@ function Calificaciones({ user }) {
           )}
 
           <div className="header-controls" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
-            <button onClick={handleBackToGrupos} className="back-button" style={{ position: 'absolute', left: 0 }}>&larr;</button>
-
-            {/* 🌟 BOTÓN DIRECTOR GLOBAL */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: '#2c3e50', padding: '8px 15px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ color: '#aaa', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Director Actual</span>
-                <span style={{ color: 'white', fontWeight: 'bold', fontSize: '0.95rem' }}>
-                  {localStorage.getItem('current_director_name') || 'No Asignado'}
-                </span>
-              </div>
-              <button
-                className="button-secondary"
-                onClick={() => setModalDirector(true)}
-                style={{
-                  padding: '6px 12px',
-                  fontSize: '0.85rem',
-                  backgroundColor: '#3498db',
-                  border: 'none',
-                  color: 'white',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s'
-                }}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#2980b9'}
-                onMouseOut={(e) => e.target.style.backgroundColor = '#3498db'}
-              >
-                Cambiar / Asignar
-              </button>
-            </div>
+            <button onClick={handleBackToGrupos} className="back-button" style={{ position: 'absolute', left: '20px' }}>&larr;</button>
           </div>
 
           <div className="calificaciones-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
             <h1 className="calificaciones-title">Calificaciones del Grupo {selectedGrupo.nombre}</h1>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
+              {/* 🌟 BOTÓN DIRECTOR GLOBAL (MOVIDO AQUÍ) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#2c3e50', padding: '8px 12px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ color: '#aaa', fontSize: '0.65rem', textTransform: 'uppercase' }}>Director</span>
+                  <span style={{ color: 'white', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                    {localStorage.getItem('current_director_name') || 'No Asignado'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setModalDirector(true)}
+                  style={{
+                    padding: '4px 8px',
+                    fontSize: '0.75rem',
+                    backgroundColor: '#3498db',
+                    border: 'none',
+                    color: 'white',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cambiar
+                </button>
+              </div>
+
               {activeTab === 'sabana' && (
                 <button
                   className="button"
@@ -1012,7 +1006,7 @@ function Calificaciones({ user }) {
                         strategy={horizontalListSortingStrategy}
                       >
                         {materias.map(materia => (
-                          <SortableHeader key={materia} id={materia} disabled={!isEditing}>
+                          <SortableHeader key={materia} id={materia} disabled={!isEditing} colSpan={getPeriodCount()}>
                             {materia}
                           </SortableHeader>
                         ))}
