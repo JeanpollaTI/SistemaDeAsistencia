@@ -4,6 +4,7 @@ export const schoolMiddleware = async (req, res, next) => {
     try {
         // El id de la escuela ya debería venir en el objeto req.user
         if (!req.user || !req.user.school_id) {
+            console.warn("schoolMiddleware: Missing school_id in req.user", req.user); // DEBUG
             return res.status(200).json({
                 error: "SCHOOL_REQUIRED",
                 msg: "No se ha identificado la escuela. Por favor, realice la migración inicial."

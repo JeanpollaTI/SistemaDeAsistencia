@@ -89,10 +89,14 @@ function Home({ user }) {
 
     try {
       const res = await axios.get(`${API_URL}/api/materias`, axiosConfig);
-      setMateriasDb(res.data || []);
+      console.log("Materias fetched:", res.data); // DEBUG
+      if (Array.isArray(res.data)) {
+        setMateriasDb(res.data);
+      } else {
+        console.error("Unexpected response for materias:", res.data);
+      }
     } catch (err) {
       console.error("Error al cargar materias:", err);
-      // No alert twice
     }
   };
 
@@ -394,7 +398,7 @@ function Home({ user }) {
                       {asignaturasSelect.map(a => <li key={a}>{a}</li>)}
                     </ul>
                   ) : (
-                    <p style={{ fontSize: '0.9rem', color: '#777', marginBottom: '1rem' }}>Ninguna asignatura asignada.</p>
+                    <p style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>Ninguna asignatura asignada.</p>
                   )}
                 </div>
 
@@ -410,12 +414,12 @@ function Home({ user }) {
               <div className="modal-right-column">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <p className="asignaturas-title"><b>CATÁLOGO DE MATERIAS</b></p>
-                  <button onClick={() => setShowSubjects(false)} style={{ background: 'none', border: '1px solid #ccc', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}>
+                  <button onClick={() => setShowSubjects(false)} style={{ background: 'none', border: '1px solid var(--border-color)', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', color: 'inherit' }}>
                     Cerrar Gestión
                   </button>
                 </div>
 
-                <p style={{ marginBottom: '10px', fontSize: '0.9rem', color: '#555' }}>Selecciona las materias del catálogo:</p>
+                <p style={{ marginBottom: '10px', fontSize: '0.9rem' }}>Selecciona las materias del catálogo:</p>
 
                 {/* Gestión de Materias (Agregar) */}
                 <div className="manage-materias-container">
@@ -478,7 +482,7 @@ function Home({ user }) {
                       )}
                     </div>
                   )) : (
-                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: '#666' }}>
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem' }}>
                       <p>No hay materias registradas.</p>
                     </div>
                   )}

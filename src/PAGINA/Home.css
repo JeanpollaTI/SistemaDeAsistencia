@@ -335,7 +335,7 @@ button {
 
 /* --- Rediseño Modal Expandible --- */
 .modal-content {
-    background-color: var(--white-color);
+    background-color: var(--dark-color-alt);
     padding: 1.5rem;
     border-radius: 8px;
     /* Inicio: Compacto */
@@ -348,7 +348,7 @@ button {
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
     position: relative;
     text-align: center;
-    color: var(--text-color-dark);
+    color: var(--text-color);
     transition: width 0.3s ease, height 0.3s ease;
     /* Animación suave */
 }
@@ -369,7 +369,7 @@ button {
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--text-color-dark);
+    color: var(--text-color);
     z-index: 10;
 }
 
@@ -429,8 +429,10 @@ button {
 .manage-materias-container input {
     flex: 1;
     padding: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-color);
     border-radius: 5px;
+    background-color: var(--dark-color);
+    color: var(--text-color);
 }
 
 .btn-add-materia {
@@ -446,10 +448,10 @@ button {
 .subject-grid {
     flex: 1;
     overflow-y: auto;
-    border: 1px solid #eee;
+    border: 1px solid var(--border-color);
     padding: 15px;
     border-radius: 8px;
-    background: #f9f9f9;
+    background: var(--dark-color);
 
     /* Configuración GRID */
     display: grid;
@@ -464,9 +466,9 @@ button {
     justify-content: space-between;
     align-items: center;
     padding: 10px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    background: white;
+    background: var(--dark-color-alt);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -523,23 +525,23 @@ button {
     margin-top: 0.5rem;
     margin-bottom: 1.5rem;
     font-size: 1.8rem;
-    color: var(--text-color-dark);
+    color: var(--title-color);
 }
 
 .profesor-details {
     text-align: left;
     margin-bottom: 1.5rem;
     padding: 1rem;
-    background-color: var(--light-gray-color);
+    background-color: var(--dark-color);
     border-radius: 8px;
-    color: var(--text-color-dark);
+    color: var(--text-color);
 }
 
 .profesor-details p,
 .profesor-details p b {
     margin: 8px 0;
     font-size: 1rem;
-    color: var(--text-color-dark);
+    color: var(--text-color);
 }
 
 .asignaturas-title {
@@ -547,7 +549,7 @@ button {
     font-weight: bold;
     margin-bottom: 1rem;
     font-size: 1.1rem;
-    color: var(--text-color-dark);
+    color: var(--text-color);
 }
 
 /* ----------------------------------------------------------------- */
@@ -576,7 +578,7 @@ button {
     align-items: center;
     gap: 8px;
     font-size: 0.9rem;
-    color: var(--text-color-dark);
+    color: var(--text-color);
     white-space: normal;
     /* Permitir salto de línea si el nombre es muy largo */
     overflow-wrap: break-word;

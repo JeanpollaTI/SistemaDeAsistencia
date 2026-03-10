@@ -284,7 +284,8 @@ router.put("/editar-perfil", verifyToken, uploadFotos.single("foto"), async (req
 // GET: Todos los profesores
 router.get("/profesores", verifyAdmin, async (req, res) => {
   try {
-    const profesores = await User.find({ role: "profesor" }).select(
+    const school_id = req.user.school_id;
+    const profesores = await User.find({ role: "profesor", school_id }).select(
       "nombre email celular edad sexo foto asignaturas createdAt"
     );
 
