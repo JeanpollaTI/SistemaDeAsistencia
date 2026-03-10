@@ -332,7 +332,8 @@ body {
   /* Efecto rebote suave */
 }
 
-.grupo-componente .modal-content input[type="text"] {
+.grupo-componente .modal-content input[type="text"],
+.grupo-componente .modal-content input[type="email"] {
   width: 100%;
   padding: 12px;
   background: var(--dark-color);
@@ -342,7 +343,8 @@ body {
   box-sizing: border-box;
 }
 
-.grupo-componente .modal-content input[type="text"]:focus {
+.grupo-componente .modal-content input[type="text"]:focus,
+.grupo-componente .modal-content input[type="email"]:focus {
   outline: none;
   border-color: var(--main-color);
 }

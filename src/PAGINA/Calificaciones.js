@@ -1045,8 +1045,8 @@ function Calificaciones({ user }) {
                     return (
                       <tr key={alumno._id}>
                         <td>{alumnos.indexOf(alumno) + 1}</td>
-                        <td style={{ fontWeight: 'bold', color: 'var(--scholaris-teal)' }}>{alumno.matricula || '---'}</td>
-                        <td>{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</td>
+                        <td className="matricula-cell">{alumno.matricula || '---'}</td>
+                        <td className="nombre-cell">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</td>
                         {materias.map(materia => (
                           <React.Fragment key={`${alumno._id}-${materia}`}>
                             {[0, 1, 2].map(bimestreIndex => {
