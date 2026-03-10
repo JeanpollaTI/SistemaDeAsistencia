@@ -88,8 +88,14 @@ function Home({ user }) {
     const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
 
     try {
+      console.log("Current user object:", user); // DEBUG
       const res = await axios.get(`${API_URL}/api/materias`, axiosConfig);
       console.log("Materias fetched:", res.data); // DEBUG
+
+      if (res.data && res.data.error) {
+        alert(`Error de materias: ${res.data.error} - ${res.data.msg || ''}`);
+      }
+
       if (Array.isArray(res.data)) {
         setMateriasDb(res.data);
       } else {
@@ -97,6 +103,7 @@ function Home({ user }) {
       }
     } catch (err) {
       console.error("Error al cargar materias:", err);
+      alert("Error crítico al cargar materias. Revisa la consola.");
     }
   };
 

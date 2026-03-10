@@ -525,23 +525,23 @@ button {
     margin-top: 0.5rem;
     margin-bottom: 1.5rem;
     font-size: 1.8rem;
-    color: var(--title-color);
+    color: #ffffff !important;
 }
 
 .profesor-details {
     text-align: left;
     margin-bottom: 1.5rem;
     padding: 1rem;
-    background-color: var(--dark-color);
+    background-color: #ffffff !important;
     border-radius: 8px;
-    color: var(--text-color);
+    color: #000000 !important;
 }
 
 .profesor-details p,
 .profesor-details p b {
     margin: 8px 0;
     font-size: 1rem;
-    color: var(--text-color);
+    color: #000000 !important;
 }
 
 .asignaturas-title {
