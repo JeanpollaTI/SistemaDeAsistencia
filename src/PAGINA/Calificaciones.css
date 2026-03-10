@@ -201,33 +201,39 @@
   top: 0 !important;
   z-index: 1000 !important;
   background-color: #ffffff !important;
-  /* BACK TO WHITE */
   color: #000000 !important;
-  /* BLACK TEXT */
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1) !important;
+  height: 60px !important;
+  /* FIXED HEIGHT */
   border-bottom: 2px solid #ddd !important;
+  border-right: 1px solid #eee !important;
 }
 
-/* Tier 4 Left Offsets */
+/* Tier 4 Left Offsets (Sync with col widths) */
 .num-header.corner-header,
 .sabana-num.corner-header {
   left: 0 !important;
+  width: 40px !important;
 }
 
 .matricula-header.corner-header {
   left: 40px !important;
+  width: 70px !important;
 }
 
 .sabana-matricula.corner-header {
   left: 30px !important;
+  width: 60px !important;
 }
 
 .nombre-header.corner-header {
   left: 110px !important;
+  width: 250px !important;
 }
 
 .sabana-nombre.corner-header {
   left: 90px !important;
+  width: 200px !important;
 }
 
 /* TIER 3: TOP HEADERS (Vertical Sticky Only) */
@@ -238,6 +244,8 @@
   z-index: 900 !important;
   background-color: #34495e !important;
   color: white !important;
+  height: 60px !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.2) !important;
 }
 
 .sabana-table thead tr:first-child th:not(.corner-header) {
@@ -248,10 +256,13 @@
 .calificaciones-table thead tr:nth-child(2) th,
 .sabana-table thead tr:nth-child(2) th {
   position: sticky !important;
-  top: 45px !important;
+  top: 60px !important;
+  /* MATCH ROW 1 HEIGHT */
   z-index: 850 !important;
   background-color: #2c3e50 !important;
   color: white !important;
+  height: 45px !important;
+  /* FIXED HEIGHT ROW 2 */
 }
 
 .sabana-table thead tr:nth-child(2) th {
@@ -271,45 +282,48 @@
   color: #000000 !important;
   /* FORCE BLACK */
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-}
-
-.calificaciones-table tbody td:first-child {
-  font-weight: bold;
-  color: #666 !important;
+  border-right: 1px solid #eee !important;
 }
 
 /* Tier 2 Left Offsets */
 .calificaciones-table tbody td:first-child,
 .sabana-table tbody .sabana-num-cell {
   left: 0 !important;
+  width: 40px !important;
+  font-weight: bold;
+  color: #666 !important;
 }
 
 .calificaciones-table tbody td.matricula-cell {
   left: 40px !important;
-  background-color: #f8f9fa !important;
+  width: 70px !important;
   color: #16a085 !important;
+  background-color: #fff !important;
 }
 
 .sabana-table tbody .sabana-matricula-cell {
   left: 30px !important;
-  background-color: #f8f9fa !important;
+  width: 60px !important;
 }
 
 .calificaciones-table tbody td.nombre-cell {
   left: 110px !important;
+  width: 250px !important;
   text-align: left !important;
 }
 
 .sabana-table tbody .sabana-nombre-cell {
   left: 90px !important;
+  width: 200px !important;
 }
 
-/* TIER 1: STICKY RIGHT (Averages restricted to Final/Actions) */
+/* TIER 1: STICKY RIGHT (Averages) */
 .calificaciones-table .actions-header,
 .calificaciones-table .actions-cell {
   position: sticky !important;
   right: 0 !important;
   width: 120px !important;
+  min-width: 120px !important;
   z-index: 900 !important;
   background-color: white !important;
   border-left: 1px solid #ddd;
@@ -320,16 +334,42 @@
   position: sticky !important;
   right: 120px !important;
   width: 80px !important;
+  min-width: 80px !important;
   z-index: 900 !important;
   background-color: white !important;
   border-left: 1px solid #ddd;
 }
 
-/* Intermediate averages should NOT be sticky to avoid "disaster" overlapping */
-.calificaciones-table .promedio-header,
-.calificaciones-table .promedio-cell {
-  position: static !important;
-  /* RESET STICKY */
+/* Re-enabling precision sticky right for averages to prevent "detached" look */
+.calificaciones-table .promedio-header:not(.promedio-header-final),
+.calificaciones-table .promedio-cell:not(.promedio-final-cell) {
+  position: sticky !important;
+  z-index: 840 !important;
+  background-color: #fff !important;
+}
+
+/* Correct right offsets for average columns group */
+.calificaciones-table .promedio-cell:nth-last-child(3) {
+  right: 200px !important;
+  width: 60px !important;
+}
+
+.calificaciones-table .promedio-cell:nth-last-child(4) {
+  right: 260px !important;
+  width: 60px !important;
+}
+
+.calificaciones-table .promedio-cell:nth-last-child(5) {
+  right: 320px !important;
+  width: 60px !important;
+  border-left: 1px solid #ccc !important;
+}
+
+/* The group header also needs to stay fixed */
+.calificaciones-table thead .promedio-header:not(.promedio-header-final):not(.sticky-trim) {
+  right: 200px !important;
+  width: 180px !important;
+  z-index: 950 !important;
 }
 
 .sabana-table .sabana-final-header,
@@ -344,8 +384,10 @@
 
 .sabana-table .sabana-promedio-gral-header,
 .sabana-table .sabana-prom-cell {
-  position: static !important;
-  /* RESET STICKY */
+  position: sticky !important;
+  right: 60px !important;
+  /* Offset by Final column */
+  z-index: 850 !important;
 }
 
 
