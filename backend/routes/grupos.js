@@ -60,7 +60,7 @@ router.post("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => 
         res.status(201).json(grupoParaEnviar);
     } catch (err) {
         console.error("Error en [POST /grupos]:", err);
-        res.status(500).json({ error: "Error en el servidor al crear el grupo." });
+        res.status(500).json({ error: "Error en el servidor al crear el grupo.", details: err.message });
     }
 });
 
@@ -75,7 +75,7 @@ router.get("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
         res.json(grupos);
     } catch (err) {
         console.error("Error en [GET /grupos]:", err);
-        res.status(500).json({ error: "Error al obtener los grupos." });
+        res.status(500).json({ error: "Error al obtener los grupos.", details: err.message });
     }
 });
 

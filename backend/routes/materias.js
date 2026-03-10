@@ -29,8 +29,8 @@ materiasRouter.get("/", authMiddleware, schoolMiddleware, async (req, res) => {
         const materias = await Materia.find({ school_id }).sort({ nombre: 1 });
         res.json(materias);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Error al obtener materias" });
+        console.error("Error al obtener materias:", error);
+        res.status(500).json({ error: "Error al obtener materias", details: error.message });
     }
 });
 
@@ -45,10 +45,11 @@ materiasRouter.post("/", authMiddleware, isAdmin, schoolMiddleware, async (req, 
         await nuevaMateria.save();
         res.status(201).json(nuevaMateria);
     } catch (error) {
+        console.error("Error al crear materia:", error);
         if (error.code === 11000) {
             return res.status(400).json({ error: "La materia ya existe" });
         }
-        res.status(500).json({ error: "Error al crear materia" });
+        res.status(500).json({ error: "Error al crear materia", details: error.message });
     }
 });
 
