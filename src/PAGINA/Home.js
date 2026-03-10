@@ -88,9 +88,6 @@ function Home({ user }) {
     const axiosConfig = { headers: { Authorization: `Bearer ${token}` } };
 
     try {
-      // Robustez: Obtener perfil primero para asegurar school_id en sesión de backend
-      await axios.get(`${API_URL}/auth/mi-perfil`, axiosConfig);
-
       const res = await axios.get(`${API_URL}/api/materias`, axiosConfig);
       setMateriasDb(res.data || []);
     } catch (err) {
@@ -189,7 +186,7 @@ function Home({ user }) {
   const openModal = (profesor) => {
     setSelectedProfesor(profesor);
     setAsignaturasSelect(profesor.asignaturas || []);
-    setShowSubjects(false); // Reset al abrir
+    setShowSubjects(true); // Mostrar catálogo por defecto para facilitar edición
     setModalVisible(true);
     setConfirmDeleteVisible(false);
     setChangePassVisible(false); // Reset pass modal

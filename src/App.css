@@ -12,7 +12,8 @@
 
     /* Shared Colors */
     --gold-color: #007A7A;
-    /* Cambiado de dorado a Teal */
+    --highlight-color: #00CBCB;
+    /* Cyan brillante para máxima visibilidad */
     --primary-color: #007A7A;
     /* Teal from Scholaris brand */
     --danger-color: #e74c3c;
@@ -222,11 +223,12 @@ button {
 }
 
 .home-title span {
-    color: var(--gold-color);
+    color: var(--highlight-color);
 }
 
 .user-name-gold {
     font-weight: 700;
+    color: var(--highlight-color);
 }
 
 /* --- Sección Profesores (Admin) --- */

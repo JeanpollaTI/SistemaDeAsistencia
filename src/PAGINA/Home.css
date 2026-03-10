@@ -264,14 +264,15 @@ button {
 
 .profesores-table th {
     background-color: var(--gold-color);
-    color: var(--dark-color);
-    /* Texto oscuro para el encabezado */
+    color: #ffffff;
+    /* Siempre blanco para contraste con Teal */
     font-weight: 600;
 }
 
 .profesores-table tbody tr:hover {
-    background-color: #fcf8e3;
-    /* Fondo más claro al pasar el mouse */
+    background-color: rgba(0, 122, 122, 0.1);
+    /* Teal muy suave y translúcido */
+    transition: background 0.2s ease;
 }
 
 .btn-ver-perfil {
