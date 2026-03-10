@@ -1020,14 +1020,14 @@ function Calificaciones({ user }) {
                     {materias.flatMap(materia => {
                       const columns = [];
                       for (let i = 0; i < getPeriodCount(); i++) {
-                        columns.push(<th key={`${materia}-p${i}`}>{getPeriodLabel(i)}</th>);
+                        columns.push(<th key={`${materia}-p${i}`} className="sticky-trim">{getPeriodLabel(i)}</th>);
                       }
                       return columns;
                     })}
                     {(() => {
                       const columns = [];
                       for (let i = 0; i < getPeriodCount(); i++) {
-                        columns.push(<th key={`prom-h-${i}`} className="promedio-header">{getPeriodLabel(i)}</th>);
+                        columns.push(<th key={`prom-h-${i}`} className="promedio-header sticky-trim">{getPeriodLabel(i)}</th>);
                       }
                       return columns;
                     })()}
