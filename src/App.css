@@ -277,17 +277,21 @@ button {
 }
 
 .btn-ver-perfil {
-    background-color: #1a2a4a;
-    color: var(--white-color);
+    background-color: #00CBCB !important;
+    color: #ffffff !important;
     border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
+    padding: 8px 16px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 203, 203, 0.2);
 }
 
 .btn-ver-perfil:hover {
-    background-color: #2c3e50;
+    background-color: #00afaf !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 203, 203, 0.3);
 }
 
 /* --- Estilos del Modal de Profesor --- */

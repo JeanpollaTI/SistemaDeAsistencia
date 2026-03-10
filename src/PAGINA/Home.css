@@ -301,8 +301,8 @@ button {
 }
 
 .btn-ver-perfil {
-    background-color: #00CBCB;
-    color: #ffffff;
+    background-color: #00CBCB !important;
+    color: #ffffff !important;
     border: none;
     padding: 8px 16px;
     border-radius: 6px;
@@ -313,7 +313,7 @@ button {
 }
 
 .btn-ver-perfil:hover {
-    background-color: #00afaf;
+    background-color: #00afaf !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 203, 203, 0.3);
 }
