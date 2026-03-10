@@ -192,192 +192,121 @@
 
 
 
-/* Body Cells: Promedio T1, T2, T3 */
-/* Body Cells: Promedio T1, T2, T3 */
-.calificaciones-table tbody td:nth-last-child(3) {
-  /* Prom T3 */
+/* --- NOBLE STICKY HIERARCHY (4 TIERS) --- */
+
+/* TIER 4: CORNERS (Top & Left Sticky) - HIGHEST PRIORITY */
+.calificaciones-table thead .corner-header,
+.sabana-table thead .corner-header {
   position: sticky !important;
-  right: 200px;
-  z-index: 80;
-  width: 50px !important;
-  min-width: 50px !important;
-  max-width: 50px !important;
-  background-color: #f9ebea;
+  top: 0 !important;
+  z-index: 1000 !important;
+  background-color: #2c3e50 !important;
+  /* Solid Dark */
+  color: white !important;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2) !important;
 }
 
-.calificaciones-table tbody td:nth-last-child(4) {
-  /* Prom T2 */
+/* Tier 4 Left Offsets */
+.num-header.corner-header,
+.sabana-num.corner-header {
+  left: 0 !important;
+}
+
+.matricula-header.corner-header {
+  left: 40px !important;
+}
+
+.sabana-matricula.corner-header {
+  left: 30px !important;
+}
+
+.nombre-header.corner-header {
+  left: 110px !important;
+}
+
+.sabana-nombre.corner-header {
+  left: 90px !important;
+}
+
+/* TIER 3: TOP HEADERS (Vertical Sticky Only) */
+.calificaciones-table thead tr:first-child th:not(.corner-header),
+.sabana-table thead tr:first-child th:not(.corner-header) {
   position: sticky !important;
-  right: 250px;
-  z-index: 80;
-  width: 50px !important;
-  min-width: 50px !important;
-  max-width: 50px !important;
-  background-color: #f9ebea;
+  top: 0 !important;
+  z-index: 900 !important;
+  background-color: #34495e !important;
+  color: white !important;
 }
 
-.calificaciones-table tbody td:nth-last-child(5) {
-  /* Prom T1 */
-  position: sticky !important;
-  right: 300px;
-  z-index: 80;
-  width: 50px !important;
-  min-width: 50px !important;
-  max-width: 50px !important;
-  background-color: #f9ebea;
-  border-left: 1px solid #aaa !important;
-  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+.sabana-table thead tr:first-child th:not(.corner-header) {
+  background-color: #8e44ad !important;
+  /* Sabana Purple */
 }
 
-/* Cell Visuals */
-.promedio-header-final {
-  background-color: var(--gold-accent) !important;
-  color: var(--text-color-dark) !important;
-}
-
-/* Normal Sub-column sizing (Grades) */
-/* Reduce to 35px for tighter fit to show MORE subjects */
+/* Row 2 Top Headers */
 .calificaciones-table thead tr:nth-child(2) th,
-.calificaciones-table tbody td {
-  width: 35px;
-  min-width: 35px;
-  max-width: 35px;
-  overflow: hidden;
-  white-space: nowrap;
-  padding: 8px 2px !important;
-  /* Reduced padding */
-}
-
-/* --- STICKY COLUMNS CONFIGURATION (LEFT) --- */
-/* High Z-Index to stay above scrolling headers */
-
-/* 1. COLUMN # - Sticky Left: 0 */
-.calificaciones-table thead tr th.num-header,
-.calificaciones-table tbody td:first-child {
+.sabana-table thead tr:nth-child(2) th {
   position: sticky !important;
-  left: 0;
-  z-index: 200;
-  /* Above top headers Row 1 (130) */
-  width: 40px !important;
-  min-width: 40px !important;
-  max-width: 40px !important;
+  top: 45px !important;
+  /* Row 1 Height */
+  z-index: 850 !important;
   background-color: #2c3e50 !important;
-  color: white !important;
-  border-right: 1px solid #ddd;
 }
 
-.calificaciones-table thead tr th.num-header {
-  top: 0;
-  z-index: 210 !important;
+.sabana-table thead tr:nth-child(2) th {
+  background-color: #9b59b6 !important;
 }
 
-.calificaciones-table tbody td:first-child {
-  z-index: 190 !important;
+/* TIER 2: LEFT COLUMNS (Horizontal Sticky Only) */
+.calificaciones-table tbody td:first-child,
+.calificaciones-table tbody td.matricula-cell,
+.calificaciones-table tbody td.nombre-cell,
+.sabana-table tbody .sabana-num-cell,
+.sabana-table tbody .sabana-matricula-cell,
+.sabana-table tbody .sabana-nombre-cell {
+  position: sticky !important;
+  z-index: 800 !important;
   background-color: #ffffff !important;
-  color: #333 !important;
+  /* SOLID BACKGROUND IS CRITICAL */
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
 }
 
-/* 2. COLUMN ID/Matricula - Sticky Left: 40px */
-.calificaciones-table thead tr th.matricula-header,
-.calificaciones-table tbody td.matricula-cell {
-  position: sticky !important;
-  left: 40px;
-  z-index: 200;
-  width: 70px !important;
-  min-width: 70px !important;
-  max-width: 70px !important;
-  background-color: #2c3e50 !important;
-  color: white !important;
-}
-
-.calificaciones-table thead tr th.matricula-header {
-  top: 0;
-  z-index: 210 !important;
+/* Tier 2 Left Offsets */
+.calificaciones-table tbody td:first-child,
+.sabana-table tbody .sabana-num-cell {
+  left: 0 !important;
 }
 
 .calificaciones-table tbody td.matricula-cell {
-  z-index: 190 !important;
+  left: 40px !important;
   background-color: #f8f9fa !important;
-  color: #16a085 !important;
 }
 
-/* 3. COLUMN Name - Sticky Left: 110px (40# + 70ID) */
-.calificaciones-table thead tr th.nombre-header,
-.calificaciones-table tbody td.nombre-cell {
-  position: sticky !important;
-  left: 110px;
-  z-index: 200;
-  width: 250px !important;
-  min-width: 250px !important;
-  max-width: 250px !important;
-  background-color: #2c3e50 !important;
-  color: white !important;
-}
-
-.calificaciones-table thead tr th.nombre-header {
-  top: 0;
-  z-index: 210 !important;
+.sabana-table tbody .sabana-matricula-cell {
+  left: 30px !important;
+  background-color: #f8f9fa !important;
 }
 
 .calificaciones-table tbody td.nombre-cell {
-  z-index: 190 !important;
+  left: 110px !important;
+}
+
+.sabana-table tbody .sabana-nombre-cell {
+  left: 90px !important;
+}
+
+
+
+/* Right Sticky Body Cells */
+.calificaciones-table tbody td:nth-last-child(1),
+.calificaciones-table tbody td:nth-last-child(2),
+.calificaciones-table tbody td:nth-last-child(3),
+.calificaciones-table tbody td:nth-last-child(4),
+.calificaciones-table tbody td:nth-last-child(5) {
+  position: sticky !important;
+  z-index: 700 !important;
+  /* Above table body, below names */
   background-color: #ffffff !important;
-  color: #000000 !important;
-  text-align: left !important;
-  white-space: normal !important;
-}
-
-/* --- STICKY RIGHT CONFIGURATION --- */
-
-/* 1. ACTIONS COLUMN */
-.actions-header,
-.actions-cell {
-  position: sticky !important;
-  right: 0;
-  width: 120px !important;
-  z-index: 120;
-  background-color: #ffffff !important;
-  border-left: 1px solid #ddd;
-}
-
-.calificaciones-table thead th.actions-header {
-  z-index: 210 !important;
-  background-color: #2c3e50 !important;
-  top: 0;
-}
-
-/* 2. FINAL COLUMN */
-.promedio-header-final,
-.promedio-final-cell {
-  position: sticky !important;
-  right: 120px;
-  width: 80px !important;
-  z-index: 110;
-  background-color: #ffffff !important;
-  border-left: 1px solid #ddd;
-}
-
-.calificaciones-table thead th.promedio-header-final {
-  z-index: 210 !important;
-  background-color: #16a085 !important;
-  color: white !important;
-  top: 0;
-}
-
-/* 3. PROMEDIO TRIMESTRAL BLOCK */
-.calificaciones-table thead tr:first-child th.promedio-header {
-  position: sticky !important;
-  right: 200px;
-  z-index: 130 !important;
-  background-color: #c0392b !important;
-  color: white !important;
-  top: 0;
-}
-
-.calificaciones-table thead tr:nth-child(2) th.sticky-trim {
-  position: sticky !important;
-  top: 45px;
-  z-index: 125 !important;
 }
 
 
@@ -444,71 +373,12 @@
   background-color: var(--header-bg);
   color: white;
   font-weight: 600;
-  position: sticky;
-  z-index: 20;
-  /* Base Z-Index for headers */
   font-size: 0.85rem;
   white-space: normal;
   word-break: break-word;
   vertical-align: middle;
   box-shadow: 0 1px 0 #ccc;
   /* Separator line that moves with scroll */
-}
-
-/* --- ROW 1: Subject Names & Main Headers --- */
-.calificaciones-table thead tr:first-child th {
-  top: 0;
-  height: 45px !important;
-  /* Fixed tight height */
-  line-height: 1.2;
-  padding: 5px !important;
-}
-
-/* --- ROW 2: T1, T2, T3 Sub-headers --- */
-.calificaciones-table thead tr:nth-child(2) th {
-  top: 45px !important;
-  /* Exact match to Row 1 height */
-  z-index: 85;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
-  height: 35px !important;
-  padding: 5px !important;
-}
-
-/* --- CORNER & FULL-HEIGHT HEADERS (Rowspan=2) --- */
-.calificaciones-table thead tr:first-child th[rowspan="2"] {
-  top: 0;
-  z-index: 100;
-  height: 80px !important;
-  /* 45 + 35 = 80 total height */
-}
-
-/* --- FIX: Specific Z-Index for Sticky Columns in Header --- */
-/* Left Columns (Num, Name) */
-.calificaciones-table thead tr th.num-header,
-.calificaciones-table thead tr th.nombre-header {
-  z-index: 100 !important;
-  top: 0;
-}
-
-/* Right Columns (Final, Actions) */
-.calificaciones-table thead th.promedio-header-final,
-.calificaciones-table thead th.actions-header {
-  z-index: 100 !important;
-  top: 0;
-}
-
-/* Promedio Trimestral Header Block (Row 1) */
-.calificaciones-table thead tr:first-child th.promedio-header {
-  top: 0;
-  z-index: 95 !important;
-  height: 45px !important;
-}
-
-/* Promedio Trimestral Sub-headers (Row 2) */
-.calificaciones-table thead tr:nth-child(2) th.promedio-header {
-  top: 45px !important;
-  z-index: 90 !important;
-  height: 35px !important;
 }
 
 .calificaciones-table tbody tr:hover td:first-child {

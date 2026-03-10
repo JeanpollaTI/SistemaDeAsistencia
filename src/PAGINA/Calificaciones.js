@@ -993,9 +993,9 @@ function Calificaciones({ user }) {
               <table className="calificaciones-table">
                 <thead>
                   <tr>
-                    <th rowSpan="2" className="num-header">#</th>
-                    <th rowSpan="2" className="matricula-header">ID/Matrícula</th>
-                    <th rowSpan="2" className="nombre-header">Nombre del Alumno</th>
+                    <th rowSpan="2" className="num-header corner-header">#</th>
+                    <th rowSpan="2" className="matricula-header corner-header">ID/Matrícula</th>
+                    <th rowSpan="2" className="nombre-header corner-header">Nombre del Alumno</th>
                     <DndContext
                       sensors={sensors}
                       collisionDetection={closestCenter}
@@ -1084,9 +1084,9 @@ function Calificaciones({ user }) {
               <table className="sabana-table">
                 <thead>
                   <tr className="sabana-head-main">
-                    <th rowSpan="2" className="sabana-num">#</th>
-                    <th rowSpan="2" className="sabana-matricula">ID</th>
-                    <th rowSpan="2" className="sabana-nombre">Nombre del Alumno</th>
+                    <th rowSpan="2" className="sabana-num corner-header">#</th>
+                    <th rowSpan="2" className="sabana-matricula corner-header">ID</th>
+                    <th rowSpan="2" className="sabana-nombre corner-header">Nombre del Alumno</th>
                     {materias.map(materia => (
                       <th key={materia} colSpan={getPeriodCount()} className="sabana-materia-header">{materia}</th>
                     ))}
