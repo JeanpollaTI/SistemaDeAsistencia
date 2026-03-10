@@ -203,38 +203,39 @@
   background-color: #ffffff !important;
   color: #000000 !important;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1) !important;
-  height: 60px !important;
-  /* FIXED HEIGHT */
+  height: 50px !important;
+  /* ULTRA COMPACT ROW 1 */
   border-bottom: 2px solid #ddd !important;
   border-right: 1px solid #eee !important;
   font-weight: 700 !important;
+  font-size: 12px !important;
 }
 
-/* Tier 4 Left Offsets (Refined Widths) */
+/* Tier 4 Left Offsets (Ultra Compact) */
 .num-header.corner-header,
 .sabana-num.corner-header {
   left: 0 !important;
-  width: 35px !important;
+  width: 30px !important;
 }
 
 .matricula-header.corner-header {
-  left: 35px !important;
+  left: 30px !important;
   width: 65px !important;
 }
 
 .sabana-matricula.corner-header {
-  left: 35px !important;
+  left: 30px !important;
   width: 60px !important;
 }
 
 .nombre-header.corner-header {
-  left: 100px !important;
-  width: 220px !important;
+  left: 95px !important;
+  width: 200px !important;
 }
 
 .sabana-nombre.corner-header {
-  left: 95px !important;
-  width: 200px !important;
+  left: 90px !important;
+  width: 180px !important;
 }
 
 /* TIER 3: TOP HEADERS (Vertical Sticky Only) */
@@ -245,7 +246,8 @@
   z-index: 900 !important;
   background-color: #34495e !important;
   color: white !important;
-  height: 60px !important;
+  height: 50px !important;
+  font-size: 12px !important;
   border-bottom: 2px solid rgba(0, 0, 0, 0.2) !important;
 }
 
@@ -257,13 +259,14 @@
 .calificaciones-table thead tr:nth-child(2) th,
 .sabana-table thead tr:nth-child(2) th {
   position: sticky !important;
-  top: 60px !important;
+  top: 50px !important;
   /* MATCH ROW 1 HEIGHT */
   z-index: 850 !important;
   background-color: #2c3e50 !important;
   color: white !important;
-  height: 45px !important;
-  /* FIXED HEIGHT ROW 2 */
+  height: 40px !important;
+  /* COMPACT ROW 2 */
+  font-size: 11px !important;
 }
 
 .sabana-table thead tr:nth-child(2) th {
@@ -287,36 +290,51 @@
   border-right: 1px solid #eee !important;
 }
 
+.sabana-table tbody .sabana-nombre-cell {
+  position: sticky !important;
+  z-index: 800 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  border-right: 1px solid #eee !important;
+  white-space: nowrap !important;
+  /* NO JUMPING LINES */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Tier 2 Left Offsets (Refined widths) */
 .calificaciones-table tbody td:first-child,
 .sabana-table tbody .sabana-num-cell {
   left: 0 !important;
-  width: 35px !important;
+  width: 30px !important;
   color: #000 !important;
 }
 
 .calificaciones-table tbody td.matricula-cell {
-  left: 35px !important;
+  left: 30px !important;
   width: 65px !important;
   color: #16a085 !important;
 }
 
 .sabana-table tbody .sabana-matricula-cell {
-  left: 35px !important;
+  left: 30px !important;
   width: 60px !important;
   color: #000 !important;
 }
 
 .calificaciones-table tbody td.nombre-cell {
-  left: 100px !important;
-  width: 220px !important;
+  left: 95px !important;
+  width: 200px !important;
   text-align: left !important;
   color: #000 !important;
 }
 
 .sabana-table tbody .sabana-nombre-cell {
-  left: 95px !important;
-  width: 200px !important;
+  left: 90px !important;
+  width: 180px !important;
   text-align: left !important;
   color: #000 !important;
 }
@@ -326,8 +344,9 @@
 .calificaciones-table .actions-cell {
   position: sticky !important;
   right: 0 !important;
-  width: 120px !important;
-  min-width: 120px !important;
+  width: 100px !important;
+  /* SLIGHTLY NARROWER */
+  min-width: 100px !important;
   z-index: 900 !important;
   background-color: white !important;
   border-left: 2px solid #ddd;
@@ -346,8 +365,8 @@
   /* RESET HORIZONTAL STICKY */
 }
 
-/* Recalculate Top Sticky for these columns' headers implicitly by Tier 3 rules,
-   but ensure they don't have right sticky overrides from previous implementations. */
+/* But ensure they still stick TOP implicitly by Tier 3 rules or explicit override */
+/* (We restored static horizontally above to prevent "detached" look from audio) */
 
 
 /* --- SCROLLBAR DESIGN --- */
@@ -379,17 +398,18 @@
 /* --- TABLE BASE STYLES --- */
 .calificaciones-table th,
 .calificaciones-table td {
-  padding: 14px 10px;
+  padding: 5px 6px !important;
+  /* ULTRA COMPACT PADDING */
   text-align: center;
   border: 1px solid var(--border-color);
   vertical-align: middle;
+  font-size: 12px;
 }
 
 .calificaciones-table thead th {
   background-color: var(--header-bg);
   color: white;
   font-weight: 600;
-  font-size: 0.85rem;
   white-space: normal;
   word-break: break-word;
   vertical-align: middle;
