@@ -2,6 +2,7 @@ import express from "express";
 import Grupo from "../models/Grupo.js";
 import Calificacion from "../models/Calificacion.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const router = express.Router();
 
@@ -76,8 +77,15 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
     try {
         const { id, grupo_id, school_id } = req.user;
 
+        // Convert strings to ObjectId to be safe across different Mongoose/MongoDB versions
+        const gId = new mongoose.Types.ObjectId(grupo_id);
+        const sId = new mongoose.Types.ObjectId(school_id);
+
         // 1. Obtener calificaciones y configuración de la escuela
-        const calificacionesRaw = await Calificacion.find({ grupo: grupo_id, school_id });
+        const calificacionesRaw = await Calificacion.find({
+            grupo: gId,
+            school_id: sId
+        });
 
         // Función de redondeo idéntica a la del frontend/admin
         const redondearCalificacion = (val) => {

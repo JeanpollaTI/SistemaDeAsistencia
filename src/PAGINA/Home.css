@@ -239,19 +239,23 @@ button {
     color: var(--title-color);
 }
 
+/* Tabla de Profesores - Limitamos altura para evitar scroll infinito */
 .profesores-table-container {
-    max-width: 1000px;
-    margin: 0 auto;
+    background-color: var(--container-color);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     overflow-x: auto;
-    background-color: var(--white-color);
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-    /* Sombra más oscura */
+    max-height: 500px;
+    /* Altura máxima para ver aprox 10-12 filas antes de scroll interno */
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .profesores-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 600px;
 }
 
 .profesores-table th,

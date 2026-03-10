@@ -605,11 +605,12 @@ body {
   width: 250px;
   flex-shrink: 0;
   padding-right: 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  /* Permite que nombres largos bajen de línea */
+  word-break: break-word;
   font-weight: 500;
-  color: var(--text-color);
+  color: #FFFFFF;
+  /* Texto más brillante para mejor contraste */
 }
 
 .grupo-componente .bimestres-container {
