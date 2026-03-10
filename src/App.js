@@ -16,6 +16,8 @@ import Horario from "./PAGINA/Horario";
 import Grupo from "./PAGINA/Grupo";
 import Trabajos from "./PAGINA/Trabajos";
 import Calificaciones from "./PAGINA/Calificaciones";
+import LandingPage from "./PAGINA/LandingPage";
+import RegisterSchool from "./PAGINA/RegisterSchool";
 import ParentPortal from "./PAGINA/ParentPortal";
 import {
     FaGraduationCap, FaMoon, FaSun, FaSignOutAlt, FaUserCircle,
