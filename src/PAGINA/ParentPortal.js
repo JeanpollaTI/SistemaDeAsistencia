@@ -38,6 +38,69 @@ function ParentPortal() {
         }
     };
 
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await axios.post(`${API_URL}/api/portal-padres/login`, loginData);
+            setToken(res.data.token);
+            setAlumno(res.data.alumno);
+            fetchData(res.data.token);
+        } catch (err) {
+            setError(err.response?.data?.msg || "Error al iniciar sesión.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleLogout = () => {
+        setToken(null);
+        setAlumno(null);
+        setData(null);
+    };
+
+    if (!token) {
+        return (
+            <div className="portal-login-container">
+                <div className="portal-login-card">
+                    <FaGraduationCap className="portal-logo-icon" />
+                    <h2>Portal de Padres y Alumnos</h2>
+                    <p>Ingresa los datos para consultar el progreso académico.</p>
+
+                    <form onSubmit={handleLogin}>
+                        <div className="input-group">
+                            <FaUser className="input-icon" />
+                            <input
+                                type="text"
+                                placeholder="Correo o Teléfono registrado"
+                                value={loginData.email}
+                                onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div className="input-group">
+                            <FaIdCard className="input-icon" />
+                            <input
+                                type="text"
+                                placeholder="Matrícula (Ej: 0001)"
+                                value={loginData.matricula}
+                                onChange={(e) => setLoginData({ ...loginData, matricula: e.target.value })}
+                                required
+                            />
+                        </div>
+                        {error && <p className="portal-error">{error}</p>}
+                        <button type="submit" className="portal-btn" disabled={loading}>
+                            {loading ? "Cargando..." : "Entrar al Portal"}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="portal-dashboard">
             <header className="portal-header">
                 <div className="portal-logo-section">
                     <FaSchool className="portal-logo" />
@@ -145,7 +208,7 @@ function ParentPortal() {
                     <p className="footer-note">Cierre la consulta si está en un equipo compartido.</p>
                 </div>
             </main>
-        </div >
+        </div>
     );
 }
 
