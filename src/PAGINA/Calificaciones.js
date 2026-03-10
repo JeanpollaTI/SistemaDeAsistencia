@@ -812,30 +812,6 @@ function Calificaciones({ user }) {
           <div className="calificaciones-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
             <h1 className="calificaciones-title">Calificaciones del Grupo {selectedGrupo.nombre}</h1>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
-              {/* 🌟 BOTÓN DIRECTOR GLOBAL (MOVIDO AQUÍ) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#2c3e50', padding: '8px 12px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ color: '#aaa', fontSize: '0.65rem', textTransform: 'uppercase' }}>Director</span>
-                  <span style={{ color: 'white', fontWeight: 'bold', fontSize: '0.85rem' }}>
-                    {localStorage.getItem('current_director_name') || 'No Asignado'}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setModalDirector(true)}
-                  style={{
-                    padding: '4px 8px',
-                    fontSize: '0.75rem',
-                    backgroundColor: '#3498db',
-                    border: 'none',
-                    color: 'white',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cambiar
-                </button>
-              </div>
-
               {activeTab === 'sabana' && (
                 <button
                   className="button"
@@ -874,6 +850,30 @@ function Calificaciones({ user }) {
                   {isEditing ? 'Terminar Edición' : 'Modificar Tabla'}
                 </button>
               )}
+
+              {/* 🌟 BOTÓN DIRECTOR GLOBAL (MOVIDO AL FINAL) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#2c3e50', padding: '8px 12px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ color: '#aaa', fontSize: '0.65rem', textTransform: 'uppercase' }}>Director</span>
+                  <span style={{ color: 'white', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                    {localStorage.getItem('current_director_name') || 'No Asignado'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setModalDirector(true)}
+                  style={{
+                    padding: '4px 8px',
+                    fontSize: '0.75rem',
+                    backgroundColor: '#3498db',
+                    border: 'none',
+                    color: 'white',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cambiar
+                </button>
+              </div>
             </div>
           </div>
 
