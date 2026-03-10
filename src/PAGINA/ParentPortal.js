@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaGraduationCap, FaUser, FaIdCard, FaCalendarAlt, FaStar } from 'react-icons/fa';
+import { FaGraduationCap, FaUser, FaIdCard, FaCalendarAlt, FaStar, FaSchool, FaSignOutAlt } from 'react-icons/fa';
 import './ParentPortal.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
