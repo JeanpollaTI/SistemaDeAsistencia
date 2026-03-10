@@ -17,6 +17,7 @@ import { emailRouter } from "./routes/emailSender.js";
 import { materiasRouter } from "./routes/materias.js";
 import registrationRouter from "./routes/registration.js";
 import stripeRouter from "./routes/stripe.js";
+import { schoolMiddleware } from "./middlewares/schoolMiddleware.js";
 
 // --- CONFIGURACIÓN INICIAL ---
 dotenv.config();
@@ -39,7 +40,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ----------------- RUTAS DE LA API -----------------
-import { schoolMiddleware } from "./middlewares/schoolMiddleware.js";
 
 app.use("/auth", authRouter);
 app.use("/horario", horarioRouter); // Los filtros ya se agregaron en las rutas, pero podríamos ponerlo aquí si todas requieren suscripción activa
