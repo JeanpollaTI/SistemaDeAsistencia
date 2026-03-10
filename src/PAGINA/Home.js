@@ -98,8 +98,16 @@ function Home({ user }) {
 
   const handleAddMateria = () => {
     if (!nuevaMateria.trim()) return;
+
+    // Nueva validación frontend para evitar duplicados
+    const materiaNormalizada = nuevaMateria.trim().toUpperCase();
+    const existe = materiasDb.find(m => m.nombre.toUpperCase() === materiaNormalizada);
+    if (existe) {
+      return mostrarAlerta(`La materia "${materiaNormalizada}" ya existe en el catálogo.`, "error");
+    }
+
     const token = localStorage.getItem("token");
-    axios.post(`${API_URL}/api/materias`, { nombre: nuevaMateria.toUpperCase() }, { headers: { Authorization: `Bearer ${token}` } })
+    axios.post(`${API_URL}/api/materias`, { nombre: materiaNormalizada }, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => {
         mostrarAlerta("Materia agregada.", "success");
         setNuevaMateria("");
