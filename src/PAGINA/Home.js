@@ -106,6 +106,24 @@ function Home({ user }) {
     }
   };
 
+  const handleStripeCheckout = async () => {
+    const token = localStorage.getItem("token");
+    if (!token || !user?.school_id) return;
+
+    try {
+      const res = await axios.post(`${API_URL}/api/stripe/create-checkout-session`, 
+        { schoolId: user.school_id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err) {
+      console.error("Error al iniciar pago:", err);
+      mostrarAlerta("No se pudo iniciar el proceso de pago.", "error");
+    }
+  };
+
   const handleAddMateria = () => {
     if (!nuevaMateria.trim()) return;
 
@@ -311,7 +329,7 @@ function Home({ user }) {
                 <div className="subscription-warning-banner">
                   <FaCalendarAlt />
                   <span>Tu suscripción de Scholaris vence en <b>{daysLeft} días</b> ({nextBillingDate.toLocaleDateString()}). Renueva ahora para mantener el acceso.</span>
-                  <button onClick={() => window.location.href = '#pagar'}>RENOVAR</button>
+                  <button onClick={handleStripeCheckout}>RENOVAR AHORA</button>
                 </div>
               );
             }

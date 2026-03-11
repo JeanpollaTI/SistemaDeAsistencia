@@ -32,18 +32,11 @@ router.post('/create-checkout-session', authMiddleware, async (req, res) => {
             payment_method_types: ['card'],
             line_items: [
                 {
-                    price_data: {
-                        currency: 'mxn',
-                        product_data: {
-                            name: `Suscripción Mensual Scholaris - ${school.name}`,
-                            description: 'Acceso completo a la plataforma de gestión escolar.',
-                        },
-                        unit_amount: 70000, // $700.00 MXN
-                    },
+                    price: process.env.STRIPE_PRICE_ID,
                     quantity: 1,
                 },
             ],
-            mode: 'payment', // Cambiar a 'subscription' si se usa un Price ID de Stripe
+            mode: 'subscription',
             success_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard?payment=success`,
             cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard?payment=cancel`,
             metadata: {
@@ -73,21 +66,62 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    if (event.type === 'checkout.session.completed') {
-        const session = event.data.object;
-        const { schoolId } = session.metadata;
+    const stripeClient = getStripe();
 
-        // Activar la escuela y establecer fecha de vencimiento (30 días después)
-        const nextBilling = new Date();
-        nextBilling.setDate(nextBilling.getDate() + 30);
+    switch (event.type) {
+        case 'checkout.session.completed': {
+            const session = event.data.object;
+            const { schoolId } = session.metadata;
+            const subscriptionId = session.subscription;
 
-        await School.findByIdAndUpdate(schoolId, {
-            'subscription.status': 'active',
-            'subscription.nextBilling': nextBilling,
-            'subscription.stripeId': session.id
-        });
+            // Obtener detalles de la suscripción para conocer la fecha de vencimiento
+            const subscription = await stripeClient.subscriptions.retrieve(subscriptionId);
+            const nextBilling = new Date(subscription.current_period_end * 1000);
 
-        console.log(`✅ Escuela ${schoolId} activada satisfactoriamente.`);
+            await School.findByIdAndUpdate(schoolId, {
+                'subscription.status': 'active',
+                'subscription.nextBilling': nextBilling,
+                'subscription.stripeId': subscriptionId
+            });
+
+            console.log(`✅ Escuela ${schoolId} activada vía Checkout.`);
+            break;
+        }
+
+        case 'customer.subscription.updated':
+        case 'customer.subscription.created': {
+            const subscription = event.data.object;
+            // Intentar encontrar la escuela por el ID de suscripción de Stripe
+            const school = await School.findOne({ 'subscription.stripeId': subscription.id });
+
+            if (school) {
+                const nextBilling = new Date(subscription.current_period_end * 1000);
+                const status = (subscription.status === 'active' || subscription.status === 'trialing') ? 'active' : 'suspended';
+
+                await School.findByIdAndUpdate(school._id, {
+                    'subscription.status': status,
+                    'subscription.nextBilling': nextBilling
+                });
+                console.log(`🔄 Suscripción de escuela ${school._id} actualizada: ${status}`);
+            }
+            break;
+        }
+
+        case 'customer.subscription.deleted': {
+            const subscription = event.data.object;
+            const school = await School.findOne({ 'subscription.stripeId': subscription.id });
+
+            if (school) {
+                await School.findByIdAndUpdate(school._id, {
+                    'subscription.status': 'suspended'
+                });
+                console.log(`❌ Suscripción de escuela ${school._id} cancelada.`);
+            }
+            break;
+        }
+
+        default:
+            console.log(`Unhandled event type ${event.type}`);
     }
 
     res.json({ received: true });

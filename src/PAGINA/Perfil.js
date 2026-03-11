@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaCreditCard } from 'react-icons/fa';
 
 import "./Perfil.css"; // Importa tu archivo de estilos
 
@@ -9,6 +11,49 @@ import "./Perfil.css"; // Importa tu archivo de estilos
  */
 function Perfil({ user, logout, getProfileImageUrl }) {
   const navigate = useNavigate();
+  const [schoolData, setSchoolData] = useState(null);
+  const [loadingPay, setLoadingPay] = useState(false);
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      fetchSchoolInfo();
+    }
+  }, [user]);
+
+  const fetchSchoolInfo = async () => {
+    const token = localStorage.getItem("token");
+    if (!token || !user?.school_id) return;
+    try {
+      const res = await axios.get(`${API_URL}/schools/${user.school_id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSchoolData(res.data);
+    } catch (err) {
+      console.error("Error al obtener info de la escuela:", err);
+    }
+  };
+
+  const handleStripeCheckout = async () => {
+    const token = localStorage.getItem("token");
+    if (!token || !user?.school_id) return;
+
+    try {
+      setLoadingPay(true);
+      const res = await axios.post(`${API_URL}/api/stripe/create-checkout-session`, 
+        { schoolId: user.school_id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err) {
+      console.error("Error al iniciar pago:", err);
+      alert("No se pudo iniciar el proceso de pago.");
+    } finally {
+      setLoadingPay(false);
+    }
+  };
 
   // Si no se recibe el objeto 'user' (es null o undefined), redirigir a login.
   if (!user) {
@@ -58,10 +103,76 @@ function Perfil({ user, logout, getProfileImageUrl }) {
           </div>
         </div>
 
-        <div className="perfil-buttons" style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '100%' }}>
+        <div className="perfil-buttons" style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '100%', marginTop: '20px' }}>
           <button className="btn-edit" onClick={handleEdit} style={{ background: '#00CBCB', width: 'auto' }}>EDITAR PERFIL</button>
           <button className="btn-logout" onClick={handleLogout} style={{ background: '#e53935', width: 'auto' }}>CERRAR SESIÓN</button>
         </div>
+
+        {user?.role === 'admin' && schoolData && (
+          <div className="subscription-section" style={{ marginTop: '30px', padding: '20px', borderRadius: '12px', background: '#f8f9fa', border: '1px solid #eee' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#333' }}>
+              <FaCreditCard style={{ color: '#00CBCB' }} /> Mi Suscripción
+            </h3>
+            
+            <div className="subscription-details-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginTop: '15px' }}>
+              <div className="sub-stat-card" style={{ padding: '15px', borderRadius: '10px', background: '#fff', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+                <p style={{ fontSize: '0.85rem', color: '#666', margin: 0 }}>Estado</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '5px' }}>
+                  {schoolData.subscription?.status === 'active' ? (
+                    <><FaCheckCircle style={{ color: '#27ae60' }} /> <span style={{ color: '#27ae60', fontWeight: 'bold' }}>ACTIVO</span></>
+                  ) : (
+                    <><FaExclamationTriangle style={{ color: '#e74c3c' }} /> <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>SUSPENDIDO</span></>
+                  )}
+                </div>
+              </div>
+
+              {schoolData.subscription?.nextBilling && (
+                <div className="sub-stat-card" style={{ padding: '15px', borderRadius: '10px', background: '#fff', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+                  <p style={{ fontSize: '0.85rem', color: '#666', margin: 0 }}>Próximo Pago</p>
+                  <p style={{ margin: '5px 0 0 0', fontWeight: 'bold', color: '#2c3e50' }}>
+                    {new Date(schoolData.subscription.nextBilling).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                </div>
+              )}
+
+              <div className="sub-stat-card" style={{ padding: '15px', borderRadius: '10px', background: '#fff', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+                <p style={{ fontSize: '0.85rem', color: '#666', margin: 0 }}>Días Restantes</p>
+                <p style={{ margin: '5px 0 0 0', fontWeight: 'bold', color: '#00CBCB', fontSize: '1.2rem' }}>
+                  {(() => {
+                    const diff = new Date(schoolData.subscription?.nextBilling) - new Date();
+                    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                    return days > 0 ? days : 0;
+                  })()} DÍAS
+                </p>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '20px', textAlign: 'left' }}>
+              <button 
+                className="btn-renew" 
+                onClick={handleStripeCheckout}
+                disabled={loadingPay}
+                style={{ 
+                  background: 'linear-gradient(135deg, #00CBCB, #3498db)', 
+                  border: 'none', 
+                  color: '#fff', 
+                  padding: '12px 25px', 
+                  borderRadius: '10px', 
+                  fontWeight: 'bold', 
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <FaCreditCard /> {loadingPay ? "PROCESANDO..." : "RENOVAR O PAGAR MENSUALIDAD"}
+              </button>
+              <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '10px' }}>
+                * Al hacer clic, serás redirigido a Stripe para completar tu pago de forma segura.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
