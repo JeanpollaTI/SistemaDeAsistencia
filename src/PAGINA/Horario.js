@@ -62,7 +62,7 @@ function Horario({ user }) {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        const res = await axios.get(`${API_URL}/auth/profesores`, {
+        const res = await axios.get(`${API_URL}/profesores`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (Array.isArray(res.data)) setProfesores(res.data);

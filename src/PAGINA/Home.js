@@ -59,7 +59,7 @@ function Home({ user }) {
     if (!token) return console.error("⚠️ No hay token guardado.");
 
     // Uso de API_URL para compatibilidad con Render/Vercel
-    axios.get(`${API_URL}/auth/profesores`, { headers: { Authorization: `Bearer ${token}` } })
+    axios.get(`${API_URL}/profesores`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => setProfesores(res.data || []))
       .catch((err) => {
         console.error("Error al obtener profesores:", err);
@@ -236,7 +236,7 @@ function Home({ user }) {
   const guardarAsignaturas = () => {
     if (!selectedProfesor) return;
     const token = localStorage.getItem("token");
-    axios.put(`${API_URL}/auth/profesores/${selectedProfesor._id}/asignaturas`, { asignaturas: asignaturasSelect }, { headers: { Authorization: `Bearer ${token}` } })
+    axios.put(`${API_URL}/profesores/${selectedProfesor._id}/asignaturas`, { asignaturas: asignaturasSelect }, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         mostrarAlerta("Asignaturas actualizadas.", "success");
         fetchProfesores();
@@ -253,7 +253,7 @@ function Home({ user }) {
   const confirmDelete = () => {
     if (!selectedProfesor) return;
     const token = localStorage.getItem("token");
-    axios.delete(`${API_URL}/auth/profesores/${selectedProfesor._id}`, { headers: { Authorization: `Bearer ${token}` } })
+    axios.delete(`${API_URL}/profesores/${selectedProfesor._id}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         mostrarAlerta("Profesor eliminado correctamente.", "success");
         fetchProfesores();
