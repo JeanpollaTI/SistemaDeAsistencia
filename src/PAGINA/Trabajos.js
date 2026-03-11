@@ -1340,6 +1340,7 @@ const PanelCalificaciones = ({
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [criterioAbierto, setCriterioAbierto] = useState(null);
+    const [numTareas, setNumTareas] = useState({});
     const [error, setError] = useState(null);
     const [schoolConfig, setSchoolConfig] = useState(null);
     const [brandingModal, setBrandingModal] = useState({ visible: false, onConfirm: null, title: '' });
@@ -2330,8 +2331,24 @@ const PanelCalificaciones = ({
                         setNotificacion={setNotificacion}
                     />
                 )}
+                </div>
+
+                {brandingModal.visible && (
+                    <BrandingModal
+                        initialData={{
+                            directorName: schoolConfig?.directorName || localStorage.getItem('current_director_name') || '',
+                            logoUrl: schoolConfig?.config?.logoUrl || '',
+                            defaultLogo: logoImage
+                        }}
+                        onConfirm={(data) => {
+                            setBrandingModal({ ...brandingModal, visible: false });
+                            brandingModal.onConfirm(data);
+                        }}
+                        onClose={() => setBrandingModal({ ...brandingModal, visible: false })}
+                        title={brandingModal.title}
+                    />
+                )}
             </div>
-        </div>
     );
 };
 
@@ -2695,21 +2712,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onRename, onClose, se
                 </div>
             </div>
 
-            {brandingModal.visible && (
-                <BrandingModal
-                    initialData={{
-                        directorName: schoolConfig?.directorName || localStorage.getItem('current_director_name') || '',
-                        logoUrl: schoolConfig?.config?.logoUrl || '',
-                        defaultLogo: logoImage
-                    }}
-                    onConfirm={(data) => {
-                        setBrandingModal({ ...brandingModal, visible: false });
-                        brandingModal.onConfirm(data);
-                    }}
-                    onClose={() => setBrandingModal({ ...brandingModal, visible: false })}
-                    title={brandingModal.title}
-                />
-            )}
+            {/* BrandingModal removed from here and moved to PanelCalificaciones scope */}
         </div>
     );
 };
