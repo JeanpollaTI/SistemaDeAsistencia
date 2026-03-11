@@ -27,25 +27,26 @@ export default function RegisterProfesor() {
         // Verificar si existe un admin al cargar el componente
         useEffect(() => {
                 const storedToken = localStorage.getItem("token");
-                if (storedToken) setToken(storedToken);
+                if (storedToken) {
+                        setToken(storedToken);
+                        // Si ya hay token, no es el primer admin (ya estamos dentro de una sesión)
+                        setFirstAdmin(false);
+                        return;
+                }
 
-                // Esta ruta en el backend debería devolver todos los usuarios para verificar si hay admins.
-                // Asumimos que es /auth/users o una ruta similar protegida.
+                // Solo si NO hay token, verificamos si es el primer usuario del sistema
                 axios
-                        .get(`${API_URL}/auth/profesores`, { // Usamos una ruta que sabemos que existe y está protegida
-                                headers: storedToken ? { Authorization: `Bearer ${storedToken}` } : {},
-                        })
+                        .get(`${API_URL}/profesores`) // Usamos la ruta principal de profesores
                         .then((res) => {
-                                // Esta lógica es para el caso hipotético de registrar el primer admin.
-                                // Si ya hay usuarios, asumimos que al menos un admin existe.
+                                // Si no hay ningún profesor/admin registrado en el sistema global (o falla)
                                 if (res.data.length === 0) {
                                         setFirstAdmin(true);
                                 }
                         })
                         .catch(() => {
-                                // Si no hay token, esta llamada fallará, lo cual es esperado para un no-admin.
-                                // Si hay token de admin pero falla, podría ser un problema del servidor.
-                                console.log("No se pudo verificar la lista de usuarios (puede ser normal si no eres admin).");
+                                // Si falla porque no hay token y la ruta es protegida, 
+                                // es probable que ya existan usuarios.
+                                setFirstAdmin(false);
                         });
         }, []);
 
@@ -79,7 +80,7 @@ export default function RegisterProfesor() {
                         const finalForm = { ...form, role: firstAdmin ? "admin" : form.role };
                         finalForm.email = finalForm.email.toLowerCase().trim();
                         finalForm.celular = finalForm.celular?.trim() || "";
-                        finalForm.fechaRegistro = new Date().toISOString(); // Send current date
+                        finalForm.fechaRegistro = new Date().toISOString();
 
                         Object.keys(finalForm).forEach((key) =>
                                 formData.append(key, finalForm[key])
@@ -89,15 +90,22 @@ export default function RegisterProfesor() {
                         const headers = { "Content-Type": "multipart/form-data" };
                         if (token) headers.Authorization = `Bearer ${token}`;
 
-                        const res = await axios.post(`${API_URL}/auth/register`, formData, { headers });
+                        // CAMBIO CLAVE: Usar la ruta de profesores si ya estamos logueados
+                        const endpoint = firstAdmin ? `${API_URL}/auth/register` : `${API_URL}/profesores/registrar`;
+                        const res = await axios.post(endpoint, formData, { headers });
 
-                        setMsg(res.data.msg || "Usuario registrado correctamente");
+                        setMsg(res.data.msg || (res.data.error ? res.data.error : "Usuario registrado correctamente"));
                         setForm({ nombre: "", edad: "", sexo: "Masculino", email: "", celular: "", password: "", role: "profesor" });
                         setFoto(null);
 
-                        setTimeout(() => navigate("/"), 2000);
+                        if (firstAdmin) {
+                                setTimeout(() => navigate("/login"), 2000);
+                        } else {
+                                // Si es un profesor registrado por el admin, nos quedamos o vamos a la lista
+                                setTimeout(() => setMsg(""), 3000);
+                        }
                 } catch (err) {
-                        setMsg(err.response?.data?.msg || "Error: Ya existe la cuenta o el servidor no responde.");
+                        setMsg(err.response?.data?.msg || err.response?.data?.error || "Error: Ya existe la cuenta o el servidor no responde.");
                 } finally {
                         setIsSubmitting(false);
                 }

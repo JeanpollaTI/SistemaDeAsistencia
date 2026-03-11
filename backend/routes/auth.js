@@ -73,8 +73,11 @@ router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, re
     email = email.toLowerCase();
     let fotoUrl = "/uploads/fotos/default.png"; // Valor por defecto
 
-    const existingUser = await User.findOne({ $or: [{ email }, { celular }] });
-    if (existingUser) return res.status(400).json({ msg: "Usuario ya existe" });
+    const emailExists = await User.findOne({ email });
+    if (emailExists) return res.status(400).json({ msg: "El correo electrónico ya está en uso" });
+
+    const celularExists = await User.findOne({ celular, school_id });
+    if (celularExists) return res.status(400).json({ msg: "El número de celular ya está registrado en su escuela." });
 
     // Lógica de subida a Cloudinary
     if (req.file) {
@@ -276,77 +279,6 @@ router.put("/editar-perfil", verifyToken, uploadFotos.single("foto"), async (req
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Error al editar perfil o subir foto", error: err.message });
-  }
-});
-
-// ---------------- RUTAS ADMIN / PROFESORES -----------------
-
-// GET: Todos los profesores
-router.get("/profesores", verifyAdmin, async (req, res) => {
-  try {
-    const school_id = req.user.school_id;
-    const profesores = await User.find({ role: "profesor", school_id }).select(
-      "nombre email celular edad sexo foto asignaturas createdAt"
-    );
-
-    const formatted = profesores.map((prof) => {
-      const profObject = prof.toObject();
-      return {
-        ...profObject,
-        correo: profObject.email, // Aliasing para frontend
-        fechaRegistro: formatDate(prof.createdAt),
-      }
-    });
-
-    res.json(formatted);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: "Error al obtener profesores", error: err.message });
-  }
-});
-
-// PUT: Actualizar asignaturas de un profesor
-router.put("/profesores/:id/asignaturas", verifyAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { asignaturas } = req.body;
-
-    const profesor = await User.findById(id);
-    if (!profesor) return res.status(404).json({ msg: "Profesor no encontrado" });
-
-    profesor.asignaturas = asignaturas || [];
-    await profesor.save();
-
-    res.json({ msg: "Asignaturas actualizadas correctamente", asignaturas: profesor.asignaturas });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: "Error al actualizar asignaturas", error: err.message });
-  }
-});
-
-// DELETE: Eliminar profesor
-router.delete("/profesores/:id", verifyAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const profesor = await User.findById(id);
-    if (!profesor) return res.status(404).json({ msg: "Profesor no encontrado" });
-
-    // Intento de eliminar imagen de Cloudinary si no es la default
-    // Esto es opcional y best-effort
-    const publicId = getCloudinaryPublicId(profesor.foto);
-    if (publicId) {
-      try {
-        await cloudinary.uploader.destroy(publicId);
-      } catch (e) {
-        console.warn("No se pudo eliminar la imagen de Cloudinary:", e.message);
-      }
-    }
-
-    await profesor.deleteOne();
-    res.json({ msg: "Profesor eliminado correctamente" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: "Error al eliminar profesor", error: err.message });
   }
 });
 
