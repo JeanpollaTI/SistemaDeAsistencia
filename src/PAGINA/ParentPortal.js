@@ -188,7 +188,7 @@ function ParentPortal() {
                                         <td>{asis.asignatura}</td>
                                         <td style={{ textAlign: 'center', color: '#27ae60', fontWeight: 'bold' }}>{asis.presentes}</td>
                                         <td style={{ textAlign: 'center', color: '#e74c3c', fontWeight: 'bold' }}>{asis.faltas}</td>
-                                        <td style={{ textAlign: 'center', color: '#f39c12', fontWeight: 'bold' }}>{asis.retardos}</td>
+                                        <td style={{ textAlign: 'center', color: '#00CBCB', fontWeight: 'bold' }}>{asis.retardos}</td>
                                         <td style={{ textAlign: 'center', color: '#3498db', fontWeight: 'bold' }}>{asis.justificados}</td>
                                         <td style={{ textAlign: 'center' }}>{asis.totales}</td>
                                     </tr>

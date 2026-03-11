@@ -263,7 +263,7 @@ function Trabajos({ user }) {
     if (error) return <div className="trabajos-container grupo-componente error-mensaje" style={{ textAlign: 'center', paddingTop: '10rem' }}><p>{error}</p></div>;
     if (!grupos || grupos.length === 0) return (
         <div className="trabajos-container grupo-componente" style={{ textAlign: 'center', paddingTop: '10rem' }}>
-            <h2 style={{ color: '#f39c12' }}>No tienes grupos asignados.</h2>
+            <h2 style={{ color: '#00CBCB' }}>No tienes grupos asignados.</h2>
             <p style={{ marginTop: '1rem' }}>Solicita al administrador que te asigne grupos y materias.</p>
         </div>
     );

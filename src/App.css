@@ -11,14 +11,14 @@
     --z-fixed: 100;
 
     /* Shared Colors */
-    --gold-color: #007A7A;
+    --gold-color: #00CBCB;
     --highlight-color: #00CBCB;
     /* Cyan brillante para máxima visibilidad */
-    --primary-color: #007A7A;
+    --primary-color: #00CBCB;
     /* Teal from Scholaris brand */
     --danger-color: #e74c3c;
     --success-color: #27ae60;
-    --warning-color: #f39c12;
+    --warning-color: #00CBCB;
 
     /* Light Theme (Default) */
     --dark-color: #f4f7f6;

@@ -453,8 +453,9 @@ button {
     padding: 10px;
     border: 1px solid var(--border-color);
     border-radius: 5px;
-    background-color: var(--dark-color);
-    color: var(--text-color);
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-weight: 500;
 }
 
 .btn-add-materia {

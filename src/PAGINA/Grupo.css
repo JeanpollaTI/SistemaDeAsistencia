@@ -6,7 +6,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Turret+Road:wght@500;700&display=swap');
 
 :root {
-  --main-color: #007A7A;
+  --main-color: #00CBCB;
   /* Dorado elegante */
   --main-color-hover: #00CBCB;
   --secondary-color: #2c3e50;
@@ -18,7 +18,7 @@
   --dark-color-alt: #343a40;
   --danger-color: #dc3545;
   --success-color: #28a745;
-  --warning-color: #ffc107;
+  --warning-color: #00CBCB;
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.4);
@@ -75,13 +75,13 @@ body {
 .grupo-componente {
   --dark-color: #191D28;
   --dark-color-alt: #1E222D;
-  --main-color: #007A7A;
+  --main-color: #00CBCB;
   --title-color: #FFFFFF;
   --text-color: #E9E9E9;
   --danger-color: #d32f2f;
   --success-color: #27ae60;
   --secondary-color: #3498db;
-  --warning-color: #f39c12;
+  --warning-color: #00CBCB;
 
   --body-font: 'Poppins', sans-serif;
   --h1-font-size: 2.25rem;
