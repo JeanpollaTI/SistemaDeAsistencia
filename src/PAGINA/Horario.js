@@ -56,6 +56,8 @@ function Horario({ user }) {
     if (!token) return;
 
     const fetchProf = async () => {
+      setIsLoading(true);
+      setLoadingMessage("Cargando información de profesores...");
       try {
         // Primero verificamos el perfil para que el middleware de auth cargue el school_id
         await axios.get(`${API_URL}/auth/mi-perfil`, {
@@ -77,6 +79,9 @@ function Horario({ user }) {
         }
       } catch (err) {
         console.error("Error al cargar profesores en Horario:", err);
+      } finally {
+        setIsLoading(false);
+        setLoadingMessage("");
       }
     };
 
