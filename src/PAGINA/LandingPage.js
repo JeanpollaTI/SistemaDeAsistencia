@@ -1,32 +1,86 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import './LandingPage.css';
 import { useNavigate } from 'react-router-dom';
 import { FaGraduationCap, FaSchool, FaUsers, FaArrowRight } from 'react-icons/fa';
-import scholarisHero from '../scholaris_hero.png';
 
 const LandingPage = () => {
     const navigate = useNavigate();
+    const canvasRef = useRef(null);
+    const effectRef = useRef(null);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const initEffect = async () => {
+            try {
+                // Importación dinámica del componente de Three.js
+                const module = await import("https://cdn.jsdelivr.net/npm/threejs-components@0.0.19/build/cursors/tubes1.min.js");
+                const TubesCursor = module.default;
+
+                if (isMounted && canvasRef.current) {
+                    effectRef.current = TubesCursor(canvasRef.current, {
+                        tubes: {
+                            colors: ["#00CBCB", "#007A7A", "#B8E2F2"],
+                            lights: {
+                                intensity: 200,
+                                colors: ["#00CBCB", "#00B5B5", "#007A7A", "#60aed5"]
+                            }
+                        }
+                    });
+
+                    const handleRandomize = () => {
+                        if (effectRef.current) {
+                            const randomColorsArray = (count) => 
+                                new Array(count).fill(0).map(() => 
+                                    "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')
+                                );
+                            
+                            effectRef.current.tubes.setColors(randomColorsArray(3));
+                            effectRef.current.tubes.setLightsColors(randomColorsArray(4));
+                        }
+                    };
+
+                    document.body.addEventListener('click', handleRandomize);
+
+                    return () => {
+                        document.body.removeEventListener('click', handleRandomize);
+                        // Limpieza si el componente de Three.js lo requiere (tubes1 no suele exponer destroy pero se limpia el canvas)
+                    };
+                }
+            } catch (error) {
+                console.error("Error loading TubesCursor:", error);
+            }
+        };
+
+        initEffect();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     return (
-        <div className="landing-container">
+        <div className="landing-container dark-theme">
+            <canvas id="canvas" ref={canvasRef}></canvas>
+            
             {/* Hero Section */}
             <section className="hero-section" id="home">
-                <div className="hero-content" style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
+                <div className="hero-content">
                     <h1>Gestión Escolar Inteligente</h1>
-                    <p style={{ textAlign: 'center', margin: '0 auto 40px auto' }}>
+                    <p className="hero-description">
                         Controla asistencias, calificaciones y mantén una comunicación fluida
                         con padres de familia en una sola plataforma segura y en tiempo real.
                     </p>
 
-                    <div className="cta-group" style={{ margin: '0 auto', gap: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <button className="cta-button secondary" onClick={() => navigate('/login')}>
+                    <div className="cta-group">
+                        <button className="cta-button secondary glass" onClick={() => navigate('/login')}>
                             <span className="cta-label">
                                 <FaGraduationCap /> Portal de mi escuela
                             </span>
                             <span className="cta-arrow">ACCESO <FaArrowRight /></span>
                         </button>
 
-                        <button className="cta-button secondary" onClick={() => navigate('/portal-padres')} style={{ background: '#007A7A', color: 'white', borderColor: '#007A7A' }}>
+                        <button className="cta-button secondary teal-dark" onClick={() => navigate('/portal-padres')}>
                             <span className="cta-label">
                                 <FaUsers /> Portal de Padres
                             </span>
@@ -46,19 +100,19 @@ const LandingPage = () => {
             {/* Features Section */}
             <section className="features-section" id="gestion">
                 <div className="container">
-                    <h2>Todo lo que tu institución necesita</h2>
+                    <h2 className="section-title">Todo lo que tu institución necesita</h2>
                     <div className="features-grid">
-                        <div className="feature-card">
+                        <div className="feature-card glass">
                             <div className="feature-icon">📊</div>
                             <h3>Control de Calificaciones</h3>
                             <p>Genera boletas y sábanas de resultados automáticamente con el periodo de evaluación que tú elijas.</p>
                         </div>
-                        <div className="feature-card">
+                        <div className="feature-card glass">
                             <div className="feature-icon">⏰</div>
                             <h3>Listas de Asistencia</h3>
                             <p>Registro rápido por grupo y profesor, monitorea la puntualidad de tus alumnos en tiempo real.</p>
                         </div>
-                        <div className="feature-card">
+                        <div className="feature-card glass">
                             <div className="feature-icon">☁️</div>
                             <h3>Infraestructura Cloud</h3>
                             <p>Accede a tus datos desde cualquier dispositivo. La información está siempre segura y respaldada.</p>
@@ -67,14 +121,13 @@ const LandingPage = () => {
                 </div>
             </section>
 
-
             {/* Footer */}
-            <footer style={{ padding: '40px 20px', background: '#111827', color: 'white', textAlign: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '1.5rem', marginBottom: '20px' }}>
-                    <FaGraduationCap style={{ color: '#ffffff' }} />
-                    <strong style={{ color: '#007A7A' }}>SCHOLARIS</strong>
+            <footer className="landing-footer">
+                <div className="footer-logo">
+                    <FaGraduationCap />
+                    <strong className="brand-name">SCHOLARIS</strong>
                 </div>
-                <p style={{ opacity: 0.6 }}>© 2026 Scholaris. Todos los derechos reservados.</p>
+                <p className="footer-copy">© 2026 Scholaris. Todos los derechos reservados.</p>
             </footer>
         </div>
     );

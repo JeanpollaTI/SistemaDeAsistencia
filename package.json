@@ -24,6 +24,7 @@
     "react-router-dom": "^7.7.0",
     "react-scripts": "5.0.1",
     "swiper": "^11.2.10",
+    "three": "^0.183.2",
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },
