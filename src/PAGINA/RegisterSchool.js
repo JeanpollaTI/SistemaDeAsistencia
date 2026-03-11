@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './RegisterSchool.css';
 import { FaSchool, FaEnvelope, FaLock, FaImage, FaGraduationCap, FaCalendarAlt, FaCheckCircle, FaArrowRight, FaArrowLeft } from 'react-icons/fa';
+import DynamicBackground from '../COMPONENTE/DynamicBackground';
+import PremiumCardForm from '../COMPONENTE/PremiumCardForm';
 
 const RegisterSchool = () => {
     const navigate = useNavigate();
@@ -17,6 +19,18 @@ const RegisterSchool = () => {
         evaluationPeriod: "Trimestre",
         logoUrl: ""
     });
+
+    const [cardData, setCardData] = useState({
+        cardNumber: '',
+        cardName: '',
+        cardMonth: '',
+        cardYear: '',
+        cardCvv: ''
+    });
+
+    const handleCardChange = (data) => {
+        setCardData(data);
+    };
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -57,7 +71,7 @@ const RegisterSchool = () => {
             const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/register-school/register-institutional`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({ ...formData, cardData })
             });
 
             const data = await response.json();
@@ -155,9 +169,16 @@ const RegisterSchool = () => {
                                 </select>
                             </div>
                         </div>
-                        <div className="payment-preview">
-                            <p>¡Activación inmediata habilitada!</p>
-                            <div className="price-tag" style={{ fontSize: '1.5rem', color: '#007a7a', fontWeight: 'bold', margin: '1rem 0' }}>Plan Estándar <span>PROMO</span></div>
+                        <div className="payment-section fade-in" style={{ marginTop: '2.5rem', borderTop: '1px solid #eee', paddingTop: '2rem' }}>
+                            <h3 style={{ justifyContent: 'center', marginBottom: '1.5rem', color: '#007a7a' }}>
+                                <FaCheckCircle /> Detalles de Suscripción
+                            </h3>
+                            <div className="payment-preview glass-effect" style={{ marginBottom: '3rem', padding: '1.5rem', borderRadius: '12px', background: 'rgba(0, 122, 122, 0.05)' }}>
+                                <p style={{ fontWeight: '600', color: '#1a202c' }}>Suscripción Mensual Scholaris</p>
+                                <div className="price-tag" style={{ fontSize: '2.5rem', fontWeight: '800', color: '#007a7a', margin: '0.5rem 0' }}>$700.00 <span style={{ fontSize: '1rem', color: '#666' }}>MXN/mes</span></div>
+                                <small style={{ color: '#64748b' }}>Acceso total | Gestión de Asistencias | Boletas Dinámicas</small>
+                            </div>
+                            <PremiumCardForm onCardChange={handleCardChange} />
                         </div>
                     </div>
                 );
@@ -168,6 +189,7 @@ const RegisterSchool = () => {
 
     return (
         <div className="register-school-wrapper">
+            <DynamicBackground />
             <div className="register-card">
                 <div className="wizard-header">
                     <div className="wizard-logo">
