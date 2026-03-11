@@ -63,49 +63,42 @@
     outline: none;
 }
 
-.branding-toggle-group {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.branding-toggle-btn {
-    flex: 1;
-    padding: 10px;
-    background: var(--dark-color, #191D28);
-    border: 1px solid var(--border-color, #333);
-    border-radius: 6px;
-    text-align: center;
-    font-size: 0.85rem;
+.branding-file-trigger {
+    width: 100%;
+    padding: 12px;
+    background: rgba(0, 203, 203, 0.05);
+    border: 1px dashed var(--primary-color, #00CBCB);
+    border-radius: 8px;
+    color: var(--primary-color, #00CBCB);
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.3s;
-    color: var(--text-color, #E9E9E9);
+    margin-top: 5px;
 }
 
-.branding-toggle-btn.active {
-    border-color: var(--primary-color, #00CBCB);
+.branding-file-trigger:hover {
     background: rgba(0, 203, 203, 0.1);
-    color: var(--primary-color, #00CBCB);
-    font-weight: bold;
+    border-style: solid;
 }
 
 .branding-preview-container {
-    margin-top: 15px;
+    margin-top: 20px;
     padding: 15px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
-    border: 1px dashed #444;
+    border: 1px solid #333;
     text-align: center;
 }
 
 .branding-preview-container p {
     margin-bottom: 10px !important;
     font-size: 0.8rem !important;
+    color: var(--text-color-light, #7f8c8d);
 }
 
 .branding-logo-preview {
     max-width: 100%;
-    max-height: 120px;
+    max-height: 100px;
     object-fit: contain;
     border-radius: 4px;
 }
@@ -121,7 +114,7 @@
 }
 
 .branding-button:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
     transform: none !important;
 }

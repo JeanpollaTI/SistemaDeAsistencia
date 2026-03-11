@@ -1,33 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import './BrandingModal.css';
 
-const BrandingModal = ({ initialData, onConfirm, onClose, title }) => {
-    const [directorName, setDirectorName] = useState(''); // FORZAR VACÍO
-    const [logoUrl, setLogoUrl] = useState('');
+const BrandingModal = ({ onConfirm, onClose, title }) => {
+    const [directorName, setDirectorName] = useState('');
     const [logoPreview, setLogoPreview] = useState(null);
-    const [isValidating, setIsValidating] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
-    const [logoSource, setLogoSource] = useState('url'); // 'url' or 'file'
-
-    const validateImage = (src) => {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = "Anonymous";
-            img.onload = () => resolve(src);
-            img.onerror = () => reject(new Error("No se pudo cargar la imagen. Verifica la URL o el archivo."));
-            img.src = src;
-        });
-    };
+    const fileInputRef = useRef(null);
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            if (!file.type.startsWith('image/')) {
+                setError("Por favor, selecciona un archivo de imagen válido.");
+                return;
+            }
             const reader = new FileReader();
             reader.onload = (readerEvent) => {
                 setLogoPreview(readerEvent.target.result);
                 setError(null);
             };
+            reader.onerror = () => setError("Error al leer el archivo.");
             reader.readAsDataURL(file);
+        }
+    };
+
+    const triggerFileInput = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
         }
     };
 
@@ -40,23 +40,22 @@ const BrandingModal = ({ initialData, onConfirm, onClose, title }) => {
             return;
         }
 
-        const finalLogo = logoSource === 'url' ? logoUrl : logoPreview;
-        if (!finalLogo) {
-            setError("Debes proporcionar un logo (URL o archivo).");
+        if (!logoPreview) {
+            setError("Debes subir un logo (archivo de imagen).");
             return;
         }
 
-        setIsValidating(true);
+        setIsProcessing(true);
         try {
-            await validateImage(finalLogo);
+            // No extra validation needed for local Base64, but we could wrap it
             onConfirm({
                 directorName,
-                logoUrl: finalLogo
+                logoUrl: logoPreview
             });
         } catch (err) {
-            setError("Error con la imagen: Es posible que la URL no permita ser usada (CORS) o el archivo sea inválido. Intenta subir el archivo directamente.");
+            setError("Error al procesar el logo. Intenta con otra imagen.");
         } finally {
-            setIsValidating(false);
+            setIsProcessing(false);
         }
     };
 
@@ -64,7 +63,7 @@ const BrandingModal = ({ initialData, onConfirm, onClose, title }) => {
         <div className="branding-modal-overlay" onClick={onClose}>
             <div className="branding-modal-content" onClick={(e) => e.stopPropagation()}>
                 <h3>{title || 'Configuración del Reporte'}</h3>
-                <p>Ingresa los datos para este reporte (No hay valores por defecto):</p>
+                <p>Configura el branding para este PDF (Se requiere director y logo):</p>
                 
                 <form onSubmit={handleSubmit}>
                     <div className="branding-input-group">
@@ -81,48 +80,26 @@ const BrandingModal = ({ initialData, onConfirm, onClose, title }) => {
 
                     <div className="branding-input-group">
                         <label>Logo de la Institución:</label>
-                        <div className="branding-toggle-group">
-                            <button 
-                                type="button"
-                                className={`branding-toggle-btn ${logoSource === 'url' ? 'active' : ''}`}
-                                onClick={() => setLogoSource('url')}
-                            >
-                                URL de Imagen
-                            </button>
-                            <button 
-                                type="button"
-                                className={`branding-toggle-btn ${logoSource === 'file' ? 'active' : ''}`}
-                                onClick={() => setLogoSource('file')}
-                            >
-                                Subir Archivo
-                            </button>
-                        </div>
-
-                        {logoSource === 'url' ? (
-                            <input
-                                type="text"
-                                value={logoUrl}
-                                onChange={(e) => {
-                                    setLogoUrl(e.target.value);
-                                    setLogoPreview(e.target.value);
-                                }}
-                                placeholder="https://..."
-                                style={{ marginTop: '10px' }}
-                            />
-                        ) : (
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFileChange}
-                                style={{ marginTop: '10px', color: '#ccc' }}
-                            />
-                        )}
+                        <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            onChange={handleFileChange} 
+                            accept="image/*" 
+                            style={{ display: 'none' }} 
+                        />
+                        <button 
+                            type="button" 
+                            className="branding-file-trigger" 
+                            onClick={triggerFileInput}
+                        >
+                            {logoPreview ? 'Cambiar Logo' : 'Seleccionar Logo'}
+                        </button>
                     </div>
 
                     {logoPreview && (
                         <div className="branding-preview-container">
                             <p>Vista previa del logo:</p>
-                            <img src={logoPreview} alt="Preview" className="branding-logo-preview" onError={() => setError("URL de imagen no válida")} />
+                            <img src={logoPreview} alt="Preview" className="branding-logo-preview" />
                         </div>
                     )}
 
@@ -132,9 +109,9 @@ const BrandingModal = ({ initialData, onConfirm, onClose, title }) => {
                         <button 
                             type="submit" 
                             className="branding-button primary" 
-                            disabled={isValidating}
+                            disabled={isProcessing || !directorName.trim() || !logoPreview}
                         >
-                            {isValidating ? 'Validando...' : 'Continuar y Descargar'}
+                            {isProcessing ? 'Procesando...' : 'Confirmar y Descargar'}
                         </button>
                         <button type="button" className="branding-button secondary" onClick={onClose}>Cancelar</button>
                     </div>
