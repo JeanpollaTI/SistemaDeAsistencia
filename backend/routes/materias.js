@@ -164,7 +164,15 @@ materiasRouter.delete("/:id", authMiddleware, isAdmin, schoolMiddleware, async (
 // DEBUG: Listar índices (solo para diagnóstico)
 materiasRouter.get("/debug/indexes", async (req, res) => {
     try {
-        const indexes = await Materia.collection.indexes();
+        const Materia = mongoose.model("Materia");
+        const Grupo = mongoose.model("Grupo");
+        const User = mongoose.model("User");
+
+        const indexes = {
+            materias: await Materia.collection.indexes(),
+            grupos: await Grupo.collection.indexes(),
+            usuarios: await User.collection.indexes()
+        };
         res.json(indexes);
     } catch (error) {
         res.status(500).json({ error: error.message });

@@ -30,8 +30,8 @@ const AlumnoSchema = new mongoose.Schema({
   },
   matricula: {
     type: String,
-    unique: true,
-    sparse: true, // Permite nulos para alumnos antiguos sin matrícula todavía
+    // unique: true, // REMOVIDO: Ahora es único por escuela (se valida en la lógica si es necesario o se deja por matricula global)
+    sparse: true,
     trim: true,
   }
 });
@@ -58,7 +58,7 @@ const GrupoSchema = new mongoose.Schema(
       type: String,
       required: [true, "El nombre del grupo es obligatorio"],
       trim: true,
-      unique: true,
+      // unique: true, // REMOVIDO: Ahora es único por escuela mediante índice compuesto
     },
     asesor: {
       type: String, // Nombre del asesor del grupo
@@ -90,7 +90,8 @@ const GrupoSchema = new mongoose.Schema(
   {
     timestamps: true, // Agrega createdAt y updatedAt automáticamente
   }
-);
+// Índice compuesto: Nombre de grupo único POR escuela
+GrupoSchema.index({ nombre: 1, school_id: 1 }, { unique: true });
 
 const Grupo = mongoose.model("Grupo", GrupoSchema);
 export default Grupo;

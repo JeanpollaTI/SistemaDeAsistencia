@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
     celular: {
       type: String,
       trim: true,
-      unique: true,
+      // unique: true, // REMOVIDO: Ahora es único por escuela mediante índice compuesto
       sparse: true,
       match: [/^\d+$/, "El celular debe contener solo dígitos"],
     },
@@ -102,5 +102,8 @@ userSchema.virtual("fechaRegistroLegible").get(function () {
   const d = this.createdAt || new Date();
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 });
+
+// Índice compuesto: Celular único POR escuela (opcional, si se prefiere)
+userSchema.index({ celular: 1, school_id: 1 }, { unique: true, sparse: true });
 
 export default mongoose.model("User", userSchema);
