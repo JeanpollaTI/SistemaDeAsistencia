@@ -188,35 +188,78 @@ function Perfil({ user, logout, getProfileImageUrl }) {
           </div>
         )}
 
-        {/* Modal de Pago para Renovación */}
         {showPaymentModal && (
           <div className="modal-overlay" style={{ zIndex: 10000 }}>
-            <div className="modal-content" style={{ maxWidth: '600px', padding: '15px' }}>
-              <button className="modal-close" onClick={() => setShowPaymentModal(false)}>
+            <div className="modal-content" style={{ 
+                maxWidth: '900px', 
+                width: '95%',
+                padding: '30px',
+                background: 'rgba(28, 31, 40, 0.95)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(0, 203, 203, 0.2)',
+                color: 'white'
+            }}>
+              <button className="modal-close" onClick={() => setShowPaymentModal(false)} style={{ color: 'white' }}>
                 <FaTimes />
               </button>
-              <h3 style={{ color: '#007A7A', marginBottom: '15px' }}>Renovar Suscripción</h3>
-              <p style={{ marginBottom: '20px', fontSize: '0.9rem' }}>
-                Completa los datos de tu tarjeta para procesar el pago de la mensualidad.
+              <h2 style={{ color: '#00CBCB', marginBottom: '10px', textAlign: 'center' }}>Renovar Suscripción</h2>
+              <p style={{ marginBottom: '30px', textAlign: 'center', opacity: 0.8 }}>
+                Tu escuela recuperará el acceso total de forma inmediata al completar el pago.
               </p>
               
-              <PremiumCardForm onCardChange={(data) => setCardData(data)} />
-              
-              {paymentError && (
-                <div className="error-message" style={{ background: '#ffebee', color: '#c62828', padding: '10px', borderRadius: '8px', marginTop: '15px', fontSize: '0.9rem' }}>
-                  <FaExclamationTriangle /> {paymentError}
-                </div>
-              )}
-              
-              <div className="modal-actions" style={{ marginTop: '20px' }}>
-                <button 
-                  className="btn-guardar"
-                  onClick={handleRenewal}
-                  disabled={loadingPay}
-                  style={{ width: '100%', background: '#007A7A' }}
-                >
-                  {loadingPay ? "Procesando..." : "Confirmar Pago ($700 MXN)"}
-                </button>
+              <div className="renewal-horizontal-layout" style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', alignItems: 'flex-start' }}>
+                  <div className="renewal-info-panel" style={{ flex: '1', minWidth: '300px' }}>
+                      <div className="price-card-premium" style={{ 
+                          background: 'linear-gradient(135deg, #007A7A, #00CBCB)',
+                          padding: '25px',
+                          borderRadius: '15px',
+                          textAlign: 'center',
+                          boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+                      }}>
+                          <p style={{ fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Mensualidad Scholaris</p>
+                          <div style={{ fontSize: '3rem', fontWeight: '800', margin: '10px 0' }}>$700.00</div>
+                          <p style={{ fontSize: '0.8rem', opacity: 0.8 }}>Válido por 1 mes adicional</p>
+                      </div>
+                      
+                      <div className="security-badges" style={{ marginTop: '25px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem' }}>
+                              <FaCheckCircle style={{ color: '#00CBCB' }} /> Facturación automática disponible
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem' }}>
+                              <FaCheckCircle style={{ color: '#00CBCB' }} /> Procesado por Stripe Inc.
+                          </div>
+                      </div>
+                  </div>
+
+                  <div className="renewal-form-panel" style={{ flex: '1.5', minWidth: '350px' }}>
+                      <PremiumCardForm onCardChange={(data) => setCardData(data)} />
+                      
+                      {paymentError && (
+                        <div className="error-message" style={{ background: 'rgba(255, 0, 0, 0.1)', border: '1px solid #ff4d4d', color: '#ff4d4d', padding: '12px', borderRadius: '10px', marginTop: '20px', fontSize: '0.9rem' }}>
+                          <FaExclamationTriangle /> {paymentError}
+                        </div>
+                      )}
+                      
+                      <div className="modal-actions" style={{ marginTop: '25px' }}>
+                        <button 
+                          className="btn-guardar"
+                          onClick={handleRenewal}
+                          disabled={loadingPay}
+                          style={{ 
+                              width: '100%', 
+                              background: '#00CBCB', 
+                              padding: '15px', 
+                              borderRadius: '12px',
+                              fontSize: '1.1rem',
+                              fontWeight: '700',
+                              letterSpacing: '1px',
+                              boxShadow: '0 5px 15px rgba(0, 203, 203, 0.3)'
+                          }}
+                        >
+                          {loadingPay ? "PROCESANDO PAGO..." : "CONFIRMAR Y PAGAR AHORA"}
+                        </button>
+                      </div>
+                  </div>
               </div>
             </div>
           </div>

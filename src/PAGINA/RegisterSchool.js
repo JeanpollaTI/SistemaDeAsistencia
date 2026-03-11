@@ -38,11 +38,11 @@ const RegisterSchool = () => {
 
     const nextStep = () => {
         if (step === 1) {
-            const domain = formData.email.split('@')[1];
             if (!formData.email || !formData.password) {
                 setError("Por favor completa las credenciales.");
                 return;
             }
+            const domain = formData.email.split('@')[1];
             if (domain !== 'gmail.com' && domain !== 'iea.edu.mx') {
                 setError("Solo se permiten correos @gmail.com o @iea.edu.mx");
                 return;
@@ -52,14 +52,15 @@ const RegisterSchool = () => {
             setError("El nombre de la escuela es obligatorio.");
             return;
         }
-
         if (step === 3) {
+            if (!cardData || !cardData.cardNumber || !cardData.cardMonth || !cardData.cardYear || !cardData.cardCvv) {
+                return setError("Por favor completa todos los datos de tu tarjeta.");
+            }
             handleSubmit();
             return;
         }
-
-        setError("");
         setStep(step + 1);
+        setError("");
     };
 
     const prevStep = () => setStep(step - 1);
@@ -171,27 +172,43 @@ const RegisterSchool = () => {
                         </div>
                         <div className="payment-section fade-in" style={{ 
                             marginTop: '2.5rem', 
-                            border: '1px solid #e0f2f1', 
-                            backgroundColor: 'rgba(255,255,255,0.7)',
-                            padding: '2rem',
-                            borderRadius: '15px'
+                            border: '1px solid rgba(255,255,255,0.2)', 
+                            backgroundColor: 'rgba(0, 122, 122, 0.4)',
+                            padding: '2.5rem',
+                            borderRadius: '20px',
+                            backdropFilter: 'blur(15px)'
                         }}>
-                            <h3 style={{ justifyContent: 'center', marginBottom: '1.5rem', color: '#007a7a' }}>
+                            <h3 style={{ justifyContent: 'center', marginBottom: '2rem', textAlign: 'center' }}>
                                 <FaCreditCard /> Método de Pago Seguro
                             </h3>
-                            <div className="payment-preview" style={{ 
-                                marginBottom: '2.5rem', 
-                                padding: '1.2rem', 
-                                borderRadius: '10px', 
-                                background: 'linear-gradient(135deg, #007a7a, #00cbcb)',
-                                color: 'white',
-                                textAlign: 'center'
-                            }}>
-                                <p style={{ fontWeight: '500', opacity: 0.9 }}>Suscripción Scholaris Premium</p>
-                                <div className="price-tag" style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0.3rem 0' }}>$700.00 <span>MXN/mes</span></div>
-                                <small style={{ opacity: 0.8 }}>Gestión total sin límites</small>
+                            
+                            <div className="payment-horizontal-layout" style={{ display: 'flex', flexWrap: 'wrap', gap: '30px', alignItems: 'flex-start' }}>
+                                <div className="payment-summary-box" style={{ flex: '1', minWidth: '300px' }}>
+                                    <div className="payment-preview" style={{ 
+                                        padding: '2rem', 
+                                        borderRadius: '15px', 
+                                        background: 'linear-gradient(135deg, rgba(0, 122, 122, 0.8), rgba(0, 203, 203, 0.8))',
+                                        color: 'white',
+                                        textAlign: 'center',
+                                        boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+                                    }}>
+                                        <p style={{ fontSize: '1.1rem', fontWeight: '500', marginBottom: '10px' }}>Suscripción Scholaris Premium</p>
+                                        <div className="price-tag" style={{ fontSize: '2.8rem', fontWeight: '800', margin: '0.5rem 0' }}>$700.00 <span style={{ fontSize: '1rem', verticalAlign: 'middle' }}>MXN/mes</span></div>
+                                        <p style={{ opacity: 0.9, fontSize: '0.9rem', marginTop: '15px' }}>
+                                            Acceso total a gestión escolar, reportes dinámicos y portal de padres en vivo.
+                                        </p>
+                                    </div>
+                                    <div style={{ marginTop: '20px', padding: '15px', background: 'rgba(255,255,255,0.1)', borderRadius: '10px' }}>
+                                        <p style={{ color: 'white', fontSize: '0.85rem' }}>
+                                            * Los datos de tu tarjeta están protegidos con encriptación de nivel bancario a través de Stripe. No almacenamos tus credenciales.
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div className="card-form-wrapper" style={{ flex: '1.5', minWidth: '350px' }}>
+                                    <PremiumCardForm onCardChange={handleCardChange} />
+                                </div>
                             </div>
-                            <PremiumCardForm onCardChange={handleCardChange} />
                         </div>
                     </div>
                 );

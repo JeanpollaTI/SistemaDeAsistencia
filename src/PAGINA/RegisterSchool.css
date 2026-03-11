@@ -11,8 +11,8 @@
 .register-card {
     background: rgba(255, 255, 255, 0.9); /* White with opacity for legibility */
     backdrop-filter: blur(10px);
-    width: 100%;
-    max-width: 700px;
+    width: 95%;
+    max-width: 1000px;
     border-radius: 20px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
     overflow: hidden;
@@ -158,10 +158,15 @@
     gap: 20px;
 }
 
-.form-step h3 {
-    color: #004d40;
-    margin-bottom: 1.5rem;
-    font-size: 1.4rem;
+.payment-section h3 {
+    color: #ffffff !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.payment-section p, 
+.payment-section small {
+    color: #ffffff !important;
+    opacity: 0.9;
 }
 
 .input-group label {
