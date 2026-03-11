@@ -71,10 +71,12 @@
 
 .cta-group {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* Forced row on large screens */
     justify-content: center;
-    gap: 20px;
+    align-items: center;
+    gap: 25px;
     margin: 0 auto;
+    width: 100%;
 }
 
 .cta-button {

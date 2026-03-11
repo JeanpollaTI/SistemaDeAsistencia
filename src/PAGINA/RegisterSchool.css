@@ -11,8 +11,8 @@
 .register-card {
     background: rgba(255, 255, 255, 0.9); /* White with opacity for legibility */
     backdrop-filter: blur(10px);
-    width: 95%;
-    max-width: 1100px; /* Increased from 1000px */
+    width: 98%; /* Slightly more fluid */
+    max-width: 1200px; /* Increased from 1100px to allow more room for horizontal layout */
     border-radius: 20px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
     overflow: hidden;
@@ -160,20 +160,36 @@
 
 .payment-section {
     width: 100%;
-    margin-top: 2.5rem;
+    margin-top: 3rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    background-color: rgba(0, 122, 122, 0.45); /* Slightly darker for better contrast */
-    padding: 3rem !important; /* Increased padding */
-    border-radius: 25px;
-    backdrop-filter: blur(15px);
+    background-color: rgba(0, 122, 122, 0.5); /* slightly more solid */
+    padding: 3.5rem !important; /* increased padding */
+    border-radius: 30px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
 }
 
 .payment-horizontal-layout {
     display: flex;
-    flex-wrap: nowrap; /* Avoid wrapping if possible */
-    gap: 40px;
-    align-items: flex-start;
-    justify-content: center;
+    flex-direction: row; /* Force row */
+    gap: 60px; /* Significant gap */
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.payment-summary-box {
+    flex: 0.8; /* Summary slightly smaller */
+    min-width: 320px;
+}
+
+.card-form-wrapper {
+    flex: 1.2; /* Card form bigger */
+    min-width: 450px;
+    padding: 20px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
 .payment-section p, 

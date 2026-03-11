@@ -23,7 +23,7 @@ const LandingPage = () => {
                     <div className="cta-group">
                         <button className="cta-button secondary glass" onClick={() => navigate('/login')}>
                             <span className="cta-label">
-                                <FaGraduationCap /> Portal de mi escuela
+                                <FaGraduationCap /> Portal de Mi Escuela
                             </span>
                             <span className="cta-arrow">ACCESO <FaArrowRight /></span>
                         </button>
@@ -37,7 +37,7 @@ const LandingPage = () => {
 
                         <button className="cta-button primary" onClick={() => navigate('/register-school')}>
                             <span className="cta-label">
-                                <FaSchool /> Registrar mi escuela
+                                <FaSchool /> Registrar mi Escuela
                             </span>
                             <span className="cta-arrow">NUEVA ESCUELA <FaArrowRight /></span>
                         </button>
