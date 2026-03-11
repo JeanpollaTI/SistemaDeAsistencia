@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "./AuthContext";
 import DynamicBackground from "../COMPONENTE/DynamicBackground";
+import LoadingOverlay from "../COMPONENTE/LoadingOverlay";
 import "./Login.css";
 
 // La URL de la API se obtiene de las variables de entorno para flexibilidad
@@ -17,11 +18,62 @@ function Login() {
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
-        // ... unchanged logic ...
+        e.preventDefault();
+        setLoading(true);
+        setError("");
+
+        if (!identifier || !password) {
+            setError("Por favor, ingresa tu correo/teléfono y contraseña.");
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    identifier: identifier.toLowerCase(),
+                    password,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                setError(data.msg || data.error || "Credenciales incorrectas. Por favor, verifica tus datos.");
+                setLoading(false);
+                return;
+            }
+
+            if (!data.token || !data.user) {
+                setError("Login fallido: no se recibió una respuesta válida del servidor.");
+                setLoading(false);
+                return;
+            }
+
+            login(data.user, data.token);
+
+            switch (data.user.role) {
+                case "admin":
+                case "profesor":
+                    navigate("/");
+                    break;
+                default:
+                    navigate("/perfil");
+                    break;
+            }
+        } catch (err) {
+            console.error("Error en la petición de login:", err);
+            setError("No se pudo conectar con el servidor. Inténtalo más tarde.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <div className="login-wrapper dark-theme">
+            {loading && <LoadingOverlay message="Iniciando Sesión..." />}
             <DynamicBackground />
             <div className="login-container glass">
                 <h2>Iniciar Sesión</h2>
