@@ -4,8 +4,9 @@ import * as XLSX from 'xlsx';
 import { FaTrash, FaPencilAlt, FaPlus, FaTimes, FaCheck } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { useNotification } from '../COMPONENTE/NotificationContext';
+import LoadingOverlay from '../COMPONENTE/LoadingOverlay';
 import './Grupo.css';
-import Notificacion from './Notificacion';
 import ConfirmacionModal from './ConfirmacionModal';
 import logoImage from './Logoescuela.png'; // Asegúrate que esta ruta sea correcta
 import BrandingModal from '../COMPONENTE/BrandingModal';
@@ -19,7 +20,7 @@ const NUM_BIMESTRES = 3;
 const DIAS_INICIALES = 30;
 
 function Grupo({ user }) {
-  // --- ESTADOS ---
+  const { showAlert } = useNotification();
   const [grupos, setGrupos] = useState([]);
   const [profesores, setProfesores] = useState([]);
   const [materiasDb, setMateriasDb] = useState([]); // NUEVO: Estado para materias globales
@@ -35,7 +36,6 @@ function Grupo({ user }) {
   const [bimestreActivo, setBimestreActivo] = useState(1); // NUEVO: Estado global
   const [asignaciones, setAsignaciones] = useState({});
   const [editingAlumno, setEditingAlumno] = useState(null);
-  const [notificacion, setNotificacion] = useState({ visible: false, mensaje: '', tipo: '' });
   const [grupoParaEliminar, setGrupoParaEliminar] = useState(null);
   const [alumnoParaEliminar, setAlumnoParaEliminar] = useState(null);
   const [archivoXLS, setArchivoXLS] = useState(null);
@@ -142,9 +142,6 @@ function Grupo({ user }) {
   }, [user]);
 
   // --- LÓGICA DE MODALES Y NOTIFICACIONES ---
-  const mostrarNotificacion = (mensaje, tipo = 'success') => {
-    setNotificacion({ visible: true, mensaje, tipo });
-  };
 
   const abrirModal = async (tipo, data = null, asignatura = null) => {
     if (tipo === 'gestionarGrupo') {
@@ -188,7 +185,7 @@ function Grupo({ user }) {
       const tieneAsignatura = misAsignaciones.some(a => a.asignatura === asignatura);
 
       if (!tieneAsignatura) {
-        return mostrarNotificacion("No tienes asignada esta materia para este grupo.", "error");
+        return showAlert("No tienes asignada esta materia para este grupo.", "danger");
       }
 
       try {
@@ -211,7 +208,7 @@ function Grupo({ user }) {
         }
         setModalVisible('asistencia');
       } catch (error) {
-        mostrarNotificacion("Error al cargar datos de asistencia.", "error");
+        showAlert("Error al cargar datos de asistencia.", "danger");
       }
     } else if (tipo === 'editarAlumno') {
       setEditingAlumno(data);
@@ -246,7 +243,7 @@ function Grupo({ user }) {
 
   const handleAgregarAlumno = () => {
     if (!alumnoInput.nombre.trim() || !alumnoInput.apellidoPaterno.trim()) {
-      return mostrarNotificacion('Nombre y Apellido Paterno son obligatorios.', 'error');
+      return showAlert('Nombre y Apellido Paterno son obligatorios.', 'error');
     }
     const alumnoId = `new-${Date.now()}`;
     const nuevoAlumno = { _id: alumnoId, ...alumnoInput };
@@ -262,7 +259,7 @@ function Grupo({ user }) {
     }));
     setModalVisible('gestionarGrupo');
     setEditingAlumno(null);
-    mostrarNotificacion("Alumno actualizado correctamente.");
+    showAlert("Alumno actualizado correctamente.");
   };
 
   const handleDeleteAlumno = (alumno) => {
@@ -273,19 +270,19 @@ function Grupo({ user }) {
     if (!alumnoParaEliminar) return;
     setNuevoGrupo(prev => ({ ...prev, alumnos: prev.alumnos.filter(a => a._id !== alumnoParaEliminar._id) }));
     setAlumnoParaEliminar(null);
-    mostrarNotificacion("Alumno eliminado de la lista.");
+    showAlert("Alumno eliminado de la lista.");
   };
 
   const handleGuardarGrupo = async () => {
-    if (!nuevoGrupo.nombre.trim()) return mostrarNotificacion("El nombre del grupo es requerido.", 'error');
+    if (!nuevoGrupo.nombre.trim()) return showAlert("El nombre del grupo es requerido.", 'error');
     try {
       const response = await axios.post(`${API_URL}/grupos`, nuevoGrupo, getAxiosConfig());
       setGrupos(prev => [...prev, response.data]);
-      mostrarNotificacion(`Grupo "${nuevoGrupo.nombre}" guardado.`);
+      showAlert(`Grupo "${nuevoGrupo.nombre}" guardado.`);
       cerrarModal();
     } catch (error) {
       console.error("Error al guardar grupo:", error);
-      mostrarNotificacion(error.response?.data?.error || error.message || 'Error al guardar.', 'error');
+      showAlert(error.response?.data?.error || error.message || 'Error al guardar.', 'error');
     }
   };
 
@@ -294,11 +291,11 @@ function Grupo({ user }) {
     try {
       const response = await axios.put(`${API_URL}/grupos/${grupoSeleccionado._id}`, nuevoGrupo, getAxiosConfig());
       setGrupos(prev => prev.map(g => g._id === grupoSeleccionado._id ? response.data : g));
-      mostrarNotificacion(`Grupo "${nuevoGrupo.nombre}" actualizado.`);
+      showAlert(`Grupo "${nuevoGrupo.nombre}" actualizado.`);
       cerrarModal();
     } catch (error) {
       console.error("Error al actualizar grupo:", error);
-      mostrarNotificacion(error.response?.data?.error || error.message || 'Error al actualizar.', 'error');
+      showAlert(error.response?.data?.error || error.message || 'Error al actualizar.', 'error');
     }
   };
 
@@ -324,10 +321,10 @@ function Grupo({ user }) {
     try {
       const response = await axios.put(`${API_URL}/grupos/${grupoSeleccionado._id}/asignar-profesores`, { asignaciones: asignacionesParaEnviar }, getAxiosConfig());
       setGrupos(grupos.map(g => g._id === grupoSeleccionado._id ? response.data : g));
-      mostrarNotificacion("Asignación guardada.");
+      showAlert("Asignación guardada.");
       cerrarModal();
     } catch (error) {
-      mostrarNotificacion("Error al guardar la asignación.", 'error');
+      showAlert("Error al guardar la asignación.", 'error');
     }
   };
 
@@ -338,16 +335,16 @@ function Grupo({ user }) {
     try {
       await axios.delete(`${API_URL}/grupos/${grupoParaEliminar._id}`, getAxiosConfig());
       setGrupos(grupos.filter(g => g._id !== grupoParaEliminar._id));
-      mostrarNotificacion(`Grupo "${grupoParaEliminar.nombre}" eliminado.`);
+      showAlert(`Grupo "${grupoParaEliminar.nombre}" eliminado.`);
     } catch (error) {
-      mostrarNotificacion(error.response?.data?.error || 'Error al eliminar.', 'error');
+      showAlert(error.response?.data?.error || 'Error al eliminar.', 'error');
     } finally {
       setGrupoParaEliminar(null);
     }
   };
 
   const exportarXLS = (grupo) => {
-    if (!grupo || !grupo.alumnos || grupo.alumnos.length === 0) return mostrarNotificacion("Este grupo no tiene alumnos para exportar.", "error");
+    if (!grupo || !grupo.alumnos || grupo.alumnos.length === 0) return showAlert("Este grupo no tiene alumnos para exportar.", "danger");
 
     const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno));
 
@@ -401,10 +398,10 @@ function Grupo({ user }) {
         diasPorBimestre
       }, getAxiosConfig());
 
-      mostrarNotificacion("Asistencia guardada exitosamente.");
+      showAlert("Asistencia guardada exitosamente.");
       cerrarModal();
     } catch (error) {
-      mostrarNotificacion("Error al guardar la asistencia.", 'error');
+      showAlert("Error al guardar la asistencia.", 'error');
     }
   };
 
@@ -554,10 +551,10 @@ function Grupo({ user }) {
 
   const handleImportarAlumnos = () => {
     if (!nombreGrupoImport.trim()) {
-      return mostrarNotificacion('Por favor, ingresa un nombre para el grupo.', 'error');
+      return showAlert('Por favor, ingresa un nombre para el grupo.', 'error');
     }
     if (!archivoXLS) {
-      return mostrarNotificacion('Por favor, selecciona un archivo XLS.', 'error');
+      return showAlert('Por favor, selecciona un archivo XLS.', 'error');
     }
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -575,17 +572,17 @@ function Grupo({ user }) {
         })).filter(a => a.nombre && a.apellidoPaterno);
 
         if (alumnosImportados.length === 0) {
-          return mostrarNotificacion('No se encontraron alumnos válidos en el archivo. Asegúrate de que las columnas son: N°, Nombre(s), Apellido Paterno, Apellido Materno.', 'error');
+          return showAlert('No se encontraron alumnos válidos en el archivo. Asegúrate de que las columnas son: N°, Nombre(s), Apellido Paterno, Apellido Materno.', 'error');
         }
         const grupoParaGuardar = { nombre: nombreGrupoImport, alumnos: alumnosImportados };
 
         const response = await axios.post(`${API_URL}/grupos`, grupoParaGuardar, getAxiosConfig());
         setGrupos(prev => [...prev, response.data]);
-        mostrarNotificacion(`Grupo "${nombreGrupoImport}" importado con ${alumnosImportados.length} alumnos.`);
+        showAlert(`Grupo "${nombreGrupoImport}" importado con ${alumnosImportados.length} alumnos.`);
         cerrarModal();
       } catch (error) {
         console.error("Error al importar archivo:", error);
-        mostrarNotificacion('Hubo un error al procesar el archivo.', 'error');
+        showAlert('Hubo un error al procesar el archivo.', 'error');
       }
     };
     reader.readAsBinaryString(archivoXLS);
@@ -595,7 +592,7 @@ function Grupo({ user }) {
 
   const generarPDF = async (grupo, asignatura, brandingData = {}) => {
     if (!asignatura) {
-      return mostrarNotificacion("No se especificó la asignatura para el PDF.", "error");
+      return showAlert("No se especificó la asignatura para el PDF.", "danger");
     }
 
     try {
@@ -707,21 +704,16 @@ function Grupo({ user }) {
       // --- FIN DE CAMBIOS ---
 
       doc.save(`Asistencia_${grupo.nombre.replace(/ /g, '_')}_${asignatura.replace(/ /g, '_')}.pdf`);
-      mostrarNotificacion("PDF generado exitosamente.");
+      showAlert("PDF generado exitosamente.");
 
     } catch (error) {
       console.error("Error al generar PDF:", error);
-      mostrarNotificacion("Error al cargar los datos de asistencia para el PDF.", "error");
+      showAlert("Error al cargar los datos de asistencia para el PDF.", "danger");
     }
   };
 
   // ... resto del componente (handleAsignacionChange, handleFileChange, etc.)
 
-  if (loading) return (
-    <div className="grupo-componente" style={{ paddingTop: '100px', textAlign: 'center' }}>
-      <p className="loading-message">Cargando...</p>
-    </div>
-  );
 
   if (error) {
     if (error === "SUSPENDED") {
@@ -765,13 +757,7 @@ function Grupo({ user }) {
 
   return (
     <div className="grupo-componente">
-      {notificacion.visible && (
-        <Notificacion
-          mensaje={notificacion.mensaje}
-          tipo={notificacion.tipo}
-          onClose={() => setNotificacion({ ...notificacion, visible: false })}
-        />
-      )}
+      {loading && <LoadingOverlay message="Cargando grupos..." />}
 
       {brandingModal.visible && (
         <BrandingModal

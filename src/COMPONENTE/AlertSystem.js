@@ -18,6 +18,13 @@ const AlertSystem = () => {
 };
 
 const AlertItem = ({ alert, onRemove }) => {
+    const [isClosing, setIsClosing] = React.useState(false);
+
+    const handleRemove = () => {
+        setIsClosing(true);
+        setTimeout(onRemove, 500); // Wait for animation
+    };
+
     const getIcon = () => {
         switch (alert.type) {
             case 'success': return <FaCheckCircle className="start-icon animated faa-tada" />;
@@ -41,8 +48,8 @@ const AlertItem = ({ alert, onRemove }) => {
     };
 
     return (
-        <div className={`alert fade alert-simple alert-${alert.type} show`} role="alert">
-            <button type="button" className="close" onClick={onRemove}>
+        <div className={`alert fade alert-simple alert-${alert.type} ${isClosing ? 'closing' : 'show'}`} role="alert">
+            <button type="button" className="close" onClick={handleRemove}>
                 <FaTimes />
             </button>
             {getIcon()}

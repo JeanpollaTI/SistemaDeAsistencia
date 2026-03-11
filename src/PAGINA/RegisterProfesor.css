@@ -116,8 +116,8 @@ input[type="file"] {
   margin: 0 auto 2rem auto;
   /* Centrado horizontal robusto */
   padding: 0.6rem 1.5rem;
-  background: linear-gradient(135deg, #007A7A, #b39028);
-  color: #1a1a1a;
+  background: linear-gradient(135deg, #007A7A, #00CBCB);
+  color: #fff;
   border-radius: 50px;
   /* Botón redondeado */
   cursor: pointer;
@@ -186,8 +186,8 @@ input[type="file"] {
   padding: 1rem;
   border-radius: 10px;
   border: none;
-  background: linear-gradient(135deg, #007A7A, #b39028);
-  color: #1a1a1a;
+  background: linear-gradient(135deg, #007A7A, #00CBCB);
+  color: #fff;
   font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;
