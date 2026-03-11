@@ -5,6 +5,8 @@ import autoTable from 'jspdf-autotable';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useNotification } from '../COMPONENTE/NotificationContext';
+import LoadingOverlay from '../COMPONENTE/LoadingOverlay';
 import './Calificaciones.css';
 
 import logoImage from './Logoescuela.png';
@@ -44,26 +46,9 @@ function SortableHeader({ id, children, disabled, colSpan }) {
 // --- CAMBIO: URL de la API desde variables de entorno para Vercel ---
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-// --- Componente de Notificación (Utilidad) ---
-function Notificacion({ mensaje, tipo, onClose }) {
-  useEffect(() => {
-    if (mensaje) {
-      const timer = setTimeout(onClose, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [mensaje, onClose]);
-
-  if (!mensaje) return null;
-
-  return (
-    <div className={`notificacion ${tipo}`}>
-      {mensaje}
-    </div>
-  );
-}
-
 // --- Componente Principal de Calificaciones (Vista Admin) ---
 function Calificaciones({ user }) {
+  const { showAlert } = useNotification();
   const [grupos, setGrupos] = useState([]);
   const [selectedGrupo, setSelectedGrupo] = useState(null);
   const [alumnos, setAlumnos] = useState([]);
@@ -75,7 +60,6 @@ function Calificaciones({ user }) {
   const [modalPdf, setModalPdf] = useState({ visible: false, alumno: null });
   const [modalShare, setModalShare] = useState({ visible: false, alumno: null });
   const [modalDirector, setModalDirector] = useState(false); // Modal para asignar director global
-  const [notificacion, setNotificacion] = useState({ visible: false, mensaje: '', tipo: '' });
   const [isEditing, setIsEditing] = useState(false); // Estado para controlar el modo edición
   const [savedDirectores, setSavedDirectores] = useState([]); // Estado para directores guardados
   // 🌟 NUEVO ESTADO: Modal para configurar el reporte de bajo rendimiento
@@ -112,17 +96,13 @@ function Calificaciones({ user }) {
             ordenMaterias: newOrder
           }, getAxiosConfig());
 
-          mostrarNotificacion("Orden guardado correctamente.");
+          showAlert("Orden guardado correctamente.");
         } catch (err) {
           console.error("Error al guardar el orden de materias:", err);
-          mostrarNotificacion("Error al guardar el orden de las materias.", "error");
+          showAlert("Error al guardar el orden de las materias.", "danger");
         }
       }
     }
-  };
-
-  const mostrarNotificacion = (mensaje, tipo = 'exito') => {
-    setNotificacion({ visible: true, mensaje, tipo });
   };
 
   const getAxiosConfig = () => ({
@@ -226,7 +206,7 @@ function Calificaciones({ user }) {
       setCalificaciones(res.data || {});
     } catch (err) {
       console.error("Error detallado al cargar calificaciones:", err.response || err);
-      mostrarNotificacion("No se pudieron cargar las calificaciones consolidadas de este grupo.", "error");
+      showAlert("No se pudieron cargar las calificaciones consolidadas de este grupo.", "danger");
       setCalificaciones({});
     } finally {
       setLoading(false);
@@ -494,7 +474,7 @@ function Calificaciones({ user }) {
   // 🌟 NUEVA FUNCIÓN: Descargar todas las boletas en un solo PDF
   const generatePdfGrupal = async (brandingData = {}) => {
     if (!alumnos || alumnos.length === 0) {
-      mostrarNotificacion("No hay alumnos en el grupo.", "error");
+      showAlert("No hay alumnos en el grupo.", "danger");
       return;
     }
 
@@ -502,7 +482,7 @@ function Calificaciones({ user }) {
     let isFirstPage = true;
 
     // Mostramos loading o notificación...
-    mostrarNotificacion("Generando PDF grupal, por favor espere...", "info");
+    showAlert("Generando PDF grupal, por favor espere...", "info");
 
     for (const alumno of alumnos) {
       if (!isFirstPage) {
@@ -515,14 +495,14 @@ function Calificaciones({ user }) {
 
     const nombreGrupo = selectedGrupo.nombre.replace(/\s/g, '_');
     doc.save(`Boletas_Grupo_${nombreGrupo}.pdf`);
-    mostrarNotificacion("PDF grupal descargado correctamente.");
+    showAlert("PDF grupal descargado correctamente.");
   };
 
   // 🌟 NUEVA FUNCIÓN: Generar reporte de bajo rendimiento (Promedios <= 6)
   // Acepta bimestresSeleccionados: array de booleans [T1, T2, T3]
   const generatePdfBajoRendimiento = async (bimestresSeleccionados = [true, true, true], brandingData = {}) => {
     if (!alumnos || alumnos.length === 0) {
-      mostrarNotificacion("No hay alumnos en el grupo.", "error");
+      showAlert("No hay alumnos en el grupo.", "danger");
       return;
     }
 
@@ -602,7 +582,7 @@ function Calificaciones({ user }) {
     });
 
     if (alumnosEnRiesgo.length === 0) {
-      mostrarNotificacion("No se encontraron alumnos con calificaciones <= 6 en los trimestres seleccionados.", "info");
+      showAlert("No se encontraron alumnos con calificaciones <= 6 en los trimestres seleccionados.", "info");
       return;
     }
 
@@ -632,7 +612,7 @@ function Calificaciones({ user }) {
     doc.text("Este reporte incluye calificaciones reprobatorias (5) y mínimas aprobatorias (6).", 14, pageHeight - 10);
 
     doc.save(`Reporte_Riesgo_${selectedGrupo.nombre.replace(/\s/g, '_')}.pdf`);
-    mostrarNotificacion(`Reporte generado: ${alumnosEnRiesgo.length} alumnos en riesgo.`);
+    showAlert(`Reporte generado: ${alumnosEnRiesgo.length} alumnos en riesgo.`);
     setModalBajoRendimiento({ ...modalBajoRendimiento, visible: false }); // Cerrar modal al terminar
   };
 
@@ -740,7 +720,7 @@ function Calificaciones({ user }) {
     doc.line(margin + colWidth + 10, finalY + 11, margin + colWidth * 2 + 10 - 20, finalY + 11);
 
     doc.save(`Sabana_Calificaciones_Grupo_${selectedGrupo.nombre.replace(/\s/g, '_')}.pdf`);
-    mostrarNotificacion("Sábana de calificaciones generada correctamente.");
+    showAlert("Sábana de calificaciones generada correctamente.");
   };
 
   const handleSendPdf = async (platform, recipient, alumno) => {
@@ -764,16 +744,9 @@ function Calificaciones({ user }) {
 
 
 
-  if (loading && !selectedGrupo) return <div className="calificaciones-container">Cargando grupos...</div>;
-  if (error) return <div className="calificaciones-container"><p className="error-message">{error}</p></div>;
-
-  return (
-    <div className="calificaciones-container section">
-      <Notificacion
-        mensaje={notificacion.mensaje}
-        tipo={notificacion.tipo}
-        onClose={() => setNotificacion({ visible: false, mensaje: '', tipo: '' })}
-      />
+      return (
+        <div className="calificaciones-container section">
+          {loading && <LoadingOverlay message="Cargando información..." />}
 
       {!selectedGrupo ? (
         <>
@@ -800,7 +773,7 @@ function Calificaciones({ user }) {
                   e.preventDefault();
                   const bimestresSeleccionados = [e.target.b1.checked, e.target.b2.checked, e.target.b3.checked];
                   if (!bimestresSeleccionados.some(b => b)) {
-                    mostrarNotificacion("Debes seleccionar al menos un Trimestre.", "error");
+                    showAlert("Debes seleccionar al menos un Trimestre.", "danger");
                     return;
                   }
                   // Al confirmar trimestres, pasamos a pedir Branding

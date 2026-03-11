@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useNotification } from "../COMPONENTE/NotificationContext";
+import LoadingOverlay from "../COMPONENTE/LoadingOverlay";
 import "./Horario.css";
 
 // --- IMPORTACIONES DE LOGOS LOCALES ---
@@ -25,6 +27,7 @@ const paletaColores = [
 
 
 function Horario({ user }) {
+  const { showAlert } = useNotification();
   const [profesores, setProfesores] = useState([]);
   const [horario, setHorario] = useState({});
   const [anio, setAnio] = useState("2025-2026");
@@ -32,7 +35,6 @@ function Horario({ user }) {
   const [colorSeleccionado, setColorSeleccionado] = useState("#f44336");
   const [leyenda, setLeyenda] = useState({});
   const [modoBorrador, setModoBorrador] = useState(false);
-  const [alerta, setAlerta] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [progress, setProgress] = useState(0);
@@ -40,11 +42,6 @@ function Horario({ user }) {
   const [brandingModal, setBrandingModal] = useState({ visible: false, onConfirm: null, title: '' });
   const horarioTableRef = useRef(null);
   const fileInputRef = useRef(null);
-
-  const mostrarAlerta = useCallback((mensaje, tipo = "success") => {
-    setAlerta({ mensaje, tipo });
-    setTimeout(() => setAlerta(null), 3000);
-  }, []);
 
   useEffect(() => {
     if (!isLoading) {
@@ -105,7 +102,7 @@ function Horario({ user }) {
         if (res.data?.leyenda) setLeyenda(res.data.leyenda);
       } catch (error) {
         console.error("Error al cargar el horario:", error);
-        mostrarAlerta("Error al cargar el horario ❌", "error");
+        showAlert("Error al cargar el horario ❌", "danger");
         setProgress(100);
       } finally {
         setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 300);
@@ -113,7 +110,7 @@ function Horario({ user }) {
     };
 
     fetchHorario();
-  }, [anio, mostrarAlerta]);
+  }, [anio, showAlert]);
 
   const generarHorarioVacio = useCallback(() => {
     if (isLoading) return;
@@ -130,8 +127,8 @@ function Horario({ user }) {
     });
     setHorario(nuevoHorario);
     setLeyenda({});
-    mostrarAlerta("Horario limpiado correctamente ✅", "success");
-  }, [isLoading, profesores, mostrarAlerta]);
+    showAlert("Horario limpiado correctamente ✅", "success");
+  }, [isLoading, profesores, showAlert]);
 
   const handleCellChange = useCallback((profesor, asignatura, dia, hora, value) => {
     if (user.role !== "admin" || isLoading) return;
@@ -153,8 +150,8 @@ function Horario({ user }) {
   const eliminarLeyenda = useCallback(color => {
     if (isLoading) return;
     setLeyenda(prev => { const copia = { ...prev }; delete copia[color]; return copia; });
-    mostrarAlerta("Color eliminado de la leyenda", "info");
-  }, [isLoading, mostrarAlerta]);
+    showAlert("Color eliminado de la leyenda", "info");
+  }, [isLoading, showAlert]);
 
   // --- Lógica de generación de PDF refactorizada (con logos locales) ---
   const generarContenidoPDF = async (doc, brandingData = {}) => {
@@ -315,10 +312,10 @@ function Horario({ user }) {
       await generarContenidoPDF(doc, brandingData);
       setProgress(95);
       doc.save(`Horario_${anio}.pdf`);
-      mostrarAlerta("PDF exportado correctamente 📄✅", "success");
+      showAlert("PDF exportado correctamente 📄✅", "success");
     } catch (error) {
       console.error("Error al exportar PDF:", error);
-      mostrarAlerta("Hubo un error al generar el PDF ❌", "error");
+      showAlert("Hubo un error al generar el PDF ❌", "danger");
     } finally {
       setIsLoading(false);
       setLoadingMessage("");
@@ -343,14 +340,14 @@ function Horario({ user }) {
         onUploadProgress: (e) => setProgress(Math.min(90, Math.round((e.loaded * 100) / (e.total || 1))))
       });
       setProgress(100);
-      mostrarAlerta("Horario guardado correctamente ✅", "success");
+      showAlert("Horario guardado correctamente ✅", "success");
     } catch (err) {
       console.error(err);
-      mostrarAlerta("Error al guardar el horario ❌", "error");
+      showAlert("Error al guardar el horario ❌", "danger");
     } finally {
       setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 500);
     }
-  }, [user.role, anio, horario, leyenda, isLoading, mostrarAlerta]);
+  }, [user.role, anio, horario, leyenda, isLoading, showAlert]);
 
 
 
@@ -369,33 +366,20 @@ function Horario({ user }) {
       await axios.post(`${API_URL}/horario`, formData, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }, onUploadProgress: (progressEvent) => { const percentCompleted = Math.min(90, Math.round((progressEvent.loaded * 100) / progressEvent.total)); setProgress(percentCompleted); } });
       setProgress(100);
       // Aquí deberías recargar o actualizar el estado si quieres mostrar el PDF
-      mostrarAlerta("PDF subido correctamente ✅", "success");
+      showAlert("PDF subido correctamente ✅", "success");
     } catch (err) {
       console.error(err);
-      mostrarAlerta("Error al subir PDF ❌", "error");
+      showAlert("Error al subir PDF ❌", "danger");
     } finally {
       e.target.value = null; // Limpiar input file
       setTimeout(() => { setIsLoading(false); setLoadingMessage(""); }, 500);
     }
-  }, [anio, isLoading, mostrarAlerta]);
+  }, [anio, isLoading, showAlert]);
 
 
   return (
     <div className="horario-page">
-      {isLoading && (
-        <div className="loading-overlay">
-          <div className="loading-content">
-            <p className="loading-message">{loadingMessage || "Cargando..."}</p>
-            <div className="progress-bar-custom">
-              <div className="progress-bar-fill" style={{ width: `${progress}%` }}>
-                <span className="progress-bar-text">{`${Math.round(progress)}%`}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {alerta && <div className={`alerta ${alerta.tipo}`}>{alerta.mensaje}</div>}
+      {isLoading && <LoadingOverlay message={loadingMessage} />}
 
       {/* Estructura Header del código nuevo */}
       <header className="horario-header">

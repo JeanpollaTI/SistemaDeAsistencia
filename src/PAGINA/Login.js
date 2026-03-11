@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "./AuthContext";
+import { useNotification } from "../COMPONENTE/NotificationContext";
 import DynamicBackground from "../COMPONENTE/DynamicBackground";
 import LoadingOverlay from "../COMPONENTE/LoadingOverlay";
 import "./Login.css";
@@ -10,20 +11,19 @@ const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 function Login() {
     const { login } = useContext(AuthContext);
+    const { showAlert } = useNotification();
 
     const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setError("");
 
         if (!identifier || !password) {
-            setError("Por favor, ingresa tu correo/teléfono y contraseña.");
+            showAlert("Por favor, ingresa tu correo/teléfono y contraseña.", "warning");
             setLoading(false);
             return;
         }
@@ -41,18 +41,19 @@ function Login() {
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.msg || data.error || "Credenciales incorrectas. Por favor, verifica tus datos.");
+                showAlert(data.msg || data.error || "Credenciales incorrectas. Por favor, verifica tus datos.", "danger");
                 setLoading(false);
                 return;
             }
 
             if (!data.token || !data.user) {
-                setError("Login fallido: no se recibió una respuesta válida del servidor.");
+                showAlert("Login fallido: no se recibió una respuesta válida del servidor.", "danger");
                 setLoading(false);
                 return;
             }
 
             login(data.user, data.token);
+            showAlert(`¡Bienvenido de nuevo, ${data.user.nombre.split(' ')[0]}!`, "success");
 
             switch (data.user.role) {
                 case "admin":
@@ -65,7 +66,7 @@ function Login() {
             }
         } catch (err) {
             console.error("Error en la petición de login:", err);
-            setError("No se pudo conectar con el servidor. Inténtalo más tarde.");
+            showAlert("No se pudo conectar con el servidor. Inténtalo más tarde.", "danger");
         } finally {
             setLoading(false);
         }
@@ -102,13 +103,10 @@ function Login() {
                             autoComplete="current-password"
                         />
                     </div>
-                    {error && <p className="error">{error}</p>}
                     <button type="submit" className="login-btn" disabled={loading}>
                         {loading ? "Ingresando..." : "Iniciar Sesión"}
                     </button>
                 </form>
-
-
             </div>
         </div>
     );
