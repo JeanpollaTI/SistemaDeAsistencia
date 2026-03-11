@@ -1830,18 +1830,21 @@ const PanelCalificaciones = ({
     const generateSubjectReport = async () => {
         const doc = new jsPDF();
 
+        const schoolName = schoolConfig?.name || 'Escuela Secundaria';
+        const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
+
         // --- LOGO Y ENCABEZADO (Reutilizado de Calificaciones.js) ---
         const img = new Image();
-        img.src = logoImage;
+        img.src = schoolLogo;
         await img.decode();
         const logoWidth = 25, margin = 14;
         const logoHeight = (img.height * logoWidth) / img.width;
         const pageWidth = doc.internal.pageSize.width;
-        doc.addImage(logoImage, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+        doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
 
         doc.setFontSize(12);
         let yPos = margin + 5;
-        doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, yPos);
+        doc.text(schoolName, margin, yPos);
         yPos += 7;
         doc.setFont(undefined, 'bold');
         doc.text('Reporte de Calificaciones por Asignatura', margin, yPos);
@@ -1890,7 +1893,7 @@ const PanelCalificaciones = ({
             body: tableBody,
             theme: 'grid',
             styles: { halign: 'center', cellPadding: 2.5 },
-            headStyles: { fillColor: [185, 151, 43], textColor: 255 }, // Color dorado del tema
+            headStyles: { fillColor: [0, 203, 203], textColor: 255 }, // Color aqua
             columnStyles: { 0: { halign: 'left' } }
         });
 

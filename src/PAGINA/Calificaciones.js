@@ -310,6 +310,9 @@ function Calificaciones({ user }) {
 
   // --- FUNCIÓN REUTILIZABLE PARA DIBUJAR UNA BOLETA EN UNA PÁGINA EXISTENTE ---
   const drawReportCard = async (doc, alumno, bimestresSeleccionados, datosFirmas = {}) => {
+    const schoolName = schoolConfig?.name || 'Escuela Secundaria';
+    const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
+
     let { nombreDirector = '', nombreDocente = '' } = datosFirmas;
 
     if (!nombreDirector) {
@@ -325,7 +328,7 @@ function Calificaciones({ user }) {
     // Para simplificar en batch, idealmente cargar imagen una vez fuera. 
     // Pero jsPDF addImage maneja cache o base64 bien.
     const img = new Image();
-    img.src = logoImage;
+    img.src = schoolLogo;
     // await img.decode(); // En batch puede ser lento, pero necesario para layout.
     // Hack: Asumimos que ya cargó o usamos dimensiones fijas si es posible.
     // Para asegurar sin await en cada uno, podríamos precargar, pero mantengamos await por seguridad visual.
@@ -336,13 +339,13 @@ function Calificaciones({ user }) {
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
 
-    doc.addImage(logoImage, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+    doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
 
     doc.setFontSize(12);
     let yPos = margin + 5;
 
     // 1. Escuela Secundaria
-    doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, yPos);
+    doc.text(schoolName, margin, yPos);
     yPos += 7;
 
     // 2. Boleta de Calificaciones
@@ -392,7 +395,7 @@ function Calificaciones({ user }) {
       body: tableBody,
       theme: 'grid',
       styles: { halign: 'center', cellPadding: 2.5 },
-      headStyles: { fillColor: [212, 175, 55], textColor: 255 },
+      headStyles: { fillColor: [0, 203, 203], textColor: 255 },
       didDrawCell: (data) => {
         if (data.row.index === tableBody.length - 1) {
           doc.setFont(undefined, 'bold');
@@ -620,20 +623,21 @@ function Calificaciones({ user }) {
     const doc = new jsPDF({ orientation: 'landscape' });
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
-    const margin = 14;
+    const schoolName = schoolConfig?.name || 'Escuela Secundaria';
+    const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
 
     // Logo
     const img = new Image();
-    img.src = logoImage;
+    img.src = schoolLogo;
     await img.decode().catch(() => { });
 
     const logoWidth = 25;
     const logoHeight = (img.height * logoWidth) / img.width;
-    doc.addImage(logoImage, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+    doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
 
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, margin + 5);
+    doc.text(schoolName, margin, margin + 5);
     doc.setFontSize(12);
     doc.text(`Sábana de Calificaciones - Grupo: ${selectedGrupo.nombre}`, margin, margin + 12);
     doc.setFont(undefined, 'normal');
@@ -641,13 +645,13 @@ function Calificaciones({ user }) {
     doc.text(`Asesor: ${selectedGrupo.asesor || 'N/A'}`, margin, margin + 18);
 
     const head = [
-      [{ content: 'Nombre del Alumno', rowSpan: 2, styles: { fillColor: [142, 68, 173] } }],
-      ...materias.map(materia => ({ content: materia, colSpan: 3, styles: { fillColor: [142, 68, 173], fontSize: 7 } })),
-      { content: 'PROMEDIO TRIMESTRAL', colSpan: 3, styles: { fillColor: [142, 68, 173] } },
+      [{ content: 'Nombre del Alumno', rowSpan: 2, styles: { fillColor: [0, 203, 203] } }],
+      ...materias.map(materia => ({ content: materia, colSpan: 3, styles: { fillColor: [0, 203, 203], fontSize: 7 } })),
+      { content: 'PROMEDIO TRIMESTRAL', colSpan: 3, styles: { fillColor: [0, 203, 203] } },
       { content: 'FINAL', rowSpan: 2, styles: { fillColor: [41, 128, 185] } }
     ];
     const subhead = [...materias.flatMap(() => ['T1', 'T2', 'T3']), 'T1', 'T2', 'T3'];
-    head.push(subhead.map(text => ({ content: text, styles: { fillColor: [155, 89, 182], fontSize: 7 } })));
+    head.push(subhead.map(text => ({ content: text, styles: { fillColor: [0, 150, 150], fontSize: 7 } })));
 
     const body = alumnos.map(alumno => {
       const row = [`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`];
@@ -816,16 +820,7 @@ function Calificaciones({ user }) {
           <div className="calificaciones-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
             <h1 className="calificaciones-title">Calificaciones del Grupo {selectedGrupo.nombre}</h1>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
-              {activeTab === 'sabana' && (
-                <button
-                  className="button"
-                  onClick={generatePdfConsolidado}
-                  style={{ backgroundColor: '#8e44ad', color: 'white' }}
-                  title="Descargar Sábana en PDF"
-                >
-                  📊 Descargar Sábana PDF
-                </button>
-              )}
+              {/* Botón de Sábana PDF eliminado a petición del usuario */}
 
               <button
                 className="button"

@@ -40,6 +40,7 @@ function Grupo({ user }) {
   const [archivoXLS, setArchivoXLS] = useState(null);
   const [nombreGrupoImport, setNombreGrupoImport] = useState('');
   const [asignaturaActual, setAsignaturaActual] = useState(null); // Para saber qué asignatura se está evaluando
+  const [schoolConfig, setSchoolConfig] = useState(null);
 
   // --- LÓGICA DE CARGA DE DATOS ---
   useEffect(() => {
@@ -89,6 +90,16 @@ function Grupo({ user }) {
           setGrupos(sortedGrupos);
           setProfesores(profesoresRes.data || []);
           setMateriasDb(materiasRes.data || []);
+
+          // Fetch School Config if we have schoolId
+          if (schoolId) {
+            try {
+              const schoolRes = await axios.get(`${API_URL}/schools/${schoolId}`, axiosConfig);
+              setSchoolConfig(schoolRes.data);
+            } catch (schoolErr) {
+              console.error("Error fetching school config for PDF generation:", schoolErr);
+            }
+          }
         } else if (user.role === 'profesor') {
           const gruposRes = await axios.get(`${API_URL}/grupos/mis-grupos`, axiosConfig);
 
@@ -102,6 +113,16 @@ function Grupo({ user }) {
             a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
           ) : [];
           setGrupos(sortedGrupos);
+
+          // Fetch School Config for professors as well
+          if (schoolId) {
+            try {
+              const schoolRes = await axios.get(`${API_URL}/schools/${schoolId}`, axiosConfig);
+              setSchoolConfig(schoolRes.data);
+            } catch (schoolErr) {
+              console.error("Error fetching school config for PDF generation:", schoolErr);
+            }
+          }
         }
       } catch (err) {
         console.error("Error al cargar datos:", err);
@@ -582,17 +603,20 @@ function Grupo({ user }) {
 
       const doc = new jsPDF();
 
+      const schoolName = schoolConfig?.name || 'Escuela Secundaria';
+      const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
+
       // --- INICIO DE CAMBIOS PARA LOGO Y ESTILOS ---
       const img = new Image();
-      img.src = logoImage;
-      await img.decode(); // Esperar a que la imagen se cargue
+      img.src = schoolLogo;
+      await img.decode().catch(() => { }); // Esperar a que la imagen se cargue
 
       const logoWidth = 25; // Ancho del logo en mm
       const logoHeight = (img.height * logoWidth) / img.width; // Calcular altura para mantener proporción
       const margin = 14;
       const pageWidth = doc.internal.pageSize.width;
 
-      doc.addImage(logoImage, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+      doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
 
       doc.setFontSize(12);
 
@@ -600,7 +624,7 @@ function Grupo({ user }) {
       let yPos = margin + 5;
 
       // 2. Primera línea: Escuela
-      doc.text('Escuela Secundaria No. 9 "Amado Nervo"', margin, yPos);
+      doc.text(schoolName, margin, yPos);
 
       // 3. Aumentar la posición Y para la siguiente línea (menos que 10 para evitar superposición con el logo)
       yPos += 7;
@@ -619,10 +643,10 @@ function Grupo({ user }) {
 
       const head = [
         [
-          { content: 'Nombre Completo', rowSpan: 2, styles: { fillColor: [212, 175, 55] } },
-          { content: 'Trimestre 1', colSpan: 2, styles: { fillColor: [212, 175, 55] } },
-          { content: 'Trimestre 2', colSpan: 2, styles: { fillColor: [212, 175, 55] } },
-          { content: 'Trimestre 3', colSpan: 2, styles: { fillColor: [212, 175, 55] } },
+          { content: 'Nombre Completo', rowSpan: 2, styles: { fillColor: [0, 203, 203] } },
+          { content: 'Trimestre 1', colSpan: 2, styles: { fillColor: [0, 203, 203] } },
+          { content: 'Trimestre 2', colSpan: 2, styles: { fillColor: [0, 203, 203] } },
+          { content: 'Trimestre 3', colSpan: 2, styles: { fillColor: [0, 203, 203] } },
         ],
         [
           { content: 'Asist.', styles: { fillColor: [40, 167, 69] } }, // Verde

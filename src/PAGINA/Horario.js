@@ -35,6 +35,7 @@ function Horario({ user }) {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [progress, setProgress] = useState(0);
+  const [schoolConfig, setSchoolConfig] = useState(null);
   const horarioTableRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -66,6 +67,15 @@ function Horario({ user }) {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (Array.isArray(res.data)) setProfesores(res.data);
+
+        // Fetch School Config IF school_id is available
+        const schoolId = user?.school_id || (await axios.get(`${API_URL}/auth/mi-perfil`, { headers: { Authorization: `Bearer ${token}` } })).data.school_id;
+        if (schoolId) {
+          const schoolRes = await axios.get(`${API_URL}/schools/${schoolId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setSchoolConfig(schoolRes.data);
+        }
       } catch (err) {
         console.error("Error al cargar profesores en Horario:", err);
       }
@@ -161,20 +171,27 @@ function Horario({ user }) {
 
   // --- Lógica de generación de PDF refactorizada (con logos locales) ---
   const generarContenidoPDF = async (doc) => {
-    doc.setFont("helvetica", "normal");
+    const schoolName = schoolConfig?.name || "ESCUELA SECUNDARIA GENERAL, No. 9";
+    const schoolLogo = schoolConfig?.config?.logoUrl || logoDerecho;
 
     // USANDO LAS VARIABLES DE LOGO IMPORTADAS LOCALMENTE
-    const [logoAgsBase64, logoDerBase64] = await Promise.all([getBase64Image(logoAgs), getBase64Image(logoDerecho)]);
+    const [logoAgsBase64, logoDerBase64] = await Promise.all([
+      getBase64Image(logoAgs),
+      getBase64Image(schoolLogo)
+    ]);
     doc.addImage(logoAgsBase64, "PNG", 15, 8, 40, 16);
     doc.addImage(logoDerBase64, "PNG", 255, 8, 25, 25);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text("ESCUELA SECUNDARIA GENERAL, No. 9", doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
+    doc.text(schoolName, doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
     doc.setFontSize(11);
-    doc.text("“AMADO NERVO”", doc.internal.pageSize.getWidth() / 2, 22, { align: "center" });
+    // Solo mostrar "AMADO NERVO" si no está ya en el nombre dinámico (fallback logic)
+    if (!schoolConfig?.name) {
+      doc.text("“AMADO NERVO”", doc.internal.pageSize.getWidth() / 2, 22, { align: "center" });
+    }
     doc.setFontSize(10);
-    doc.text(`HORARIO GENERAL ${anio}`, doc.internal.pageSize.getWidth() / 2, 29, { align: "center" });
+    doc.text(`HORARIO GENERAL ${anio}`, doc.internal.pageSize.getWidth() / 2, (schoolConfig?.name ? 22 : 29), { align: "center" });
 
     const tablaElement = horarioTableRef.current;
     if (!tablaElement) throw new Error("Tabla de horario no encontrada.");
