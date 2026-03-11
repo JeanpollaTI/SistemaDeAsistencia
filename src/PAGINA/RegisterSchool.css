@@ -12,7 +12,7 @@
     background: rgba(255, 255, 255, 0.9); /* White with opacity for legibility */
     backdrop-filter: blur(10px);
     width: 95%;
-    max-width: 1000px;
+    max-width: 1100px; /* Increased from 1000px */
     border-radius: 20px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
     overflow: hidden;
@@ -158,9 +158,22 @@
     gap: 20px;
 }
 
-.payment-section h3 {
-    color: #ffffff !important;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+.payment-section {
+    width: 100%;
+    margin-top: 2.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background-color: rgba(0, 122, 122, 0.45); /* Slightly darker for better contrast */
+    padding: 3rem !important; /* Increased padding */
+    border-radius: 25px;
+    backdrop-filter: blur(15px);
+}
+
+.payment-horizontal-layout {
+    display: flex;
+    flex-wrap: nowrap; /* Avoid wrapping if possible */
+    gap: 40px;
+    align-items: flex-start;
+    justify-content: center;
 }
 
 .payment-section p, 

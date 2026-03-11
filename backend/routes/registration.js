@@ -5,7 +5,18 @@ import School from '../models/School.js';
 import User from '../models/User.js';
 
 const router = express.Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+let stripe;
+const getStripe = () => {
+    if (!stripe) {
+        if (!process.env.STRIPE_SECRET_KEY) {
+            console.error("❌ STRIPE_SECRET_KEY no está definida.");
+            return null;
+        }
+        stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    }
+    return stripe;
+};
 
 /**
  * @route   POST /api/schools/register-institutional
@@ -62,11 +73,16 @@ router.post('/register-institutional', async (req, res) => {
         // 3. Procesar Pago con Stripe (Suscripción Directa)
         let stripeSubscriptionId = null;
         let stripeCustomerId = null;
+        const stripeClient = getStripe();
+
+        if (!stripeClient) {
+            return res.status(500).json({ msg: "Error de configuración en la pasarela de pagos." });
+        }
 
         try {
             // Crear Token de tarjeta (Solo para propósitos de demostración/integración directa con raw data)
             // NOTA: Para producción real, se debe usar Stripe Elements en el frontend.
-            const token = await stripe.tokens.create({
+            const token = await stripeClient.tokens.create({
                 card: {
                     number: cardData.cardNumber.replace(/\s/g, ''),
                     exp_month: parseInt(cardData.cardMonth),
@@ -77,7 +93,7 @@ router.post('/register-institutional', async (req, res) => {
             });
 
             // Crear Cliente
-            const customer = await stripe.customers.create({
+            const customer = await stripeClient.customers.create({
                 email: email.toLowerCase(),
                 source: token.id,
                 name: cardData.cardName,
@@ -86,7 +102,7 @@ router.post('/register-institutional', async (req, res) => {
             stripeCustomerId = customer.id;
 
             // Crear Suscripción
-            const subscription = await stripe.subscriptions.create({
+            const subscription = await stripeClient.subscriptions.create({
                 customer: customer.id,
                 items: [{ price: process.env.STRIPE_PRICE_ID }],
                 metadata: { schoolId: school._id.toString() }
