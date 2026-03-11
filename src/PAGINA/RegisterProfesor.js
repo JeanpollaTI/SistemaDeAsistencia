@@ -61,8 +61,8 @@ export default function RegisterProfesor() {
                 if (!token && !firstAdmin)
                         return setMsg("No tienes permisos de administrador para registrar usuarios.");
 
-                const { nombre, edad, sexo, email, password } = form;
-                if (!nombre || !edad || !sexo || !email || !password)
+                const { nombre, edad, sexo, email, password, celular } = form;
+                if (!nombre || !edad || !sexo || !email || !password || !celular)
                         return setMsg("Todos los campos son obligatorios.");
 
                 if (
