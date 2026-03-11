@@ -1,9 +1,11 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import Stripe from 'stripe';
 import School from '../models/School.js';
 import User from '../models/User.js';
 
 const router = express.Router();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 /**
  * @route   POST /api/schools/register-institutional
@@ -18,7 +20,8 @@ router.post('/register-institutional', async (req, res) => {
             schoolName,
             schoolType,
             evaluationPeriod,
-            logoUrl
+            logoUrl,
+            cardData
         } = req.body;
 
         // 1. Validaciones básicas
@@ -39,7 +42,7 @@ router.post('/register-institutional', async (req, res) => {
             return res.status(400).json({ msg: "El correo ya está registrado en la plataforma." });
         }
 
-        // 2. Crear la Institución (Activa por defecto para demostración/pago simulado)
+        // 2. Crear la Institución (Inicialmente suspendida hasta confirmar pago)
         const school = new School({
             name: schoolName,
             type: schoolType,
@@ -49,14 +52,67 @@ router.post('/register-institutional', async (req, res) => {
                 scaleMax: 10
             },
             subscription: {
-                status: "active", // SE CAMBIA A ACTIVE PARA PERMITIR ACCESO INMEDIATO
-                nextBilling: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 días después
+                status: "suspended", // Estado inicial
+                nextBilling: new Date()
             }
         });
 
         await school.save();
 
-        // 3. Crear el Usuario Administrador ligado a la escuela
+        // 3. Procesar Pago con Stripe (Suscripción Directa)
+        let stripeSubscriptionId = null;
+        let stripeCustomerId = null;
+
+        try {
+            // Crear Token de tarjeta (Solo para propósitos de demostración/integración directa con raw data)
+            // NOTA: Para producción real, se debe usar Stripe Elements en el frontend.
+            const token = await stripe.tokens.create({
+                card: {
+                    number: cardData.cardNumber.replace(/\s/g, ''),
+                    exp_month: parseInt(cardData.cardMonth),
+                    exp_year: parseInt(cardData.cardYear),
+                    cvc: cardData.cardCvv,
+                    name: cardData.cardName
+                },
+            });
+
+            // Crear Cliente
+            const customer = await stripe.customers.create({
+                email: email.toLowerCase(),
+                source: token.id,
+                name: cardData.cardName,
+                metadata: { schoolId: school._id.toString() }
+            });
+            stripeCustomerId = customer.id;
+
+            // Crear Suscripción
+            const subscription = await stripe.subscriptions.create({
+                customer: customer.id,
+                items: [{ price: process.env.STRIPE_PRICE_ID }],
+                metadata: { schoolId: school._id.toString() }
+            });
+            stripeSubscriptionId = subscription.id;
+
+            // Si llegamos aquí, el pago/suscripción fue exitoso o iniciado
+            const nextBilling = new Date(subscription.current_period_end * 1000);
+            
+            school.subscription.status = "active";
+            school.subscription.nextBilling = nextBilling;
+            school.subscription.stripeId = stripeSubscriptionId;
+            await school.save();
+
+        } catch (paymentErr) {
+            console.error("Error en procesamiento de pago Stripe:", paymentErr.message);
+            // Si el pago falla, eliminamos la escuela recién creada para evitar inconsistencias
+            // (Opcional: podrías dejarla como suspendida y pedir pago después)
+            await School.findByIdAndDelete(school._id);
+            return res.status(400).json({ 
+                msg: "Error al procesar el pago de la suscripción.", 
+                error: paymentErr.message 
+            });
+        }
+
+        // 4. Crear el Usuario Administrador ligado a la escuela
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
