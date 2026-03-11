@@ -32,11 +32,23 @@ materiasRouter.get("/", authMiddleware, schoolMiddleware, async (req, res) => {
                 "INTEGRACION CURRICULAR I", "INTEGRACION CURRICULAR II", "INTEGRACION CURRICULAR III",
                 "TUTORIA I", "TUTORIA II", "TUTORIA III"
             ];
-            // Insertamos ignorando duplicados si algún otro ya existe
-            await Materia.insertMany(
-                defaultMaterias.map(nombre => ({ nombre, school_id })),
-                { ordered: false }
-            );
+
+            // Usamos un bucle para insertar una por una y evitar que falle toda la operación
+            for (const nombre of defaultMaterias) {
+                try {
+                    await Materia.findOneAndUpdate(
+                        { nombre, school_id },
+                        { nombre, school_id },
+                        { upsert: true }
+                    );
+                } catch (e) {
+                    console.warn(`No se pudo crear/verificar materia ${nombre}: ${e.message}`);
+                    // Si el error es 11000 y el índice es nombre_1, intentamos borrarlo de nuevo
+                    if (e.code === 11000 && e.message.includes("nombre_1")) {
+                        await Materia.collection.dropIndex("nombre_1").catch(() => { });
+                    }
+                }
+            }
         }
 
         const materias = await Materia.find({ school_id }).sort({ nombre: 1 });
@@ -146,6 +158,16 @@ materiasRouter.delete("/:id", authMiddleware, isAdmin, schoolMiddleware, async (
     } catch (error) {
         console.error("Error al eliminar materia:", error);
         res.status(500).json({ error: "Error al eliminar materia" });
+    }
+});
+
+// DEBUG: Listar índices (solo para diagnóstico)
+materiasRouter.get("/debug/indexes", async (req, res) => {
+    try {
+        const indexes = await Materia.collection.indexes();
+        res.json(indexes);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
