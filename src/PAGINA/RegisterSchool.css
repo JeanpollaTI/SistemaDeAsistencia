@@ -9,12 +9,15 @@
 }
 
 .register-card {
-    background: white;
+    background: rgba(255, 255, 255, 0.9); /* White with opacity for legibility */
+    backdrop-filter: blur(10px);
     width: 100%;
-    max-width: 650px;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    max-width: 700px;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
     overflow: hidden;
+    position: relative;
+    z-index: 10;
 }
 
 .wizard-header {
@@ -138,6 +141,16 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
+}
+
+.form-step h3 {
+    color: #004d40;
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+}
+
+.input-group label {
+    color: #1a202c !important;
 }
 
 .payment-preview {

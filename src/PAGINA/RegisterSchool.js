@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './RegisterSchool.css';
-import { FaSchool, FaEnvelope, FaLock, FaImage, FaGraduationCap, FaCalendarAlt, FaCheckCircle, FaArrowRight, FaArrowLeft } from 'react-icons/fa';
+import { FaSchool, FaEnvelope, FaLock, FaImage, FaGraduationCap, FaCalendarAlt, FaCheckCircle, FaArrowRight, FaArrowLeft, FaCreditCard } from 'react-icons/fa';
 import DynamicBackground from '../COMPONENTE/DynamicBackground';
 import PremiumCardForm from '../COMPONENTE/PremiumCardForm';
 
@@ -169,14 +169,27 @@ const RegisterSchool = () => {
                                 </select>
                             </div>
                         </div>
-                        <div className="payment-section fade-in" style={{ marginTop: '2.5rem', borderTop: '1px solid #eee', paddingTop: '2rem' }}>
+                        <div className="payment-section fade-in" style={{ 
+                            marginTop: '2.5rem', 
+                            border: '1px solid #e0f2f1', 
+                            backgroundColor: 'rgba(255,255,255,0.7)',
+                            padding: '2rem',
+                            borderRadius: '15px'
+                        }}>
                             <h3 style={{ justifyContent: 'center', marginBottom: '1.5rem', color: '#007a7a' }}>
-                                <FaCheckCircle /> Detalles de Suscripción
+                                <FaCreditCard /> Método de Pago Seguro
                             </h3>
-                            <div className="payment-preview glass-effect" style={{ marginBottom: '3rem', padding: '1.5rem', borderRadius: '12px', background: 'rgba(0, 122, 122, 0.05)' }}>
-                                <p style={{ fontWeight: '600', color: '#1a202c' }}>Suscripción Mensual Scholaris</p>
-                                <div className="price-tag" style={{ fontSize: '2.5rem', fontWeight: '800', color: '#007a7a', margin: '0.5rem 0' }}>$700.00 <span style={{ fontSize: '1rem', color: '#666' }}>MXN/mes</span></div>
-                                <small style={{ color: '#64748b' }}>Acceso total | Gestión de Asistencias | Boletas Dinámicas</small>
+                            <div className="payment-preview" style={{ 
+                                marginBottom: '2.5rem', 
+                                padding: '1.2rem', 
+                                borderRadius: '10px', 
+                                background: 'linear-gradient(135deg, #007a7a, #00cbcb)',
+                                color: 'white',
+                                textAlign: 'center'
+                            }}>
+                                <p style={{ fontWeight: '500', opacity: 0.9 }}>Suscripción Scholaris Premium</p>
+                                <div className="price-tag" style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0.3rem 0' }}>$700.00 <span>MXN/mes</span></div>
+                                <small style={{ opacity: 0.8 }}>Gestión total sin límites</small>
                             </div>
                             <PremiumCardForm onCardChange={handleCardChange} />
                         </div>
