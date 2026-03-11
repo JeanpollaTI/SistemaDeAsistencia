@@ -191,23 +191,25 @@ function Perfil({ user, logout, getProfileImageUrl }) {
         {showPaymentModal && (
           <div className="modal-overlay" style={{ zIndex: 10000 }}>
             <div className="modal-content" style={{ 
-                maxWidth: '900px', 
-                width: '95%',
-                padding: '30px',
-                background: 'rgba(28, 31, 40, 0.95)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(0, 203, 203, 0.2)',
-                color: 'white'
+                maxWidth: '1200px', 
+                width: '98%',
+                padding: '40px',
+                borderRadius: '30px',
+                background: 'rgba(28, 31, 40, 0.98)',
+                backdropFilter: 'blur(30px)',
+                border: '1px solid rgba(0, 203, 203, 0.3)',
+                color: 'white',
+                boxShadow: '0 25px 50px rgba(0,0,0,0.5)'
             }}>
               <button className="modal-close" onClick={() => setShowPaymentModal(false)} style={{ color: 'white' }}>
                 <FaTimes />
               </button>
               <h2 style={{ color: '#00CBCB', marginBottom: '10px', textAlign: 'center' }}>Renovar Suscripción</h2>
-              <p style={{ marginBottom: '30px', textAlign: 'center', opacity: 0.8 }}>
+              <p style={{ color: '#ffffff', marginBottom: '30px', textAlign: 'center', opacity: 0.9, fontSize: '1.1rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
                 Tu escuela recuperará el acceso total de forma inmediata al completar el pago.
               </p>
               
-              <div className="renewal-horizontal-layout" style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', alignItems: 'flex-start' }}>
+              <div className="renewal-horizontal-layout" style={{ display: 'flex', flexWrap: 'nowrap', gap: '60px', alignItems: 'center', justifyContent: 'center' }}>
                   <div className="renewal-info-panel" style={{ flex: '1', minWidth: '300px' }}>
                       <div className="price-card-premium" style={{ 
                           background: 'linear-gradient(135deg, #007A7A, #00CBCB)',
@@ -231,7 +233,7 @@ function Perfil({ user, logout, getProfileImageUrl }) {
                       </div>
                   </div>
 
-                  <div className="renewal-form-panel" style={{ flex: '1.5', minWidth: '350px' }}>
+                  <div className="renewal-form-panel" style={{ flex: '1.4', minWidth: '450px', background: 'rgba(255,255,255,0.05)', padding: '30px', borderRadius: '25px', border: '1px solid rgba(255,255,255,0.1)' }}>
                       <PremiumCardForm onCardChange={(data) => setCardData(data)} />
                       
                       {paymentError && (

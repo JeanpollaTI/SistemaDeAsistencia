@@ -17,13 +17,13 @@
   }
   
   .card-list {
-    flex: 1;
+    flex: 1.2;
     margin-bottom: 0 !important;
-    margin-top: 30px;
+    margin-top: 0px;
   }
   
   .card-form__inner {
-    flex: 1.2;
+    flex: 1.4;
     padding-top: 35px !important;
   }
 }
@@ -43,8 +43,8 @@
 }
 
 .card-item {
-  max-width: 430px;
-  height: 270px;
+  max-width: 440px;
+  height: 280px;
   margin-left: auto;
   margin-right: auto;
   position: relative;
