@@ -165,32 +165,32 @@ function EditarPerfil({ user }) {
             <form onSubmit={handleSubmit}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{ fontSize: '0.85rem', marginBottom: '5px', fontWeight: 'bold' }}>Nombre Completo</label>
-                  <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Nombre" />
+                  <label style={{ fontSize: '0.85rem', marginBottom: '5px', fontWeight: 'bold', color: '#333' }}>Nombre Completo</label>
+                  <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Nombre" style={{ color: '#000' }} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{ fontSize: '0.85rem', marginBottom: '5px', fontWeight: 'bold' }}>Edad</label>
-                  <input type="number" name="edad" value={formData.edad} onChange={handleChange} placeholder="Edad" />
+                  <label style={{ fontSize: '0.85rem', marginBottom: '5px', fontWeight: 'bold', color: '#333' }}>Edad</label>
+                  <input type="number" name="edad" value={formData.edad} onChange={handleChange} placeholder="Edad" style={{ color: '#000' }} />
                 </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label style={{ fontSize: '0.85rem', marginBottom: '5px', fontWeight: 'bold' }}>Email de Contacto</label>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" />
+                <label style={{ fontSize: '0.85rem', marginBottom: '5px', fontWeight: 'bold', color: '#333' }}>Email de Contacto</label>
+                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" style={{ color: '#000' }} />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{ fontSize: '0.85rem', marginBottom: '5px', fontWeight: 'bold' }}>Género</label>
-                  <select name="sexo" value={formData.sexo} onChange={handleChange}>
+                  <label style={{ fontSize: '0.85rem', marginBottom: '5px', fontWeight: 'bold', color: '#333' }}>Género</label>
+                  <select name="sexo" value={formData.sexo} onChange={handleChange} style={{ color: '#000' }}>
                     <option value="Masculino">Masculino</option>
                     <option value="Femenino">Femenino</option>
                     <option value="Otro">Otro</option>
                   </select>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{ fontSize: '0.85rem', marginBottom: '5px', fontWeight: 'bold' }}>Teléfono Celular</label>
-                  <input type="text" name="celular" value={formData.celular} onChange={handleChange} placeholder="Celular" />
+                  <label style={{ fontSize: '0.85rem', marginBottom: '5px', fontWeight: 'bold', color: '#333' }}>Teléfono Celular</label>
+                  <input type="text" name="celular" value={formData.celular} onChange={handleChange} placeholder="Celular" style={{ color: '#000' }} />
                 </div>
               </div>
 
@@ -210,42 +210,59 @@ function EditarPerfil({ user }) {
         <hr className="divider" style={{ margin: "20px 0", borderTop: "1px solid #ccc" }} />
 
         {/* Sección de Cambio de Contraseña */}
-        <div style={{ textAlign: "center" }}>
-          <button
-            type="button"
-            className="btn-toggle-password"
-            onClick={() => setShowPasswordForm(!showPasswordForm)}
-            style={{ background: "none", border: "none", color: "#3498db", cursor: "pointer", textDecoration: "underline" }}
-          >
-            {showPasswordForm ? "Cancelar cambio de contraseña" : "Cambiar Contraseña"}
-          </button>
-        </div>
-
-        {showPasswordForm && (
-          <form onSubmit={handlePasswordChange} style={{ marginTop: "15px", border: "1px solid #eee", padding: "15px", borderRadius: "8px" }}>
-            <h4>Cambiar Contraseña</h4>
-            {passwordMessage.text && <p className={passwordMessage.type === 'error' ? 'error' : 'success'}>{passwordMessage.text}</p>}
-
-            <input
-              type="password"
-              placeholder="Contraseña Actual"
-              value={passwordData.currentPassword}
-              onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-              required
-            />
-            <input
-              type="password"
-              placeholder="Nueva Contraseña"
-              value={passwordData.newPassword}
-              onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-              required
-            />
-
-            <button type="submit" className="btn-save" disabled={loading} style={{ marginTop: "10px", width: "100%" }}>
-              Actualizar Contraseña
+        <div style={{ marginTop: '30px', padding: '25px', borderRadius: '16px', background: '#f8f9fa', border: '1px solid #eee', textAlign: 'left' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showPasswordForm ? '20px' : '0' }}>
+            <h4 style={{ margin: 0, fontFamily: 'Turret Road', color: '#333', textTransform: 'uppercase', letterSpacing: '1px' }}>Seguridad de la Cuenta</h4>
+            <button
+              type="button"
+              className="btn-toggle-password"
+              onClick={() => setShowPasswordForm(!showPasswordForm)}
+              style={{ background: '#00CBCB', border: 'none', color: '#fff', cursor: 'pointer', padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold' }}
+            >
+              {showPasswordForm ? "CANCELAR" : "CAMBIAR CONTRASEÑA"}
             </button>
-          </form>
-        )}
+          </div>
+
+          {showPasswordForm && (
+            <form onSubmit={handlePasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '10px' }}>Para cambiar tu contraseña, ingresa la actual y la nueva a continuación:</p>
+
+              {passwordMessage.text && (
+                <div style={{ padding: '10px', borderRadius: '8px', background: passwordMessage.type === 'error' ? '#fff5f5' : '#e8f8f8', color: passwordMessage.type === 'error' ? '#e53935' : '#008b8b', border: `1px solid ${passwordMessage.type === 'error' ? '#ffcdd2' : '#00CBCB'}`, fontSize: '0.85rem' }}>
+                  {passwordMessage.text}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#555', marginBottom: '5px' }}>CONTRASEÑA ACTUAL</label>
+                <input
+                  type="password"
+                  placeholder="********"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                  style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ddd', background: '#fff' }}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#555', marginBottom: '5px' }}>NUEVA CONTRASEÑA</label>
+                <input
+                  type="password"
+                  placeholder="********"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                  style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ddd', background: '#fff' }}
+                  required
+                />
+              </div>
+
+              <button type="submit" className="btn-save" disabled={loading} style={{ marginTop: "10px", width: "100%", background: 'linear-gradient(135deg, #00CBCB, #3498db)', color: '#fff', borderRadius: '10px', padding: '12px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>
+                {loading ? "ACTUALIZANDO..." : "ACTUALIZAR MI CONTRASEÑA"}
+              </button>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );

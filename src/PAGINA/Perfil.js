@@ -47,14 +47,14 @@ function Perfil({ user, logout, getProfileImageUrl }) {
             }}
           />
 
-          <div className="perfil-info" style={{ textAlign: 'left', flex: 1 }}>
+          <div className="perfil-info" style={{ textAlign: 'left', flex: 1, color: '#000000' }}>
             <p style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '15px', color: '#00CBCB' }}>Datos Personales</p>
-            <p><strong>Nombre:</strong> {user.nombre || "N/A"}</p>
-            <p><strong>Edad:</strong> {user.edad || "N/A"}</p>
-            <p><strong>Email:</strong> {user.email || "N/A"}</p>
-            <p><strong>Sexo:</strong> {user.sexo || "N/A"}</p>
-            <p><strong>Celular:</strong> {user.celular || "N/A"}</p>
-            <p><strong>Rol:</strong> <span style={{ textTransform: 'capitalize', fontWeight: '600' }}>{user.role || "N/A"}</span></p>
+            <p style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Nombre:</strong> {user.nombre || "N/A"}</p>
+            <p style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Edad:</strong> {user.edad || "N/A"}</p>
+            <p style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Email:</strong> {user.email || "N/A"}</p>
+            <p style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Sexo:</strong> {user.sexo || "N/A"}</p>
+            <p style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Celular:</strong> {user.celular || "N/A"}</p>
+            <p style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Rol:</strong> <span style={{ textTransform: 'capitalize', fontWeight: '600', color: '#000000' }}>{user.role || "N/A"}</span></p>
           </div>
         </div>
 
