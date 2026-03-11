@@ -623,6 +623,7 @@ function Calificaciones({ user }) {
     const doc = new jsPDF({ orientation: 'landscape' });
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
+    const margin = 14;
     const schoolName = schoolConfig?.name || 'Escuela Secundaria';
     const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
 
