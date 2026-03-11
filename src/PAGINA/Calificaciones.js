@@ -312,11 +312,12 @@ function Calificaciones({ user }) {
   const drawReportCard = async (doc, alumno, bimestresSeleccionados, datosFirmas = {}) => {
     const schoolName = schoolConfig?.name || 'Escuela Secundaria';
     const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
+    const schoolDirector = schoolConfig?.directorName || '';
 
     let { nombreDirector = '', nombreDocente = '' } = datosFirmas;
 
     if (!nombreDirector) {
-      nombreDirector = localStorage.getItem('current_director_name') || '';
+      nombreDirector = schoolDirector || localStorage.getItem('current_director_name') || '';
     }
     if (!nombreDocente) {
       nombreDocente = selectedGrupo?.asesor || '';
@@ -533,23 +534,45 @@ function Calificaciones({ user }) {
       return;
     }
 
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
+    const schoolName = schoolConfig?.name || 'Escuela Secundaria';
+    const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
+    const schoolDirector = schoolConfig?.directorName || '';
 
     // --- ENCABEZADO REPORTE ---
-    doc.setFontSize(14); // Un poco más pequeño para el título largo
-    doc.setFont(undefined, 'bold');
-    // Título actualizado
-    const titulo = "Registro de alumnos en riesgo de no alcanzar los procesos de desarrollo de aprendizaje";
-    const splitTitulo = doc.splitTextToSize(titulo, pageWidth - 40); // Ajustar márgenes
-    doc.text(splitTitulo, pageWidth / 2, 20, { align: 'center' });
+    const img = new Image();
+    img.src = schoolLogo;
+    await img.decode().catch(() => { });
 
-    // Ajustar Y basado en líneas del título
-    let currentY = 20 + (splitTitulo.length * 6);
+    const logoWidth = 25, margin = 14;
+    const logoHeight = (img.height * logoWidth) / img.width;
+    const pageHeight = doc.internal.pageSize.height;
+
+    doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
 
     doc.setFontSize(12);
+    let yPos = margin + 5;
+    doc.text(schoolName, margin, yPos);
+    yPos += 7;
+    doc.setFont(undefined, 'bold');
+    doc.text('Reporte de Alumnos en Situación de Riesgo', margin, yPos);
     doc.setFont(undefined, 'normal');
-    doc.text(`Grupo: ${selectedGrupo.nombre}`, 14, currentY + 10);
+    yPos += 7;
+
+    doc.text(`Grupo: ${selectedGrupo.nombre}`, margin, yPos);
+    yPos += 7;
+
+    doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, yPos);
+    yPos += 5;
+
+    // --- TÍTULO LARGO (opcional, si se desea mantener) ---
+    // doc.setFontSize(14);
+    // doc.setFont(undefined, 'bold');
+    // const titulo = "Registro de alumnos en riesgo de no alcanzar los procesos de desarrollo de aprendizaje";
+    // const splitTitulo = doc.splitTextToSize(titulo, pageWidth - 40);
+    // doc.text(splitTitulo, pageWidth / 2, yPos + 10, { align: 'center' });
+    // yPos += 20;
+
+    currentY = yPos + 10;
     // Fecha actual
     const fecha = new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
     doc.text(`Fecha: ${fecha}`, pageWidth - 14, currentY + 10, { align: 'right' });
@@ -610,7 +633,6 @@ function Calificaciones({ user }) {
     });
 
     // Pie de página
-    const pageHeight = doc.internal.pageSize.height;
     doc.setFontSize(8);
     doc.text("Este reporte incluye calificaciones reprobatorias (5) y mínimas aprobatorias (6).", 14, pageHeight - 10);
 
@@ -626,6 +648,7 @@ function Calificaciones({ user }) {
     const margin = 14;
     const schoolName = schoolConfig?.name || 'Escuela Secundaria';
     const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
+    const schoolDirector = schoolConfig?.directorName || '';
 
     // Logo
     const img = new Image();
@@ -644,6 +667,7 @@ function Calificaciones({ user }) {
     doc.setFont(undefined, 'normal');
     doc.setFontSize(10);
     doc.text(`Asesor: ${selectedGrupo.asesor || 'N/A'}`, margin, margin + 18);
+    doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, margin + 24);
 
     const head = [
       [{ content: 'Nombre del Alumno', rowSpan: 2, styles: { fillColor: [0, 203, 203] } }],
@@ -703,7 +727,7 @@ function Calificaciones({ user }) {
 
     // Director
     doc.text("Nombre y firma del director (a)", margin, finalY);
-    const directorName = localStorage.getItem('current_director_name') || '';
+    const directorName = schoolDirector || localStorage.getItem('current_director_name') || '';
     if (directorName) {
       doc.setFont(undefined, 'bold');
       doc.text(directorName.toUpperCase(), margin, finalY + 10);

@@ -12,6 +12,7 @@ const schoolSchema = new mongoose.Schema(
             enum: ["Primaria", "Secundaria", "Preparatoria", "Universidad", "Academia"],
             required: [true, "El tipo de institución es obligatorio"],
         },
+        directorName: { type: String, default: "" },
         config: {
             logoUrl: { type: String, default: "" },
             primaryColor: { type: String, default: "#1a73e8" },

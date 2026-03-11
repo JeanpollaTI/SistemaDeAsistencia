@@ -173,6 +173,7 @@ function Horario({ user }) {
   const generarContenidoPDF = async (doc) => {
     const schoolName = schoolConfig?.name || "ESCUELA SECUNDARIA GENERAL, No. 9";
     const schoolLogo = schoolConfig?.config?.logoUrl || logoDerecho;
+    const schoolDirector = schoolConfig?.directorName || '';
 
     // USANDO LAS VARIABLES DE LOGO IMPORTADAS LOCALMENTE
     const [logoAgsBase64, logoDerBase64] = await Promise.all([
@@ -192,6 +193,10 @@ function Horario({ user }) {
     }
     doc.setFontSize(10);
     doc.text(`HORARIO GENERAL ${anio}`, doc.internal.pageSize.getWidth() / 2, (schoolConfig?.name ? 22 : 29), { align: "center" });
+
+    // Director name in subtitle
+    doc.setFontSize(9);
+    doc.text(`Director(a): ${schoolDirector || "__________________________"}`, doc.internal.pageSize.getWidth() / 2, (schoolConfig?.name ? 28 : 35), { align: "center" });
 
     const tablaElement = horarioTableRef.current;
     if (!tablaElement) throw new Error("Tabla de horario no encontrada.");

@@ -33,7 +33,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // UPDATE school
 router.put('/:id', authMiddleware, isAdmin, async (req, res) => {
     try {
-        const { name, type, evaluationPeriod, config } = req.body;
+        const { name, type, evaluationPeriod, config, directorName } = req.body;
 
         // Verificación de seguridad
         if (req.user.school_id.toString() !== req.params.id) {
@@ -42,7 +42,7 @@ router.put('/:id', authMiddleware, isAdmin, async (req, res) => {
 
         const school = await School.findByIdAndUpdate(
             req.params.id,
-            { name, type, evaluationPeriod, config },
+            { name, type, evaluationPeriod, config, directorName },
             { new: true }
         );
 

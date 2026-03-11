@@ -13,8 +13,10 @@ const SchoolDashboard = () => {
     const [formData, setFormData] = useState({
         name: '',
         type: '',
+        directorName: '',
         evaluationPeriod: '',
         config: {
+            logoUrl: '',
             primaryColor: '#b9972b',
             scaleMax: 10
         }
@@ -42,8 +44,9 @@ const SchoolDashboard = () => {
             setFormData({
                 name: schoolRes.data.name,
                 type: schoolRes.data.type,
+                directorName: schoolRes.data.directorName || '',
                 evaluationPeriod: schoolRes.data.evaluationPeriod,
-                config: schoolRes.data.config || { primaryColor: '#b9972b', scaleMax: 10 }
+                config: schoolRes.data.config || { logoUrl: '', primaryColor: '#b9972b', scaleMax: 10 }
             });
         } catch (err) {
             console.error("Error fetching school data:", err);
@@ -116,6 +119,16 @@ const SchoolDashboard = () => {
                             required
                         />
                     </div>
+                    <div className="form-group">
+                        <label>Nombre del Director (a)</label>
+                        <input
+                            type="text"
+                            name="directorName"
+                            value={formData.directorName}
+                            onChange={handleChange}
+                            placeholder="Nombre completo para firmas"
+                        />
+                    </div>
                     <div className="form-row">
                         <div className="form-group">
                             <label>Tipo de Institución</label>
@@ -140,7 +153,18 @@ const SchoolDashboard = () => {
                 </section>
 
                 <section className="form-section">
-                    <h2>Apariencia y Parámetros</h2>
+                    <h2>Apariencia e Identidad</h2>
+                    <div className="form-group">
+                        <label>URL del Logo (Opcional)</label>
+                        <input
+                            type="text"
+                            name="config.logoUrl"
+                            value={formData.config.logoUrl}
+                            onChange={handleChange}
+                            placeholder="https://ejemplo.com/logo.png"
+                        />
+                        <small style={{ color: '#666' }}>Se recomienda una imagen PNG con fondo transparente.</small>
+                    </div>
                     <div className="form-row">
                         <div className="form-group">
                             <label>Color Primario</label>

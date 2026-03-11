@@ -1832,6 +1832,7 @@ const PanelCalificaciones = ({
 
         const schoolName = schoolConfig?.name || 'Escuela Secundaria';
         const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
+        const schoolDirector = schoolConfig?.directorName || '';
 
         // --- LOGO Y ENCABEZADO (Reutilizado de Calificaciones.js) ---
         const img = new Image();
@@ -1850,9 +1851,9 @@ const PanelCalificaciones = ({
         doc.text('Reporte de Calificaciones por Asignatura', margin, yPos);
         doc.setFont(undefined, 'normal');
         yPos += 7;
-        doc.text(`Grupo: ${grupo.nombre}`, margin, yPos);
+        doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, yPos);
         yPos += 7;
-        doc.text(`Asignatura: ${asignatura}`, margin, yPos);
+        doc.text(`Grupo: ${grupo.nombre} - Asignatura: ${asignatura}`, margin, yPos);
         yPos += 7;
         // 🌟 AGREGADO: Nombre del docente
         const nombreDocente = user ? `${user.nombre} ${user.apellidoPaterno || ''} ${user.apellidoMaterno || ''}`.trim() : 'Docente';

@@ -601,10 +601,9 @@ function Grupo({ user }) {
       const asistenciaData = res.data?.registros || {};
       const diasData = res.data?.diasPorBimestre || {};
 
-      const doc = new jsPDF();
-
       const schoolName = schoolConfig?.name || 'Escuela Secundaria';
       const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
+      const schoolDirector = schoolConfig?.directorName || '';
 
       // --- INICIO DE CAMBIOS PARA LOGO Y ESTILOS ---
       const img = new Image();
@@ -638,7 +637,11 @@ function Grupo({ user }) {
       // 6. Tercera línea: Asignatura (ahora está en 'yPos')
       doc.text(`Asignatura: ${asignatura}`, margin, yPos);
 
-      // 7. AUMENTO CLAVE: Añadir un espacio adicional (e.g., 7mm) para que el texto NO toque la tabla.
+      // 7. Director(a)
+      yPos += 7;
+      doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, yPos);
+
+      // 8. AUMENTO CLAVE: Añadir un espacio adicional (e.g., 7mm) para que el texto NO toque la tabla.
       yPos += 7; // Espacio entre el texto de "Asignatura" y el inicio de la tabla
 
       const head = [
