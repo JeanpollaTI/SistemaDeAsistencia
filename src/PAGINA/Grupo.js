@@ -601,6 +601,7 @@ function Grupo({ user }) {
       const asistenciaData = res.data?.registros || {};
       const diasData = res.data?.diasPorBimestre || {};
 
+      const doc = new jsPDF();
       const schoolName = schoolConfig?.name || 'Escuela Secundaria';
       const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
       const schoolDirector = schoolConfig?.directorName || '';

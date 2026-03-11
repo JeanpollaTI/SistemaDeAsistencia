@@ -534,9 +534,12 @@ function Calificaciones({ user }) {
       return;
     }
 
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
     const schoolName = schoolConfig?.name || 'Escuela Secundaria';
     const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
     const schoolDirector = schoolConfig?.directorName || '';
+    let currentY = 0;
 
     // --- ENCABEZADO REPORTE ---
     const img = new Image();
