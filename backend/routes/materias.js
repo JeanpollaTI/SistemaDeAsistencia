@@ -11,13 +11,7 @@ const materiasRouter = express.Router();
 materiasRouter.get("/", authMiddleware, schoolMiddleware, async (req, res) => {
     try {
         const school_id = req.user.school_id;
-
-        // Eliminamos el seeding automático para que cada escuela empiece de cero como solicitó el usuario
-        /*
-        const count = await Materia.countDocuments({ school_id });
-        if (count === 0) { ... }
-        */
-
+        // Seeding automático eliminado definitivamente para que cada escuela gestione su catálogo.
         const materias = await Materia.find({ school_id }).sort({ nombre: 1 });
         res.json(materias);
     } catch (error) {

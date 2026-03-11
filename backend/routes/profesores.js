@@ -32,7 +32,8 @@ profesoresRouter.get("/", authMiddleware, isAdmin, schoolMiddleware, async (req,
       const pObj = p.toObject();
       return {
         ...pObj,
-        fechaRegistro: p.createdAt // El frontend usará New Date(fechaRegistro)
+        // Usamos toISOString o el virtual para asegurar que llegue como string válido
+        fechaRegistro: p.createdAt ? p.createdAt.toISOString() : new Date().toISOString()
       };
     });
 
