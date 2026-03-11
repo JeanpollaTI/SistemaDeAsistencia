@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaCreditCard } from 'react-icons/fa';
+import { FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaCreditCard, FaTimes } from 'react-icons/fa';
+import PremiumCardForm from "../COMPONENTE/PremiumCardForm";
 
 import "./Perfil.css"; // Importa tu archivo de estilos
 
@@ -13,6 +14,9 @@ function Perfil({ user, logout, getProfileImageUrl }) {
   const navigate = useNavigate();
   const [schoolData, setSchoolData] = useState(null);
   const [loadingPay, setLoadingPay] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [cardData, setCardData] = useState(null);
+  const [paymentError, setPaymentError] = useState("");
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
   useEffect(() => {
@@ -34,22 +38,32 @@ function Perfil({ user, logout, getProfileImageUrl }) {
     }
   };
 
-  const handleStripeCheckout = async () => {
+  const handleRenewal = async () => {
+    if (!cardData) {
+      setPaymentError("Por favor completa los datos de la tarjeta.");
+      return;
+    }
+    
     const token = localStorage.getItem("token");
     if (!token || !user?.school_id) return;
 
     try {
       setLoadingPay(true);
-      const res = await axios.post(`${API_URL}/api/stripe/create-checkout-session`, 
-        { schoolId: user.school_id },
+      setPaymentError("");
+      
+      const res = await axios.post(`${API_URL}/api/stripe/process-renewal`, 
+        { schoolId: user.school_id, cardData },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (res.data.url) {
-        window.location.href = res.data.url;
+
+      if (res.data.success) {
+        alert("¡Renovación exitosa!");
+        setShowPaymentModal(false);
+        fetchSchoolInfo(); // Refrescar info de la escuela
       }
     } catch (err) {
-      console.error("Error al iniciar pago:", err);
-      alert("No se pudo iniciar el proceso de pago.");
+      console.error("Error al procesar renovación:", err);
+      setPaymentError(err.response?.data?.error || "Error al procesar el pago. Por favor intenta de nuevo.");
     } finally {
       setLoadingPay(false);
     }
@@ -150,7 +164,7 @@ function Perfil({ user, logout, getProfileImageUrl }) {
             <div style={{ marginTop: '20px', textAlign: 'left' }}>
               <button 
                 className="btn-renew" 
-                onClick={handleStripeCheckout}
+                onClick={() => setShowPaymentModal(true)}
                 disabled={loadingPay}
                 style={{ 
                   background: 'linear-gradient(135deg, #00CBCB, #3498db)', 
@@ -165,11 +179,45 @@ function Perfil({ user, logout, getProfileImageUrl }) {
                   gap: '8px'
                 }}
               >
-                <FaCreditCard /> {loadingPay ? "PROCESANDO..." : "RENOVAR O PAGAR MENSUALIDAD"}
+                <FaCreditCard /> RENOVAR O PAGAR MENSUALIDAD
               </button>
               <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '10px' }}>
                 * Al hacer clic, serás redirigido a Stripe para completar tu pago de forma segura.
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Pago para Renovación */}
+        {showPaymentModal && (
+          <div className="modal-overlay" style={{ zIndex: 10000 }}>
+            <div className="modal-content" style={{ maxWidth: '600px', padding: '15px' }}>
+              <button className="modal-close" onClick={() => setShowPaymentModal(false)}>
+                <FaTimes />
+              </button>
+              <h3 style={{ color: '#007A7A', marginBottom: '15px' }}>Renovar Suscripción</h3>
+              <p style={{ marginBottom: '20px', fontSize: '0.9rem' }}>
+                Completa los datos de tu tarjeta para procesar el pago de la mensualidad.
+              </p>
+              
+              <PremiumCardForm onCardChange={(data) => setCardData(data)} />
+              
+              {paymentError && (
+                <div className="error-message" style={{ background: '#ffebee', color: '#c62828', padding: '10px', borderRadius: '8px', marginTop: '15px', fontSize: '0.9rem' }}>
+                  <FaExclamationTriangle /> {paymentError}
+                </div>
+              )}
+              
+              <div className="modal-actions" style={{ marginTop: '20px' }}>
+                <button 
+                  className="btn-guardar"
+                  onClick={handleRenewal}
+                  disabled={loadingPay}
+                  style={{ width: '100%', background: '#007A7A' }}
+                >
+                  {loadingPay ? "Procesando..." : "Confirmar Pago ($700 MXN)"}
+                </button>
+              </div>
             </div>
           </div>
         )}
