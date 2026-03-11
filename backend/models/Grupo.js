@@ -90,6 +90,7 @@ const GrupoSchema = new mongoose.Schema(
   {
     timestamps: true, // Agrega createdAt y updatedAt automáticamente
   }
+);
 // Índice compuesto: Nombre de grupo único POR escuela
 GrupoSchema.index({ nombre: 1, school_id: 1 }, { unique: true });
 
