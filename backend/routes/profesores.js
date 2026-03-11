@@ -26,7 +26,17 @@ profesoresRouter.get("/", authMiddleware, isAdmin, schoolMiddleware, async (req,
   try {
     const school_id = req.user.school_id;
     const profesores = await User.find({ role: "profesor", school_id }).select("-password");
-    res.json(profesores);
+
+    // Alias createdAt as fechaRegistro for the frontend
+    const formatted = profesores.map(p => {
+      const pObj = p.toObject();
+      return {
+        ...pObj,
+        fechaRegistro: p.createdAt // El frontend usará New Date(fechaRegistro)
+      };
+    });
+
+    res.json(formatted);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error al obtener profesores" });

@@ -12,35 +12,11 @@ materiasRouter.get("/", authMiddleware, schoolMiddleware, async (req, res) => {
     try {
         const school_id = req.user.school_id;
 
-        // Si no hay materias para ESTA escuela, poblamos con las de por defecto
+        // Eliminamos el seeding automático para que cada escuela empiece de cero como solicitó el usuario
+        /*
         const count = await Materia.countDocuments({ school_id });
-        if (count === 0) {
-            const defaultMaterias = [
-                "ESPAÑOL I", "ESPAÑOL II", "ESPAÑOL III", "INGLES I", "INGLES II", "INGLES III", "ARTES I", "ARTES II", "ARTES III",
-                "MATEMATICAS I", "MATEMATICAS II", "MATEMATICAS III", "BIOLOGIA I", "FISICA II", "QUIMICA III", "GEOGRAFIA I",
-                "HISTORIA I", "HISTORIA II", "HISTORIA III", "FORMACION CIVICA Y ETICA I", "FORMACION CIVICA Y ETICA II", "FORMACION CIVICA Y ETICA III",
-                "TECNOLOGIA", "EDUCACION FISICA I", "EDUCACION FISICA II", "EDUCACION FISICA III",
-                "INTEGRACION CURRICULAR I", "INTEGRACION CURRICULAR II", "INTEGRACION CURRICULAR III",
-                "TUTORIA I", "TUTORIA II", "TUTORIA III"
-            ];
-
-            // Usamos un bucle para insertar una por una y evitar que falle toda la operación
-            for (const nombre of defaultMaterias) {
-                try {
-                    await Materia.findOneAndUpdate(
-                        { nombre, school_id },
-                        { nombre, school_id },
-                        { upsert: true }
-                    );
-                } catch (e) {
-                    console.warn(`No se pudo crear/verificar materia ${nombre}: ${e.message}`);
-                    // Si el error es 11000 y el índice es nombre_1, intentamos borrarlo de nuevo
-                    if (e.code === 11000 && e.message.includes("nombre_1")) {
-                        await Materia.collection.dropIndex("nombre_1").catch(() => { });
-                    }
-                }
-            }
-        }
+        if (count === 0) { ... }
+        */
 
         const materias = await Materia.find({ school_id }).sort({ nombre: 1 });
         res.json(materias);
