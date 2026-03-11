@@ -19,11 +19,11 @@ const LandingPage = () => {
                     </p>
 
                     <div className="cta-group" style={{ margin: '0 auto', gap: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <button className="cta-button primary" onClick={() => navigate('/register-school')}>
+                        <button className="cta-button secondary" onClick={() => navigate('/login')}>
                             <span className="cta-label">
-                                <FaSchool /> Registrar mi escuela
+                                <FaGraduationCap /> Portal de mi escuela
                             </span>
-                            <span className="cta-arrow">NUEVA ESCUELA <FaArrowRight /></span>
+                            <span className="cta-arrow">ACCESO <FaArrowRight /></span>
                         </button>
 
                         <button className="cta-button secondary" onClick={() => navigate('/portal-padres')} style={{ background: '#007A7A', color: 'white', borderColor: '#007A7A' }}>
@@ -33,11 +33,11 @@ const LandingPage = () => {
                             <span className="cta-arrow">ALUMNOS <FaArrowRight /></span>
                         </button>
 
-                        <button className="cta-button secondary" onClick={() => navigate('/login')}>
+                        <button className="cta-button primary" onClick={() => navigate('/register-school')}>
                             <span className="cta-label">
-                                <FaGraduationCap /> Portal de mi escuela
+                                <FaSchool /> Registrar mi escuela
                             </span>
-                            <span className="cta-arrow">ACCESO <FaArrowRight /></span>
+                            <span className="cta-arrow">NUEVA ESCUELA <FaArrowRight /></span>
                         </button>
                     </div>
                 </div>

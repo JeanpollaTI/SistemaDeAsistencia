@@ -115,6 +115,9 @@ function App() {
     const renderMenu = () => {
         if (!user) {
             // Menú público (Scholaris)
+            // OCULTAR EN EL HOME (LandingPage) según pedido del usuario: "que desaparezcan solo ahí"
+            if (location.pathname === "/") return null;
+
             return (
                 <div className="nav-menu-right">
                     <ul className="nav-list">
