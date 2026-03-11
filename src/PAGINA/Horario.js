@@ -8,6 +8,7 @@ import "./Horario.css";
 // Se asume que estos archivos están en el mismo directorio o accesibles
 import logoAgs from "./Ags.png";
 import logoDerecho from "./Logoescuela.png";
+import BrandingModal from "../COMPONENTE/BrandingModal";
 // ------------------------------------
 
 // --- CONSTANTES Y CONFIGURACIÓN ---
@@ -36,6 +37,7 @@ function Horario({ user }) {
   const [loadingMessage, setLoadingMessage] = useState("");
   const [progress, setProgress] = useState(0);
   const [schoolConfig, setSchoolConfig] = useState(null);
+  const [brandingModal, setBrandingModal] = useState({ visible: false, onConfirm: null, title: '' });
   const horarioTableRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -155,10 +157,10 @@ function Horario({ user }) {
   }, [isLoading, mostrarAlerta]);
 
   // --- Lógica de generación de PDF refactorizada (con logos locales) ---
-  const generarContenidoPDF = async (doc) => {
+  const generarContenidoPDF = async (doc, brandingData = {}) => {
     const schoolName = schoolConfig?.name || "ESCUELA SECUNDARIA GENERAL, No. 9";
-    const schoolLogo = schoolConfig?.config?.logoUrl || logoDerecho;
-    const schoolDirector = schoolConfig?.directorName || '';
+    const schoolLogo = brandingData.logoUrl || schoolConfig?.config?.logoUrl || logoDerecho;
+    const schoolDirector = brandingData.directorName || schoolConfig?.directorName || '';
 
     // USANDO LAS VARIABLES DE LOGO IMPORTADAS LOCALMENTE
     const imgLogoDer = new Image();
@@ -303,14 +305,14 @@ function Horario({ user }) {
     }
   };
 
-  const exportarPDF = useCallback(async () => {
+  const exportarPDF = async (brandingData = {}) => {
     if (isLoading) return;
     setIsLoading(true);
     setLoadingMessage("Exportando PDF...");
     setProgress(10);
     try {
       const doc = new jsPDF("landscape");
-      await generarContenidoPDF(doc);
+      await generarContenidoPDF(doc, brandingData);
       setProgress(95);
       doc.save(`Horario_${anio}.pdf`);
       mostrarAlerta("PDF exportado correctamente 📄✅", "success");
@@ -321,7 +323,7 @@ function Horario({ user }) {
       setIsLoading(false);
       setLoadingMessage("");
     }
-  }, [anio, leyenda, isLoading, mostrarAlerta]);
+  };
 
 
 
@@ -417,7 +419,11 @@ function Horario({ user }) {
           )}
           <button onClick={generarHorarioVacio} className="btn-admin" disabled={isLoading}>🗑️ Limpiar</button>
           <button onClick={guardarHorario} className="btn-admin" disabled={isLoading}> 💾 Guardar</button>
-          <button onClick={exportarPDF} className="btn-admin" disabled={isLoading}> 📄 Exportar PDF </button>
+          <button onClick={() => setBrandingModal({
+            visible: true,
+            title: 'Reporte de Horario',
+            onConfirm: (brandingData) => exportarPDF(brandingData)
+          })} className="btn-admin" disabled={isLoading}> 📄 Exportar PDF </button>
 
 
           <input type="file" accept="application/pdf" ref={fileInputRef} style={{ display: "none" }} onChange={handleArchivoChange} disabled={isLoading} />
@@ -476,6 +482,21 @@ function Horario({ user }) {
               </div>
             ))}
           </div>
+          {brandingModal.visible && (
+            <BrandingModal
+              initialData={{
+                directorName: schoolConfig?.directorName || localStorage.getItem('current_director_name') || '',
+                logoUrl: schoolConfig?.config?.logoUrl || '',
+                defaultLogo: logoDerecho
+              }}
+              onConfirm={(data) => {
+                setBrandingModal({ ...brandingModal, visible: false });
+                brandingModal.onConfirm(data);
+              }}
+              onClose={() => setBrandingModal({ ...brandingModal, visible: false })}
+              title={brandingModal.title}
+            />
+          )}
         </div>
       )}
     </div>

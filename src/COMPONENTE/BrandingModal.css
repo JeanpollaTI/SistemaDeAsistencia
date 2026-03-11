@@ -1,0 +1,129 @@
+.branding-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+    backdrop-filter: blur(5px);
+}
+
+.branding-modal-content {
+    background: var(--dark-color-alt, #1E222D);
+    padding: 2rem;
+    border-radius: 12px;
+    width: 450px;
+    max-width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-color, #E9E9E9);
+}
+
+.branding-modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: var(--primary-color, #00CBCB);
+    font-size: 1.5rem;
+}
+
+.branding-modal-content p {
+    color: var(--text-color-light, #7f8c8d);
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+}
+
+.branding-input-group {
+    margin-bottom: 1.5rem;
+}
+
+.branding-input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.branding-input-group input[type="text"] {
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #333);
+    background: var(--dark-color, #191D28);
+    color: white;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.branding-input-group input[type="text"]:focus {
+    border-color: var(--primary-color, #00CBCB);
+    outline: none;
+}
+
+.branding-toggle-group {
+    display: flex;
+    gap: 10px;
+}
+
+.branding-toggle {
+    flex: 1;
+    padding: 10px;
+    background: var(--dark-color, #191D28);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    text-align: center;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.branding-toggle input {
+    display: none;
+}
+
+.branding-toggle.active {
+    border-color: var(--primary-color, #00CBCB);
+    background: rgba(0, 203, 203, 0.1);
+    color: var(--primary-color, #00CBCB);
+}
+
+.branding-modal-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 2rem;
+}
+
+.branding-button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.branding-button.primary {
+    background: var(--primary-color, #00CBCB);
+    color: #111;
+}
+
+.branding-button.primary:hover {
+    background: #00B5B5;
+    transform: translateY(-2px);
+}
+
+.branding-button.secondary {
+    background: transparent;
+    border: 1px solid var(--border-color, #333);
+    color: var(--text-color, #E9E9E9);
+}
+
+.branding-button.secondary:hover {
+    background: rgba(255, 255, 255, 0.05);
+}

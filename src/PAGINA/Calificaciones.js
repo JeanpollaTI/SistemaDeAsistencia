@@ -8,6 +8,7 @@ import { CSS } from '@dnd-kit/utilities';
 import './Calificaciones.css';
 
 import logoImage from './Logoescuela.png';
+import BrandingModal from '../COMPONENTE/BrandingModal';
 
 // --- Sortable Header Component ---
 function SortableHeader({ id, children, disabled, colSpan }) {
@@ -84,6 +85,7 @@ function Calificaciones({ user }) {
   });
   const [activeTab, setActiveTab] = useState('detalle'); // 'detalle' o 'sabana'
   const [schoolConfig, setSchoolConfig] = useState(null);
+  const [brandingModal, setBrandingModal] = useState({ visible: false, onConfirm: null, title: '' });
 
 
   // --- DnD Sensors ---
@@ -309,19 +311,13 @@ function Calificaciones({ user }) {
   };
 
   // --- FUNCIÓN REUTILIZABLE PARA DIBUJAR UNA BOLETA EN UNA PÁGINA EXISTENTE ---
-  const drawReportCard = async (doc, alumno, bimestresSeleccionados, datosFirmas = {}) => {
+  const drawReportCard = async (doc, alumno, bimestresSeleccionados, brandingData = {}) => {
     const schoolName = schoolConfig?.name || 'Escuela Secundaria';
-    const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
-    const schoolDirector = schoolConfig?.directorName || '';
+    const schoolLogo = brandingData.logoUrl || schoolConfig?.config?.logoUrl || logoImage;
+    const schoolDirector = brandingData.directorName || schoolConfig?.directorName || '';
 
-    let { nombreDirector = '', nombreDocente = '' } = datosFirmas;
-
-    if (!nombreDirector) {
-      nombreDirector = schoolDirector || localStorage.getItem('current_director_name') || '';
-    }
-    if (!nombreDocente) {
-      nombreDocente = selectedGrupo?.asesor || '';
-    }
+    let nombreDirector = schoolDirector || localStorage.getItem('current_director_name') || '';
+    let nombreDocente = selectedGrupo?.asesor || '';
 
     const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
 
@@ -486,20 +482,17 @@ function Calificaciones({ user }) {
     doc.text("LUGAR DE EXPEDICIÓN:     AGUASCALIENTES, AGUASCALIENTES", pageWidth / 2, footerY, { align: 'center' });
   };
 
-  const generatePdfIndividual = async (alumno, bimestresSeleccionados, outputType = 'save', datosFirmas = {}) => {
+  const generatePdfIndividual = async (alumno, bimestresSeleccionados, brandingData = {}) => {
     const doc = new jsPDF();
-    await drawReportCard(doc, alumno, bimestresSeleccionados, datosFirmas);
+    await drawReportCard(doc, alumno, bimestresSeleccionados, brandingData);
 
-    if (outputType === 'save') {
-      const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
-      doc.save(`Boleta_${nombreCompleto.replace(/\s/g, '_')}.pdf`);
-      setModalPdf({ visible: false, alumno: null });
-    }
-    return doc.output('datauristring');
+    const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
+    doc.save(`Boleta_${nombreCompleto.replace(/\s/g, '_')}.pdf`);
+    setModalPdf({ visible: false, alumno: null });
   };
 
   // 🌟 NUEVA FUNCIÓN: Descargar todas las boletas en un solo PDF
-  const generatePdfGrupal = async () => {
+  const generatePdfGrupal = async (brandingData = {}) => {
     if (!alumnos || alumnos.length === 0) {
       mostrarNotificacion("No hay alumnos en el grupo.", "error");
       return;
@@ -517,7 +510,7 @@ function Calificaciones({ user }) {
       }
       isFirstPage = false;
       // Por defecto, incluimos los 3 trimestres en el reporte grupal
-      await drawReportCard(doc, alumno, [true, true, true]);
+      await drawReportCard(doc, alumno, [true, true, true], brandingData);
     }
 
     const nombreGrupo = selectedGrupo.nombre.replace(/\s/g, '_');
@@ -526,9 +519,8 @@ function Calificaciones({ user }) {
   };
 
   // 🌟 NUEVA FUNCIÓN: Generar reporte de bajo rendimiento (Promedios <= 6)
-  // 🌟 NUEVA FUNCIÓN: Generar reporte de bajo rendimiento (Promedios <= 6)
   // Acepta bimestresSeleccionados: array de booleans [T1, T2, T3]
-  const generatePdfBajoRendimiento = async (bimestresSeleccionados = [true, true, true]) => {
+  const generatePdfBajoRendimiento = async (bimestresSeleccionados = [true, true, true], brandingData = {}) => {
     if (!alumnos || alumnos.length === 0) {
       mostrarNotificacion("No hay alumnos en el grupo.", "error");
       return;
@@ -537,8 +529,8 @@ function Calificaciones({ user }) {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     const schoolName = schoolConfig?.name || 'Escuela Secundaria';
-    const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
-    const schoolDirector = schoolConfig?.directorName || '';
+    const schoolLogo = brandingData.logoUrl || schoolConfig?.config?.logoUrl || logoImage;
+    const schoolDirector = brandingData.directorName || schoolConfig?.directorName || '';
     let currentY = 0;
 
     // --- ENCABEZADO REPORTE ---
@@ -811,8 +803,13 @@ function Calificaciones({ user }) {
                     mostrarNotificacion("Debes seleccionar al menos un Trimestre.", "error");
                     return;
                   }
-                  // Ya no leemos inputs del form, generatePdfIndividual usa localStorage/grupo
-                  generatePdfIndividual(modalPdf.alumno, bimestresSeleccionados, 'save');
+                  // Al confirmar trimestres, pasamos a pedir Branding
+                  setModalPdf({ ...modalPdf, visible: false });
+                  setBrandingModal({
+                    visible: true,
+                    title: `Boleta de ${modalPdf.alumno?.nombre}`,
+                    onConfirm: (brandingData) => generatePdfIndividual(modalPdf.alumno, bimestresSeleccionados, brandingData)
+                  });
                 }}>
                   <div className="checkbox-group">
                     <label><input type="checkbox" name="b1" defaultChecked /> Trimestre 1</label>
@@ -852,7 +849,11 @@ function Calificaciones({ user }) {
 
               <button
                 className="button"
-                onClick={generatePdfGrupal}
+                onClick={() => setBrandingModal({
+                  visible: true,
+                  title: 'Boletas Grupales',
+                  onConfirm: (brandingData) => generatePdfGrupal(brandingData)
+                })}
                 style={{ backgroundColor: '#2980b9', color: 'white' }}
                 title="Generar un solo PDF con todas las boletas del grupo"
               >
@@ -878,29 +879,7 @@ function Calificaciones({ user }) {
                 </button>
               )}
 
-              {/* 🌟 BOTÓN DIRECTOR GLOBAL (MOVIDO AL FINAL) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#2c3e50', padding: '8px 12px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ color: '#aaa', fontSize: '0.65rem', textTransform: 'uppercase' }}>Director</span>
-                  <span style={{ color: 'white', fontWeight: 'bold', fontSize: '0.85rem' }}>
-                    {localStorage.getItem('current_director_name') || 'No Asignado'}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setModalDirector(true)}
-                  style={{
-                    padding: '4px 8px',
-                    fontSize: '0.75rem',
-                    backgroundColor: '#3498db',
-                    border: 'none',
-                    color: 'white',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cambiar
-                </button>
-              </div>
+              {/* 🌟 BOTÓN DIRECTOR GLOBAL ELIMINADO - AHORA SE PIDE AL DESCARGAR */}
             </div>
           </div>
 
@@ -920,51 +899,7 @@ function Calificaciones({ user }) {
             </button>
           </div>
 
-          {modalDirector && (
-            <div className="modal-overlay" onClick={() => setModalDirector(false)}>
-              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
-                <h3>Asignar Director(a)</h3>
-                <p>Este nombre aparecerá en todas las boletas que generes.</p>
-
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  const nuevoDirector = e.target.directorGlobal.value;
-                  if (nuevoDirector) {
-                    localStorage.setItem('current_director_name', nuevoDirector);
-                    if (!savedDirectores.includes(nuevoDirector)) {
-                      const updated = [...savedDirectores, nuevoDirector];
-                      setSavedDirectores(updated);
-                      localStorage.setItem('saved_directores', JSON.stringify(updated));
-                    }
-                    mostrarNotificacion("Director asignado correctamente.");
-                    setModalDirector(false);
-                  }
-                }}>
-                  <div className="input-group">
-                    <label>Nombre del Director(a):</label>
-                    <input
-                      list="directores-list-global"
-                      name="directorGlobal"
-                      defaultValue={localStorage.getItem('current_director_name') || ''}
-                      placeholder="Escribe o selecciona..."
-                      style={{ width: '100%', padding: '10px', marginTop: '5px' }}
-                      autoFocus
-                    />
-                    <datalist id="directores-list-global">
-                      {savedDirectores.map((dir, idx) => (
-                        <option key={idx} value={dir} />
-                      ))}
-                    </datalist>
-                  </div>
-                  {/* ... Historial list simplified ... */}
-                  <div className="modal-actions" style={{ marginTop: '20px' }}>
-                    <button type="submit" className="button">Guardar</button>
-                    <button type="button" className="button-secondary" onClick={() => setModalDirector(false)}>Cancelar</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
+          {/* Modal Director removed */}
 
           {/* 🌟 MODAL REPORTE BAJO RENDIMIENTO */}
           {modalBajoRendimiento.visible && (
@@ -974,7 +909,12 @@ function Calificaciones({ user }) {
                 <p>Selecciona los trimestres a evaluar:</p>
                 <form onSubmit={(e) => {
                   e.preventDefault();
-                  generatePdfBajoRendimiento(modalBajoRendimiento.seleccion);
+                  setModalBajoRendimiento({ ...modalBajoRendimiento, visible: false });
+                  setBrandingModal({
+                    visible: true,
+                    title: 'Reporte de Riesgo',
+                    onConfirm: (brandingData) => generatePdfBajoRendimiento(modalBajoRendimiento.seleccion, brandingData)
+                  });
                 }}>
                   <div className="checkbox-group" style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '20px 0' }}>
                     {[0, 1, 2].map(index => (
@@ -1159,6 +1099,22 @@ function Calificaciones({ user }) {
                 </tbody>
               </table>
             </div>
+          )}
+
+          {brandingModal.visible && (
+            <BrandingModal
+              initialData={{
+                directorName: schoolConfig?.directorName || localStorage.getItem('current_director_name') || '',
+                logoUrl: schoolConfig?.config?.logoUrl || '',
+                defaultLogo: logoImage
+              }}
+              onConfirm={(data) => {
+                setBrandingModal({ ...brandingModal, visible: false });
+                brandingModal.onConfirm(data);
+              }}
+              onClose={() => setBrandingModal({ ...brandingModal, visible: false })}
+              title={brandingModal.title}
+            />
           )}
         </>
       )}

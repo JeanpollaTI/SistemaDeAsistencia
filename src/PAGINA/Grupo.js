@@ -8,6 +8,7 @@ import './Grupo.css';
 import Notificacion from './Notificacion';
 import ConfirmacionModal from './ConfirmacionModal';
 import logoImage from './Logoescuela.png'; // Asegúrate que esta ruta sea correcta
+import BrandingModal from '../COMPONENTE/BrandingModal';
 
 // --- URL de la API desde variables de entorno para Vercel ---
 // CORRECCIÓN: Eliminado '/api' para coincidir con Home.js y la estructura del backend
@@ -41,6 +42,7 @@ function Grupo({ user }) {
   const [nombreGrupoImport, setNombreGrupoImport] = useState('');
   const [asignaturaActual, setAsignaturaActual] = useState(null); // Para saber qué asignatura se está evaluando
   const [schoolConfig, setSchoolConfig] = useState(null);
+  const [brandingModal, setBrandingModal] = useState({ visible: false, onConfirm: null, title: '' });
 
   // --- LÓGICA DE CARGA DE DATOS ---
   useEffect(() => {
@@ -591,7 +593,7 @@ function Grupo({ user }) {
 
   // ... código anterior (imports, estados, etc.)
 
-  const generarPDF = async (grupo, asignatura) => {
+  const generarPDF = async (grupo, asignatura, brandingData = {}) => {
     if (!asignatura) {
       return mostrarNotificacion("No se especificó la asignatura para el PDF.", "error");
     }
@@ -603,8 +605,8 @@ function Grupo({ user }) {
 
       const doc = new jsPDF();
       const schoolName = schoolConfig?.name || 'Escuela Secundaria';
-      const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
-      const schoolDirector = schoolConfig?.directorName || '';
+      const schoolLogo = brandingData.logoUrl || schoolConfig?.config?.logoUrl || logoImage;
+      const schoolDirector = brandingData.directorName || schoolConfig?.directorName || '';
 
       // --- INICIO DE CAMBIOS PARA LOGO Y ESTILOS ---
       const img = new Image();
@@ -763,7 +765,29 @@ function Grupo({ user }) {
 
   return (
     <div className="grupo-componente">
-      {notificacion.visible && <Notificacion mensaje={notificacion.mensaje} tipo={notificacion.tipo} onClose={() => setNotificacion({ visible: false })} />}
+      {notificacion.visible && (
+        <Notificacion
+          mensaje={notificacion.mensaje}
+          tipo={notificacion.tipo}
+          onClose={() => setNotificacion({ ...notificacion, visible: false })}
+        />
+      )}
+
+      {brandingModal.visible && (
+        <BrandingModal
+          initialData={{
+            directorName: schoolConfig?.directorName || localStorage.getItem('current_director_name') || '',
+            logoUrl: schoolConfig?.config?.logoUrl || '',
+            defaultLogo: logoImage
+          }}
+          onConfirm={(data) => {
+            setBrandingModal({ ...brandingModal, visible: false });
+            brandingModal.onConfirm(data);
+          }}
+          onClose={() => setBrandingModal({ ...brandingModal, visible: false })}
+          title={brandingModal.title}
+        />
+      )}
       <ConfirmacionModal isOpen={!!grupoParaEliminar} onClose={() => setGrupoParaEliminar(null)} onConfirm={confirmarEliminacionGrupo} mensaje={`¿Seguro que deseas eliminar el grupo "${grupoParaEliminar?.nombre}"?`} />
       <ConfirmacionModal isOpen={!!alumnoParaEliminar} onClose={() => setAlumnoParaEliminar(null)} onConfirm={confirmarEliminacionAlumno} mensaje={`¿Seguro que deseas eliminar al alumno "${alumnoParaEliminar?.nombre}" de la lista?`} />
 
@@ -854,7 +878,11 @@ function Grupo({ user }) {
                       <td data-label="Mi Asignatura">{asignacion.asignatura}</td>
                       <td className="acciones-cell">
                         <button className="btn btn-primary" onClick={() => abrirModal('asistencia', grupo, asignacion.asignatura)}>Tomar Asistencia</button>
-                        <button className="btn btn-export" onClick={() => generarPDF(grupo, asignacion.asignatura)}>PDF</button>
+                        <button className="btn btn-export" onClick={() => setBrandingModal({
+                          visible: true,
+                          title: 'Reporte de Asistencia',
+                          onConfirm: (brandingData) => generarPDF(grupo, asignacion.asignatura, brandingData)
+                        })}>PDF</button>
                       </td>
                     </tr>
                   ));

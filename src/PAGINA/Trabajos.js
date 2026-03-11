@@ -5,6 +5,7 @@ import autoTable from 'jspdf-autotable';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import logoImage from './Logoescuela.png';
 import ConfirmacionModal from './ConfirmacionModal';
+import BrandingModal from '../COMPONENTE/BrandingModal';
 
 
 // La URL de la API se obtiene de las variables de entorno para Vercel/Render
@@ -1339,8 +1340,9 @@ const PanelCalificaciones = ({
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [criterioAbierto, setCriterioAbierto] = useState(null);
-    const [numTareas, setNumTareas] = useState({});
+    const [error, setError] = useState(null);
     const [schoolConfig, setSchoolConfig] = useState(null);
+    const [brandingModal, setBrandingModal] = useState({ visible: false, onConfirm: null, title: '' });
     // 🌟 ESTADO AGREGADO: Para controlar cuándo y qué tarea necesita un nombre.
     const [tareaPorNombrar, setTareaPorNombrar] = useState(null);
     // 🌟 ESTADO AGREGADO: Para el modal de confirmación personalizado
@@ -1827,12 +1829,12 @@ const PanelCalificaciones = ({
     };
 
     // 🌟 FUNCIÓN NUEVA: Generar Reporte PDF de la Asignatura
-    const generateSubjectReport = async () => {
+    const generateSubjectReport = async (brandingData = {}) => {
         const doc = new jsPDF();
 
         const schoolName = schoolConfig?.name || 'Escuela Secundaria';
-        const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
-        const schoolDirector = schoolConfig?.directorName || '';
+        const schoolLogo = brandingData.logoUrl || schoolConfig?.config?.logoUrl || logoImage;
+        const schoolDirector = brandingData.directorName || schoolConfig?.directorName || '';
 
         // --- LOGO Y ENCABEZADO (Reutilizado de Calificaciones.js) ---
         const img = new Image();
@@ -1992,7 +1994,11 @@ const PanelCalificaciones = ({
                                     <FaArrowRight />
                                 </button>
                             </div>
-                            <button className="btn" onClick={generateSubjectReport} style={{ marginRight: '10px', backgroundColor: '#2980b9', borderColor: '#2980b9', color: 'white' }}>
+                            <button className="btn" onClick={() => setBrandingModal({
+                                visible: true,
+                                title: 'Reporte de Asignatura',
+                                onConfirm: (brandingData) => generateSubjectReport(brandingData)
+                            })} style={{ marginRight: '10px', backgroundColor: '#2980b9', borderColor: '#2980b9', color: 'white' }}>
                                 📄 Reporte PDF
                             </button>
                             <button className="btn" onClick={handleLimpiarCalificaciones} style={{ marginRight: '10px', backgroundColor: '#c0392b', borderColor: '#c0392b', color: 'white' }}>
@@ -2688,6 +2694,22 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onRename, onClose, se
                     </div>
                 </div>
             </div>
+
+            {brandingModal.visible && (
+                <BrandingModal
+                    initialData={{
+                        directorName: schoolConfig?.directorName || localStorage.getItem('current_director_name') || '',
+                        logoUrl: schoolConfig?.config?.logoUrl || '',
+                        defaultLogo: logoImage
+                    }}
+                    onConfirm={(data) => {
+                        setBrandingModal({ ...brandingModal, visible: false });
+                        brandingModal.onConfirm(data);
+                    }}
+                    onClose={() => setBrandingModal({ ...brandingModal, visible: false })}
+                    title={brandingModal.title}
+                />
+            )}
         </div>
     );
 };
