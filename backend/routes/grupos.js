@@ -24,12 +24,6 @@ router.post("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => 
         const { nombre, alumnos } = req.body;
         const school_id = req.user.school_id;
 
-        // EMERGENCY FIX: Borrar el índice global antiguo si existe
-        try {
-            await Grupo.collection.dropIndex("nombre_1");
-            console.log("✅ Índice 'nombre_1' (global) eliminado de la colección grupos.");
-        } catch (e) { /* Ya no existe */ }
-
         if (!nombre) {
             return res.status(400).json({ error: "El nombre del grupo es obligatorio." });
         }

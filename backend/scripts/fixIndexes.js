@@ -1,5 +1,13 @@
 import mongoose from 'mongoose';
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Cargar .env desde el nivel superior (backend/)
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const fixIndexes = async () => {
     try {
@@ -8,21 +16,25 @@ const fixIndexes = async () => {
         console.log("✅ Connected.");
 
         const db = mongoose.connection.db;
-        const collection = db.collection('users');
 
-        console.log("Checking indexes for 'users' collection...");
-        const indexes = await collection.indexes();
-        console.log("Current indexes:", indexes.map(idx => idx.name));
+        const cleanup = async (collectionName, indexName) => {
+            const collection = db.collection(collectionName);
+            const indexes = await collection.indexes();
+            if (indexes.some(idx => idx.name === indexName)) {
+                console.log(`Dropping '${indexName}' from '${collectionName}'...`);
+                await collection.dropIndex(indexName);
+                console.log(`✅ Index dropped from ${collectionName}.`);
+            } else {
+                console.log(`ℹ️ Index '${indexName}' not found in ${collectionName}.`);
+            }
+        };
 
-        if (indexes.some(idx => idx.name === 'celular_1')) {
-            console.log("Dropping 'celular_1' index...");
-            await collection.dropIndex('celular_1');
-            console.log("✅ Index dropped successfully.");
-        } else {
-            console.log("ℹ️ Index 'celular_1' not found. Nothing to do.");
-        }
+        // Cleanup problematic global indexes
+        await cleanup('users', 'celular_1');
+        await cleanup('grupos', 'nombre_1');
+        await cleanup('materias', 'nombre_1');
 
-        console.log("Mongoose will recreate the index with 'sparse: true' on next startup.");
+        console.log("\nCleanup finished. Compound indexes defined in schemas will be created on server restart.");
         process.exit(0);
     } catch (err) {
         console.error("❌ Error fixing indexes:", err);

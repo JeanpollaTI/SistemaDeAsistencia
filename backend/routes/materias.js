@@ -12,15 +12,6 @@ materiasRouter.get("/", authMiddleware, schoolMiddleware, async (req, res) => {
     try {
         const school_id = req.user.school_id;
 
-        // EMERGENCY FIX: Uniqueness index was previously applied to 'nombre' globally.
-        // We try to drop it if it exists to allow multi-school support.
-        try {
-            await Materia.collection.dropIndex("nombre_1");
-            console.log("✅ Índice 'nombre_1' eliminado (ya no es necesario ser único globalmente)");
-        } catch (e) {
-            // El índice ya no existe o nunca existió, ignorar
-        }
-
         // Si no hay materias para ESTA escuela, poblamos con las de por defecto
         const count = await Materia.countDocuments({ school_id });
         if (count === 0) {

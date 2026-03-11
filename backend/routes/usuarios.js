@@ -56,12 +56,19 @@ router.post("/registrar-profesor", authMiddleware, isAdmin, schoolMiddleware, up
       return res.status(400).json({ msg: "Los campos nombre, email, contraseña y celular son obligatorios." });
     }
 
-    // 3. Revisar si ya existe un usuario con ese email o celular
-    // 3. Revisar si ya existe un usuario con ese email o celular (en cualquier escuela por seguridad de unicidad global de email/cel)
-    // Pero la búsqueda para ver si existe debería ser global, pero el registro lleva school_id
-    const existingUser = await User.findOne({ $or: [{ email }, { celular }] });
-    if (existingUser) {
-      return res.status(400).json({ msg: "El email o el celular ya están registrados." });
+    // 3. Revisar si ya existe un usuario con ese email (Global) o celular (En la misma escuela)
+    const school_id = req.user.school_id;
+
+    // El email debe ser único globalmente para el login
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).json({ msg: "El email ya está registrado en el sistema." });
+    }
+
+    // El celular lo validamos por escuela para evitar colisiones entre instituciones
+    const existingCelular = await User.findOne({ celular, school_id });
+    if (existingCelular) {
+      return res.status(400).json({ msg: "Este número de celular ya está registrado en su escuela." });
     }
 
     // 4. Encriptar la contraseña antes de guardarla
