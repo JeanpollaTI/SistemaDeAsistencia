@@ -138,43 +138,74 @@ function EditarPerfil({ user }) {
       <div className="editar-perfil-card">
         <h2>Editar Perfil</h2>
 
-        {error && <p className="error">{error}</p>}
-        {success && <p className="success">{success}</p>}
-
-        {/* Imagen de perfil y botón de cambio de foto */}
-        <img src={fotoPreview} alt="Preview" className="profile-img-large" />
-
-        <div style={{ marginBottom: "15px" }}>
-          <label className="btn-edit" style={{ cursor: "pointer" }}>
-            Cambiar Foto
-            <input type="file" onChange={handleFileChange} accept="image/*" style={{ display: "none" }} />
-          </label>
-        </div>
-
-        {/* Formulario de edición */}
-        <form onSubmit={handleSubmit}>
-          <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Nombre" />
-          <input type="number" name="edad" value={formData.edad} onChange={handleChange} placeholder="Edad" />
-          <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" />
-
-          <select name="sexo" value={formData.sexo} onChange={handleChange}>
-            <option value="Masculino">Masculino</option>
-            <option value="Femenino">Femenino</option>
-            <option value="Otro">Otro</option>
-          </select>
-
-          <input type="text" name="celular" value={formData.celular} onChange={handleChange} placeholder="Celular" />
-
-          {/* Botones de acción */}
-          <div className="editar-perfil-buttons">
-            <button type="submit" className="btn-save" disabled={loading}>
-              {loading ? "Guardando..." : "Guardar cambios"}
-            </button>
-            <button type="button" className="btn-cancel" onClick={() => navigate("/perfil")}>
-              Cancelar
-            </button>
+        <div className="edit-profile-horizontal">
+          {/* Lado izquierdo: Foto y Acción */}
+          <div className="edit-photo-section">
+            <img
+              src={fotoPreview}
+              alt="Preview"
+              className="profile-img-large"
+              style={{
+                width: '180px',
+                height: '180px',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: '4px solid #00CBCB',
+                margin: '0 0 1rem 0'
+              }}
+            />
+            <label className="btn-edit" style={{ cursor: "pointer", background: '#00CBCB', width: '100%', textAlign: 'center' }}>
+              Cambiar Foto
+              <input type="file" onChange={handleFileChange} accept="image/*" style={{ display: "none" }} />
+            </label>
           </div>
-        </form>
+
+          {/* Lado derecho: Formulario */}
+          <div style={{ flex: 1 }}>
+            <form onSubmit={handleSubmit}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label style={{ fontSize: '0.85rem', marginBottom: '5px', fontWeight: 'bold' }}>Nombre Completo</label>
+                  <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Nombre" />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label style={{ fontSize: '0.85rem', marginBottom: '5px', fontWeight: 'bold' }}>Edad</label>
+                  <input type="number" name="edad" value={formData.edad} onChange={handleChange} placeholder="Edad" />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label style={{ fontSize: '0.85rem', marginBottom: '5px', fontWeight: 'bold' }}>Email de Contacto</label>
+                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label style={{ fontSize: '0.85rem', marginBottom: '5px', fontWeight: 'bold' }}>Género</label>
+                  <select name="sexo" value={formData.sexo} onChange={handleChange}>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label style={{ fontSize: '0.85rem', marginBottom: '5px', fontWeight: 'bold' }}>Teléfono Celular</label>
+                  <input type="text" name="celular" value={formData.celular} onChange={handleChange} placeholder="Celular" />
+                </div>
+              </div>
+
+              {/* Botones de acción dentro del flujo del form o abajo */}
+              <div className="editar-perfil-buttons" style={{ justifyContent: 'flex-end', gap: '1rem' }}>
+                <button type="submit" className="btn-save" disabled={loading} style={{ background: '#00CBCB', width: 'auto' }}>
+                  {loading ? "Guardando..." : "Guardar cambios"}
+                </button>
+                <button type="button" className="btn-cancel" onClick={() => navigate("/perfil")} style={{ background: '#aaa', width: 'auto' }}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
 
         <hr className="divider" style={{ margin: "20px 0", borderTop: "1px solid #ccc" }} />
 

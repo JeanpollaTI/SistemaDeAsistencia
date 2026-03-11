@@ -4,23 +4,41 @@
   justify-content: center;
   min-height: 100vh;
   padding: 20px;
- 
+
 }
 
 .editar-perfil-card {
   background-color: #ffffff;
-  padding: 30px 40px;
+  padding: 30px;
   border-radius: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  max-width: 800px;
   width: 100%;
   margin-top: 80px;
   text-align: center;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .editar-perfil-card h2 {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
   color: #000000;
+  font-family: 'Turret Road', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.edit-profile-horizontal {
+  display: flex;
+  gap: 2.5rem;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.edit-photo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 200px;
 }
 
 .editar-perfil-card form {
@@ -43,7 +61,8 @@
   margin-top: 20px;
 }
 
-.btn-save, .btn-cancel {
+.btn-save,
+.btn-cancel {
   padding: 10px 20px;
   border: none;
   border-radius: 6px;

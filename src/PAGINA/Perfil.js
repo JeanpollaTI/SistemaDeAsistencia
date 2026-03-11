@@ -17,47 +17,50 @@ function Perfil({ user, logout, getProfileImageUrl }) {
   }
 
   const handleEdit = () => navigate("/editar-perfil");
-  
+
   const handleLogout = logout || (() => { console.log("Logout simulado."); navigate('/'); });
 
   // Determinar la URL de la imagen
   // La lógica principal está en getProfileImageUrl (en AuthContext)
-  const imageUrl = getProfileImageUrl 
-    ? getProfileImageUrl(user.foto) 
+  const imageUrl = getProfileImageUrl
+    ? getProfileImageUrl(user.foto)
     : 'https://placehold.co/150x150/AAAAAA/FFFFFF?text=Perfil';
 
   return (
     <div className="perfil-page">
       <div className="perfil-container">
-        <h2>Perfil de Usuario</h2>
-        <img 
-          // Usamos la URL determinada arriba.
-          src={imageUrl} 
-          alt="Perfil" 
-          className="profile-img-large" 
-          // Agregamos un estilo inline para anular background-image o background-color
-          // que puedan estar ocultando la foto en el CSS.
-          style={{ 
-            width: '150px', 
-            height: '150px', 
-            borderRadius: '50%', 
-            objectFit: 'cover',
-            background: 'none' // Esto es CRÍTICO si el CSS de perfil está mal
-          }}
-        />
+        <h2>Mi Perfil</h2>
 
-        <div className="perfil-info">
-          <p><strong>Nombre:</strong> {user.nombre || "N/A"}</p>
-          <p><strong>Edad:</strong> {user.edad || "N/A"}</p>
-          <p><strong>Email:</strong> {user.email || "N/A"}</p>
-          <p><strong>Sexo:</strong> {user.sexo || "N/A"}</p>
-          <p><strong>Celular:</strong> {user.celular || "N/A"}</p>
-          <p><strong>Rol:</strong> {user.role || "N/A"}</p>
+        <div className="profile-horizontal-layout">
+          <img
+            src={imageUrl}
+            alt="Perfil"
+            className="profile-img-large"
+            style={{
+              width: '180px',
+              height: '180px',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              background: 'none',
+              border: '4px solid #00CBCB',
+              margin: '0'
+            }}
+          />
+
+          <div className="perfil-info" style={{ textAlign: 'left', flex: 1 }}>
+            <p style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '15px', color: '#00CBCB' }}>Datos Personales</p>
+            <p><strong>Nombre:</strong> {user.nombre || "N/A"}</p>
+            <p><strong>Edad:</strong> {user.edad || "N/A"}</p>
+            <p><strong>Email:</strong> {user.email || "N/A"}</p>
+            <p><strong>Sexo:</strong> {user.sexo || "N/A"}</p>
+            <p><strong>Celular:</strong> {user.celular || "N/A"}</p>
+            <p><strong>Rol:</strong> <span style={{ textTransform: 'capitalize', fontWeight: '600' }}>{user.role || "N/A"}</span></p>
+          </div>
         </div>
 
-        <div className="perfil-buttons">
-          <button className="btn-edit" onClick={handleEdit}>EDITAR PERFIL</button>
-          <button className="btn-logout" onClick={handleLogout}>CERRAR SESIÓN</button>
+        <div className="perfil-buttons" style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '100%' }}>
+          <button className="btn-edit" onClick={handleEdit} style={{ background: '#00CBCB', width: 'auto' }}>EDITAR PERFIL</button>
+          <button className="btn-logout" onClick={handleLogout} style={{ background: '#e53935', width: 'auto' }}>CERRAR SESIÓN</button>
         </div>
       </div>
     </div>

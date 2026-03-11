@@ -380,24 +380,26 @@ function Home({ user }) {
             <button className="modal-close" onClick={closeModal}>&times;</button>
             <div className="modal-body-grid">
 
-              {/* Columna Izquierda: Perfil */}
+              {/* Columna Izquierda: Perfil (Ahora con cabecera horizontal) */}
               <div className="modal-left-column">
-                <img
-                  src={profileImgUrl(selectedProfesor.foto)}
-                  alt={selectedProfesor.nombre}
-                  className="profile-img-modal"
-                />
-                <h3 style={{ color: '#ffffff !important', fontWeight: 'bold' }}>{selectedProfesor.nombre}</h3>
-
-                <div className="profesor-details" style={{ width: '100%', textAlign: 'left', backgroundColor: '#ffffff !important', color: '#000000 !important', padding: '1rem', borderRadius: '8px' }}>
-                  <p style={{ color: '#000000 !important' }}><b style={{ color: '#000000 !important' }}>Correo:</b> {selectedProfesor.email}</p>
-                  <p style={{ color: '#000000 !important' }}><b style={{ color: '#000000 !important' }}>Celular:</b> {selectedProfesor.celular}</p>
-                  {/* <p><b>Edad:</b> {selectedProfesor.edad}</p> */}
-                  {/* <p><b>Sexo:</b> {selectedProfesor.sexo}</p> */}
-                  <p style={{ color: '#000000 !important' }}><b style={{ color: '#000000 !important' }}>Registro:</b> {selectedProfesor.fechaRegistro && !isNaN(new Date(selectedProfesor.fechaRegistro)) ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
+                <div className="profesor-profile-header">
+                  <img
+                    src={profileImgUrl(selectedProfesor.foto)}
+                    alt={selectedProfesor.nombre}
+                    className="profile-img-modal"
+                    style={{ margin: 0 }} /* Reset margin for header layout */
+                  />
+                  <div style={{ textAlign: 'left' }}>
+                    <h3 style={{ color: '#ffffff !important', fontWeight: 'bold' }}>{selectedProfesor.nombre}</h3>
+                    <div className="profesor-details" style={{ backgroundColor: 'transparent', color: '#ffffff !important', padding: '0', borderRadius: '0', boxShadow: 'none' }}>
+                      <p style={{ color: '#ffffff !important' }}><b style={{ color: '#00CBCB' }}>Correo:</b> {selectedProfesor.email}</p>
+                      <p style={{ color: '#ffffff !important' }}><b style={{ color: '#00CBCB' }}>Celular:</b> {selectedProfesor.celular}</p>
+                      <p style={{ color: '#ffffff !important' }}><b style={{ color: '#00CBCB' }}>Registro:</b> {selectedProfesor.fechaRegistro && !isNaN(new Date(selectedProfesor.fechaRegistro)) ? new Date(selectedProfesor.fechaRegistro).toLocaleDateString() : 'N/A'}</p>
+                    </div>
+                  </div>
                 </div>
 
-                <div style={{ width: '100%', marginTop: '1rem', textAlign: 'left' }}>
+                <div style={{ width: '100%', marginTop: '0.5rem', textAlign: 'left' }}>
                   <h4>Asignaturas Actuales:</h4>
                   {asignaturasSelect.length > 0 ? (
                     <ul style={{ listStyleType: 'disc', paddingLeft: '20px', fontSize: '0.9rem', marginBottom: '1rem' }}>
