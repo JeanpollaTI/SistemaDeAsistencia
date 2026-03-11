@@ -154,21 +154,6 @@ function Horario({ user }) {
     mostrarAlerta("Color eliminado de la leyenda", "info");
   }, [isLoading, mostrarAlerta]);
 
-  // Función auxiliar para obtener Base64 de las imágenes (usando las importaciones locales)
-  const getBase64Image = (imgPath) => new Promise((resolve, reject) => {
-    const img = new Image();
-    img.src = imgPath;
-    img.crossOrigin = "Anonymous";
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      canvas.getContext("2d").drawImage(img, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
-    };
-    img.onerror = (error) => reject(error);
-  });
-
   // --- Lógica de generación de PDF refactorizada (con logos locales) ---
   const generarContenidoPDF = async (doc) => {
     const schoolName = schoolConfig?.name || "ESCUELA SECUNDARIA GENERAL, No. 9";
@@ -176,12 +161,20 @@ function Horario({ user }) {
     const schoolDirector = schoolConfig?.directorName || '';
 
     // USANDO LAS VARIABLES DE LOGO IMPORTADAS LOCALMENTE
-    const [logoAgsBase64, logoDerBase64] = await Promise.all([
-      getBase64Image(logoAgs),
-      getBase64Image(schoolLogo)
-    ]);
-    doc.addImage(logoAgsBase64, "PNG", 15, 8, 40, 16);
-    doc.addImage(logoDerBase64, "PNG", 255, 8, 25, 25);
+    const imgLogoDer = new Image();
+    imgLogoDer.src = schoolLogo;
+    imgLogoDer.crossOrigin = "Anonymous";
+    await imgLogoDer.decode().catch(() => { });
+
+    const imgLogoAgs = new Image();
+    imgLogoAgs.src = logoAgs;
+    await imgLogoAgs.decode().catch(() => { });
+
+    const logoDerWidth = 25;
+    const logoDerHeight = (imgLogoDer.height * logoDerWidth) / imgLogoDer.width;
+
+    doc.addImage(logoAgs, "PNG", 15, 8, 40, 16);
+    doc.addImage(schoolLogo, "PNG", 255, 8, logoDerWidth, logoDerHeight);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
