@@ -191,8 +191,8 @@ function Perfil({ user, logout, getProfileImageUrl }) {
         {showPaymentModal && (
           <div className="modal-overlay" style={{ zIndex: 10000 }}>
             <div className="modal-content" style={{ 
-                maxWidth: '1200px', 
-                width: '98%',
+                maxWidth: '850px', 
+                width: '95%',
                 padding: '40px',
                 borderRadius: '30px',
                 background: 'rgba(28, 31, 40, 0.98)',
@@ -209,7 +209,7 @@ function Perfil({ user, logout, getProfileImageUrl }) {
                 Tu escuela recuperará el acceso total de forma inmediata al completar el pago.
               </p>
               
-              <div className="renewal-horizontal-layout" style={{ display: 'flex', flexWrap: 'nowrap', gap: '60px', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="renewal-horizontal-layout" style={{ display: 'flex', flexDirection: 'column', gap: '40px', alignItems: 'center', justifyContent: 'center' }}>
                   <div className="renewal-info-panel" style={{ flex: '1', minWidth: '300px' }}>
                       <div className="price-card-premium" style={{ 
                           background: 'linear-gradient(135deg, #007A7A, #00CBCB)',
@@ -233,7 +233,7 @@ function Perfil({ user, logout, getProfileImageUrl }) {
                       </div>
                   </div>
 
-                  <div className="renewal-form-panel" style={{ flex: '1.4', minWidth: '450px', background: 'rgba(255,255,255,0.05)', padding: '30px', borderRadius: '25px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div className="renewal-form-panel" style={{ width: '100%', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '25px' }}>
                       <PremiumCardForm onCardChange={(data) => setCardData(data)} />
                       
                       {paymentError && (

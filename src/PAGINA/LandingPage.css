@@ -71,12 +71,16 @@
 
 .cta-group {
     display: flex;
-    flex-wrap: nowrap; /* Forced row on large screens */
-    justify-content: center;
+    flex-direction: column; /* Stacks buttons vertically as requested */
     align-items: center;
-    gap: 25px;
-    margin: 0 auto;
+    gap: 20px;
+    margin: 40px auto 0;
     width: 100%;
+}
+
+.cta-button {
+    width: 100%;
+    max-width: 380px; /* Slightly wider for the vertical stack */
 }
 
 .cta-button {
