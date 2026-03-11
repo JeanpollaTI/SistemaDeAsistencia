@@ -179,8 +179,8 @@
 
 .payment-summary-box {
     width: 100%;
-    max-width: 450px;
-    margin-bottom: 20px;
+    max-width: 500px;
+    margin: 0 auto 30px; /* Centered with bottom margin */
 }
 
 .card-form-wrapper {

@@ -216,14 +216,15 @@ function Perfil({ user, logout, getProfileImageUrl }) {
                           padding: '25px',
                           borderRadius: '15px',
                           textAlign: 'center',
-                          boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+                          boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                          margin: '0 auto' /* Centered */
                       }}>
                           <p style={{ fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Mensualidad Scholaris</p>
                           <div style={{ fontSize: '3rem', fontWeight: '800', margin: '10px 0' }}>$700.00</div>
                           <p style={{ fontSize: '0.8rem', opacity: 0.8 }}>Válido por 1 mes adicional</p>
                       </div>
                       
-                      <div className="security-badges" style={{ marginTop: '25px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      <div className="security-badges" style={{ marginTop: '25px', display: 'flex', justifyContent: 'center', gap: '25px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem' }}>
                               <FaCheckCircle style={{ color: '#00CBCB' }} /> Facturación automática disponible
                           </div>
