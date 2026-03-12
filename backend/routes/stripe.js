@@ -136,6 +136,11 @@ router.post('/process-renewal', authMiddleware, async (req, res) => {
         const { schoolId, cardData } = req.body;
         if (!cardData) return res.status(400).json({ error: "Datos de tarjeta faltantes" });
 
+        // Seguridad: El admin solo puede pagar por SU propia escuela
+        if (req.user.role !== 'superadmin' && req.user.school_id.toString() !== schoolId) {
+            return res.status(403).json({ error: "No tienes permiso para realizar pagos para esta escuela." });
+        }
+
         const school = await School.findById(schoolId);
         if (!school) return res.status(404).json({ error: "Escuela no encontrada" });
 
