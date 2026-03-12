@@ -139,9 +139,11 @@ const PremiumCardForm = ({ onCardChange }) => {
                                 </label>
                                 <div className="card-item__date" ref={cardElements.cardDate}>
                                     <label className="card-item__dateTitle">Vence</label>
-                                    <label className="card-item__dateItem"><span>{cardMonth || 'MM'}</span></label>
-                                    /
-                                    <label className="card-item__dateItem"><span>{cardYear ? cardYear.toString().slice(2, 4) : 'YY'}</span></label>
+                                    <div className="card-item__dateValues">
+                                        <label className="card-item__dateItem"><span>{cardMonth || 'MM'}</span></label>
+                                        /
+                                        <label className="card-item__dateItem"><span>{cardYear ? cardYear.toString().slice(2, 4) : 'YY'}</span></label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
