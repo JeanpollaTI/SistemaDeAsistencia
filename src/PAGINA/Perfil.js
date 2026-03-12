@@ -227,7 +227,7 @@ function Perfil({ user, logout, getProfileImageUrl }) {
                           margin: '0 auto' /* Centered */
                       }}>
                           <p style={{ fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Mensualidad Scholaris</p>
-                          <div style={{ fontSize: '3rem', fontWeight: '800', margin: '10px 0' }}>$700.00</div>
+                          <div style={{ fontSize: '3rem', fontWeight: '800', margin: '10px 0' }}>$850.00</div>
                           <p style={{ fontSize: '0.8rem', opacity: 0.8 }}>Válido por 1 mes adicional</p>
                       </div>
                       

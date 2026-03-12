@@ -160,7 +160,7 @@ router.post('/process-renewal', authMiddleware, async (req, res) => {
         // 2. Crear un cargo único para renovación (o suscripción manual)
         // Usamos PaymentIntents o Charges. Charges es más simple para tokens.
         const charge = await stripeClient.charges.create({
-            amount: 70000, // $700.00 MXN
+            amount: 85000, // $850.00 MXN
             currency: 'mxn',
             source: token.id,
             description: `Renovación de suscripción para ${school.name}`,

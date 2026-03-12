@@ -182,7 +182,7 @@ const RegisterSchool = () => {
                                         boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
                                     }}>
                                         <p style={{ fontSize: '1.1rem', fontWeight: '500', marginBottom: '10px' }}>Suscripción Scholaris Premium</p>
-                                        <div className="price-tag" style={{ fontSize: '2.8rem', fontWeight: '800', margin: '0.5rem 0' }}>$700.00 <span style={{ fontSize: '1rem', verticalAlign: 'middle' }}>MXN/mes</span></div>
+                                        <div className="price-tag" style={{ fontSize: '2.8rem', fontWeight: '800', margin: '0.5rem 0' }}>$850.00 <span style={{ fontSize: '1rem', verticalAlign: 'middle' }}>MXN/mes</span></div>
                                         <p style={{ opacity: 0.9, fontSize: '0.9rem', marginTop: '15px' }}>
                                             Acceso total a gestión escolar, reportes dinámicos y portal de padres en vivo.
                                         </p>
