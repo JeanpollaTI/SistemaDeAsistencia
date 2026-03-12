@@ -11,7 +11,7 @@ const getStripe = () => {
     if (!stripe) {
         if (!process.env.STRIPE_SECRET_KEY) {
             console.error("❌ STRIPE_SECRET_KEY no está definida.");
-            return null;
+            throw new Error("Stripe API Key missing");
         }
         stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     }

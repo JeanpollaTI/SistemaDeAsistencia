@@ -157,13 +157,8 @@ router.post('/process-renewal', authMiddleware, async (req, res) => {
             },
         });
 
-        // 2. Si la escuela ya tiene un stripeId, intentamos cargar a ese cliente o crear uno nuevo
-        let customerId = school.subscription?.stripeId ? null : null; // Simplificamos: creamos cliente por transacción o usamos el existente
-        
-        // Mejor flujo: Crear un PaymentMethod y adjuntarlo al cliente, o simplemente cobrar una vez si es "one-shot"
-        // Según el usuario: "será de un pago... renovar el pago o la suscripción"
-        
-        // Creamos un cargo único para renovación (o suscripción manual)
+        // 2. Crear un cargo único para renovación (o suscripción manual)
+        // Usamos PaymentIntents o Charges. Charges es más simple para tokens.
         const charge = await stripeClient.charges.create({
             amount: 70000, // $700.00 MXN
             currency: 'mxn',
@@ -174,7 +169,7 @@ router.post('/process-renewal', authMiddleware, async (req, res) => {
 
         if (charge.status === 'succeeded') {
             // Actualizar fecha de vencimiento (30 días más)
-            const currentExpire = school.subscription?.nextBilling || new Date();
+            const currentExpire = (school.subscription && school.subscription.nextBilling) ? new Date(school.subscription.nextBilling) : new Date();
             const newExpire = new Date(Math.max(currentExpire.getTime(), Date.now()) + 30 * 24 * 60 * 60 * 1000);
 
             await School.findByIdAndUpdate(schoolId, {

@@ -39,8 +39,14 @@ function Perfil({ user, logout, getProfileImageUrl }) {
   };
 
   const handleRenewal = async () => {
-    if (!cardData) {
-      setPaymentError("Por favor completa los datos de la tarjeta.");
+    if (!cardData || !cardData.cardNumber || !cardData.cardMonth || !cardData.cardYear || !cardData.cardCvv) {
+      setPaymentError("Por favor completa todos los datos de la tarjeta.");
+      return;
+    }
+    
+    // Validar formato básico
+    if (cardData.cardNumber.replace(/\s/g, '').length < 13) {
+      setPaymentError("El número de tarjeta no es válido.");
       return;
     }
     
@@ -63,7 +69,8 @@ function Perfil({ user, logout, getProfileImageUrl }) {
       }
     } catch (err) {
       console.error("Error al procesar renovación:", err);
-      setPaymentError(err.response?.data?.error || "Error al procesar el pago. Por favor intenta de nuevo.");
+      const errorMsg = err.response?.data?.error || err.response?.data?.msg || err.message || "Error al procesar el pago. Por favor intenta de nuevo.";
+      setPaymentError(errorMsg);
     } finally {
       setLoadingPay(false);
     }
