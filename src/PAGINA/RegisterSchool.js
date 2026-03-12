@@ -122,7 +122,7 @@ const RegisterSchool = () => {
                 return (
                     <div className="form-step fade-in">
                         <h3><FaSchool /> Datos de la Institución</h3>
-                        <p className="step-desc">Ingresa el nombre de tu escuela y sube un logo si lo tienes.</p>
+                        <p className="step-desc">Ingresa el nombre oficial de tu escuela para comenzar la configuración.</p>
                         <div className="input-group">
                             <label>Nombre Oficial</label>
                             <input
