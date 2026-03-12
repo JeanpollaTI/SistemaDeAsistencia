@@ -16,8 +16,7 @@ const RegisterSchool = () => {
         password: "",
         schoolName: "",
         schoolType: "Secundaria",
-        evaluationPeriod: "Trimestre",
-        logoUrl: ""
+        evaluationPeriod: "Trimestre"
     });
 
     const [cardData, setCardData] = useState({
@@ -132,16 +131,6 @@ const RegisterSchool = () => {
                                 value={formData.schoolName}
                                 onChange={handleChange}
                                 placeholder="Ej: Secundaria General No. 9"
-                            />
-                        </div>
-                        <div className="input-group">
-                            <label><FaImage /> URL del Logo (Opcional)</label>
-                            <input
-                                type="text"
-                                name="logoUrl"
-                                value={formData.logoUrl}
-                                onChange={handleChange}
-                                placeholder="https://..."
                             />
                         </div>
                     </div>
