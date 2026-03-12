@@ -58,7 +58,6 @@ function Calificaciones({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalPdf, setModalPdf] = useState({ visible: false, alumno: null });
-  const [modalShare, setModalShare] = useState({ visible: false, alumno: null });
   const [modalDirector, setModalDirector] = useState(false); // Modal para asignar director global
   const [isEditing, setIsEditing] = useState(false); // Estado para controlar el modo edición
   const [savedDirectores, setSavedDirectores] = useState([]); // Estado para directores guardados
@@ -723,24 +722,6 @@ function Calificaciones({ user }) {
     showAlert("Sábana de calificaciones generada correctamente.");
   };
 
-  const handleSendPdf = async (platform, recipient, alumno) => {
-    const pdfDataUri = await generatePdfIndividual(alumno, [true, true, true], 'data');
-    const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
-
-    if (platform === 'whatsapp') {
-      const mensaje = `Hola, te comparto la boleta de calificaciones de ${nombreCompleto}. Por favor, descárgala y adjúntala en la conversación.`;
-      const url = `https://wa.me/${recipient}?text=${encodeURIComponent(mensaje)}`;
-      window.open(url, '_blank');
-
-      const link = document.createElement('a');
-      link.href = pdfDataUri;
-      link.download = `Boleta_${nombreCompleto.replace(/\s/g, '_')}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-    setModalShare({ visible: false, alumno: null });
-  };
 
 
 
@@ -803,13 +784,6 @@ function Calificaciones({ user }) {
             </div>
           )}
 
-          {modalShare.visible && (
-            <ModalShare
-              alumno={modalShare.alumno}
-              onClose={() => setModalShare({ visible: false, alumno: null })}
-              onSend={handleSendPdf}
-            />
-          )}
 
           <div className="header-controls" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
             <button onClick={handleBackToGrupos} className="back-button" style={{ position: 'absolute', left: '20px' }}>&larr;</button>
@@ -998,8 +972,7 @@ function Calificaciones({ user }) {
                               <strong>{promFinal > 0 ? promFinal.toFixed(2) : '-'}</strong>
                             </td>
                             <td className="actions-cell">
-                              <button onClick={() => setModalPdf({ visible: true, alumno })} title="Descargar Boleta Individual">📄</button>
-                              <button onClick={() => setModalShare({ visible: true, alumno: alumno })} title="Compartir Boleta">🔗</button>
+                                <button onClick={() => setModalPdf({ visible: true, alumno })} title="Descargar Boleta Individual">📄</button>
                             </td>
                           </tr>
                         );
@@ -1095,43 +1068,5 @@ function Calificaciones({ user }) {
   );
 }
 
-// --- Componente: Modal para Compartir ---
-function ModalShare({ alumno, onClose, onSend }) {
-  const [recipientPhone, setRecipientPhone] = useState('');
-
-  const handleWhatsAppSubmit = (e) => {
-    e.preventDefault();
-    if (recipientPhone) {
-      onSend('whatsapp', recipientPhone, alumno);
-    }
-  };
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <h3>Enviar Boleta de {`${alumno.apellidoPaterno} ${alumno.nombre}`}</h3>
-
-        <form onSubmit={handleWhatsAppSubmit} className="share-form">
-          <label htmlFor="phone-input">Enviar a WhatsApp:</label>
-          <div className="input-group">
-            <input
-              id="phone-input"
-              type="tel"
-              value={recipientPhone}
-              onChange={(e) => setRecipientPhone(e.target.value)}
-              placeholder="521234567890 (cód. país + número)"
-              required
-            />
-            <button type="submit" className="button whatsapp">Enviar WhatsApp</button>
-          </div>
-        </form>
-
-        <div className="modal-actions">
-          <button type="button" className="button-secondary" onClick={onClose}>Cancelar</button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default Calificaciones;
