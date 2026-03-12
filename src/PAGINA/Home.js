@@ -4,6 +4,7 @@ import "./Home.css";
 import { useNavigate } from "react-router-dom";
 import ConfirmacionModal from "./ConfirmacionModal";
 import { FaCalendarAlt } from 'react-icons/fa';
+import { useNotification } from "../COMPONENTE/NotificationContext";
 
 // La URL de tu backend ahora se leerá desde las variables de entorno
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
@@ -19,6 +20,31 @@ function Home({ user }) {
   const [asignaturasSelect, setAsignaturasSelect] = useState([]);
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
   const [alerta, setAlerta] = useState(null); // Nuevo estado para alertas
+  const { addNotification } = useNotification();
+
+  // --- Alerta de Suscripción ---
+  const [showSubscriptionAlert, setShowSubscriptionAlert] = useState(false);
+
+  useEffect(() => {
+    if (schoolData?.subscription?.nextBilling) {
+      const nextBillingDate = new Date(schoolData.subscription.nextBilling);
+      const today = new Date();
+      const timeDiff = nextBillingDate - today;
+      const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+      if (daysLeft <= 3 && daysLeft >= 0) {
+        setShowSubscriptionAlert(true);
+        // Evitar duplicados de notificación persistente
+        addNotification(`Tu suscripción vence en ${daysLeft} días (${nextBillingDate.toLocaleDateString()}).`, 'warning');
+        
+        // Auto-hide after 15 seconds
+        const timer = setTimeout(() => {
+          setShowSubscriptionAlert(false);
+        }, 15000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [schoolData, addNotification]);
 
   // Estados Admin Change Password
   const [changePassVisible, setChangePassVisible] = useState(false);
@@ -316,25 +342,12 @@ function Home({ user }) {
       {alerta && <div className={`alerta-fixed ${alerta.tipo}`}>{alerta.mensaje}</div>}
 
       <section className="home section" id="home">
-        {/* Alerta de Suscripción */}
-        {schoolData?.subscription?.nextBilling && (
-          (() => {
-            const nextBillingDate = new Date(schoolData.subscription.nextBilling);
-            const today = new Date();
-            const timeDiff = nextBillingDate - today;
-            const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-
-            if (daysLeft <= 3 && daysLeft >= 0) {
-              return (
-                <div className="subscription-warning-banner">
-                  <FaCalendarAlt />
-                  <span>Tu suscripción de Scholaris vence en <b>{daysLeft} días</b> ({nextBillingDate.toLocaleDateString()}). Renueva ahora para mantener el acceso.</span>
-                  <button onClick={handleStripeCheckout}>RENOVAR AHORA</button>
-                </div>
-              );
-            }
-            return null;
-          })()
+        {/* Alerta de Suscripción Temporal */}
+        {showSubscriptionAlert && schoolData?.subscription?.nextBilling && (
+          <div className="subscription-warning-banner fade-out-anim">
+            <FaCalendarAlt />
+            <span>Tu suscripción de Scholaris vence en <b>{Math.ceil((new Date(schoolData.subscription.nextBilling) - new Date()) / (1000 * 60 * 60 * 24))} días</b> ({new Date(schoolData.subscription.nextBilling).toLocaleDateString()}).</span>
+          </div>
         )}
 
         <div className="home-container container grid">

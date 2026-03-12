@@ -4,7 +4,7 @@ import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-
 // Componentes y Contexto
 import { AuthProvider, AuthContext } from "./PAGINA/AuthContext";
 import PrivateRoute from "./PAGINA/PrivateRoute";
-import { NotificationProvider } from "./COMPONENTE/NotificationContext";
+import { NotificationProvider, useNotification } from "./COMPONENTE/NotificationContext";
 import AlertSystem from "./COMPONENTE/AlertSystem";
 
 // Componentes de Páginas
@@ -24,7 +24,7 @@ import ParentPortal from "./PAGINA/ParentPortal";
 import {
     FaGraduationCap, FaMoon, FaSun, FaSignOutAlt, FaUserCircle,
     FaThLarge, FaUsers, FaCalendarAlt, FaChartBar, FaTasks,
-    FaUserPlus, FaChevronDown
+    FaUserPlus, FaChevronDown, FaBell
 } from 'react-icons/fa';
 
 // Estilos y logo
@@ -34,11 +34,13 @@ import logo from "./logo.png";
 
 function App() {
     const { user, loading, getProfileImageUrl, logout } = useContext(AuthContext);
+    const { notifications, markAsRead, clearNotifications } = useNotification();
     const navigate = useNavigate();
     const location = useLocation();
 
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -46,18 +48,28 @@ function App() {
     }, [theme]);
 
     const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
-    const toggleDropdown = () => setDropdownOpen(prev => !prev);
-    const closeDropdown = () => setDropdownOpen(false);
+    const toggleDropdown = () => {
+        setDropdownOpen(prev => !prev);
+        setNotifDropdownOpen(false);
+    };
+    const toggleNotifDropdown = () => {
+        setNotifDropdownOpen(prev => !prev);
+        setDropdownOpen(false);
+    };
+    const closeDropdowns = () => {
+        setDropdownOpen(false);
+        setNotifDropdownOpen(false);
+    };
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownOpen && !event.target.closest('.user-pill') && !event.target.closest('.dropdown-menu')) {
-                closeDropdown();
+            if ((dropdownOpen || notifDropdownOpen) && !event.target.closest('.user-pill') && !event.target.closest('.dropdown-menu') && !event.target.closest('.notif-pill') && !event.target.closest('.notif-dropdown')) {
+                closeDropdowns();
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [dropdownOpen]);
+    }, [dropdownOpen, notifDropdownOpen]);
 
     useEffect(() => {
         if (location.state?.scrollTo) {
@@ -66,7 +78,7 @@ function App() {
                 window.scrollTo({ top: section.offsetTop - 70, behavior: "smooth" });
             }
         }
-        closeDropdown();
+        closeDropdowns();
     }, [location]);
 
     useEffect(() => {
@@ -137,13 +149,39 @@ function App() {
             } else {
                 handleNavClick(null, sec.id);
             }
-            closeDropdown();
+            closeDropdowns();
         };
 
         const sections = [...baseSections, ...roleSections];
 
         return (
             <div className="nav-right-container">
+                <div className={`notif-pill ${notifDropdownOpen ? 'active' : ''}`} onClick={toggleNotifDropdown}>
+                    <FaBell className="notif-icon" />
+                    {notifications.filter(n => !n.read).length > 0 && (
+                        <span className="notif-badge">{notifications.filter(n => !n.read).length}</span>
+                    )}
+                </div>
+
+                <div className={`notif-dropdown ${notifDropdownOpen ? 'show' : ''}`}>
+                    <div className="notif-header">
+                        <h3>Notificaciones</h3>
+                        {notifications.length > 0 && <button onClick={clearNotifications}>Limpiar</button>}
+                    </div>
+                    <div className="notif-list">
+                        {notifications.length > 0 ? notifications.map(n => (
+                            <div key={n.id} className={`notif-item ${n.read ? 'read' : 'unread'} ${n.type}`} onClick={() => markAsRead(n.id)}>
+                                <div className="notif-content">
+                                    <p>{n.message}</p>
+                                    <span className="notif-date">{new Date(n.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                            </div>
+                        )) : (
+                            <p className="notif-empty">No hay notificaciones</p>
+                        )}
+                    </div>
+                </div>
+
                 <div className={`user-pill ${dropdownOpen ? 'active' : ''}`} onClick={toggleDropdown}>
                     <img src={getProfileImageUrl(user.foto)} alt="Perfil" className="user-pill-img" />
                     <span className="user-pill-name">{user.nombre.split(' ')[0]}</span>
@@ -163,16 +201,16 @@ function App() {
                     ))}
 
                     {user?.role === "admin" && (
-                        <button className="nav-link-dropdown" onClick={() => { navigate("/register-profesor"); closeDropdown(); }}>
+                        <button className="nav-link-dropdown" onClick={() => { navigate("/register-profesor"); closeDropdowns(); }}>
                             <FaUserPlus /> REGISTRAR PROFESOR
                         </button>
                     )}
 
-                    <button className="nav-link-dropdown" onClick={() => { navigate("/perfil"); closeDropdown(); }}>
+                    <button className="nav-link-dropdown" onClick={() => { navigate("/perfil"); closeDropdowns(); }}>
                         <FaUserCircle /> MI PERFIL
                     </button>
 
-                    <button className="nav-link-dropdown logout" onClick={() => { logout(); closeDropdown(); }}>
+                    <button className="nav-link-dropdown logout" onClick={() => { logout(); closeDropdowns(); }}>
                         <FaSignOutAlt /> CERRAR SESIÓN
                     </button>
                 </div>
