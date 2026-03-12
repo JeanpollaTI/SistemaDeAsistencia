@@ -34,10 +34,17 @@ function Home({ user }) {
 
       if (daysLeft <= 3 && daysLeft >= 0) {
         setShowSubscriptionAlert(true);
-        // Evitar duplicados de notificación persistente
-        addNotification(`Tu suscripción vence en ${daysLeft} días (${nextBillingDate.toLocaleDateString()}).`, 'warning');
         
-        // Auto-hide after 15 seconds
+        // --- Limit notification to once per day ---
+        const lastNotified = localStorage.getItem(`lastSubNotification_${schoolData._id}`);
+        const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+
+        if (lastNotified !== todayStr) {
+          addNotification(`Tu suscripción vence en ${daysLeft} días (${nextBillingDate.toLocaleDateString()}).`, 'warning');
+          localStorage.setItem(`lastSubNotification_${schoolData._id}`, todayStr);
+        }
+        
+        // Auto-hide banner after 15 seconds (keeps existing behavior for current session)
         const timer = setTimeout(() => {
           setShowSubscriptionAlert(false);
         }, 15000);
