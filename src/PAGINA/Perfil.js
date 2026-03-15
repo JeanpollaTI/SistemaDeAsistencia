@@ -45,7 +45,7 @@ function Perfil({ user, logout, getProfileImageUrl }) {
     const interval = setInterval(() => {
       const diff = new Date(schoolData.subscription.nextBilling) - new Date();
       if (diff <= 0) {
-        setTimeLeft("0 DÍAS (Expirado)");
+        setTimeLeft("0d 00h 00m 00s (Expirado)");
         clearInterval(interval);
         return;
       }
@@ -59,11 +59,7 @@ function Perfil({ user, logout, getProfileImageUrl }) {
       const fMinutes = minutes.toString().padStart(2, '0');
       const fSeconds = seconds.toString().padStart(2, '0');
 
-      if (days > 0) {
-        setTimeLeft(`${days}d ${fHours}h ${fMinutes}m ${fSeconds}s`);
-      } else {
-        setTimeLeft(`${fHours}h ${fMinutes}m ${fSeconds}s`);
-      }
+      setTimeLeft(`${days}d ${fHours}h ${fMinutes}m ${fSeconds}s`);
     }, 1000);
 
     return () => clearInterval(interval);

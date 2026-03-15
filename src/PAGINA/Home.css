@@ -727,46 +727,20 @@ button {
         height: var(--header-height);
     }
 
-    /* Mostrar/Ocultar el menú móvil */
-    .nav-toggle {
-        margin-right: 1rem;
-        display: inline-flex;
-    }
-
-    .nav-close {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        display: inline-flex;
-    }
-
+    /* Ajuste responsivo para el contenedor de usuario \/ notificaciones */
     .nav-menu {
-        position: fixed;
-        background-color: var(--dark-color-alt);
-        /* Fondo para el menú lateral */
-        width: 70%;
-        /* Más estrecho en móvil */
-        height: 100%;
-        top: 0;
-        right: -100%;
-        /* Oculto fuera de la pantalla */
-        padding: 4rem 0 0 1.5rem;
-        /* Ajuste de padding para menú móvil */
-        box-shadow: -2px 0 4px rgba(0, 0, 0, 0.3);
-        border-radius: 0;
-        /* Lo hacemos rectangular */
-        z-index: var(--z-fixed);
-        transition: .3s;
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
     }
 
     .nav-list {
-        flex-direction: column;
-        align-items: flex-start;
-        row-gap: 2rem;
+        flex-direction: row;
+        gap: 0.5rem;
     }
-
-    .show-menu {
-        right: 0;
+    
+    .nav-link-button {
+        font-size: 0.8rem;
     }
 
     /* Clase que muestra el menú */
