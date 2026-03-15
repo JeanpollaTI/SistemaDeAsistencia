@@ -17,6 +17,7 @@ function Perfil({ user, logout, getProfileImageUrl }) {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [cardData, setCardData] = useState(null);
   const [paymentError, setPaymentError] = useState("");
+  const [timeLeft, setTimeLeft] = useState("");
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
   useEffect(() => {
@@ -37,6 +38,36 @@ function Perfil({ user, logout, getProfileImageUrl }) {
       console.error("Error al obtener info de la escuela:", err);
     }
   };
+
+  useEffect(() => {
+    if (!schoolData?.subscription?.nextBilling) return;
+
+    const interval = setInterval(() => {
+      const diff = new Date(schoolData.subscription.nextBilling) - new Date();
+      if (diff <= 0) {
+        setTimeLeft("0 DÍAS (Expirado)");
+        clearInterval(interval);
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / 1000 / 60) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+
+      const fHours = hours.toString().padStart(2, '0');
+      const fMinutes = minutes.toString().padStart(2, '0');
+      const fSeconds = seconds.toString().padStart(2, '0');
+
+      if (days > 0) {
+        setTimeLeft(`${days}d ${fHours}h ${fMinutes}m ${fSeconds}s`);
+      } else {
+        setTimeLeft(`${fHours}h ${fMinutes}m ${fSeconds}s`);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [schoolData]);
 
   const handleRenewal = async () => {
     if (!cardData || !cardData.cardNumber || !cardData.cardMonth || !cardData.cardYear || !cardData.cardCvv) {
@@ -158,20 +189,8 @@ function Perfil({ user, logout, getProfileImageUrl }) {
 
               <div className="sub-stat-card" style={{ padding: '15px', borderRadius: '10px', background: '#fff', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
                 <p style={{ fontSize: '0.85rem', color: '#666', margin: 0 }}>Tiempo Restante</p>
-                <p style={{ margin: '5px 0 0 0', fontWeight: 'bold', color: '#00CBCB', fontSize: '1.2rem' }}>
-                  {(() => {
-                    const diff = new Date(schoolData.subscription?.nextBilling) - new Date();
-                    if (diff <= 0) return "0 DÍAS";
-                    
-                    const hours = Math.floor(diff / (1000 * 60 * 60));
-                    const days = Math.floor(hours / 24);
-                    
-                    if (days > 0) {
-                        return `${days} DÍA${days > 1 ? 'S' : ''}`;
-                    } else {
-                        return `${hours} HORA${hours !== 1 ? 'S' : ''}`;
-                    }
-                  })()}
+                <p style={{ margin: '5px 0 0 0', fontWeight: 'bold', color: '#00CBCB', fontSize: '1.2rem', fontFamily: 'monospace' }}>
+                  {timeLeft || "Calculando..."}
                 </p>
               </div>
             </div>

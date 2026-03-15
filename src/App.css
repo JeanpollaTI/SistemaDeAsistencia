@@ -878,4 +878,28 @@ button {
     .section {
         padding: 5.5rem 0 1rem;
     }
+
+    /* Force UI elements to compress and guarantee visibility */
+    .nav-logo span {
+        display: none !important;
+    }
+    .user-pill-name, .user-pill-arrow {
+        display: none !important;
+    }
+    .user-pill {
+        padding: 0.4em !important;
+        gap: 0 !important;
+        min-height: auto !important;
+        justify-content: center;
+    }
+    .user-pill-img {
+        margin: 0 !important;
+    }
+    .nav-right-container {
+        gap: 0.5rem !important;
+    }
+    .dropdown-menu {
+        width: 230px !important;
+        right: -10px !important;
+    }
 }
