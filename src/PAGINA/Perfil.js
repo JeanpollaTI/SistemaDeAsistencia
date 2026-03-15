@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FaCalendarAlt, FaCheckCircle, FaExclamationTriangle, FaCreditCard, FaTimes } from 'react-icons/fa';
-import PremiumCardForm from "../COMPONENTE/PremiumCardForm";
 
 import "./Perfil.css"; // Importa tu archivo de estilos
 
@@ -15,7 +14,6 @@ function Perfil({ user, logout, getProfileImageUrl }) {
   const [schoolData, setSchoolData] = useState(null);
   const [loadingPay, setLoadingPay] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [cardData, setCardData] = useState(null);
   const [paymentError, setPaymentError] = useState("");
   const [timeLeft, setTimeLeft] = useState("");
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
@@ -67,17 +65,6 @@ function Perfil({ user, logout, getProfileImageUrl }) {
   }, [schoolData]);
 
   const handleRenewal = async () => {
-    if (!cardData || !cardData.cardNumber || !cardData.cardMonth || !cardData.cardYear || !cardData.cardCvv) {
-      setPaymentError("Por favor completa todos los datos de la tarjeta.");
-      return;
-    }
-    
-    // Validar formato básico
-    if (cardData.cardNumber.replace(/\s/g, '').length < 13) {
-      setPaymentError("El número de tarjeta no es válido.");
-      return;
-    }
-    
     const token = localStorage.getItem("token");
     if (!token || !user?.school_id) return;
 
@@ -85,21 +72,20 @@ function Perfil({ user, logout, getProfileImageUrl }) {
       setLoadingPay(true);
       setPaymentError("");
       
-      const res = await axios.post(`${API_URL}/api/stripe/process-renewal`, 
-        { schoolId: user.school_id, cardData },
+      const res = await axios.post(`${API_URL}/api/stripe/create-checkout-session`, 
+        { schoolId: user.school_id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (res.data.success) {
-        alert("¡Renovación exitosa!");
-        setShowPaymentModal(false);
-        fetchSchoolInfo(); // Refrescar info de la escuela
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      } else {
+        throw new Error("No se recibió la URL de pago de Stripe.");
       }
     } catch (err) {
       console.error("Error al procesar renovación:", err);
-      const errorMsg = err.response?.data?.error || err.response?.data?.msg || err.message || "Error al procesar el pago. Por favor intenta de nuevo.";
+      const errorMsg = err.response?.data?.error || err.response?.data?.msg || err.message || "Error al iniciar el pago. Por favor intenta de nuevo.";
       setPaymentError(errorMsg);
-    } finally {
       setLoadingPay(false);
     }
   };
@@ -265,16 +251,18 @@ function Perfil({ user, logout, getProfileImageUrl }) {
                       </div>
                   </div>
 
-                  <div className="renewal-form-panel" style={{ width: '100%', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '25px' }}>
-                      <PremiumCardForm onCardChange={(data) => setCardData(data)} />
+                  <div className="renewal-form-panel" style={{ width: '100%', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '25px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <p style={{ color: 'white', fontSize: '1.05rem', marginBottom: '20px' }}>
+                          Para tu seguridad y cumplimiento normativo, el pago se procesará a través de la pasarela oficial de Stripe.
+                      </p>
                       
                       {paymentError && (
-                        <div className="error-message" style={{ background: 'rgba(255, 0, 0, 0.1)', border: '1px solid #ff4d4d', color: '#ff4d4d', padding: '12px', borderRadius: '10px', marginTop: '20px', fontSize: '0.9rem' }}>
+                        <div className="error-message" style={{ background: 'rgba(255, 0, 0, 0.1)', border: '1px solid #ff4d4d', color: '#ff4d4d', padding: '12px', borderRadius: '10px', marginTop: '20px', fontSize: '0.9rem', marginBottom: '20px' }}>
                           <FaExclamationTriangle /> {paymentError}
                         </div>
                       )}
                       
-                      <div className="modal-actions" style={{ marginTop: '25px' }}>
+                      <div className="modal-actions" style={{ marginTop: '5px' }}>
                         <button 
                           className="btn-guardar"
                           onClick={handleRenewal}

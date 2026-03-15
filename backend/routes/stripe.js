@@ -127,65 +127,6 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     res.json({ received: true });
 });
 
-/**
- * @route   POST /api/stripe/process-renewal
- * @desc    Procesa el pago de renovación directamente con cardData
- */
-router.post('/process-renewal', authMiddleware, async (req, res) => {
-    try {
-        const { schoolId, cardData } = req.body;
-        if (!cardData) return res.status(400).json({ error: "Datos de tarjeta faltantes" });
-
-        // Seguridad: El admin solo puede pagar por SU propia escuela
-        if (req.user.role !== 'superadmin' && req.user.school_id.toString() !== schoolId) {
-            return res.status(403).json({ error: "No tienes permiso para realizar pagos para esta escuela." });
-        }
-
-        const school = await School.findById(schoolId);
-        if (!school) return res.status(404).json({ error: "Escuela no encontrada" });
-
-        const stripeClient = getStripe();
-
-        // 1. Crear Token de tarjeta
-        const token = await stripeClient.tokens.create({
-            card: {
-                number: cardData.cardNumber.replace(/\s/g, ''),
-                exp_month: parseInt(cardData.cardMonth),
-                exp_year: parseInt(cardData.cardYear),
-                cvc: cardData.cardCvv,
-                name: cardData.cardName
-            },
-        });
-
-        // 2. Crear un cargo único para renovación (o suscripción manual)
-        // Usamos PaymentIntents o Charges. Charges es más simple para tokens.
-        const charge = await stripeClient.charges.create({
-            amount: 85000, // $850.00 MXN
-            currency: 'mxn',
-            source: token.id,
-            description: `Renovación de suscripción para ${school.name}`,
-            metadata: { schoolId: schoolId.toString() }
-        });
-
-        if (charge.status === 'succeeded') {
-            // Actualizar fecha de vencimiento (30 días más)
-            const currentExpire = (school.subscription && school.subscription.nextBilling) ? new Date(school.subscription.nextBilling) : new Date();
-            const newExpire = new Date(Math.max(currentExpire.getTime(), Date.now()) + 30 * 24 * 60 * 60 * 1000);
-
-            await School.findByIdAndUpdate(schoolId, {
-                'subscription.status': 'active',
-                'subscription.nextBilling': newExpire
-            });
-
-            return res.json({ success: true, msg: "Pago procesado correctamente." });
-        } else {
-            return res.status(400).json({ error: "El pago no pudo ser procesado." });
-        }
-
-    } catch (err) {
-        console.error("Error en renovación Stripe:", err);
-        res.status(500).json({ error: err.message || "Error al procesar el pago." });
-    }
-});
+// Removed /process-renewal in favor of /create-checkout-session
 
 export default router;

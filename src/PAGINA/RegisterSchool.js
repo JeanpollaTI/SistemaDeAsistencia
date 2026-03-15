@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import './RegisterSchool.css';
 import { FaSchool, FaEnvelope, FaLock, FaImage, FaGraduationCap, FaCalendarAlt, FaCheckCircle, FaArrowRight, FaArrowLeft, FaCreditCard } from 'react-icons/fa';
 import DynamicBackground from '../COMPONENTE/DynamicBackground';
-import PremiumCardForm from '../COMPONENTE/PremiumCardForm';
 
 const RegisterSchool = () => {
     const navigate = useNavigate();
@@ -18,18 +17,6 @@ const RegisterSchool = () => {
         schoolType: "Secundaria",
         evaluationPeriod: "Trimestre"
     });
-
-    const [cardData, setCardData] = useState({
-        cardNumber: '',
-        cardName: '',
-        cardMonth: '',
-        cardYear: '',
-        cardCvv: ''
-    });
-
-    const handleCardChange = (data) => {
-        setCardData(data);
-    };
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -52,9 +39,6 @@ const RegisterSchool = () => {
             return;
         }
         if (step === 3) {
-            if (!cardData || !cardData.cardNumber || !cardData.cardMonth || !cardData.cardYear || !cardData.cardCvv) {
-                return setError("Por favor completa todos los datos de tu tarjeta.");
-            }
             handleSubmit();
             return;
         }
@@ -71,7 +55,7 @@ const RegisterSchool = () => {
             const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/register-school/register-institutional`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...formData, cardData })
+                body: JSON.stringify(formData)
             });
 
             const data = await response.json();
@@ -80,11 +64,14 @@ const RegisterSchool = () => {
                 throw new Error(detailedError);
             }
 
-            alert("¡Institución registrada y activada con éxito!");
-            navigate('/login');
+            // Redirigir a Stripe Checkout
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error("No se recibió la URL de pago.");
+            }
         } catch (err) {
             setError(err.message);
-        } finally {
             setLoading(false);
         }
     };
@@ -171,8 +158,8 @@ const RegisterSchool = () => {
                                 <FaCreditCard /> Método de Pago Seguro
                             </h3>
                             
-                            <div className="payment-horizontal-layout" style={{ display: 'flex', flexWrap: 'wrap', gap: '30px', alignItems: 'flex-start' }}>
-                                <div className="payment-summary-box" style={{ flex: '1', minWidth: '300px' }}>
+                            <div className="payment-horizontal-layout" style={{ display: 'flex', flexWrap: 'wrap', gap: '30px', alignItems: 'flex-start', justifyContent: 'center' }}>
+                                <div className="payment-summary-box" style={{ flex: '1', minWidth: '300px', maxWidth: '500px' }}>
                                     <div className="payment-preview" style={{ 
                                         padding: '2rem', 
                                         borderRadius: '15px', 
@@ -187,15 +174,11 @@ const RegisterSchool = () => {
                                             Acceso total a gestión escolar, reportes dinámicos y portal de padres en vivo.
                                         </p>
                                     </div>
-                                    <div style={{ marginTop: '20px', padding: '15px', background: 'rgba(255,255,255,0.1)', borderRadius: '10px' }}>
-                                        <p style={{ color: 'white', fontSize: '0.85rem' }}>
-                                            * Los datos de tu tarjeta están protegidos con encriptación de nivel bancario a través de Stripe. No almacenamos tus credenciales.
+                                    <div style={{ marginTop: '20px', padding: '15px', background: 'rgba(255,255,255,0.1)', borderRadius: '10px', textAlign: 'center' }}>
+                                        <p style={{ color: 'white', fontSize: '0.95rem', fontWeight: 'bold' }}>
+                                            Serás redirigido a Stripe para completar tu pago de forma 100% segura.
                                         </p>
                                     </div>
-                                </div>
-                                
-                                <div className="card-form-wrapper" style={{ flex: '1.5', minWidth: '350px' }}>
-                                    <PremiumCardForm onCardChange={handleCardChange} />
                                 </div>
                             </div>
                         </div>
@@ -240,7 +223,7 @@ const RegisterSchool = () => {
                             onClick={nextStep}
                             disabled={loading}
                         >
-                            {step === 3 ? (loading ? "Registrando..." : "Registrar y Activar") : "Siguiente"} {step !== 3 && <FaArrowRight />}
+                            {step === 3 ? (loading ? "Redirigiendo a Stripe..." : "Proceder al Pago Seguro") : "Siguiente"} {step !== 3 && <FaArrowRight />}
                         </button>
                     </div>
                 )}

@@ -31,8 +31,7 @@ router.post('/register-institutional', async (req, res) => {
             schoolName,
             schoolType,
             evaluationPeriod,
-            logoUrl,
-            cardData
+            logoUrl
         } = req.body;
 
         // 1. Validaciones básicas
@@ -70,60 +69,36 @@ router.post('/register-institutional', async (req, res) => {
 
         await school.save();
 
-        // 3. Procesar Pago con Stripe (Suscripción Directa)
-        let stripeSubscriptionId = null;
-        let stripeCustomerId = null;
+        // 3. Crear sesión de Stripe Checkout
         const stripeClient = getStripe();
+        let sessionUrl = null;
 
         if (!stripeClient) {
             return res.status(500).json({ msg: "Error de configuración en la pasarela de pagos." });
         }
 
         try {
-            // Crear Token de tarjeta (Solo para propósitos de demostración/integración directa con raw data)
-            // NOTA: Para producción real, se debe usar Stripe Elements en el frontend.
-            const token = await stripeClient.tokens.create({
-                card: {
-                    number: cardData.cardNumber.replace(/\s/g, ''),
-                    exp_month: parseInt(cardData.cardMonth),
-                    exp_year: parseInt(cardData.cardYear),
-                    cvc: cardData.cardCvv,
-                    name: cardData.cardName
-                },
-            });
-
-            // Crear Cliente
-            const customer = await stripeClient.customers.create({
-                email: email.toLowerCase(),
-                source: token.id,
-                name: cardData.cardName,
+            const session = await stripeClient.checkout.sessions.create({
+                payment_method_types: ['card'],
+                line_items: [{
+                    price: process.env.STRIPE_PRICE_ID,
+                    quantity: 1,
+                }],
+                mode: 'subscription',
+                success_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?payment=success`,
+                cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/register-school?payment=cancel`,
+                customer_email: email.toLowerCase(),
                 metadata: { schoolId: school._id.toString() }
             });
-            stripeCustomerId = customer.id;
 
-            // Crear Suscripción
-            const subscription = await stripeClient.subscriptions.create({
-                customer: customer.id,
-                items: [{ price: process.env.STRIPE_PRICE_ID }],
-                metadata: { schoolId: school._id.toString() }
-            });
-            stripeSubscriptionId = subscription.id;
-
-            // Si llegamos aquí, el pago/suscripción fue exitoso o iniciado
-            const nextBilling = new Date(subscription.current_period_end * 1000);
-            
-            school.subscription.status = "active";
-            school.subscription.nextBilling = nextBilling;
-            school.subscription.stripeId = stripeSubscriptionId;
-            await school.save();
+            sessionUrl = session.url;
 
         } catch (paymentErr) {
-            console.error("Error en procesamiento de pago Stripe:", paymentErr.message);
-            // Si el pago falla, eliminamos la escuela recién creada para evitar inconsistencias
-            // (Opcional: podrías dejarla como suspendida y pedir pago después)
+            console.error("Error al crear sesión de Stripe Checkout:", paymentErr.message);
+            // Si el inicio de pago falla, eliminamos la escuela para evitar inconsistencias
             await School.findByIdAndDelete(school._id);
             return res.status(400).json({ 
-                msg: "Error al procesar el pago de la suscripción.", 
+                msg: "Error al iniciar el pago de la suscripción.", 
                 error: paymentErr.message 
             });
         }
@@ -142,11 +117,12 @@ router.post('/register-institutional', async (req, res) => {
 
         await adminUser.save();
 
-        // 4. Retornar éxito e ID para continuar a Stripe
+        // 4. Retornar éxito e ID, más la URL de Stripe para continuar
         res.status(201).json({
-            msg: "Registro institucional exitoso.",
+            msg: "Registro institucional iniciado.",
             schoolId: school._id,
-            adminId: adminUser._id
+            adminId: adminUser._id,
+            url: sessionUrl
         });
 
     } catch (err) {
