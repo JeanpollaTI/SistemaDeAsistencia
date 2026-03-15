@@ -110,3 +110,25 @@
   margin-bottom: 1.5rem;
   font-size: 0.85rem;
 }
+
+/* Responsividad para móviles */
+@media (max-width: 600px) {
+  .login-wrapper {
+      padding: 15px; /* Evita que la tarjeta toque los bordes laterales */
+  }
+
+  .login-container.glass {
+      padding: 2rem 1.5rem; /* Reduce el padding interior */
+      width: 100%;
+      box-sizing: border-box;
+  }
+
+  .login-container h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+  }
+
+  .login-container input {
+      padding: 12px 14px; /* Inputs ligeramente más pequeños */
+  }
+}

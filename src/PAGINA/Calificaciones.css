@@ -611,4 +611,23 @@
   .calificaciones-title {
     font-size: 1.8rem;
   }
+
+  .header-controls {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .back-button, .button-export {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .tabs-navigation {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 1rem;
+    -webkit-overflow-scrolling: touch;
+  }
 }

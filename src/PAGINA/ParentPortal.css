@@ -349,4 +349,24 @@
     .portal-user-info {
         flex-direction: column;
     }
+
+    /* Fix mobile login card layout */
+    .portal-login-card.glass {
+        padding: 2rem 1.5rem;
+        width: 95%; /* More width on small screens */
+        box-sizing: border-box; /* Avoid overflow */
+    }
+
+    .portal-logo-icon {
+        font-size: 2.8rem;
+        margin-bottom: 1rem;
+    }
+
+    .portal-login-card h2 {
+        font-size: 1.5rem;
+    }
+
+    .portal-login-container {
+        padding: 10px; /* Reduce container padding to give card more space */
+    }
 }

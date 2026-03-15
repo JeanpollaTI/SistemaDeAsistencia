@@ -46,6 +46,12 @@
     text-align: center;
     gap: 1.5rem;
   }
+
+  .perfil-container,
+  .editar-perfil-card {
+    padding: 20px 15px;
+    margin-top: 60px;
+  }
 }
 
 /* Imagen de perfil */

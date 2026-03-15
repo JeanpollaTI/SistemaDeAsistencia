@@ -1294,6 +1294,34 @@ function Trabajos({ user }) {
                     font-size: 0.85rem;
                     opacity: 0.8;
                 }
+
+                @media (max-width: 768px) {
+                    .grupo-componente .main-header {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 15px;
+                    }
+                    .grupo-componente .main-header > div {
+                        display: flex;
+                        flex-direction: column;
+                        width: 100%;
+                    }
+                    .grupo-componente .main-header .btn {
+                        width: 100%;
+                        margin-bottom: 5px;
+                        margin-left: 0 !important;
+                        margin-right: 0 !important;
+                    }
+                    .grupo-componente .tabla-global th.alumno-col, 
+                    .grupo-componente .tabla-global td.alumno-col,
+                    .grupo-componente .tabla-global .num-col,
+                    .grupo-componente .tabla-global tbody td:first-child,
+                    .grupo-componente .tabla-global .obs-col,
+                    .grupo-componente .tabla-global tbody td.obs-col-body {
+                        position: static !important;
+                        box-shadow: none !important;
+                    }
+                }
              `}</style>
             <div className="trabajos-container grupo-componente">
                 {!grupoSeleccionado ? (

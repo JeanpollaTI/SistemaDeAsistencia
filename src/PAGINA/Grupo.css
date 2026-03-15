@@ -597,6 +597,7 @@ body {
   justify-content: center;
   gap: 2rem;
   margin-bottom: 2rem;
+  flex-wrap: wrap; /* NEW: Allow wrapping on mobile */
 }
 
 .grupo-componente .asistencia-body {

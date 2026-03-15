@@ -125,6 +125,7 @@
 .horario-table-container {
     width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border-radius: 8px;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
     margin-bottom: 20px;

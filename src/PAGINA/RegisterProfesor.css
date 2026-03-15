@@ -226,6 +226,16 @@ input[type="file"] {
 }
 
 /* Responsive */
+@media screen and (max-width: 768px) {
+  .register-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .register-form {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media screen and (max-width: 480px) {
   .register-container {
     padding: 2rem 1.5rem;

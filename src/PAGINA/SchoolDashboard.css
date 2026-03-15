@@ -213,3 +213,39 @@ input[type="color"]::-webkit-color-swatch {
         opacity: 1;
     }
 }
+
+/* Responsividad para Móviles */
+@media (max-width: 768px) {
+    .school-dashboard {
+        padding: 1rem;
+        margin-top: 60px;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 2rem;
+    }
+    
+    .form-section {
+        padding: 1.5rem;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .subscription-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .btn-manage-sub {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .btn-save {
+        width: 100%;
+    }
+}
