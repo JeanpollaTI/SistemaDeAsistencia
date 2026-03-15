@@ -90,8 +90,18 @@
 .input-group input:focus {
     outline: none;
     border-color: #00CBCB;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.6) !important; /* Force dark background when focused */
     box-shadow: 0 0 15px rgba(0, 203, 203, 0.2);
+}
+
+/* Fix for Chrome/Edge Autofill masking the background with white */
+.input-group input:-webkit-autofill,
+.input-group input:-webkit-autofill:hover, 
+.input-group input:-webkit-autofill:focus, 
+.input-group input:-webkit-autofill:active{
+    -webkit-box-shadow: 0 0 0 30px #111 inset !important;
+    -webkit-text-fill-color: #ffffff !important;
+    transition: background-color 5000s ease-in-out 0s;
 }
 
 .portal-btn {
