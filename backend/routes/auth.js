@@ -191,7 +191,7 @@ router.put("/admin/change-user-password", authMiddleware, isAdmin, async (req, r
 });
 
 
-import { authMiddleware } from "../middlewares/authMiddleware.js";
+
 
 // ----------------- MI PERFIL -----------------
 
