@@ -116,6 +116,17 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: "Contraseña incorrecta" });
 
+    // Verificar dinámicamente si la escuela está expirada al hacer login
+    let subStatus = user.school_id?.subscription?.status || "active";
+    if (user.school_id?.subscription?.nextBilling) {
+        const nextBillingDate = new Date(user.school_id.subscription.nextBilling);
+        if (new Date() > nextBillingDate && subStatus !== "suspended") {
+            subStatus = "suspended";
+            user.school_id.subscription.status = "suspended";
+            await user.school_id.save();
+        }
+    }
+
     const token = jwt.sign(
       { id: user._id, role: user.role, school_id: user.school_id?._id || user.school_id },
       process.env.JWT_SECRET,
@@ -136,7 +147,7 @@ router.post("/login", async (req, res) => {
         foto: user.foto,
         school_id: user.school_id?._id || user.school_id,
         school_name: user.school_id?.name || "",
-        subscriptionStatus: user.school_id?.subscription?.status || "active",
+        subscriptionStatus: subStatus,
         asignaturas: user.asignaturas || [],
         fechaRegistro: formatDate(user.createdAt)
       }

@@ -47,6 +47,7 @@ function Perfil({ user, logout, getProfileImageUrl }) {
       if (diff <= 0) {
         setTimeLeft("0d 00h 00m 00s (Expirado)");
         clearInterval(interval);
+        window.location.reload(); // Forzar actualización para que el backend suspenda la sesión instántaneamente
         return;
       }
 

@@ -32,6 +32,14 @@ export const schoolMiddleware = async (req, res, next) => {
             });
         }
 
+        if (school.subscription?.nextBilling) {
+            const nextBillingDate = new Date(school.subscription.nextBilling);
+            if (new Date() > nextBillingDate && school.subscription.status !== "suspended") {
+                school.subscription.status = "suspended";
+                await school.save(); // Modificamos en DB automáticamente al detectarlo expirado.
+            }
+        }
+
         if (school?.subscription?.status === "suspended") {
             return res.status(403).json({
                 error: "Servicio Suspendido",
