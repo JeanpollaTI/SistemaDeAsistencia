@@ -1,7 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { AuthContext } from './AuthContext';
 import { FaLock, FaExclamationTriangle, FaTimes, FaCreditCard, FaCheckCircle, FaSignOutAlt } from 'react-icons/fa';
-import PremiumCardForm from '../COMPONENTE/PremiumCardForm';
 import axios from 'axios';
 import './SuspendedScreen.css';
 
@@ -10,21 +9,10 @@ const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 const SuspendedScreen = () => {
     const { user, logout, updateUser } = useContext(AuthContext);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [cardData, setCardData] = useState(null);
     const [loadingPay, setLoadingPay] = useState(false);
     const [paymentError, setPaymentError] = useState("");
 
     const handleRenewal = async () => {
-        if (!cardData || !cardData.cardNumber || !cardData.cardMonth || !cardData.cardYear || !cardData.cardCvv) {
-            setPaymentError("Por favor completa todos los datos de la tarjeta.");
-            return;
-        }
-
-        if (cardData.cardNumber.replace(/\s/g, '').length < 13) {
-            setPaymentError("El número de tarjeta no es válido.");
-            return;
-        }
-
         const token = localStorage.getItem("token");
         if (!token || !user?.school_id) return;
 
@@ -32,22 +20,19 @@ const SuspendedScreen = () => {
             setLoadingPay(true);
             setPaymentError("");
 
-            const res = await axios.post(`${API_URL}/api/stripe/process-renewal`,
-                { schoolId: user.school_id, cardData },
+            const res = await axios.post(`${API_URL}/api/stripe/create-checkout-session`,
+                { schoolId: user.school_id },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            if (res.data.success) {
-                alert("¡Renovación exitosa! La institución ha recuperado el acceso.");
-                setShowPaymentModal(false);
-                // Force reload to bypass the suspension screen by updating the context
-                const updatedUser = { ...user, subscriptionStatus: 'active' };
-                updateUser(updatedUser);
-                window.location.href = "/";
+            if (res.data.url) {
+                window.location.href = res.data.url;
+            } else {
+                throw new Error("No se recibió la URL de pago de Stripe.");
             }
         } catch (err) {
-            console.error("Error al procesar renovación:", err);
-            const errorMsg = err.response?.data?.error || err.response?.data?.msg || err.message || "Error al procesar el pago.";
+            console.error("Error al iniciar renovación:", err);
+            const errorMsg = err.response?.data?.error || err.response?.data?.msg || err.message || "Error al iniciar el proceso de pago.";
             setPaymentError(errorMsg);
         } finally {
             setLoadingPay(false);
@@ -133,11 +118,13 @@ const SuspendedScreen = () => {
                                 </div>
                             </div>
 
-                            <div className="renewal-form-panel" style={{ width: '100%', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '25px' }}>
-                                <PremiumCardForm onCardChange={(data) => setCardData(data)} />
+                            <div className="renewal-form-panel" style={{ width: '100%', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '25px', textAlign: 'center' }}>
+                                <p style={{ color: 'white', fontSize: '1.05rem', marginBottom: '30px' }}>
+                                    Para su seguridad y el cumplimiento de normativas de pagos, será redirigido a la pasarela oficial y segura de Stripe para completar la suscripción.
+                                </p>
 
                                 {paymentError && (
-                                    <div className="error-message" style={{ background: 'rgba(255, 0, 0, 0.1)', border: '1px solid #ff4d4d', color: '#ff4d4d', padding: '12px', borderRadius: '10px', marginTop: '20px', fontSize: '0.9rem' }}>
+                                    <div className="error-message" style={{ background: 'rgba(255, 0, 0, 0.1)', border: '1px solid #ff4d4d', color: '#ff4d4d', padding: '12px', borderRadius: '10px', marginTop: '20px', fontSize: '0.9rem', marginBottom: '20px' }}>
                                         <FaExclamationTriangle /> {paymentError}
                                     </div>
                                 )}
