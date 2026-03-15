@@ -33,33 +33,13 @@ const getCloudinaryPublicId = (url) => {
   return `perfiles/${publicId}`;
 };
 
-// ----------------- MIDDLEWARE JWT -----------------
-const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ msg: "No hay token" });
-  try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
-    next();
-  } catch (err) {
-    if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({ msg: "Token expirado", error: err.name });
-    }
-    return res.status(401).json({ msg: "Token inválido" });
-  }
-};
 
-const verifyAdmin = (req, res, next) => {
-  verifyToken(req, res, () => {
-    if (req.user.role !== "admin")
-      return res.status(403).json({ msg: "No tienes permisos" });
-    next();
-  });
-};
+import { authMiddleware, isAdmin } from "../middlewares/authMiddleware.js";
 
 // ----------------- RUTAS DE AUTENTICACIÓN ------------------
 
 // Register
-router.post("/register", verifyAdmin, uploadFotos.single("foto"), async (req, res) => {
+router.post("/register", authMiddleware, isAdmin, uploadFotos.single("foto"), async (req, res) => {
   try {
     let { nombre, edad, sexo, email, celular, password, role, school_id } = req.body;
 
@@ -159,7 +139,7 @@ router.post("/login", async (req, res) => {
 });
 
 // CAMBIAR CONTRASEÑA (Usuario autenticado cambia su propia contraseña)
-router.put("/change-password", verifyToken, async (req, res) => {
+router.put("/change-password", authMiddleware, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     const userId = req.user.id;
@@ -183,7 +163,7 @@ router.put("/change-password", verifyToken, async (req, res) => {
 
 // ADMIN: CAMBIAR CONTRASEÑA DE OTRO USUARIO
 // Se requiere que el admin envíe SU propia contraseña para confirmar la acción
-router.put("/admin/change-user-password", verifyAdmin, async (req, res) => {
+router.put("/admin/change-user-password", authMiddleware, isAdmin, async (req, res) => {
   try {
     const { targetUserId, newPassword, adminPassword } = req.body;
     const adminId = req.user.id;
@@ -211,10 +191,12 @@ router.put("/admin/change-user-password", verifyAdmin, async (req, res) => {
 });
 
 
+import { authMiddleware } from "../middlewares/authMiddleware.js";
+
 // ----------------- MI PERFIL -----------------
 
 // GET: Obtener perfil propio
-router.get("/mi-perfil", verifyToken, async (req, res) => {
+router.get("/mi-perfil", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password").populate('school_id');
     if (!user) {
@@ -232,7 +214,7 @@ router.get("/mi-perfil", verifyToken, async (req, res) => {
 });
 
 // ----------------- EDITAR PERFIL (usuarios logueados) CON CLOUDINARY -----------------
-router.put("/editar-perfil", verifyToken, uploadFotos.single("foto"), async (req, res) => {
+router.put("/editar-perfil", authMiddleware, uploadFotos.single("foto"), async (req, res) => {
   try {
     const userId = req.user.id;
     const { nombre, edad, email, sexo, celular } = req.body;
@@ -295,4 +277,4 @@ router.put("/editar-perfil", verifyToken, uploadFotos.single("foto"), async (req
   }
 });
 
-export { router as authRouter, verifyToken, verifyAdmin };
+export { router as authRouter };
