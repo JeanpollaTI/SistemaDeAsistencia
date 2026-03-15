@@ -21,6 +21,7 @@ import Calificaciones from "./PAGINA/Calificaciones";
 import LandingPage from "./PAGINA/LandingPage";
 import RegisterSchool from "./PAGINA/RegisterSchool";
 import ParentPortal from "./PAGINA/ParentPortal";
+import SuspendedScreen from "./PAGINA/SuspendedScreen";
 import {
     FaGraduationCap, FaMoon, FaSun, FaSignOutAlt, FaUserCircle,
     FaThLarge, FaUsers, FaCalendarAlt, FaChartBar, FaTasks,
@@ -123,6 +124,16 @@ function App() {
                             </button>
                         </li>
                     </ul>
+                </div>
+            );
+        }
+
+        if (user?.subscriptionStatus === "suspended") {
+            return (
+                <div className="nav-right-container">
+                    <button className="nav-link-button" onClick={() => logout()} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ff6b6b' }}>
+                        <FaSignOutAlt /> SALIR
+                    </button>
                 </div>
             );
         }
@@ -234,7 +245,13 @@ function App() {
             </header>
 
             <main>
-                <Routes>
+                {user?.subscriptionStatus === "suspended" ? (
+                    <Routes>
+                        <Route path="/suspendido" element={<SuspendedScreen />} />
+                        <Route path="*" element={<Navigate to="/suspendido" />} />
+                    </Routes>
+                ) : (
+                    <Routes>
                     <Route path="/" element={user ? <Home user={user} /> : <LandingPage />} />
                     <Route path="/register-school" element={user ? <Navigate to="/" /> : <RegisterSchool />} />
                     <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
@@ -249,7 +266,8 @@ function App() {
                     <Route path="/register-profesor" element={<PrivateRoute requiredRole="admin"><RegisterProfesor user={user} /></PrivateRoute>} />
                     <Route path="/calificaciones" element={<PrivateRoute requiredRole="admin"><Calificaciones user={user} /></PrivateRoute>} />
                     <Route path="*" element={<Navigate to="/" />} />
-                </Routes>
+                    </Routes>
+                )}
             </main>
         </div>
     );

@@ -17,5 +17,25 @@ const apiClient = axios.create({
     },
 });
 
+apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 403 && error.response.data?.subscriptionStatus === 'suspended') {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                try {
+                    const userObj = JSON.parse(userStr);
+                    userObj.subscriptionStatus = 'suspended';
+                    localStorage.setItem('user', JSON.stringify(userObj));
+                } catch(e) {}
+            }
+            if (window.location.pathname !== '/suspendido') {
+                window.location.href = '/suspendido';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default apiClient;
    

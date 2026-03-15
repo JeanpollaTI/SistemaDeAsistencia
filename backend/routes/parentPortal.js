@@ -35,8 +35,14 @@ router.post("/login", async (req, res) => {
             (a.emailPadre === loginId || a.telefonoPadre === loginId) && a.matricula === matricula
         );
 
-        // Obtener nombre de la escuela
-        const school = await School.findById(grupo.school_id).select('name');
+        // Obtener nombre de la escuela y suscripción
+        const school = await School.findById(grupo.school_id).select('name subscription');
+
+        if (school?.subscription?.status === 'suspended') {
+            return res.status(403).json({ 
+                msg: "El acceso a la plataforma para esta institución se encuentra temporalmente suspendido por falta de pago. Por favor, contacte a la administración de la escuela." 
+            });
+        }
 
         // Generar un token especial para el padre
         const token = jwt.sign(
@@ -90,8 +96,14 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
         const gId = new mongoose.Types.ObjectId(grupo_id);
         const sId = new mongoose.Types.ObjectId(school_id);
 
-        // Fetch School name
-        const school = await School.findById(sId).select('name');
+        // Fetch School name and subscription
+        const school = await School.findById(sId).select('name subscription');
+
+        if (school?.subscription?.status === 'suspended') {
+            return res.status(403).json({ 
+                msg: "El acceso a la plataforma para esta institución se encuentra temporalmente suspendido por falta de pago." 
+            });
+        }
 
         // 1. Obtener calificaciones
         const calificacionesRaw = await Calificacion.find({

@@ -32,15 +32,13 @@ export const schoolMiddleware = async (req, res, next) => {
             });
         }
 
-        /* 
-        if (school.subscription.status === "suspended") {
+        if (school?.subscription?.status === "suspended") {
             return res.status(403).json({
                 error: "Servicio Suspendido",
                 msg: "El acceso ha sido bloqueado por falta de pago. Contacte al administrador de la plataforma.",
                 subscriptionStatus: "suspended"
             });
         }
-        */
 
         // Guardar la información de la escuela en el request para uso posterior
         req.school = school;

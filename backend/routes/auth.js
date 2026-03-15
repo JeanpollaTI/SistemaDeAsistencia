@@ -136,6 +136,7 @@ router.post("/login", async (req, res) => {
         foto: user.foto,
         school_id: user.school_id?._id || user.school_id,
         school_name: user.school_id?.name || "",
+        subscriptionStatus: user.school_id?.subscription?.status || "active",
         asignaturas: user.asignaturas || [],
         fechaRegistro: formatDate(user.createdAt)
       }
@@ -211,6 +212,7 @@ router.get("/mi-perfil", verifyToken, async (req, res) => {
     const userObj = user.toObject();
     userObj.school_name = user.school_id?.name || "";
     userObj.school_id = user.school_id?._id || user.school_id;
+    userObj.subscriptionStatus = user.school_id?.subscription?.status || "active";
     res.json(userObj);
   } catch (err) {
     console.error(err);

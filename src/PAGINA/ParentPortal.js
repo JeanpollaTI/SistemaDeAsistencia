@@ -35,8 +35,10 @@ function ParentPortal() {
             showAlert("Datos académicos actualizados.", "success");
         } catch (err) {
             console.error("Error al obtener datos:", err);
-            showAlert("No se pudieron cargar los datos académicos.", "danger");
-            if (err.response?.status === 401) handleLogout();
+            if (err.response?.status === 401 || err.response?.status === 403) {
+                showAlert(err.response?.data?.msg || "Acceso denegado.", "danger");
+                handleLogout();
+            }
         } finally {
             setLoading(false);
         }
