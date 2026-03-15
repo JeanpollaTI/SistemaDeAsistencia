@@ -11,6 +11,7 @@ const auditSchools = async () => {
         console.log(`Found ${schools.length} schools`);
 
         for (const school of schools) {
+
             if (!school.subscription?.nextBilling) {
                 console.log(`Fixing missing nextBilling for: ${school.name}`);
                 const defaultDate = new Date();
