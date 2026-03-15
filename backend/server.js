@@ -30,6 +30,10 @@ const __dirname = path.dirname(__filename);
 // ----------------- MIDDLEWARE -----------------
 // Habilita Cross-Origin Resource Sharing para permitir peticiones desde el frontend
 app.use(cors());
+
+// Stripe Webhook MUST come before express.json() to maintain raw body for signature verification
+app.use("/api/stripe", stripeRouter);
+
 // Parsea los cuerpos de las peticiones entrantes con formato JSON
 // <-- CAMBIO: Se aumenta el límite para aceptar el PDF en formato base64 -->
 app.use(express.json({ limit: '10mb' }));
@@ -51,7 +55,7 @@ app.use("/calificaciones", calificacionesRouter);
 import schoolRoutes from "./routes/schools.js";
 app.use("/schools", schoolRoutes);
 app.use("/api/register-school", registrationRouter);
-app.use("/api/stripe", stripeRouter);
+// app.use("/api/stripe", stripeRouter); // moved above to handle raw body
 // <-- AÑADIDO: Usar la nueva ruta para el envío de boletas -->
 app.use("/api/materias", materiasRouter);
 app.use("/api/portal-padres", parentPortalRouter);

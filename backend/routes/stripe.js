@@ -21,7 +21,7 @@ const getStripe = () => {
  * @route   POST /api/stripe/create-checkout-session
  * @desc    Crea una sesión de Stripe para una suscripción mensual de $700 MXN
  */
-router.post('/create-checkout-session', authMiddleware, async (req, res) => {
+router.post('/create-checkout-session', express.json(), authMiddleware, async (req, res) => {
     try {
         const { schoolId } = req.body;
         const school = await School.findById(schoolId);
