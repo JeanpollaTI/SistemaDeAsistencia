@@ -4,7 +4,7 @@ import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 
 import Horario from "../models/Horario.js";
-import { verifyToken, verifyAdmin } from "./auth.js";
+import { authMiddleware, isAdmin } from "../middlewares/authMiddleware.js";
 import { schoolMiddleware } from "../middlewares/schoolMiddleware.js";
 
 const router = express.Router();
@@ -42,7 +42,7 @@ const parseJSON = (input) => {
 // ----------------- CRUD Horario ------------------
 
 // Crear o actualizar horario (con imagen opcional)
-router.post("/", verifyAdmin, schoolMiddleware, uploadImage.single("imagen"), async (req, res) => {
+router.post("/", authMiddleware, isAdmin, schoolMiddleware, uploadImage.single("imagen"), async (req, res) => {
   try {
     const { anio, datos, leyenda } = req.body;
     const school_id = req.user.school_id;
@@ -79,7 +79,7 @@ router.post("/", verifyAdmin, schoolMiddleware, uploadImage.single("imagen"), as
   }
 });
 
-router.get("/:anio", verifyToken, schoolMiddleware, async (req, res) => {
+router.get("/:anio", authMiddleware, schoolMiddleware, async (req, res) => {
   try {
     const school_id = req.user.school_id;
     const horario = await Horario.findOne({ anio: req.params.anio, school_id });
@@ -91,7 +91,7 @@ router.get("/:anio", verifyToken, schoolMiddleware, async (req, res) => {
   }
 });
 
-router.get("/", verifyToken, schoolMiddleware, async (req, res) => {
+router.get("/", authMiddleware, schoolMiddleware, async (req, res) => {
   try {
     const school_id = req.user.school_id;
     const horarios = await Horario.find({ school_id }).select("anio imageUrl").sort({ anio: -1 });
@@ -102,7 +102,7 @@ router.get("/", verifyToken, schoolMiddleware, async (req, res) => {
   }
 });
 
-router.delete("/:anio", verifyAdmin, schoolMiddleware, async (req, res) => {
+router.delete("/:anio", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
   try {
     const school_id = req.user.school_id;
     const horario = await Horario.findOne({ anio: req.params.anio, school_id });
