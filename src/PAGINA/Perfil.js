@@ -157,13 +157,21 @@ function Perfil({ user, logout, getProfileImageUrl }) {
               )}
 
               <div className="sub-stat-card" style={{ padding: '15px', borderRadius: '10px', background: '#fff', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
-                <p style={{ fontSize: '0.85rem', color: '#666', margin: 0 }}>Días Restantes</p>
+                <p style={{ fontSize: '0.85rem', color: '#666', margin: 0 }}>Tiempo Restante</p>
                 <p style={{ margin: '5px 0 0 0', fontWeight: 'bold', color: '#00CBCB', fontSize: '1.2rem' }}>
                   {(() => {
                     const diff = new Date(schoolData.subscription?.nextBilling) - new Date();
-                    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-                    return days > 0 ? days : 0;
-                  })()} DÍAS
+                    if (diff <= 0) return "0 DÍAS";
+                    
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const days = Math.floor(hours / 24);
+                    
+                    if (days > 0) {
+                        return `${days} DÍA${days > 1 ? 'S' : ''}`;
+                    } else {
+                        return `${hours} HORA${hours !== 1 ? 'S' : ''}`;
+                    }
+                  })()}
                 </p>
               </div>
             </div>

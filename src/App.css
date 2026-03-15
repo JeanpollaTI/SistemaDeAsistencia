@@ -471,6 +471,7 @@ button {
     gap: 1.2rem;
     position: relative;
     /* Crucial for absolute dropdown positioning */
+    z-index: 3000;
 }
 
 /* Tema Toggle Button estilo User Pill Circle */
