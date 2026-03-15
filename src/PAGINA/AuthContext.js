@@ -27,22 +27,31 @@ export const AuthProvider = ({ children }) => {
 
     // 1. Efecto para verificar la sesión al cargar la aplicación
     useEffect(() => {
-        const checkSession = () => {
-            const storedUser = localStorage.getItem('user');
+        const checkSession = async () => {
             const token = localStorage.getItem('token');
+            const storedUser = localStorage.getItem('user');
             
-            if (storedUser && token) {
+            if (token) {
                 try {
-                    const userData = JSON.parse(storedUser);
-                    setUser(userData);
-                    // CONFIGURACIÓN API: Seteamos el header de autorización para que funcione apiClient
+                    // CONFIGURACIÓN API: Seteamos el header de autorización
                     apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                    
+                    // IMPORTANTE: Refrescar los datos del usuario desde el servidor
+                    // Esto arregla problemas de school_id faltante por datos locales viejos
+                    const res = await apiClient.get('/auth/mi-perfil');
+                    const freshUser = res.data;
+                    
+                    setUser(freshUser);
+                    localStorage.setItem('user', JSON.stringify(freshUser));
                 } catch (error) {
-                    console.error("Error parsing user data or setting API token:", error);
-                    // Sesión inválida, limpiar
-                    localStorage.removeItem('user');
-                    localStorage.removeItem('token');
-                    setUser(null);
+                    console.error("Error refreshing session from server:", error);
+                    // Si el error es 401 (token expirado/inválido), limpiamos
+                    if (error.response?.status === 401) {
+                        logout();
+                    } else if (storedUser) {
+                        // Si es otro error (ej. red), intentamos cargar de local como respaldo
+                        setUser(JSON.parse(storedUser));
+                    }
                 }
             }
             setLoading(false);

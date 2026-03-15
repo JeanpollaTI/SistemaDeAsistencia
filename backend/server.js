@@ -55,8 +55,9 @@ app.use("/api/stripe", stripeRouter);
 // <-- AÑADIDO: Usar la nueva ruta para el envío de boletas -->
 app.use("/api/materias", materiasRouter);
 app.use("/api/portal-padres", parentPortalRouter);
+import { authMiddleware } from "./middlewares/authMiddleware.js";
 // Esta ruta es genérica para /api y aplica el schoolMiddleware, debe ir después de rutas específicas
-app.use("/api", schoolMiddleware, emailRouter);
+app.use("/api", authMiddleware, schoolMiddleware, emailRouter);
 
 // ----------------- MANEJO DE ERRORES -----------------
 // Middleware para rutas no encontradas (404 Fallback)

@@ -1,19 +1,8 @@
 import express from 'express';
 import { sendEmail } from '../utils/sendEmail.js';
-import { authMiddleware } from '../middlewares/authMiddleware.js';
+import { authMiddleware, isAdmin } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
-
-// Middleware para verificar si el usuario es administrador
-// (Redundante si authMiddleware ya lo hace o si usas verifyAdmin importado, 
-//  pero aquí lo definimos localmente si no se importa)
-const verifyAdmin = (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
-        next();
-    } else {
-        return res.status(403).json({ msg: "Acceso denegado. Se requiere rol de administrador." });
-    }
-};
 
 // POST /api/enviar-boleta
 router.post('/enviar-boleta', authMiddleware, async (req, res) => {
@@ -44,7 +33,7 @@ router.post('/enviar-boleta', authMiddleware, async (req, res) => {
 
 
 // POST /api/enviar-horario
-router.post('/enviar-horario', authMiddleware, verifyAdmin, async (req, res) => {
+router.post('/enviar-horario', authMiddleware, isAdmin, async (req, res) => {
     const { to, subject, body, pdfData, fileName } = req.body;
 
     if (!to || !Array.isArray(to) || to.length === 0 || !pdfData) {
