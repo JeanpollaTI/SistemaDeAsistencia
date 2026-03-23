@@ -51,13 +51,13 @@
   width: 90%;
   max-width: 450px;
   text-align: center;
-  border-top: 4px solid #b9972b;
+  border-top: 4px solid #00CBCB;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   animation: fadeIn 0.3s ease-out;
 }
 
 .confirm-modal-content h4 {
-  color: #b9972b;
+  color: #00CBCB;
   font-size: 1.25rem;
   margin-bottom: 1rem;
 }

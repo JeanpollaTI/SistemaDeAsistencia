@@ -40,8 +40,23 @@ function Horario({ user }) {
   const [progress, setProgress] = useState(0);
   const [schoolConfig, setSchoolConfig] = useState(null);
   const [brandingModal, setBrandingModal] = useState({ visible: false, onConfirm: null, title: '' });
+  const [hasChanges, setHasChanges] = useState(false);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
+  const [pendingAnio, setPendingAnio] = useState(null);
   const horarioTableRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  // --- LÓGICA PARA EVITAR SALIR SIN GUARDAR ---
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasChanges]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -132,28 +147,33 @@ function Horario({ user }) {
     });
     setHorario(nuevoHorario);
     setLeyenda({});
+    setHasChanges(true); // 🌟 ALERTA: Horario limpiado
     showAlert("Horario limpiado correctamente ✅", "success");
   }, [isLoading, profesores, showAlert]);
 
   const handleCellChange = useCallback((profesor, asignatura, dia, hora, value) => {
     if (user.role !== "admin" || isLoading) return;
+    setHasChanges(true); // 🌟 ALERTA: Cambio de texto
     setHorario(prev => ({ ...prev, [profesor]: { ...(prev[profesor] || {}), [`${asignatura}-${dia}-${hora}`]: { ...((prev[profesor] || {})[`${asignatura}-${dia}-${hora}`] || { text: "", color: "transparent" }), text: value } } }));
   }, [user.role, isLoading]);
 
   const pintarHora = useCallback((profesor, asignatura, dia, hora) => {
     if (user.role !== "admin" || isLoading || (!mostrarPaleta && !modoBorrador)) return;
     const nuevoColor = modoBorrador ? "transparent" : colorSeleccionado;
+    setHasChanges(true); // 🌟 ALERTA: Cambio de color
     setHorario(prev => ({ ...prev, [profesor]: { ...(prev[profesor] || {}), [`${asignatura}-${dia}-${hora}`]: { ...((prev[profesor] || {})[`${asignatura}-${dia}-${hora}`] || { text: "", color: "transparent" }), color: nuevoColor } } }));
     if (!modoBorrador && !leyenda[colorSeleccionado]) { setLeyenda(prev => ({ ...prev, [colorSeleccionado]: "" })); }
   }, [user.role, isLoading, mostrarPaleta, modoBorrador, colorSeleccionado, leyenda]);
 
   const handleLeyendaChange = useCallback((color, value) => {
     if (isLoading) return;
+    setHasChanges(true); // 🌟 ALERTA: Cambio en leyenda
     setLeyenda(prev => ({ ...prev, [color]: value }));
   }, [isLoading]);
 
   const eliminarLeyenda = useCallback(color => {
     if (isLoading) return;
+    setHasChanges(true); // 🌟 ALERTA: Eliminación en leyenda
     setLeyenda(prev => { const copia = { ...prev }; delete copia[color]; return copia; });
     showAlert("Color eliminado de la leyenda", "info");
   }, [isLoading, showAlert]);
@@ -345,6 +365,7 @@ function Horario({ user }) {
         onUploadProgress: (e) => setProgress(Math.min(90, Math.round((e.loaded * 100) / (e.total || 1))))
       });
       setProgress(100);
+      setHasChanges(false);
       showAlert("Horario guardado correctamente ✅", "success");
     } catch (err) {
       console.error(err);
@@ -385,13 +406,42 @@ function Horario({ user }) {
   return (
     <div className="horario-page">
       {isLoading && <LoadingOverlay message={loadingMessage} />}
+      
+      <ConfirmacionModal 
+        isOpen={showUnsavedWarning} 
+        onClose={() => {
+          setShowUnsavedWarning(false);
+          setPendingAnio(null);
+        }} 
+        onConfirm={() => {
+          setHasChanges(false);
+          setShowUnsavedWarning(false);
+          if (pendingAnio) setAnio(pendingAnio);
+          setPendingAnio(null);
+        }} 
+        mensaje="Tienes cambios sin guardar. ¿Estás seguro de que deseas salir o cambiar de ciclo?" 
+      />
 
       {/* Estructura Header del código nuevo */}
       <header className="horario-header">
         <h1>Gestión de Horarios</h1>
         <div className="titulo-anio">
           {user.role === "admin" ? (
-            <input type="text" value={anio} onChange={e => setAnio(e.target.value)} className="anio-input" disabled={isLoading} />
+            <input 
+              type="text" 
+              value={anio} 
+              onChange={e => {
+                const val = e.target.value;
+                if (hasChanges) {
+                  setPendingAnio(val);
+                  setShowUnsavedWarning(true);
+                } else {
+                  setAnio(val);
+                }
+              }} 
+              className="anio-input" 
+              disabled={isLoading} 
+            />
           ) : <h2>Ciclo Escolar: {anio}</h2>}
         </div>
       </header>

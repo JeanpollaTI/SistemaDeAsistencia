@@ -145,6 +145,13 @@ body {
   color: var(--main-color);
 }
 
+.grupo-componente .header-actions {
+  display: flex;
+  flex-direction: column; /* Stack vertically as per user preference but with spacing */
+  align-items: flex-end;
+  gap: 12px;
+}
+
 /* ======================================= */
 /* BOTONES                                 */
 /* ======================================= */
