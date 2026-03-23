@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
-import { FaTrash, FaPencilAlt, FaPlus, FaTimes, FaCheck } from 'react-icons/fa';
+import { FaTrash, FaPencilAlt, FaPlus, FaTimes, FaCheck, FaQuestionCircle } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useNotification } from '../COMPONENTE/NotificationContext';
@@ -9,6 +9,7 @@ import LoadingOverlay from '../COMPONENTE/LoadingOverlay';
 import './Grupo.css';
 import ConfirmacionModal from './ConfirmacionModal';
 import logoImage from './Logoescuela.png'; // Asegúrate que esta ruta sea correcta
+import importFormatImg from './formato.png';
 import BrandingModal from '../COMPONENTE/BrandingModal';
 
 // --- URL de la API desde variables de entorno para Vercel ---
@@ -43,8 +44,22 @@ function Grupo({ user }) {
   const [asignaturaActual, setAsignaturaActual] = useState(null); // Para saber qué asignatura se está evaluando
   const [schoolConfig, setSchoolConfig] = useState(null);
   const [brandingModal, setBrandingModal] = useState({ visible: false, onConfirm: null, title: '' });
+  const [showFormatGuide, setShowFormatGuide] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
 
   // --- LÓGICA DE CARGA DE DATOS ---
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasChanges]);
+
   useEffect(() => {
     if (!user) { setLoading(false); setError("Información de usuario no disponible."); return; }
 
@@ -223,10 +238,17 @@ function Grupo({ user }) {
     } else if (tipo === 'importar') {
       setModalVisible('importar');
     }
+    setHasChanges(false);
   };
 
-  const cerrarModal = () => {
+  const cerrarModal = (force = false) => {
+    if (hasChanges && !force) {
+      setShowUnsavedWarning(true);
+      return;
+    }
     setModalVisible(null);
+    setShowUnsavedWarning(false);
+    setHasChanges(false);
     setGrupoSeleccionado(null);
     setNuevoGrupo({ nombre: '', asesor: '', alumnos: [] });
     setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '' });
@@ -249,6 +271,7 @@ function Grupo({ user }) {
     const nuevoAlumno = { _id: alumnoId, ...alumnoInput };
     setNuevoGrupo(prev => ({ ...prev, alumnos: [...prev.alumnos, nuevoAlumno].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)) }));
     setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '' });
+    setHasChanges(true);
   };
 
   const handleUpdateAlumno = () => {
@@ -259,6 +282,7 @@ function Grupo({ user }) {
     }));
     setModalVisible('gestionarGrupo');
     setEditingAlumno(null);
+    setHasChanges(true);
     showAlert("Alumno actualizado correctamente.");
   };
 
@@ -270,6 +294,7 @@ function Grupo({ user }) {
     if (!alumnoParaEliminar) return;
     setNuevoGrupo(prev => ({ ...prev, alumnos: prev.alumnos.filter(a => a._id !== alumnoParaEliminar._id) }));
     setAlumnoParaEliminar(null);
+    setHasChanges(true);
     showAlert("Alumno eliminado de la lista.");
   };
 
@@ -279,7 +304,8 @@ function Grupo({ user }) {
       const response = await axios.post(`${API_URL}/grupos`, nuevoGrupo, getAxiosConfig());
       setGrupos(prev => [...prev, response.data]);
       showAlert(`Grupo "${nuevoGrupo.nombre}" guardado.`);
-      cerrarModal();
+      setHasChanges(false);
+      cerrarModal(true);
     } catch (error) {
       console.error("Error al guardar grupo:", error);
       showAlert(error.response?.data?.error || error.message || 'Error al guardar.', 'error');
@@ -292,7 +318,8 @@ function Grupo({ user }) {
       const response = await axios.put(`${API_URL}/grupos/${grupoSeleccionado._id}`, nuevoGrupo, getAxiosConfig());
       setGrupos(prev => prev.map(g => g._id === grupoSeleccionado._id ? response.data : g));
       showAlert(`Grupo "${nuevoGrupo.nombre}" actualizado.`);
-      cerrarModal();
+      setHasChanges(false);
+      cerrarModal(true);
     } catch (error) {
       console.error("Error al actualizar grupo:", error);
       showAlert(error.response?.data?.error || error.message || 'Error al actualizar.', 'error');
@@ -368,7 +395,7 @@ function Grupo({ user }) {
     const estadoActual = asistencia[key]?.estado || '';
     const siguienteEstadoIndex = (estados.indexOf(estadoActual) + 1) % estados.length;
     const nuevoEstado = estados[siguienteEstadoIndex];
-
+    setHasChanges(true);
     setAsistencia(prev => {
       const newState = { ...prev };
       if (nuevoEstado) {
@@ -398,8 +425,9 @@ function Grupo({ user }) {
         diasPorBimestre
       }, getAxiosConfig());
 
+      setHasChanges(false);
       showAlert("Asistencia guardada exitosamente.");
-      cerrarModal();
+      cerrarModal(true);
     } catch (error) {
       showAlert("Error al guardar la asistencia.", 'error');
     }
@@ -776,6 +804,7 @@ function Grupo({ user }) {
       )}
       <ConfirmacionModal isOpen={!!grupoParaEliminar} onClose={() => setGrupoParaEliminar(null)} onConfirm={confirmarEliminacionGrupo} mensaje={`¿Seguro que deseas eliminar el grupo "${grupoParaEliminar?.nombre}"?`} />
       <ConfirmacionModal isOpen={!!alumnoParaEliminar} onClose={() => setAlumnoParaEliminar(null)} onConfirm={confirmarEliminacionAlumno} mensaje={`¿Seguro que deseas eliminar al alumno "${alumnoParaEliminar?.nombre}" de la lista?`} />
+      <ConfirmacionModal isOpen={showUnsavedWarning} onClose={() => setShowUnsavedWarning(false)} onConfirm={() => cerrarModal(true)} mensaje="Tienes cambios sin guardar. ¿Estás seguro de que deseas salir?" />
 
       <div className="page-container">
         {user.role === 'admin' && (
@@ -784,7 +813,14 @@ function Grupo({ user }) {
               <h1>Gestión de Grupos</h1>
               <div className="header-actions">
                 <button className="btn btn-primary" onClick={() => abrirModal('gestionarGrupo')}>Crear Grupo</button>
-                <button className="btn btn-secondary" onClick={() => abrirModal('importar')}>Importar Alumnos XLS</button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button className="btn btn-secondary" onClick={() => abrirModal('importar')}>Importar Alumnos XLS</button>
+                  <FaQuestionCircle
+                    style={{ cursor: 'pointer', color: '#00CBCB', fontSize: '1.4rem' }}
+                    onClick={() => setShowFormatGuide(true)}
+                    title="Ver formato sugerido"
+                  />
+                </div>
               </div>
             </header>
             <h3 className="subtitulo">TODOS LOS GRUPOS EXISTENTES</h3>
@@ -1135,7 +1171,19 @@ function Grupo({ user }) {
         )}
         {modalVisible === 'importar' && (
           <div className="modal-backdrop">
-            <div className="modal-content modal-sm">
+            <div className="modal-content modal-sm" style={{ position: 'relative' }}>
+              <FaQuestionCircle
+                style={{
+                  position: 'absolute',
+                  top: '15px',
+                  right: '15px',
+                  cursor: 'pointer',
+                  color: '#00CBCB',
+                  fontSize: '1.2rem'
+                }}
+                onClick={() => setShowFormatGuide(true)}
+                title="Ver formato sugerido"
+              />
               <h2>Importar Grupo desde XLS</h2>
               <div className="import-form">
                 <input
@@ -1157,6 +1205,30 @@ function Grupo({ user }) {
               <div className="modal-actions">
                 <button className="btn btn-primary" onClick={handleImportarAlumnos}>Importar y Crear Grupo</button>
                 <button className="btn btn-cancel" onClick={cerrarModal}>Cancelar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showFormatGuide && (
+          <div className="modal-backdrop" onClick={() => setShowFormatGuide(false)} style={{ zIndex: 4000 }}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px', textAlign: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h2 style={{ margin: 0 }}>Formato Sugerido para Importar</h2>
+                <FaTimes style={{ cursor: 'pointer', fontSize: '1.5rem' }} onClick={() => setShowFormatGuide(false)} />
+              </div>
+              <p style={{ color: '#666', marginBottom: '20px' }}>
+                Asegúrate de que tu archivo Excel tenga las siguientes columnas en este orden exacto:
+                <br />
+                <strong>N°, Nombre(s), Apellido Paterno, Apellido Materno</strong>
+              </p>
+              <img
+                src={importFormatImg}
+                alt="Formato sugerido"
+                style={{ width: '100%', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
+              />
+              <div className="modal-actions" style={{ marginTop: '20px' }}>
+                <button className="btn btn-primary" onClick={() => setShowFormatGuide(false)}>Entendido</button>
               </div>
             </div>
           </div>

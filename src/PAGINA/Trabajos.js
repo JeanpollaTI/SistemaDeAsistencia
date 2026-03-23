@@ -1380,6 +1380,8 @@ const PanelCalificaciones = ({
     const [criterioSeleccionadoGlobal, setCriterioSeleccionadoGlobal] = useState(null);
     // 🌟 ESTADO AGREGADO: Zoom (Escala)
     const [zoomLevel, setZoomLevel] = useState(1);
+    const [hasChanges, setHasChanges] = useState(false);
+    const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
 
     // 🌟 ESTADO AGREGADO: Historial para Deshacer/Rehacer (Undo/Redo)
     const [history, setHistory] = useState({ past: [], future: [] });
@@ -1392,6 +1394,26 @@ const PanelCalificaciones = ({
             a.apellidoPaterno.localeCompare(b.apellidoPaterno, 'es', { sensitivity: 'base' })
         );
     }, [grupo]);
+  
+    // --- LÓGICA PARA EVITAR SALIR SIN GUARDAR ---
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (hasChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [hasChanges]);
+
+    const handleConfirmarVolver = () => {
+        if (hasChanges) {
+            setShowUnsavedWarning(true);
+        } else {
+            onVolver();
+        }
+    };
 
     // 🌟 FUNCIONES UNDO/REDO
     const saveToHistory = () => {
@@ -1447,6 +1469,7 @@ const PanelCalificaciones = ({
 
         try {
             await axios.post(`${API_URL}/calificaciones`, payload, config);
+            setHasChanges(false);
             setNotificacion({ mensaje: 'Criterios actualizados y guardados correctamente.', tipo: 'exito' });
         } catch (error) {
             console.error("Error auto-guardando criterios:", error);
@@ -1544,7 +1567,8 @@ const PanelCalificaciones = ({
 
         const nuevoNombre = tareaNombre.trim();
         const alumnosIds = grupo.alumnos.map(a => a._id);
-
+        
+        setHasChanges(true);
         saveToHistory(); // 🌟 Guardar antes de renombrar tarea
 
         setCalificaciones(prev => {
@@ -1583,6 +1607,7 @@ const PanelCalificaciones = ({
 
     // 🌟 MANEJO DE OBSERVACIONES (TECNOLOGIA)
     const handleObservacionChange = (alumnoId, bimestre, val) => {
+        setHasChanges(true);
         setCalificaciones(prev => ({
             ...prev,
             [alumnoId]: {
@@ -1598,7 +1623,8 @@ const PanelCalificaciones = ({
     // 🌟 FUNCIÓN NUEVA: Eliminar nombre y calificaciones de una columna
     const handleEliminarTarea = (criterioNombre, tareaIndex) => {
         const alumnosIds = grupo.alumnos.map(a => a._id);
-
+        
+        setHasChanges(true);
         saveToHistory(); // 🌟 Guardar antes de eliminar tarea
 
         setCalificaciones(prev => {
@@ -1642,7 +1668,8 @@ const PanelCalificaciones = ({
     const handleBulkCalificacionUpdate = (updates) => {
         // updates: [{ alumnoId, bimestre, criterioNombre, tareaIndex, valor }]
         if (!updates || updates.length === 0) return;
-
+        
+        setHasChanges(true);
         saveToHistory(); // 🌟 Guardar estado actual antes de pegar
 
         setCalificaciones(prev => {
@@ -1704,7 +1731,8 @@ const PanelCalificaciones = ({
             fecha: datosAnteriores.fecha || new Date().toISOString(),
             nombre: datosAnteriores.nombre // Mantenemos el nombre si ya fue asignado
         };
-
+  
+        setHasChanges(true);
         saveToHistory(); // 🌟 Guardar para deshacer cambios manuales
 
         setCalificaciones(prev => ({
@@ -1736,6 +1764,7 @@ const PanelCalificaciones = ({
         };
         try {
             await axios.post(`${API_URL}/calificaciones`, payload, config);
+            setHasChanges(false);
             setNotificacion({ mensaje: '¡Calificaciones guardadas con éxito!', tipo: 'exito' });
         } catch (error) {
             setNotificacion({ mensaje: 'Error al guardar las calificaciones.', tipo: 'error' });
@@ -1993,6 +2022,19 @@ const PanelCalificaciones = ({
                 mensaje={confirmModal.message}
                 confirmText="Sí, Eliminar Todo"
             />
+  
+            <ConfirmacionModal
+                isOpen={showUnsavedWarning}
+                onClose={() => setShowUnsavedWarning(false)}
+                onConfirm={() => {
+                    setHasChanges(false);
+                    setShowUnsavedWarning(false);
+                    onVolver();
+                }}
+                mensaje="Tienes cambios sin guardar. ¿Estás seguro de que deseas salir?"
+                confirmText="Salir sin guardar"
+                cancelText="Seguir calificando"
+            />
 
 
 
@@ -2037,7 +2079,7 @@ const PanelCalificaciones = ({
 
                             {/* Botón para abrir el modal de criterios */}
                             <button className="btn" onClick={() => setModalCriterios(true)}>Criterios</button>
-                            <button className="btn btn-cancel" onClick={onVolver} style={{ marginLeft: '10px' }}>Cerrar</button>
+                            <button className="btn btn-cancel" onClick={handleConfirmarVolver} style={{ marginLeft: '10px' }}>Cerrar</button>
                         </div>
                     </header>
 
