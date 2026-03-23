@@ -3,6 +3,7 @@ import axios from "axios";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useNotification } from "../COMPONENTE/NotificationContext";
+import ConfirmacionModal from './ConfirmacionModal';
 import LoadingOverlay from "../COMPONENTE/LoadingOverlay";
 import "./Horario.css";
 
