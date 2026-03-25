@@ -155,6 +155,8 @@ function Perfil({ user, logout, getProfileImageUrl }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '5px' }}>
                   {schoolData.subscription?.status === 'active' ? (
                     <><FaCheckCircle style={{ color: '#27ae60' }} /> <span style={{ color: '#27ae60', fontWeight: 'bold' }}>ACTIVO</span></>
+                  ) : schoolData.subscription?.status === 'trial' ? (
+                    <><FaCheckCircle style={{ color: '#00CBCB' }} /> <span style={{ color: '#00CBCB', fontWeight: 'bold' }}>PRUEBA GRATUITA</span></>
                   ) : (
                     <><FaExclamationTriangle style={{ color: '#e74c3c' }} /> <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>SUSPENDIDO</span></>
                   )}
@@ -163,7 +165,9 @@ function Perfil({ user, logout, getProfileImageUrl }) {
 
               {schoolData.subscription?.nextBilling && (
                 <div className="sub-stat-card" style={{ padding: '15px', borderRadius: '10px', background: '#fff', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
-                  <p style={{ fontSize: '0.85rem', color: '#666', margin: 0 }}>Próximo Pago</p>
+                  <p style={{ fontSize: '0.85rem', color: '#666', margin: 0 }}>
+                    {schoolData.subscription?.status === 'trial' ? 'Fin de Prueba' : 'Próximo Pago'}
+                  </p>
                   <p style={{ margin: '5px 0 0 0', fontWeight: 'bold', color: '#2c3e50' }}>
                     {new Date(schoolData.subscription.nextBilling).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
                   </p>
@@ -203,6 +207,15 @@ function Perfil({ user, logout, getProfileImageUrl }) {
               </p>
             </div>
           </div>
+        )}
+
+        {user?.role === 'admin' && schoolData?.subscription?.status === 'trial' && (
+            <div style={{ marginTop: '20px', padding: '15px', background: 'rgba(0,203,203,0.1)', borderRadius: '10px', textAlign: 'center', border: '1px solid #00CBCB' }}>
+                <p style={{ color: '#00CBCB', fontSize: '1rem', fontWeight: 'bold' }}>
+                    🎁 ¡REGALO DE BIENVENIDA! <br/>
+                    Obtén 3 días de PRUEBA GRATUITA sin compromiso.
+                </p>
+            </div>
         )}
 
         {showPaymentModal && (

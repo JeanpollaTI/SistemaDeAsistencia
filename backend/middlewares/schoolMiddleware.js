@@ -43,7 +43,7 @@ export const schoolMiddleware = async (req, res, next) => {
         if (school?.subscription?.status === "suspended") {
             return res.status(403).json({
                 error: "Servicio Suspendido",
-                msg: "El acceso ha sido bloqueado por falta de pago. Contacte al administrador de la plataforma.",
+                msg: "La prueba gratuita ha terminado o el acceso ha sido bloqueado por falta de pago. Contacte al administrador de la plataforma.",
                 subscriptionStatus: "suspended"
             });
         }

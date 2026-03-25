@@ -17,6 +17,16 @@ function Home({ user }) {
   const [schoolData, setSchoolData] = useState(null);
   const [selectedProfesor, setSelectedProfesor] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const location = new URLSearchParams(window.location.search);
+  const registered = location.get("registered");
+
+  React.useEffect(() => {
+      if (registered === "trial") {
+          mostrarAlerta("¡Registro exitoso! Tu prueba gratuita de 3 días ha comenzado. Inicia sesión para empezar.", "success");
+      }
+  }, [registered]);
   const [asignaturasSelect, setAsignaturasSelect] = useState([]);
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
   const [alerta, setAlerta] = useState(null); // Nuevo estado para alertas
@@ -349,11 +359,16 @@ function Home({ user }) {
       {alerta && <div className={`alerta-fixed ${alerta.tipo}`}>{alerta.mensaje}</div>}
 
       <section className="home section" id="home">
-        {/* Alerta de Suscripción Temporal */}
+        {/* Alerta de Suscripción Temporal / Prueba */}
         {showSubscriptionAlert && schoolData?.subscription?.nextBilling && (
-          <div className="subscription-warning-banner fade-out-anim">
+          <div className={`subscription-warning-banner fade-out-anim ${schoolData.subscription.status === 'trial' ? 'trial-banner' : ''}`} 
+               style={schoolData.subscription.status === 'trial' ? { background: 'linear-gradient(135deg, #00CBCB, #007A7A)', border: '1px solid rgba(255,255,255,0.3)' } : {}}>
             <FaCalendarAlt />
-            <span>Tu suscripción de Scholaris vence en <b>{Math.ceil((new Date(schoolData.subscription.nextBilling) - new Date()) / (1000 * 60 * 60 * 24))} días</b> ({new Date(schoolData.subscription.nextBilling).toLocaleDateString()}).</span>
+            {schoolData.subscription.status === 'trial' ? (
+              <span>🎁 ¡Estás en tu <b>PRUEBA GRATUITA!</b> Te quedan <b>{Math.ceil((new Date(schoolData.subscription.nextBilling) - new Date()) / (1000 * 60 * 60 * 24))} días</b> de acceso total.</span>
+            ) : (
+              <span>Tu suscripción de Scholaris vence en <b>{Math.ceil((new Date(schoolData.subscription.nextBilling) - new Date()) / (1000 * 60 * 60 * 24))} días</b> ({new Date(schoolData.subscription.nextBilling).toLocaleDateString()}).</span>
+            )}
           </div>
         )}
 

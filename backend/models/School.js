@@ -26,12 +26,15 @@ const schoolSchema = new mongoose.Schema(
         subscription: {
             status: {
                 type: String,
-                enum: ["active", "suspended"],
-                default: "active",
+                enum: ["active", "suspended", "trial"],
+                default: "trial",
             },
             stripeId: { type: String, default: "" },
             currentPeriodEnd: { type: Date },
-            nextBilling: { type: Date },
+            nextBilling: {
+                type: Date,
+                default: () => new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) // 3 días de prueba
+            },
         },
     },
     {

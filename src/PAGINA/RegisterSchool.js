@@ -64,11 +64,12 @@ const RegisterSchool = () => {
                 throw new Error(detailedError);
             }
 
-            // Redirigir a Stripe Checkout
+            // Redirigir a Stripe Checkout o a Login
             if (data.url) {
                 window.location.href = data.url;
             } else {
-                throw new Error("No se recibió la URL de pago.");
+                // Modo Prueba: Redirigir a login con mensaje
+                navigate('/login?registered=trial');
             }
         } catch (err) {
             setError(err.message);
@@ -175,8 +176,9 @@ const RegisterSchool = () => {
                                         </p>
                                     </div>
                                     <div style={{ marginTop: '20px', padding: '15px', background: 'rgba(255,255,255,0.1)', borderRadius: '10px', textAlign: 'center' }}>
-                                        <p style={{ color: 'white', fontSize: '0.95rem', fontWeight: 'bold' }}>
-                                            Serás redirigido a Stripe para completar tu pago de forma 100% segura.
+                                        <p style={{ color: 'white', fontSize: '1rem', fontWeight: 'bold' }}>
+                                            🎁 ¡REGALO DE BIENVENIDA! <br/>
+                                            Obtén 3 días de PRUEBA GRATUITA sin compromiso.
                                         </p>
                                     </div>
                                 </div>
@@ -223,7 +225,7 @@ const RegisterSchool = () => {
                             onClick={nextStep}
                             disabled={loading}
                         >
-                            {step === 3 ? (loading ? "Redirigiendo a Stripe..." : "Proceder al Pago Seguro") : "Siguiente"} {step !== 3 && <FaArrowRight />}
+                            {step === 3 ? (loading ? "Iniciando Prueba..." : "Registrar e Iniciar Prueba (3 Días Gratis)") : "Siguiente"} {step !== 3 && <FaArrowRight />}
                         </button>
                     </div>
                 )}

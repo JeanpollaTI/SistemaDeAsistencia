@@ -17,6 +17,14 @@ function Login() {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const queryParams = new URLSearchParams(window.location.search);
+    const registered = queryParams.get("registered");
+
+    useEffect(() => {
+        if (registered === "trial") {
+            showAlert("¡Registro exitoso! Tu prueba gratuita de 3 días ha comenzado. Inicia sesión para empezar.", "success");
+        }
+    }, [registered, showAlert]);
 
     const handleLogin = async (e) => {
         e.preventDefault();

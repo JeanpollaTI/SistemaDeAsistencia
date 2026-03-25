@@ -52,7 +52,7 @@ router.post('/register-institutional', async (req, res) => {
             return res.status(400).json({ msg: "El correo ya está registrado en la plataforma." });
         }
 
-        // 2. Crear la Institución (Inicialmente suspendida hasta confirmar pago)
+        // 2. Crear la Institución con Prueba Gratuita (3 días)
         const school = new School({
             name: schoolName,
             type: schoolType,
@@ -62,8 +62,8 @@ router.post('/register-institutional', async (req, res) => {
                 scaleMax: 10
             },
             subscription: {
-                status: "suspended", // Estado inicial
-                nextBilling: new Date()
+                status: "trial", // Estado inicial: Prueba
+                nextBilling: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) // 3 días desde hoy
             }
         });
 
@@ -94,13 +94,9 @@ router.post('/register-institutional', async (req, res) => {
             sessionUrl = session.url;
 
         } catch (paymentErr) {
-            console.error("Error al crear sesión de Stripe Checkout:", paymentErr.message);
-            // Si el inicio de pago falla, eliminamos la escuela para evitar inconsistencias
-            await School.findByIdAndDelete(school._id);
-            return res.status(400).json({ 
-                msg: "Error al iniciar el pago de la suscripción.", 
-                error: paymentErr.message 
-            });
+            console.error("Error al crear sesión de Stripe Checkout (Modo Prueba - 3 días):", paymentErr.message);
+            // IMPORTANTE: No eliminamos la escuela ni bloqueamos el registro.
+            sessionUrl = null;
         }
 
         // 4. Crear el Usuario Administrador ligado a la escuela
