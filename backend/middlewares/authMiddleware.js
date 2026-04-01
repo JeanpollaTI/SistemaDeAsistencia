@@ -18,9 +18,9 @@ export const authMiddleware = async (req, res, next) => {
     const user = await User.findById(decoded.id);
     if (!user) return res.status(401).json({ error: "Usuario no encontrado" });
 
-    // Inyectamos el school_id. Prioridad: token > database
-    // Si el token es viejo (no tiene school_id), lo tomamos del documento del usuario.
-    const school_id = decoded.school_id || user.school_id || null;
+    // Inyectamos el school_id. Prioridad: base de datos > token
+    // Esto asegura que si el usuario cambia de escuela o se corrige su ID, surta efecto inmediato.
+    const school_id = user.school_id || decoded.school_id || null;
 
     req.user = user;
     req.user.school_id = school_id;

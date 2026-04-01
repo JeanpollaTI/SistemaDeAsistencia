@@ -326,11 +326,11 @@ body {
 
 .grupo-componente .modal-content {
   background-color: var(--dark-color);
-  padding: 2rem;
+  padding: 1.5rem; /* Reduced from 2rem */
   border-radius: 12px;
-  width: 90%;
+  width: 95%; /* More width on mobile */
   max-width: 950px;
-  max-height: 90vh;
+  max-height: 95vh; /* More height on mobile */
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
   border: 1px solid #444;
@@ -905,13 +905,26 @@ body {
     text-align: center;
   }
 
+  .grupo-componente .modal-content {
+    padding: 1rem;
+    width: 98%;
+    max-height: 98vh;
+  }
+
+  .grupo-componente .alumno-form {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 2rem; /* Add extra room for the button */
+  }
+
   .grupo-componente .alumno-form-inputs {
     grid-template-columns: 1fr;
+    gap: 8px; /* Slightly tighter gap */
   }
 
   .grupo-componente .modal-body-grid {
     grid-template-columns: 1fr;
-    gap: 15px;
+    gap: 10px;
   }
 }
 
