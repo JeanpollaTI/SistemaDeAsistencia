@@ -342,7 +342,8 @@ body {
 .grupo-componente .modal-content input[type="text"],
 .grupo-componente .modal-content input[type="email"] {
   width: 100%;
-  padding: 12px;
+  padding: 8px 12px; /* Reduced from 12px */
+  height: 40px; /* Fixed height for consistency */
   background: var(--dark-color);
   border: 1px solid #555;
   border-radius: 6px;
@@ -383,12 +384,11 @@ body {
 
 .grupo-componente .alumno-form {
   background-color: var(--dark-color-alt);
-  /* Lighter background to distinguish from modal */
-  padding: 1.5rem;
+  padding: 1rem; /* Reduced from 1.5rem */
   border-radius: 8px;
   margin: 0;
-  /* Remove margin as it's now inside the grid column */
   border: 1px solid #444;
+  margin-bottom: 10px; /* Separator */
 }
 
 .grupo-componente .form-subtitle {
@@ -407,7 +407,7 @@ body {
 .grupo-componente .alumno-form-actions {
   display: flex;
   gap: 10px;
-  margin-top: 1.5rem;
+  margin-top: 1rem; /* Reduced from 1.5rem */
   width: 100%;
 }
 
