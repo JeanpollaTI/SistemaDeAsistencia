@@ -918,6 +918,7 @@ function Grupo({ user }) {
             <div className="modal-content">
               <h2>{grupoSeleccionado ? 'Editar Grupo' : 'Crear Nuevo Grupo'}</h2>
               <div className="modal-body-grid">
+                {/* Columna 1: Información General */}
                 <div className="modal-column-left">
                   <div className="form-group">
                     <label>Nombre del Grupo:</label>
@@ -926,13 +927,17 @@ function Grupo({ user }) {
                       setHasChanges(true);
                     }} />
                   </div>
-                  <div className="form-group">
+                  <div className="form-group" style={{ marginTop: '1rem' }}>
                     <label>Asesor del Grupo:</label>
                     <input type="text" value={nuevoGrupo.asesor || ''} onChange={e => {
                       setNuevoGrupo({ ...nuevoGrupo, asesor: e.target.value });
                       setHasChanges(true);
                     }} />
                   </div>
+                </div>
+
+                {/* Columna 2: Formulario de Registro */}
+                <div className="modal-column-center">
                   <div className="alumno-form">
                     <h4 className="form-subtitle">Agregar Nuevo Alumno</h4>
                     <div className="alumno-form-inputs">
@@ -948,6 +953,7 @@ function Grupo({ user }) {
                   </div>
                 </div>
 
+                {/* Columna 3: Listado de Alumnos */}
                 <div className="modal-column-right">
                   <div className="alumnos-list">
                     <div className="alumnos-count-header">Alumnos en el grupo: {nuevoGrupo.alumnos.length}</div>
