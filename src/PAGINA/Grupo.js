@@ -321,6 +321,30 @@ function Grupo({ user }) {
     setHasChanges(true);
   };
 
+  const handleUpdateAlumno = () => {
+    if (!editingAlumno) return;
+    setNuevoGrupo(prev => ({
+      ...prev,
+      alumnos: prev.alumnos.map(a => a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a).sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno))
+    }));
+    setModalVisible('gestionarGrupo');
+    setEditingAlumno(null);
+    setHasChanges(true);
+    showAlert("Alumno actualizado correctamente.");
+  };
+
+  const handleDeleteAlumno = (alumno) => {
+    setAlumnoParaEliminar(alumno);
+  };
+
+  const confirmarEliminacionAlumno = () => {
+    if (!alumnoParaEliminar) return;
+    setNuevoGrupo(prev => ({ ...prev, alumnos: prev.alumnos.filter(a => a._id !== alumnoParaEliminar._id) }));
+    setAlumnoParaEliminar(null);
+    setHasChanges(true);
+    showAlert("Alumno eliminado de la lista.");
+  };
+
   // Listener de teclado para el modal
   useEffect(() => {
     if (modalVisible !== 'gestionarGrupo') return;
@@ -664,7 +688,7 @@ function Grupo({ user }) {
     reader.readAsBinaryString(archivoXLS);
   };
 
-  // ... código anterior (imports, estados, etc.)
+
 
   const generarPDF = async (grupo, asignatura, brandingData = {}) => {
     if (!asignatura) {
@@ -788,7 +812,7 @@ function Grupo({ user }) {
     }
   };
 
-  // ... resto del componente (handleAsignacionChange, handleFileChange, etc.)
+
 
 
   if (error) {
