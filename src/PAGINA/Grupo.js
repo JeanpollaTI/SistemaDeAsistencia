@@ -37,6 +37,8 @@ function Grupo({ user }) {
   const [bimestreActivo, setBimestreActivo] = useState(1); // NUEVO: Estado global
   const [asignaciones, setAsignaciones] = useState({});
   const [editingAlumno, setEditingAlumno] = useState(null);
+  const [selectedAlumnoIndex, setSelectedAlumnoIndex] = useState(-1);
+  const alumnosListRef = useRef(null);
   const [grupoParaEliminar, setGrupoParaEliminar] = useState(null);
   const [alumnoParaEliminar, setAlumnoParaEliminar] = useState(null);
   const [archivoXLS, setArchivoXLS] = useState(null);
@@ -255,48 +257,94 @@ function Grupo({ user }) {
     setBimestreAbierto({});
     setAsignaciones({});
     setEditingAlumno(null);
+    setSelectedAlumnoIndex(-1);
     setArchivoXLS(null);
     setNombreGrupoImport('');
     setAsignaturaActual(null);
   };
 
+  // --- LÓGICA DE NAVEGACIÓN Y EDICIÓN INLINE ---
+  const handleSelectAlumno = (index) => {
+    if (index < 0 || index >= nuevoGrupo.alumnos.length) return;
+    const alumno = nuevoGrupo.alumnos[index];
+    setSelectedAlumnoIndex(index);
+    setAlumnoInput({
+      nombre: alumno.nombre,
+      apellidoPaterno: alumno.apellidoPaterno,
+      apellidoMaterno: alumno.apellidoMaterno || '',
+      emailPadre: alumno.emailPadre || '',
+      telefonoPadre: alumno.telefonoPadre || ''
+    });
+    setEditingAlumno(alumno);
+
+    // Scroll into view
+    if (alumnosListRef.current) {
+      const listItems = alumnosListRef.current.querySelectorAll('li');
+      if (listItems[index]) {
+        listItems[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  };
+
+  const handleCancelarEdicion = () => {
+    setEditingAlumno(null);
+    setSelectedAlumnoIndex(-1);
+    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '' });
+  };
+
   // --- FUNCIONES CRUD Y LÓGICA ---
   const getAxiosConfig = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
 
-  const handleAgregarAlumno = () => {
+  const handleAgregarOActualizarAlumno = () => {
     if (!alumnoInput.nombre.trim() || !alumnoInput.apellidoPaterno.trim()) {
       return showAlert('Nombre y Apellido Paterno son obligatorios.', 'error');
     }
-    const alumnoId = `new-${Date.now()}`;
-    const nuevoAlumno = { _id: alumnoId, ...alumnoInput };
-    setNuevoGrupo(prev => ({ ...prev, alumnos: [...prev.alumnos, nuevoAlumno].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)) }));
-    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '' });
+
+    if (editingAlumno) {
+      // ACTUALIZAR INLINE
+      setNuevoGrupo(prev => ({
+        ...prev,
+        alumnos: prev.alumnos.map(a => a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a)
+        // No ordenamos aquí para no perder el índice de navegación si el usuario está en racha
+      }));
+      showAlert("Alumno actualizado en la lista.");
+    } else {
+      // AGREGAR NUEVO
+      const alumnoId = `new-${Date.now()}`;
+      const nuevoAlumno = { _id: alumnoId, ...alumnoInput };
+      setNuevoGrupo(prev => ({ 
+        ...prev, 
+        alumnos: [...prev.alumnos, nuevoAlumno].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)) 
+      }));
+      handleCancelarEdicion();
+    }
     setHasChanges(true);
   };
 
-  const handleUpdateAlumno = () => {
-    if (!editingAlumno) return;
-    setNuevoGrupo(prev => ({
-      ...prev,
-      alumnos: prev.alumnos.map(a => a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a).sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno))
-    }));
-    setModalVisible('gestionarGrupo');
-    setEditingAlumno(null);
-    setHasChanges(true);
-    showAlert("Alumno actualizado correctamente.");
-  };
+  // Listener de teclado para el modal
+  useEffect(() => {
+    if (modalVisible !== 'gestionarGrupo') return;
 
-  const handleDeleteAlumno = (alumno) => {
-    setAlumnoParaEliminar(alumno);
-  };
+    const handleKeyDown = (e) => {
+      // Si el usuario está escribiendo en el nombre del grupo o asesor, no interferir con flechas
+      if (document.activeElement.closest('.modal-column-left')) return;
 
-  const confirmarEliminacionAlumno = () => {
-    if (!alumnoParaEliminar) return;
-    setNuevoGrupo(prev => ({ ...prev, alumnos: prev.alumnos.filter(a => a._id !== alumnoParaEliminar._id) }));
-    setAlumnoParaEliminar(null);
-    setHasChanges(true);
-    showAlert("Alumno eliminado de la lista.");
-  };
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const nextIndex = selectedAlumnoIndex + 1 >= nuevoGrupo.alumnos.length ? 0 : selectedAlumnoIndex + 1;
+        handleSelectAlumno(nextIndex);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prevIndex = selectedAlumnoIndex - 1 < 0 ? nuevoGrupo.alumnos.length - 1 : selectedAlumnoIndex - 1;
+        handleSelectAlumno(prevIndex);
+      } else if (e.key === 'Escape') {
+        handleCancelarEdicion();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [modalVisible, selectedAlumnoIndex, nuevoGrupo.alumnos]);
 
   const handleGuardarGrupo = async () => {
     if (!nuevoGrupo.nombre.trim()) return showAlert("El nombre del grupo es requerido.", 'error');
@@ -936,42 +984,55 @@ function Grupo({ user }) {
                   </div>
                 </div>
 
-                {/* Columna 2: Formulario de Registro */}
+                {/* Columna 2: Formulario de Registro / Edición */}
                 <div className="modal-column-center">
-                  <div className="alumno-form">
-                    <h4 className="form-subtitle">Agregar Nuevo Alumno</h4>
+                  <div className={`alumno-form ${editingAlumno ? 'edit-mode' : ''}`}>
+                    <h4 className="form-subtitle">
+                      {editingAlumno ? `Editando: ${editingAlumno.nombre}` : 'Agregar Nuevo Alumno'}
+                    </h4>
                     <div className="alumno-form-inputs">
-                      <input type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} />
-                      <input type="text" placeholder="Apellido Paterno" value={alumnoInput.apellidoPaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoPaterno: e.target.value })} />
-                      <input type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} />
-                      <input type="email" placeholder="Correo del Padre/Alumno" value={alumnoInput.emailPadre} onChange={(e) => setAlumnoInput({ ...alumnoInput, emailPadre: e.target.value })} />
-                      <input type="text" placeholder="Teléfono (Opcional)" value={alumnoInput.telefonoPadre || ''} onChange={(e) => setAlumnoInput({ ...alumnoInput, telefonoPadre: e.target.value })} />
+                      <input type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} />
+                      <input type="text" placeholder="Apellido Paterno" value={alumnoInput.apellidoPaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoPaterno: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} />
+                      <input type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} />
+                      <input type="email" placeholder="Correo del Padre/Alumno" value={alumnoInput.emailPadre} onChange={(e) => setAlumnoInput({ ...alumnoInput, emailPadre: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} />
+                      <input type="text" placeholder="Teléfono (Opcional)" value={alumnoInput.telefonoPadre || ''} onChange={(e) => setAlumnoInput({ ...alumnoInput, telefonoPadre: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} />
                     </div>
                     <div className="alumno-form-actions">
-                      <button className="btn btn-add" onClick={handleAgregarAlumno}>Agregar Alumno</button>
+                      <button className="btn btn-add" onClick={handleAgregarOActualizarAlumno}>
+                        {editingAlumno ? 'Actualizar' : 'Agregar Alumno'}
+                      </button>
+                      {editingAlumno && (
+                        <button className="btn btn-cancel" onClick={handleCancelarEdicion} style={{ padding: '8px' }}>Nuevo</button>
+                      )}
                     </div>
+                    {editingAlumno && <p className="key-hint">Presiona ESC para cancelar o Enter para guardar</p>}
                   </div>
                 </div>
 
                 {/* Columna 3: Listado de Alumnos */}
                 <div className="modal-column-right">
-                  <div className="alumnos-list">
+                  <div className="alumnos-list" ref={alumnosListRef}>
                     <div className="alumnos-count-header">Alumnos en el grupo: {nuevoGrupo.alumnos.length}</div>
                     <ul>
                       {nuevoGrupo.alumnos.map((a, index) => (
-                        <li key={a._id}>
+                        <li 
+                          key={a._id} 
+                          className={`${selectedAlumnoIndex === index ? 'selected' : ''} ${editingAlumno?._id === a._id ? 'editing' : ''}`}
+                          onClick={() => handleSelectAlumno(index)}
+                          style={{ cursor: 'pointer' }}
+                        >
                           <span className="alumno-nombre-display">
                             <strong>{a.matricula || '---'}</strong> - {`${index + 1}. ${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`}
                             <br />
                             <small style={{ color: '#666' }}>{a.emailPadre || 'Sin correo'} | {a.telefonoPadre || 'Sin tel'}</small>
                           </span>
                           <div className="alumno-actions">
-                            <button className="btn-edit-alumno" onClick={() => abrirModal('editarAlumno', a)}><FaPencilAlt /></button>
-                            <button className="btn-delete-alumno" onClick={() => handleDeleteAlumno(a)}><FaTrash /></button>
+                            <button className="btn-delete-alumno" onClick={(e) => { e.stopPropagation(); handleDeleteAlumno(a); }}><FaTrash /></button>
                           </div>
                         </li>
                       ))}
                     </ul>
+                    <div className="list-hint">Tip: Usa las flechas ↑ ↓ para navegar</div>
                   </div>
                 </div>
               </div>

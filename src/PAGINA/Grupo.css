@@ -462,10 +462,35 @@ body {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
+.grupo-componente .alumnos-list li.selected {
+  background-color: rgba(0, 203, 203, 0.15);
+  border-left: 4px solid var(--main-color);
+  padding-left: 11px; /* Adjust for border */
+}
+
 .grupo-componente .alumnos-list li.editing {
-  background-color: var(--dark-color);
-  border-color: var(--main-color);
-  box-shadow: 0 0 8px rgba(0, 203, 203, 0.3);
+  background-color: rgba(142, 68, 173, 0.2);
+  border-color: #8e44ad;
+}
+
+.grupo-componente .alumno-form.edit-mode {
+  border: 1px solid #8e44ad;
+  box-shadow: 0 0 10px rgba(142, 68, 173, 0.3);
+}
+
+.grupo-componente .key-hint {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 10px;
+  text-align: center;
+  font-style: italic;
+}
+
+.grupo-componente .list-hint {
+  font-size: 0.7rem;
+  color: #666;
+  margin-top: 5px;
+  text-align: center;
 }
 
 .grupo-componente .alumno-actions {
