@@ -39,6 +39,7 @@ function Grupo({ user }) {
   const [editingAlumno, setEditingAlumno] = useState(null);
   const [selectedAlumnoIndex, setSelectedAlumnoIndex] = useState(-1);
   const alumnosListRef = useRef(null);
+  const alumnoInputRefs = useRef([]); // Refs for Nombre, ApP, ApM, Email, Tel
   const [grupoParaEliminar, setGrupoParaEliminar] = useState(null);
   const [alumnoParaEliminar, setAlumnoParaEliminar] = useState(null);
   const [archivoXLS, setArchivoXLS] = useState(null);
@@ -350,19 +351,49 @@ function Grupo({ user }) {
     if (modalVisible !== 'gestionarGrupo') return;
 
     const handleKeyDown = (e) => {
-      // Si el usuario está escribiendo en el nombre del grupo o asesor, no interferir con flechas
-      if (document.activeElement.closest('.modal-column-left')) return;
+      const activeElement = document.activeElement;
+      const isInputFocused = activeElement.tagName === 'INPUT' || activeElement.tagName === 'SELECT';
+      
+      // 1. Si está en la columna izquierda (Grupo/Asesor), no interferir
+      if (activeElement.closest('.modal-column-left')) return;
 
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        const nextIndex = selectedAlumnoIndex + 1 >= nuevoGrupo.alumnos.length ? 0 : selectedAlumnoIndex + 1;
-        handleSelectAlumno(nextIndex);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        const prevIndex = selectedAlumnoIndex - 1 < 0 ? nuevoGrupo.alumnos.length - 1 : selectedAlumnoIndex - 1;
-        handleSelectAlumno(prevIndex);
-      } else if (e.key === 'Escape') {
-        handleCancelarEdicion();
+      // 2. Si está en los inputs del alumno (Columna Centro)
+      const inputIndex = alumnoInputRefs.current.indexOf(activeElement);
+      if (inputIndex !== -1) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const nextInput = alumnoInputRefs.current[inputIndex + 1];
+          if (nextInput) nextInput.focus();
+          else if (selectedAlumnoIndex !== -1) {
+            // Si es el último input y estamos editando, tal vez bajar al siguiente alumno?
+            // Pero mejor dejar que cíclico o simplemente quedarse ahí para evitar saltos locos.
+            // Decidimos: si está en el último, no hace nada o vuelve al primero.
+            alumnoInputRefs.current[0].focus();
+          }
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const prevInput = alumnoInputRefs.current[inputIndex - 1];
+          if (prevInput) prevInput.focus();
+          else {
+            alumnoInputRefs.current[alumnoInputRefs.current.length - 1].focus();
+          }
+        }
+        return; // Salir para no procesar navegación de lista
+      }
+
+      // 3. Navegación de lista (si no hay un input enfocado o si está enfocado el contenedor de la lista)
+      if (!isInputFocused || activeElement.closest('.alumnos-list')) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const nextIndex = selectedAlumnoIndex + 1 >= nuevoGrupo.alumnos.length ? 0 : selectedAlumnoIndex + 1;
+          handleSelectAlumno(nextIndex);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const prevIndex = selectedAlumnoIndex - 1 < 0 ? nuevoGrupo.alumnos.length - 1 : selectedAlumnoIndex - 1;
+          handleSelectAlumno(prevIndex);
+        } else if (e.key === 'Escape') {
+          handleCancelarEdicion();
+        }
       }
     };
 
@@ -1015,11 +1046,36 @@ function Grupo({ user }) {
                       {editingAlumno ? `Editando: ${editingAlumno.nombre}` : 'Agregar Nuevo Alumno'}
                     </h4>
                     <div className="alumno-form-inputs">
-                      <input type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} />
-                      <input type="text" placeholder="Apellido Paterno" value={alumnoInput.apellidoPaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoPaterno: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} />
-                      <input type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} />
-                      <input type="email" placeholder="Correo del Padre/Alumno" value={alumnoInput.emailPadre} onChange={(e) => setAlumnoInput({ ...alumnoInput, emailPadre: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} />
-                      <input type="text" placeholder="Teléfono (Opcional)" value={alumnoInput.telefonoPadre || ''} onChange={(e) => setAlumnoInput({ ...alumnoInput, telefonoPadre: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} />
+                      <input 
+                        ref={el => alumnoInputRefs.current[0] = el}
+                        type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} 
+                        onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} 
+                        onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
+                      />
+                      <input 
+                        ref={el => alumnoInputRefs.current[1] = el}
+                        type="text" placeholder="Apellido Paterno" value={alumnoInput.apellidoPaterno} 
+                        onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoPaterno: e.target.value })} 
+                        onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
+                      />
+                      <input 
+                        ref={el => alumnoInputRefs.current[2] = el}
+                        type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} 
+                        onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} 
+                        onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
+                      />
+                      <input 
+                        ref={el => alumnoInputRefs.current[3] = el}
+                        type="email" placeholder="Correo del Padre/Alumno" value={alumnoInput.emailPadre} 
+                        onChange={(e) => setAlumnoInput({ ...alumnoInput, emailPadre: e.target.value })} 
+                        onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
+                      />
+                      <input 
+                        ref={el => alumnoInputRefs.current[4] = el}
+                        type="text" placeholder="Teléfono (Opcional)" value={alumnoInput.telefonoPadre || ''} 
+                        onChange={(e) => setAlumnoInput({ ...alumnoInput, telefonoPadre: e.target.value })} 
+                        onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
+                      />
                     </div>
                     <div className="alumno-form-actions">
                       <button className="btn btn-add" onClick={handleAgregarOActualizarAlumno}>
@@ -1035,7 +1091,7 @@ function Grupo({ user }) {
 
                 {/* Columna 3: Listado de Alumnos */}
                 <div className="modal-column-right">
-                  <div className="alumnos-list" ref={alumnosListRef}>
+                  <div className="alumnos-list" ref={alumnosListRef} tabIndex={0}>
                     <div className="alumnos-count-header">Alumnos en el grupo: {nuevoGrupo.alumnos.length}</div>
                     <ul>
                       {nuevoGrupo.alumnos.map((a, index) => (
