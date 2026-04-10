@@ -349,16 +349,21 @@ function Grupo({ user }) {
     showAlert("Alumno eliminado de la lista.");
   };
 
-  // Listener de teclado para el modal y Autofocus
+  // Autofocus inicial al abrir el modal (Solo una vez por apertura)
+  useEffect(() => {
+    if (modalVisible === 'gestionarGrupo') {
+      const timer = setTimeout(() => {
+        if (alumnoInputRefs.current[0]) {
+          alumnoInputRefs.current[0].focus();
+        }
+      }, 300); // Un poco mas de delay para estabilidad
+      return () => clearTimeout(timer);
+    }
+  }, [modalVisible]);
+
+  // Listener de teclado para el modal
   useEffect(() => {
     if (modalVisible !== 'gestionarGrupo') return;
-
-    // Autofocus al primer campo cuando abre el modal
-    setTimeout(() => {
-      if (alumnoInputRefs.current[0]) {
-        alumnoInputRefs.current[0].focus();
-      }
-    }, 100);
 
     const handleKeyDown = (e) => {
       const activeElement = document.activeElement;
@@ -378,14 +383,21 @@ function Grupo({ user }) {
       // 2. Si está en los inputs del alumno (Columna Centro)
       const inputIndex = alumnoInputRefs.current.indexOf(activeElement);
       if (inputIndex !== -1) {
+        // PERMITIR Alt + Flecha para navegar la lista sin salir del input
+        if (e.altKey && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+          e.preventDefault();
+          const direction = e.key === 'ArrowDown' ? 1 : -1;
+          const newIdx = (selectedAlumnoIndex + direction + nuevoGrupo.alumnos.length) % nuevoGrupo.alumnos.length;
+          handleSelectAlumno(newIdx);
+          return;
+        }
+
         if (e.key === 'ArrowDown') {
           e.preventDefault();
           const nextInput = alumnoInputRefs.current[inputIndex + 1];
           if (nextInput) nextInput.focus();
-          else if (selectedAlumnoIndex !== -1) {
-            // Si es el último input y estamos editando, tal vez bajar al siguiente alumno?
-            // Pero mejor dejar que cíclico o simplemente quedarse ahí para evitar saltos locos.
-            // Decidimos: si está en el último, no hace nada o vuelve al primero.
+          else {
+            // Ciclar al primero
             alumnoInputRefs.current[0].focus();
           }
         } else if (e.key === 'ArrowUp') {
