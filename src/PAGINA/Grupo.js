@@ -164,7 +164,10 @@ function Grupo({ user }) {
   const abrirModal = async (tipo, data = null, asignatura = null) => {
     if (tipo === 'gestionarGrupo') {
       setGrupoSeleccionado(data);
-      if (data) { setNuevoGrupo(structuredClone(data)); }
+      if (data) { 
+        // FALLBACK: Usamos JSON.parse(stringify) para mejor compatibilidad en navegadores viejos (structuredClone es nuevo)
+        setNuevoGrupo(JSON.parse(JSON.stringify(data))); 
+      }
       else { setNuevoGrupo({ nombre: '', asesor: '', alumnos: [] }); }
       setModalVisible('gestionarGrupo');
     } else if (tipo === 'asignar') {
@@ -346,16 +349,31 @@ function Grupo({ user }) {
     showAlert("Alumno eliminado de la lista.");
   };
 
-  // Listener de teclado para el modal
+  // Listener de teclado para el modal y Autofocus
   useEffect(() => {
     if (modalVisible !== 'gestionarGrupo') return;
 
+    // Autofocus al primer campo cuando abre el modal
+    setTimeout(() => {
+      if (alumnoInputRefs.current[0]) {
+        alumnoInputRefs.current[0].focus();
+      }
+    }, 100);
+
     const handleKeyDown = (e) => {
       const activeElement = document.activeElement;
-      const isInputFocused = activeElement.tagName === 'INPUT' || activeElement.tagName === 'SELECT';
       
-      // 1. Si está en la columna izquierda (Grupo/Asesor), no interferir
-      if (activeElement.closest('.modal-column-left')) return;
+      // Manejo de compatibilidad para tagName
+      const tagName = activeElement.tagName ? activeElement.tagName.toUpperCase() : '';
+      const isInputFocused = tagName === 'INPUT' || tagName === 'SELECT' || tagName === 'TEXTAREA';
+      
+      // 1. Si está en la columna izquierda (Grupo/Asesor), no interferir si está escribiendo
+      // Usamos una verificación más básica para compatibilidad
+      let parent = activeElement;
+      while (parent && parent !== document.body) {
+        if (parent.classList && parent.classList.contains('modal-column-left')) return;
+        parent = parent.parentElement;
+      }
 
       // 2. Si está en los inputs del alumno (Columna Centro)
       const inputIndex = alumnoInputRefs.current.indexOf(activeElement);
@@ -393,6 +411,8 @@ function Grupo({ user }) {
           handleSelectAlumno(prevIndex);
         } else if (e.key === 'Escape') {
           handleCancelarEdicion();
+          // Quitar foco de inputs si hay alguno
+          if (isInputFocused) activeElement.blur();
         }
       }
     };
