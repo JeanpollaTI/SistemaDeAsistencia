@@ -216,9 +216,9 @@ const SuperAdminDashboard = ({ user }) => {
                                 <small style={{ color: '#aaa' }}>Ej: 30 para un mes, 3 para prueba.</small>
                             </div>
 
-                            <div className="actions-cell" style={{ marginTop: '2rem', justifyContent: 'flex-end' }}>
-                                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancelar</button>
-                                <button type="submit" className="btn btn-primary">Guardar Cambios</button>
+                            <div className="modal-footer-actions">
+                                <button type="button" className="btn-modal-cancel" onClick={() => setIsModalOpen(false)}>Cancelar</button>
+                                <button type="submit" className="btn-modal-save">Guardar Cambios</button>
                             </div>
                         </form>
                     </div>

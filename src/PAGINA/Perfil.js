@@ -191,18 +191,33 @@ function Perfil({ user, logout, getProfileImageUrl }) {
               </p>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <a 
-                  href={`https://wa.me/521234567890?text=Hola,%20quisiera%20renovar%20mi%20suscripción:%20${user?.school_name}`}
+                  href={`https://wa.me/524491422521?text=Hola,%20quisiera%20renovar%20mi%20suscripción:%20${user?.school_name}`}
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="btn-renew" 
-                  style={{ background: '#25D366', textDecoration: 'none', fontSize: '0.8rem', padding: '8px 15px' }}
+                  style={{ 
+                    background: '#25D366', 
+                    textDecoration: 'none', 
+                    fontSize: '0.85rem', 
+                    padding: '10px 20px',
+                    color: '#ffffff',
+                    fontWeight: '800',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+                  }}
                 >
                   WHATSAPP
                 </a>
                 <a 
                   href={`mailto:thejeanpollo@gmail.com?subject=Renovación%20Scholaris%20-%20${user?.school_name}`}
                   className="btn-renew" 
-                  style={{ background: '#00CBCB', textDecoration: 'none', fontSize: '0.8rem', padding: '8px 15px' }}
+                  style={{ 
+                    background: '#00CBCB', 
+                    textDecoration: 'none', 
+                    fontSize: '0.85rem', 
+                    padding: '10px 20px',
+                    color: '#000000',
+                    fontWeight: '800'
+                  }}
                 >
                   CORREO
                 </a>

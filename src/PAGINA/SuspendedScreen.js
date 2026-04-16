@@ -62,9 +62,16 @@ const SuspendedScreen = () => {
                     
                     <div className="contact-methods" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
                         <a 
-                            href={`https://wa.me/521234567890?text=Hola,%20quisiera%20renovar%20la%20suscripción%20de%20mi%20escuela:%20${user?.school_name}`} 
+                            href={`https://wa.me/524491422521?text=Hola,%20quisiera%20renovar%20la%20suscripción%20de%20mi%20escuela:%20${user?.school_name}`} 
                             className="btn-renew-large" 
-                            style={{ background: '#25D366', textDecoration: 'none', justifyContent: 'center' }}
+                            style={{ 
+                                background: '#25D366', 
+                                textDecoration: 'none', 
+                                justifyContent: 'center',
+                                color: '#ffffff',
+                                fontWeight: '800',
+                                textShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                            }}
                             target="_blank" 
                             rel="noopener noreferrer"
                         >
@@ -73,7 +80,13 @@ const SuspendedScreen = () => {
                         <a 
                             href={`mailto:thejeanpollo@gmail.com?subject=Renovación%20Scholaris%20-%20${user?.school_name}`} 
                             className="btn-renew-large" 
-                            style={{ background: '#00CBCB', textDecoration: 'none', justifyContent: 'center' }}
+                            style={{ 
+                                background: '#00CBCB', 
+                                textDecoration: 'none', 
+                                justifyContent: 'center',
+                                color: '#000000', /* Black text on aqua for high contrast */
+                                fontWeight: '800'
+                            }}
                         >
                             ENVIAR CORREO ELECTRÓNICO
                         </a>
