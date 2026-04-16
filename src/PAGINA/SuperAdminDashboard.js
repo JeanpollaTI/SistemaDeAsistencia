@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../api/apiClient';
 import { useNotification } from '../COMPONENTE/NotificationContext';
-import { FaTrash, FaCheckCircle, FaExclamationTriangle, FaClock, FaSyncAlt, FaThList, FaLightbulb, FaBullhorn, FaThumbtack } from 'react-icons/fa';
+import { FaTrash, FaCheckCircle, FaExclamationTriangle, FaClock, FaSyncAlt, FaThList, FaLightbulb, FaBullhorn, FaThumbtack, FaMagic, FaInfoCircle } from 'react-icons/fa';
 import './SuperAdminDashboard.css';
 
 const SuperAdminDashboard = ({ user }) => {
