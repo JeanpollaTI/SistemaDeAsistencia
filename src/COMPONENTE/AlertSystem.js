@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNotification } from './NotificationContext';
+import { FaCheckCircle, FaInfoCircle, FaExclamationTriangle, FaTimesCircle, FaThumbsUp, FaTimes, FaMagic } from 'react-icons/fa';
 import './AlertSystem.css';
 
 const AlertSystem = () => {
