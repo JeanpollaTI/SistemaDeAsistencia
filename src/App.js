@@ -7,6 +7,7 @@ import PrivateRoute from "./PAGINA/PrivateRoute";
 import { NotificationProvider, useNotification } from "./COMPONENTE/NotificationContext";
 import AlertSystem from "./COMPONENTE/AlertSystem";
 import SuggestionModal from "./COMPONENTE/SuggestionModal";
+import ConfirmModal from "./COMPONENTE/ConfirmModal";
 import apiClient from "./api/apiClient";
 
 // Componentes de Páginas
@@ -250,9 +251,11 @@ function App() {
                         <FaUserCircle /> MI PERFIL
                     </button>
 
-                    <button className="nav-link-dropdown" onClick={() => { setIsSuggestionModalOpen(true); closeDropdowns(); }}>
-                        <FaLightbulb /> SUGERENCIAS
-                    </button>
+                    {user?.role !== "superadmin" && (
+                        <button className="nav-link-dropdown" onClick={() => { setIsSuggestionModalOpen(true); closeDropdowns(); }}>
+                            <FaLightbulb /> SUGERENCIAS
+                        </button>
+                    )}
 
                     <button className="nav-link-dropdown logout" onClick={() => { logout(); closeDropdowns(); }}>
                         <FaSignOutAlt /> CERRAR SESIÓN
@@ -310,6 +313,7 @@ function App() {
                 isOpen={isSuggestionModalOpen} 
                 onClose={() => setIsSuggestionModalOpen(false)} 
             />
+            <ConfirmModal />
         </div>
     );
 }

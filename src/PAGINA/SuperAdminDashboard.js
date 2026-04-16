@@ -9,7 +9,7 @@ const SuperAdminDashboard = ({ user }) => {
     const [schools, setSchools] = useState([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({ total: 0, active: 0, trial: 0, suspended: 0 });
-    const { addNotification } = useNotification();
+    const { addNotification, showConfirm } = useNotification();
     const [selectedSchool, setSelectedSchool] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [statusForm, setStatusForm] = useState({ status: 'active', days: 30 });
@@ -90,15 +90,19 @@ const SuperAdminDashboard = ({ user }) => {
     };
 
     const handleDeleteSchool = async (id, name) => {
-        if (window.confirm(`¿ESTÁS SEGURO? Esta acción eliminará permanentemente la escuela "${name}" y TODOS sus profesores, grupos, alumnos y calificaciones. Esta acción NO se puede deshacer.`)) {
-            try {
-                await apiClient.delete(`/api/superadmin/schools/${id}`);
-                addNotification('Escuela eliminada correctamente', 'success');
-                fetchSchools();
-            } catch (error) {
-                addNotification('Error al eliminar escuela', 'error');
+        showConfirm(
+            'ELIMINAR INSTITUCIÓN',
+            `¿ESTÁS TOTALMENTE SEGURO? Esta acción eliminará permanentemente la escuela "${name}" y TODOS sus profesores, grupos, alumnos y calificaciones. Esta acción NO se puede deshacer.`,
+            async () => {
+                try {
+                    await apiClient.delete(`/api/superadmin/schools/${id}`);
+                    addNotification('Escuela eliminada correctamente', 'success');
+                    fetchSchools();
+                } catch (error) {
+                    addNotification('Error al eliminar escuela', 'error');
+                }
             }
-        }
+        );
     };
 
     const handlePinSuggestion = async (id) => {
@@ -109,11 +113,17 @@ const SuperAdminDashboard = ({ user }) => {
     };
 
     const handleDeleteSuggestion = async (id) => {
-        try {
-            await apiClient.delete(`/api/superadmin/suggestions/${id}`);
-            addNotification('Sugerencia eliminada', 'info');
-            fetchSuggestions();
-        } catch (e) { addNotification('Error al eliminar', 'error'); }
+        showConfirm(
+            'Eliminar Sugerencia',
+            '¿Deseas eliminar este reporte? Esta acción es permanente.',
+            async () => {
+                try {
+                    await apiClient.delete(`/api/superadmin/suggestions/${id}`);
+                    addNotification('Sugerencia eliminada', 'info');
+                    fetchSuggestions();
+                } catch (e) { addNotification('Error al eliminar', 'error'); }
+            }
+        );
     };
 
     const handleSendBroadcast = async (e) => {
@@ -366,16 +376,32 @@ const SuperAdminDashboard = ({ user }) => {
                         
                         <form onSubmit={handleUpdateStatus}>
                             <div className="form-group">
-                                <label>Nuevo Estado:</label>
-                                <select 
-                                    className="form-control"
-                                    value={statusForm.status}
-                                    onChange={(e) => setStatusForm({...statusForm, status: e.target.value})}
-                                >
-                                    <option value="active">Activa (Acceso Total)</option>
-                                    <option value="suspended">Suspendida (Bloqueada)</option>
-                                    <option value="trial">Prueba (3 días)</option>
-                                </select>
+                                <label style={{ textAlign: 'center', display: 'block', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                                    Selecciona el Nuevo Estado
+                                </label>
+                                <div className="status-selection-grid">
+                                    <div 
+                                        className={`status-card-input active-state ${statusForm.status === 'active' ? 'selected' : ''}`}
+                                        onClick={() => setStatusForm({...statusForm, status: 'active'})}
+                                    >
+                                        <FaCheckCircle />
+                                        <span>Activa</span>
+                                    </div>
+                                    <div 
+                                        className={`status-card-input trial-state ${statusForm.status === 'trial' ? 'selected' : ''}`}
+                                        onClick={() => setStatusForm({...statusForm, status: 'trial'})}
+                                    >
+                                        <FaClock />
+                                        <span>Prueba</span>
+                                    </div>
+                                    <div 
+                                        className={`status-card-input suspended-state ${statusForm.status === 'suspended' ? 'selected' : ''}`}
+                                        onClick={() => setStatusForm({...statusForm, status: 'suspended'})}
+                                    >
+                                        <FaExclamationTriangle />
+                                        <span>Suspended</span>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="form-group">

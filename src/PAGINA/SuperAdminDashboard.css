@@ -188,9 +188,25 @@
   text-transform: capitalize;
 }
 
-.status-active { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-.status-suspended { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-.status-trial { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+.status-active { background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+.status-suspended { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+.status-trial { background: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3); }
+
+/* Improved Modal Overlay */
+.status-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* Darker for focus */
+    display: flex; /* Centering */
+    justify-content: center;
+    align-items: center;
+    z-index: 5000;
+    backdrop-filter: blur(12px);
+    padding: 20px;
+}
 
 .actions-cell {
   display: flex;
@@ -344,5 +360,64 @@
 
 .btn-modal-cancel:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+/* Status Cards for Modal */
+.status-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.status-card-input {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1.2rem 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid transparent;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.status-card-input svg {
+    font-size: 1.5rem;
+}
+
+.status-card-input span {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-card-input:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.status-card-input.active-state {
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.status-card-input.suspended-state {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.status-card-input.trial-state {
+    border-color: #eab308;
+    background: rgba(234, 179, 8, 0.1);
+    color: #eab308;
+}
+
+.status-selection-grid .selected {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 

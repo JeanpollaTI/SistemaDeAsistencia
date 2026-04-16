@@ -6,6 +6,8 @@ export const NotificationProvider = ({ children }) => {
     const [alerts, setAlerts] = useState([]);
     const [notifications, setNotifications] = useState([]);
 
+    const [confirmData, setConfirmData] = useState(null);
+
     const showAlert = useCallback((message, type = 'info') => {
         const id = Date.now();
         setAlerts(prev => [...prev, { id, message, type }]);
@@ -25,6 +27,14 @@ export const NotificationProvider = ({ children }) => {
         setNotifications(prev => [{ id, message, type, date: new Date(), read: false }, ...prev].slice(0, 10)); // Keep last 10
     }, []);
 
+    const showConfirm = useCallback((title, message, onConfirm, onCancel) => {
+        setConfirmData({ title, message, onConfirm, onCancel });
+    }, []);
+
+    const closeConfirm = useCallback(() => {
+        setConfirmData(null);
+    }, []);
+
     const markAsRead = useCallback((id) => {
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     }, []);
@@ -36,7 +46,8 @@ export const NotificationProvider = ({ children }) => {
     return (
         <NotificationContext.Provider value={{ 
             showAlert, removeAlert, alerts,
-            notifications, addNotification, markAsRead, clearNotifications 
+            notifications, addNotification, markAsRead, clearNotifications,
+            showConfirm, closeConfirm, confirmData
         }}>
             {children}
         </NotificationContext.Provider>
