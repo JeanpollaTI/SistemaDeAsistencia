@@ -77,19 +77,6 @@ const SuspendedScreen = () => {
                         >
                             CONTACTAR POR WHATSAPP
                         </a>
-                        <a 
-                            href={`mailto:thejeanpollo@gmail.com?subject=Renovación%20Scholaris%20-%20${user?.school_name}`} 
-                            className="btn-renew-large" 
-                            style={{ 
-                                background: '#00CBCB', 
-                                textDecoration: 'none', 
-                                justifyContent: 'center',
-                                color: '#000000', /* Black text on aqua for high contrast */
-                                fontWeight: '800'
-                            }}
-                        >
-                            ENVIAR CORREO ELECTRÓNICO
-                        </a>
                     </div>
                 </div>
 

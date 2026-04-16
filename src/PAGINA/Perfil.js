@@ -207,20 +207,6 @@ function Perfil({ user, logout, getProfileImageUrl }) {
                 >
                   WHATSAPP
                 </a>
-                <a 
-                  href={`mailto:thejeanpollo@gmail.com?subject=Renovación%20Scholaris%20-%20${user?.school_name}`}
-                  className="btn-renew" 
-                  style={{ 
-                    background: '#00CBCB', 
-                    textDecoration: 'none', 
-                    fontSize: '0.85rem', 
-                    padding: '10px 20px',
-                    color: '#000000',
-                    fontWeight: '800'
-                  }}
-                >
-                  CORREO
-                </a>
               </div>
             </div>
           </div>
