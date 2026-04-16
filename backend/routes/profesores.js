@@ -47,7 +47,7 @@ profesoresRouter.get("/", authMiddleware, isAdmin, schoolMiddleware, async (req,
 // ---------------- Registrar un nuevo profesor (solo admin) ----------------
 profesoresRouter.post("/registrar", authMiddleware, isAdmin, upload.single("foto"), async (req, res) => {
   try {
-    const { nombre, email, password, celular, edad, sexo } = req.body;
+    const { nombre, email, password, celular, edad, sexo, role } = req.body;
 
     if (!nombre || !email || !password || !celular || !edad || !sexo) {
       return res.status(400).json({ msg: "Todos los campos son obligatorios" });
@@ -89,7 +89,7 @@ profesoresRouter.post("/registrar", authMiddleware, isAdmin, upload.single("foto
       celular,
       edad,
       sexo,
-      role: "profesor",
+      role: role || "profesor",
       foto: fotoUrl,
       school_id
     });
