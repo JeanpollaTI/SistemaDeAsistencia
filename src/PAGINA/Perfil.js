@@ -182,29 +182,31 @@ function Perfil({ user, logout, getProfileImageUrl }) {
               </div>
             </div>
 
-            <div style={{ marginTop: '20px', textAlign: 'left' }}>
-              <button 
-                className="btn-renew" 
-                onClick={() => setShowPaymentModal(true)}
-                disabled={loadingPay}
-                style={{ 
-                  background: 'linear-gradient(135deg, #00CBCB, #3498db)', 
-                  border: 'none', 
-                  color: '#fff', 
-                  padding: '12px 25px', 
-                  borderRadius: '10px', 
-                  fontWeight: 'bold', 
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <FaCreditCard /> RENOVAR O PAGAR MENSUALIDAD
-              </button>
-              <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '10px' }}>
-                * Al hacer clic, serás redirigido a Stripe para completar tu pago de forma segura.
+            <div style={{ marginTop: '20px', textAlign: 'left', background: 'rgba(0, 203, 203, 0.05)', padding: '15px', borderRadius: '10px' }}>
+              <p style={{ color: '#333', fontSize: '0.95rem', marginBottom: '10px' }}>
+                <b>¿Deseas renovar tu mensualidad?</b>
               </p>
+              <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '15px' }}>
+                Scholaris utiliza ahora un sistema de gestión directa. Por favor <b>contacta con tu supervisor</b> sobre la suscripción para realizar tu pago y reactivar el servicio:
+              </p>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <a 
+                  href={`https://wa.me/521234567890?text=Hola,%20quisiera%20renovar%20mi%20suscripción:%20${user?.school_name}`}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="btn-renew" 
+                  style={{ background: '#25D366', textDecoration: 'none', fontSize: '0.8rem', padding: '8px 15px' }}
+                >
+                  WHATSAPP
+                </a>
+                <a 
+                  href={`mailto:thejeanpollo@gmail.com?subject=Renovación%20Scholaris%20-%20${user?.school_name}`}
+                  className="btn-renew" 
+                  style={{ background: '#00CBCB', textDecoration: 'none', fontSize: '0.8rem', padding: '8px 15px' }}
+                >
+                  CORREO
+                </a>
+              </div>
             </div>
           </div>
         )}
@@ -216,88 +218,6 @@ function Perfil({ user, logout, getProfileImageUrl }) {
                     Obtén 3 días de PRUEBA GRATUITA sin compromiso.
                 </p>
             </div>
-        )}
-
-        {showPaymentModal && (
-          <div className="modal-overlay" style={{ zIndex: 10000 }}>
-            <div className="modal-content" style={{ 
-                maxWidth: '850px', 
-                width: '95%',
-                padding: '40px',
-                borderRadius: '30px',
-                background: 'rgba(28, 31, 40, 0.98)',
-                backdropFilter: 'blur(30px)',
-                border: '1px solid rgba(0, 203, 203, 0.3)',
-                color: 'white',
-                boxShadow: '0 25px 50px rgba(0,0,0,0.5)'
-            }}>
-              <button className="modal-close" onClick={() => setShowPaymentModal(false)} style={{ color: 'white' }}>
-                <FaTimes />
-              </button>
-              <h2 style={{ color: '#00CBCB', marginBottom: '10px', textAlign: 'center' }}>Renovar Suscripción</h2>
-              <p style={{ color: '#ffffff', marginBottom: '30px', textAlign: 'center', opacity: 0.9, fontSize: '1.1rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                Tu escuela recuperará el acceso total de forma inmediata al completar el pago.
-              </p>
-              
-              <div className="renewal-horizontal-layout" style={{ display: 'flex', flexDirection: 'column', gap: '40px', alignItems: 'center', justifyContent: 'center' }}>
-                  <div className="renewal-info-panel" style={{ flex: '1', minWidth: '300px' }}>
-                      <div className="price-card-premium" style={{ 
-                          background: 'linear-gradient(135deg, #007A7A, #00CBCB)',
-                          padding: '25px',
-                          borderRadius: '15px',
-                          textAlign: 'center',
-                          boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-                          margin: '0 auto' /* Centered */
-                      }}>
-                          <p style={{ fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Mensualidad Scholaris</p>
-                          <div style={{ fontSize: '3rem', fontWeight: '800', margin: '10px 0' }}>$850.00</div>
-                          <p style={{ fontSize: '0.8rem', opacity: 0.8 }}>Válido por 1 mes adicional</p>
-                      </div>
-                      
-                      <div className="security-badges" style={{ marginTop: '25px', display: 'flex', justifyContent: 'center', gap: '25px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem' }}>
-                              <FaCheckCircle style={{ color: '#00CBCB' }} /> Facturación automática disponible
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem' }}>
-                              <FaCheckCircle style={{ color: '#00CBCB' }} /> Procesado por Stripe Inc.
-                          </div>
-                      </div>
-                  </div>
-
-                  <div className="renewal-form-panel" style={{ width: '100%', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '25px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                      <p style={{ color: 'white', fontSize: '1.05rem', marginBottom: '20px' }}>
-                          Para tu seguridad y cumplimiento normativo, el pago se procesará a través de la pasarela oficial de Stripe.
-                      </p>
-                      
-                      {paymentError && (
-                        <div className="error-message" style={{ background: 'rgba(255, 0, 0, 0.1)', border: '1px solid #ff4d4d', color: '#ff4d4d', padding: '12px', borderRadius: '10px', marginTop: '20px', fontSize: '0.9rem', marginBottom: '20px' }}>
-                          <FaExclamationTriangle /> {paymentError}
-                        </div>
-                      )}
-                      
-                      <div className="modal-actions" style={{ marginTop: '5px' }}>
-                        <button 
-                          className="btn-guardar"
-                          onClick={handleRenewal}
-                          disabled={loadingPay}
-                          style={{ 
-                              width: '100%', 
-                              background: '#00CBCB', 
-                              padding: '15px', 
-                              borderRadius: '12px',
-                              fontSize: '1.1rem',
-                              fontWeight: '700',
-                              letterSpacing: '1px',
-                              boxShadow: '0 5px 15px rgba(0, 203, 203, 0.3)'
-                          }}
-                        >
-                          {loadingPay ? "PROCESANDO PAGO..." : "CONFIRMAR Y PAGAR AHORA"}
-                        </button>
-                      </div>
-                  </div>
-              </div>
-            </div>
-          </div>
         )}
       </div>
     </div>

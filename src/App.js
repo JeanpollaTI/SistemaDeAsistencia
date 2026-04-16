@@ -22,6 +22,7 @@ import LandingPage from "./PAGINA/LandingPage";
 import RegisterSchool from "./PAGINA/RegisterSchool";
 import ParentPortal from "./PAGINA/ParentPortal";
 import SuspendedScreen from "./PAGINA/SuspendedScreen";
+import SuperAdminDashboard from "./PAGINA/SuperAdminDashboard";
 import {
     FaGraduationCap, FaMoon, FaSun, FaSignOutAlt, FaUserCircle,
     FaThLarge, FaUsers, FaCalendarAlt, FaChartBar, FaTasks,
@@ -152,6 +153,10 @@ function App() {
                 { id: "horario", label: "HORARIO GENERAL", path: "/horario", icon: <FaCalendarAlt /> },
                 { id: "calificaciones", label: "CALIFICACIONES", path: "/calificaciones", icon: <FaChartBar /> },
             ];
+        } else if (user?.role === "superadmin") {
+            roleSections = [
+                { id: "manager", label: "ADMIN GLOBAL", path: "/manager-dashboard", icon: <FaThLarge /> },
+            ];
         }
 
         const handleMenuAction = (sec) => {
@@ -245,7 +250,8 @@ function App() {
             </header>
 
             <main>
-                {user?.subscriptionStatus === "suspended" ? (
+                {/* El SuperAdmin nunca ve la pantalla de suspendido */}
+                {user?.subscriptionStatus === "suspended" && user?.role !== "superadmin" ? (
                     <Routes>
                         <Route path="/suspendido" element={<SuspendedScreen />} />
                         <Route path="*" element={<Navigate to="/suspendido" />} />
@@ -265,6 +271,8 @@ function App() {
                     <Route path="/trabajos" element={<PrivateRoute requiredRole="profesor"><Trabajos user={user} /></PrivateRoute>} />
                     <Route path="/register-profesor" element={<PrivateRoute requiredRole="admin"><RegisterProfesor user={user} /></PrivateRoute>} />
                     <Route path="/calificaciones" element={<PrivateRoute requiredRole="admin"><Calificaciones user={user} /></PrivateRoute>} />
+                    {/* Nueva Ruta SuperAdmin */}
+                    <Route path="/manager-dashboard" element={<PrivateRoute requiredRole="superadmin"><SuperAdminDashboard user={user} /></PrivateRoute>} />
                     <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
                 )}

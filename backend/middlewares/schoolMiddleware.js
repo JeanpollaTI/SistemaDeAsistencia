@@ -3,6 +3,11 @@ import School from "../models/School.js";
 
 export const schoolMiddleware = async (req, res, next) => {
     try {
+        // El SuperAdmin tiene acceso global y no depende de una escuela específica
+        if (req.user && req.user.role === 'superadmin') {
+            return next();
+        }
+
         // El id de la escuela ya debería venir en el objeto req.user
         if (!req.user || !req.user.school_id) {
             console.warn("schoolMiddleware: Missing school_id in req.user. Path:", req.path, "User:", req.user?.id || "not identified");

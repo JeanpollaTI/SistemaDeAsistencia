@@ -29,7 +29,6 @@ const schoolSchema = new mongoose.Schema(
                 enum: ["active", "suspended", "trial"],
                 default: "trial",
             },
-            stripeId: { type: String, default: "" },
             currentPeriodEnd: { type: Date },
             nextBilling: {
                 type: Date,

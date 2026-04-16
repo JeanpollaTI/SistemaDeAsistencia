@@ -41,13 +41,13 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["admin", "profesor", "padre"],
+      enum: ["admin", "profesor", "padre", "superadmin"],
       default: "profesor",
     },
     school_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "School",
-      required: true,
+      required: function() { return this.role !== 'superadmin'; },
       index: true,
     },
     // Solo para el rol 'padre'

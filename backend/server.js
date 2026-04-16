@@ -16,7 +16,8 @@ import { calificacionesRouter } from "./routes/calificaciones.js";
 import { emailRouter } from "./routes/emailSender.js";
 import { materiasRouter } from "./routes/materias.js";
 import registrationRouter from "./routes/registration.js";
-import stripeRouter from "./routes/stripe.js";
+import stripeRouter from "./routes/stripe.js"; // Se eliminará físicamente después
+import superadminRouter from "./routes/superadmin.js";
 import parentPortalRouter from "./routes/parentPortal.js";
 import { schoolMiddleware } from "./middlewares/schoolMiddleware.js";
 
@@ -31,8 +32,8 @@ const __dirname = path.dirname(__filename);
 // Habilita Cross-Origin Resource Sharing para permitir peticiones desde el frontend
 app.use(cors());
 
-// Stripe Webhook MUST come before express.json() to maintain raw body for signature verification
-app.use("/api/stripe", stripeRouter);
+// Stripe Webhook REMOVED - Using manual management now
+// app.use("/api/stripe", stripeRouter);
 
 // Parsea los cuerpos de las peticiones entrantes con formato JSON
 // <-- CAMBIO: Se aumenta el límite para aceptar el PDF en formato base64 -->
@@ -46,7 +47,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // ----------------- RUTAS DE LA API -----------------
 
 app.use("/auth", authRouter);
-app.use("/horario", horarioRouter); // Los filtros ya se agregaron en las rutas, pero podríamos ponerlo aquí si todas requieren suscripción activa
+app.use("/horario", horarioRouter);
 app.use("/profesores", profesoresRouter);
 app.use("/grupos", gruposRouter);
 app.use("/asistencia", asistenciaRouter);
@@ -55,11 +56,12 @@ app.use("/calificaciones", calificacionesRouter);
 import schoolRoutes from "./routes/schools.js";
 app.use("/schools", schoolRoutes);
 app.use("/api/register-school", registrationRouter);
-// app.use("/api/stripe", stripeRouter); // moved above to handle raw body
+app.use("/api/superadmin", superadminRouter); // Nueva ruta para gestión global
+// app.use("/api/stripe", stripeRouter); // REMOVED
 // <-- AÑADIDO: Usar la nueva ruta para el envío de boletas -->
 app.use("/api/materias", materiasRouter);
 app.use("/api/portal-padres", parentPortalRouter);
-import { authMiddleware } from "./middlewares/authMiddleware.js";
+import { authMiddleware, isSuperAdmin } from "./middlewares/authMiddleware.js";
 // Esta ruta es genérica para /api y aplica el schoolMiddleware, debe ir después de rutas específicas
 app.use("/api", authMiddleware, schoolMiddleware, emailRouter);
 

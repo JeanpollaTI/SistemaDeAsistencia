@@ -193,14 +193,17 @@ const SchoolDashboard = () => {
                     <div className="subscription-card">
                         <div className="sub-status">
                             <span className={`badge ${school.subscription?.status}`}>
-                                {school.subscription?.status === 'active' ? 'Activa' : 'Suspendida'}
+                                {school.subscription?.status === 'active' ? 'Activa' : 
+                                 school.subscription?.status === 'trial' ? 'Prueba' : 'Suspendida'}
                             </span>
                         </div>
                         <div className="sub-details">
-                            <p><strong>ID de Cliente:</strong> {school.subscription?.stripeId || 'N/A'}</p>
-                            <p><strong>Próximo Cobro:</strong> {school.subscription?.nextBilling ? new Date(school.subscription.nextBilling).toLocaleDateString() : 'Pendiente'}</p>
+                            <p><strong>Institución:</strong> {school.name}</p>
+                            <p><strong>{school.subscription?.status === 'trial' ? 'Fin de Prueba' : 'Vencimiento'}:</strong> {school.subscription?.nextBilling ? new Date(school.subscription.nextBilling).toLocaleDateString() : 'Pendiente'}</p>
                         </div>
-                        <button type="button" className="btn-manage-sub">Gestionar en Stripe</button>
+                        <div className="manual-renewal-notice" style={{ marginTop: '1rem', padding: '10px', backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: '8px', fontSize: '0.85rem' }}>
+                            <p>El sistema de pagos automáticos ha sido desactivado. Para renovar o cambiar su plan, contacte al Administrador Global.</p>
+                        </div>
                     </div>
                 </section>
 

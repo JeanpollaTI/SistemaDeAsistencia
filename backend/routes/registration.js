@@ -1,22 +1,10 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
-import Stripe from 'stripe';
 import School from '../models/School.js';
 import User from '../models/User.js';
 
 const router = express.Router();
 
-let stripe;
-const getStripe = () => {
-    if (!stripe) {
-        if (!process.env.STRIPE_SECRET_KEY) {
-            console.error("❌ STRIPE_SECRET_KEY no está definida.");
-            throw new Error("Stripe API Key missing");
-        }
-        stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-    }
-    return stripe;
-};
 
 /**
  * @route   POST /api/schools/register-institutional
@@ -69,35 +57,9 @@ router.post('/register-institutional', async (req, res) => {
 
         await school.save();
 
-        // 3. Crear sesión de Stripe Checkout
-        const stripeClient = getStripe();
-        let sessionUrl = null;
+        // 3. (REMOVED) Stripe Checkout session removed
+        const sessionUrl = null;
 
-        if (!stripeClient) {
-            return res.status(500).json({ msg: "Error de configuración en la pasarela de pagos." });
-        }
-
-        try {
-            const session = await stripeClient.checkout.sessions.create({
-                payment_method_types: ['card'],
-                line_items: [{
-                    price: process.env.STRIPE_PRICE_ID,
-                    quantity: 1,
-                }],
-                mode: 'subscription',
-                success_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?payment=success`,
-                cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/register-school?payment=cancel`,
-                customer_email: email.toLowerCase(),
-                metadata: { schoolId: school._id.toString() }
-            });
-
-            sessionUrl = session.url;
-
-        } catch (paymentErr) {
-            console.error("Error al crear sesión de Stripe Checkout (Modo Prueba - 3 días):", paymentErr.message);
-            // IMPORTANTE: No eliminamos la escuela ni bloqueamos el registro.
-            sessionUrl = null;
-        }
 
         // 4. Crear el Usuario Administrador ligado a la escuela
         const salt = await bcrypt.genSalt(10);

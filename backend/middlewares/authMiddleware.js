@@ -33,9 +33,17 @@ export const authMiddleware = async (req, res, next) => {
 };
 
 export const isAdmin = (req, res, next) => {
-  if (req.user && req.user.role === "admin") {
+  if (req.user && (req.user.role === "admin" || req.user.role === "superadmin")) {
     next();
   } else {
     res.status(403).json({ error: "Acceso denegado, solo admin" });
+  }
+};
+
+export const isSuperAdmin = (req, res, next) => {
+  if (req.user && req.user.role === "superadmin") {
+    next();
+  } else {
+    res.status(403).json({ error: "Acceso denegado, solo el Administrador Global" });
   }
 };
