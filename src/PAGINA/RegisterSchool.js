@@ -147,41 +147,23 @@ const RegisterSchool = () => {
                                 </select>
                             </div>
                         </div>
-                        <div className="payment-section fade-in" style={{ 
+                        <div className="trial-info-box fade-in" style={{ 
                             marginTop: '2.5rem', 
-                            border: '1px solid rgba(255,255,255,0.2)', 
-                            backgroundColor: 'rgba(0, 122, 122, 0.4)',
-                            padding: '2.5rem',
+                            border: '1px solid rgba(0, 203, 203, 0.3)', 
+                            background: 'rgba(0, 122, 122, 0.1)',
+                            padding: '2rem',
                             borderRadius: '20px',
-                            backdropFilter: 'blur(15px)'
+                            backdropFilter: 'blur(10px)',
+                            textAlign: 'center'
                         }}>
-                            <h3 style={{ justifyContent: 'center', marginBottom: '2rem', textAlign: 'center' }}>
-                                <FaCreditCard /> Método de Pago Seguro
+                            <h3 style={{ color: '#00CBCB', marginBottom: '1rem' }}>
+                                <FaCheckCircle /> ¡Acceso Inmediato Garantizado!
                             </h3>
-                            
-                            <div className="payment-horizontal-layout" style={{ display: 'flex', flexWrap: 'wrap', gap: '30px', alignItems: 'flex-start', justifyContent: 'center' }}>
-                                <div className="payment-summary-box" style={{ flex: '1', minWidth: '300px', maxWidth: '500px' }}>
-                                    <div className="payment-preview" style={{ 
-                                        padding: '2rem', 
-                                        borderRadius: '15px', 
-                                        background: 'linear-gradient(135deg, rgba(0, 122, 122, 0.8), rgba(0, 203, 203, 0.8))',
-                                        color: 'white',
-                                        textAlign: 'center',
-                                        boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
-                                    }}>
-                                        <p style={{ fontSize: '1.1rem', fontWeight: '500', marginBottom: '10px' }}>Suscripción Scholaris Premium</p>
-                                        <div className="price-tag" style={{ fontSize: '2.8rem', fontWeight: '800', margin: '0.5rem 0' }}>$850.00 <span style={{ fontSize: '1rem', verticalAlign: 'middle' }}>MXN/mes</span></div>
-                                        <p style={{ opacity: 0.9, fontSize: '0.9rem', marginTop: '15px' }}>
-                                            Acceso total a gestión escolar, reportes dinámicos y portal de padres en vivo.
-                                        </p>
-                                    </div>
-                                    <div style={{ marginTop: '20px', padding: '15px', background: 'rgba(255,255,255,0.1)', borderRadius: '10px', textAlign: 'center' }}>
-                                        <p style={{ color: 'white', fontSize: '1rem', fontWeight: 'bold' }}>
-                                            🎁 ¡REGALO DE BIENVENIDA! <br/>
-                                            Obtén 3 días de PRUEBA GRATUITA sin compromiso.
-                                        </p>
-                                    </div>
-                                </div>
+                            <p style={{ fontSize: '1.1rem', color: 'white', marginBottom: '1.5rem' }}>
+                                Al registrarte, tu institución obtendrá **3 días de PRUEBA GRATUITA** con todas las funciones premium activas.
+                            </p>
+                            <div style={{ display: 'inline-block', padding: '10px 20px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', fontSize: '0.9rem', color: '#aaa' }}>
+                                Después del periodo de prueba, contacta a tu supervisor para la activación manual.
                             </div>
                         </div>
                     </div>

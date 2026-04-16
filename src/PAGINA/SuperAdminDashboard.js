@@ -85,7 +85,7 @@ const SuperAdminDashboard = ({ user }) => {
                     <h1>Panel de Gestión Global</h1>
                     <p className="subtitle">Bienvenido, Manager. Control total de la plataforma.</p>
                 </div>
-                <button className="btn btn-secondary" onClick={fetchSchools}>
+                <button className="btn-refresh" onClick={fetchSchools}>
                     <FaSyncAlt /> Refrescar
                 </button>
             </div>
@@ -162,18 +162,21 @@ const SuperAdminDashboard = ({ user }) => {
                                     </span>
                                 </td>
                                 <td className="actions-cell">
-                                    <button 
-                                        className="btn btn-primary btn-sm"
-                                        onClick={() => openStatusModal(school)}
-                                    >
-                                        Gestionar
-                                    </button>
-                                    <button 
-                                        className="btn btn-danger btn-sm"
-                                        onClick={() => handleDeleteSchool(school._id, school.name)}
-                                    >
-                                        <FaTrash />
-                                    </button>
+                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                        <button 
+                                            className="btn btn-primary btn-sm"
+                                            onClick={() => openStatusModal(school)}
+                                        >
+                                            Gestionar
+                                        </button>
+                                        <button 
+                                            className="btn btn-danger btn-sm"
+                                            onClick={() => handleDeleteSchool(school._id, school.name)}
+                                            style={{ padding: '0.4rem', minWidth: '38px' }}
+                                        >
+                                            <FaTrash />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
