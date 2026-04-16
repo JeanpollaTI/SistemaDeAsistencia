@@ -20,6 +20,7 @@ import registrationRouter from "./routes/registration.js";
 import superadminRouter from "./routes/superadmin.js";
 import parentPortalRouter from "./routes/parentPortal.js";
 import { schoolMiddleware } from "./middlewares/schoolMiddleware.js";
+import { authMiddleware } from "./middlewares/authMiddleware.js";
 
 // --- CONFIGURACIÓN INICIAL ---
 const app = express();
