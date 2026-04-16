@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { AuthContext } from "./AuthContext"; // Importar el contexto
+import { AuthContext } from "./AuthContext";
+import apiClient from "../api/apiClient";
+import { useNotification } from "../COMPONENTE/NotificationContext";
 import "./EditarPerfil.css";
 
 // --- URL de la API desde variables de entorno ---
@@ -11,7 +12,9 @@ function EditarPerfil({ user }) {
   const navigate = useNavigate();
 
   // Obtener la función login (setter para el usuario) y la función de URL del contexto
-  const { login, getProfileImageUrl } = useContext(AuthContext);
+  // Obtener la función updateUser y la función de URL del contexto
+  const { updateUser, getProfileImageUrl } = useContext(AuthContext);
+  const { addNotification } = useNotification();
 
   const [formData, setFormData] = useState({
     nombre: "",
@@ -72,37 +75,34 @@ function EditarPerfil({ user }) {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      if (!token) return setError("No estás autenticado. Por favor, inicia sesión nuevamente.");
-
+      
       const data = new FormData();
       Object.keys(formData).forEach((key) => data.append(key, formData[key]));
-      if (foto) data.append("foto", foto); // 'foto' es el nombre que espera Multer en el backend
+      if (foto) data.append("foto", foto);
 
-      // --- RUTA DE API ---
-      const res = await axios.put(`${API_URL}/auth/editar-perfil`, data, {
+      // Usamos el apiClient centralizado
+      const res = await apiClient.put(`/auth/editar-perfil`, data, {
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          'Content-Type': 'multipart/form-data'
+        }
       });
 
       const updatedUser = res.data.user || res.data;
 
-      // Actualizar el estado global del usuario
-      login(updatedUser, token);
+      // Actualizar SOLO el estado del usuario, sin re-logear
+      updateUser(updatedUser);
 
-      setSuccess("Perfil actualizado correctamente.");
-
-      setTimeout(() => navigate("/perfil"), 1500);
+      addNotification("Perfil actualizado correctamente", "success");
+      setTimeout(() => navigate("/perfil"), 1000);
     } catch (err) {
       console.error(err);
-      const backendMsg = err.response?.data?.msg || "";
-      if (backendMsg.includes("Email already in use")) {
-        setError("El correo ingresado ya está registrado. Por favor, utiliza otro.");
-      } else if (backendMsg.includes("Celular already in use")) {
-        setError("El número de celular ya está registrado. Por favor, utiliza otro.");
+      const backendMsg = err.response?.data?.msg || err.response?.data?.error || "";
+      if (backendMsg.includes("Email already in use") || backendMsg.includes("correo ya está en uso")) {
+        addNotification("El correo ingresado ya está registrado.", "error");
+      } else if (backendMsg.includes("Celular already in use") || backendMsg.includes("ya está registrado")) {
+        addNotification("El número de celular ya está registrado en su escuela.", "error");
       } else {
-        setError("Error al actualizar perfil. Intenta nuevamente.");
+        addNotification("Error al actualizar perfil. Intenta nuevamente.", "error");
       }
     } finally {
       setLoading(false);
@@ -118,16 +118,13 @@ function EditarPerfil({ user }) {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      await axios.put(`${API_URL}/auth/change-password`, passwordData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setPasswordMessage({ type: "success", text: "Contraseña actualizada exitosamente." });
+      await apiClient.put(`/auth/change-password`, passwordData);
+      addNotification("Contraseña actualizada exitosamente", "success");
       setPasswordData({ currentPassword: "", newPassword: "" });
       setShowPasswordForm(false);
     } catch (err) {
       console.error(err);
-      setPasswordMessage({ type: "error", text: err.response?.data?.msg || "Error al cambiar la contraseña." });
+      addNotification(err.response?.data?.msg || "Error al cambiar la contraseña", "error");
     } finally {
       setLoading(false);
     }

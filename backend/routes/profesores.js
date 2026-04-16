@@ -176,8 +176,9 @@ profesoresRouter.put("/editar-perfil", authMiddleware, upload.single("foto"), as
       if (emailExists) return res.status(400).json({ msg: "El correo ya está en uso" });
     }
     if (celular !== user.celular) {
-      const celularExists = await User.findOne({ celular });
-      if (celularExists) return res.status(400).json({ msg: "El celular ya está en uso" });
+      // El celular debe ser único dentro de la misma institución (school_id)
+      const celularExists = await User.findOne({ celular, school_id: user.school_id });
+      if (celularExists) return res.status(400).json({ msg: "El número de celular ya está registrado en su escuela." });
     }
 
     if (req.file) {
@@ -200,9 +201,19 @@ profesoresRouter.put("/editar-perfil", authMiddleware, upload.single("foto"), as
     user.sexo = sexo;
 
     if (fotoUrl) user.foto = fotoUrl;
-
+    
+    // Guardamos y poblamos para no perder la información de la escuela en el frontend
     await user.save();
-    res.json({ msg: "Perfil actualizado correctamente", user });
+    await user.populate('school_id');
+
+    // Mismo formato de respuesta que en auth.js para consistencia
+    const userObj = user.toObject();
+    userObj.school_name = user.school_id?.name || "";
+    userObj.subscriptionStatus = user.school_id?.subscription?.status || "active";
+
+    console.log(`✅ Perfil de profesor ${user.email} actualizado correctamente.`);
+
+    res.json({ msg: "Perfil actualizado correctamente", user: userObj });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Error al actualizar perfil o subir foto", error: err.message });

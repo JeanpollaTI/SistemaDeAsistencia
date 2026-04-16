@@ -224,14 +224,15 @@ router.put("/editar-perfil", authMiddleware, uploadFotos.single("foto"), async (
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ msg: "Usuario no encontrado" });
 
-    // Validar unicidad de email y celular
+    // Validar unicidad de email y celular (dentado por escuela para celular)
     if (email && email !== user.email) {
       const emailExists = await User.findOne({ email });
       if (emailExists) return res.status(400).json({ msg: "El correo ya está en uso" });
     }
     if (celular && celular !== user.celular) {
-      const celularExists = await User.findOne({ celular });
-      if (celularExists) return res.status(400).json({ msg: "El celular ya está en uso" });
+      // El celular debe ser único dentro de la misma institución (school_id)
+      const celularExists = await User.findOne({ celular, school_id: user.school_id });
+      if (celularExists) return res.status(400).json({ msg: "El número de celular ya está registrado en su escuela." });
     }
 
     // 2. Lógica de Subida a Cloudinary
@@ -262,15 +263,23 @@ router.put("/editar-perfil", authMiddleware, uploadFotos.single("foto"), async (
     if (fotoUrl) updateData.foto = fotoUrl;
 
     // 4. Actualizar en la base de datos
-    const updatedUser = await User.findByIdAndUpdate(
+    // Usamos findByIdAndUpdate y luego poblamos school_id para que el frontend no pierda school_name
+    let updatedUser = await User.findByIdAndUpdate(
       userId,
       updateData,
       { new: true, runValidators: true }
-    ).select("-password");
+    ).select("-password").populate('school_id');
 
     if (!updatedUser) return res.status(404).json({ msg: "Usuario no encontrado" });
 
-    res.json({ msg: "Perfil actualizado correctamente", user: updatedUser });
+    // Formatear para compatibilidad con el frontend (similar al login)
+    const userResponse = updatedUser.toObject();
+    userResponse.school_name = updatedUser.school_id?.name || "";
+    userResponse.subscriptionStatus = updatedUser.school_id?.subscription?.status || "active";
+
+    console.log(`✅ Perfil de ${updatedUser.email} actualizado correctamente.`);
+
+    res.json({ msg: "Perfil actualizado correctamente", user: userResponse });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Error al editar perfil o subir foto", error: err.message });
