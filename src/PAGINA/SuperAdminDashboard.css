@@ -35,6 +35,88 @@
   margin-bottom: 2rem;
 }
 
+/* Tabs Styling */
+.dashboard-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: #888;
+    padding: 0.8rem 1.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    border-radius: 8px 8px 0 0;
+}
+
+.tab-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+    color: #00CBCB;
+    border-bottom: 3px solid #00CBCB;
+}
+
+/* Suggestions & Broadcasts Lists */
+.management-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.suggestion-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.2rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    border-left: 4px solid #444;
+}
+
+.suggestion-item.pinned {
+    border-left-color: #f1c40f;
+    background: rgba(241, 196, 15, 0.05);
+}
+
+.suggestion-content {
+    flex: 1;
+}
+
+.suggestion-meta {
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 0.5rem;
+}
+
+.broadcast-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    max-width: 600px;
+}
+
+.broadcast-history-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    margin-top: 0.8rem;
+}
+
 .stat-card {
   background: rgba(255, 255, 255, 0.03);
   padding: 2rem;

@@ -19,6 +19,7 @@ import registrationRouter from "./routes/registration.js";
 // import stripeRouter from "./routes/stripe.js"; // REMOVED
 import superadminRouter from "./routes/superadmin.js";
 import parentPortalRouter from "./routes/parentPortal.js";
+import suggestionRouter from "./routes/suggestionRoutes.js";
 import { schoolMiddleware } from "./middlewares/schoolMiddleware.js";
 import { authMiddleware } from "./middlewares/authMiddleware.js";
 
@@ -60,6 +61,7 @@ app.use("/api/register-school", registrationRouter);
 app.use("/api/superadmin", superadminRouter); // YA incluye authMiddleware e isSuperAdmin internamente
 app.use("/api/portal-padres", parentPortalRouter);
 app.use("/api/materias", materiasRouter);
+app.use("/api/suggestions", suggestionRouter);
 
 // Esta ruta es genérica para /api y aplica el schoolMiddleware para el resto de rutas (ej. emailSender)
 // SE EXCLUYEN las de arriba porque Express ya terminó con ellas si matchearon

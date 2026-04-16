@@ -6,6 +6,8 @@ import { AuthProvider, AuthContext } from "./PAGINA/AuthContext";
 import PrivateRoute from "./PAGINA/PrivateRoute";
 import { NotificationProvider, useNotification } from "./COMPONENTE/NotificationContext";
 import AlertSystem from "./COMPONENTE/AlertSystem";
+import SuggestionModal from "./COMPONENTE/SuggestionModal";
+import apiClient from "./api/apiClient";
 
 // Componentes de Páginas
 import Home from "./PAGINA/Home";
@@ -26,7 +28,7 @@ import SuperAdminDashboard from "./PAGINA/SuperAdminDashboard";
 import {
     FaGraduationCap, FaMoon, FaSun, FaSignOutAlt, FaUserCircle,
     FaThLarge, FaUsers, FaCalendarAlt, FaChartBar, FaTasks,
-    FaUserPlus, FaChevronDown, FaBell
+    FaUserPlus, FaChevronDown, FaBell, FaLightbulb
 } from 'react-icons/fa';
 
 // Estilos y logo
@@ -43,6 +45,7 @@ function App() {
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+    const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -90,6 +93,27 @@ function App() {
             document.title = "Scholaris";
         }
     }, [user, location.pathname]);
+
+    // Fetch Global Broadcasts
+    const { addNotification } = useNotification();
+    useEffect(() => {
+        if (user) {
+            const fetchBroadcasts = async () => {
+                try {
+                    const res = await apiClient.get('/api/superadmin/broadcasts/active');
+                    res.data.forEach(broadcast => {
+                        // Check if we've seen this broadcast in this session/local
+                        const seenKey = `broadcast_${broadcast.id}`;
+                        if (!localStorage.getItem(seenKey)) {
+                            addNotification(`📣 ${broadcast.message}`, broadcast.type);
+                            localStorage.setItem(seenKey, 'seen');
+                        }
+                    });
+                } catch (e) { console.error("Error fetching broadcasts", e); }
+            };
+            fetchBroadcasts();
+        }
+    }, [user]);
 
     if (loading) {
         return (
@@ -226,6 +250,10 @@ function App() {
                         <FaUserCircle /> MI PERFIL
                     </button>
 
+                    <button className="nav-link-dropdown" onClick={() => { setIsSuggestionModalOpen(true); closeDropdowns(); }}>
+                        <FaLightbulb /> SUGERENCIAS
+                    </button>
+
                     <button className="nav-link-dropdown logout" onClick={() => { logout(); closeDropdowns(); }}>
                         <FaSignOutAlt /> CERRAR SESIÓN
                     </button>
@@ -277,6 +305,11 @@ function App() {
                     </Routes>
                 )}
             </main>
+
+            <SuggestionModal 
+                isOpen={isSuggestionModalOpen} 
+                onClose={() => setIsSuggestionModalOpen(false)} 
+            />
         </div>
     );
 }

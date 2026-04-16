@@ -8,6 +8,8 @@ import Asistencia from '../models/Asistencia.js';
 import Horario from '../models/Horario.js';
 import Materia from '../models/Materia.js';
 import { authMiddleware, isSuperAdmin } from '../middlewares/authMiddleware.js';
+import Suggestion from '../models/Suggestion.js';
+import Broadcast from '../models/Broadcast.js';
 
 const router = express.Router();
 
@@ -96,6 +98,87 @@ router.delete('/schools/:id', authMiddleware, isSuperAdmin, async (req, res) => 
             msg: `Escuela "${school.name}" y todos sus datos han sido eliminados.`,
             details: deleteResults 
         });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- SUGGESTIONS MANAGEMENT ---
+
+// GET all suggestions
+router.get('/suggestions', authMiddleware, isSuperAdmin, async (req, res) => {
+    try {
+        const suggestions = await Suggestion.find()
+            .populate('author_id', 'nombre email role')
+            .populate('school_id', 'name')
+            .sort({ isPinned: -1, createdAt: -1 });
+        res.json(suggestions);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PUT toggle pin
+router.put('/suggestions/:id/pin', authMiddleware, isSuperAdmin, async (req, res) => {
+    try {
+        const suggestion = await Suggestion.findById(req.params.id);
+        if (!suggestion) return res.status(404).json({ msg: 'Sugerencia no encontrada' });
+        
+        suggestion.isPinned = !suggestion.isPinned;
+        await suggestion.save();
+        res.json(suggestion);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// DELETE suggestion
+router.delete('/suggestions/:id', authMiddleware, isSuperAdmin, async (req, res) => {
+    try {
+        await Suggestion.findByIdAndDelete(req.params.id);
+        res.json({ msg: 'Sugerencia eliminada' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- BROADCAST NOTIFICATIONS ---
+
+// POST broadcast message
+router.post('/broadcast', authMiddleware, isSuperAdmin, async (req, res) => {
+    try {
+        const { message, type, days } = req.body;
+        if (!message) return res.status(400).json({ msg: 'Mensaje obligatorio' });
+
+        const expiresAt = days ? new Date(Date.now() + days * 24 * 60 * 60 * 1000) : undefined;
+
+        const broadcast = new Broadcast({
+            author_id: req.user.id,
+            message,
+            type: type || 'update',
+            expiresAt
+        });
+
+        await broadcast.save();
+        res.status(201).json({ msg: 'Comunicado enviado correctamente', broadcast });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET active broadcasts (Public/Auth)
+// Note: This could also be in a general notifications router
+router.get('/broadcasts/active', authMiddleware, async (req, res) => {
+    try {
+        const now = new Date();
+        const broadcasts = await Broadcast.find({
+            $or: [
+                { expiresAt: { $gt: now } },
+                { expiresAt: { $exists: false } },
+                { expiresAt: null }
+            ]
+        }).sort({ createdAt: -1 }).limit(5);
+        res.json(broadcasts);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
