@@ -85,28 +85,8 @@ router.put("/:id/asignar-profesores", authMiddleware, isAdmin, async (req, res) 
     try {
         const { asignaciones } = req.body;
 
-        console.log("------------------------------------------");
-        console.log(`[PUT /asignar-profesores] Recibido para Grupo ${req.params.id}`);
-        console.log("Payload:", JSON.stringify(asignaciones, null, 2));
-
-        const grupo = await Grupo.findById(req.params.id);
-        if (!grupo) {
-            return res.status(404).json({ error: "Grupo no encontrado" });
-        }
-
-        // Filtramos para asegurar que solo se envíen asignaciones con profesorId válido
-        const asignacionesValidas = (asignaciones || []).filter(asig => {
-            const isValid = asig.profesor && mongoose.Types.ObjectId.isValid(asig.profesor);
-            if (!isValid) console.warn("Asignación rechazada (ID inválido):", asig);
-            return isValid;
-        });
-
-        console.log("Asignaciones Válidas a guardar:", JSON.stringify(asignacionesValidas, null, 2));
-
         grupo.profesoresAsignados = asignacionesValidas;
         const savedGrupo = await grupo.save();
-        console.log("Grupo guardado. profesoresAsignados:", JSON.stringify(savedGrupo.profesoresAsignados, null, 2));
-        console.log("------------------------------------------");
 
         const grupoActualizado = await Grupo.findById(req.params.id).populate({
             path: 'profesoresAsignados.profesor',
@@ -194,7 +174,6 @@ router.get("/mis-grupos", authMiddleware, async (req, res) => {
     try {
         const profesorId = req.user._id;
         const profesorStringId = String(req.user._id);
-        console.log("Buscando grupos para profesor:", { objectId: profesorId, stringId: profesorStringId });
 
         if (!profesorId) {
             return res.status(401).json({ error: "ID de profesor no válido o faltante en el token." });

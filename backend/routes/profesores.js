@@ -98,7 +98,12 @@ profesoresRouter.post("/registrar", authMiddleware, isAdmin, upload.single("foto
     res.status(201).json({ msg: "Profesor registrado exitosamente" });
 
   } catch (error) {
-    console.error(error);
+    console.error("Error en registrar profesor:", error);
+    // Manejo de errores de validación de Mongoose para dar respuestas claras al frontend
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ msg: messages.join('. ') });
+    }
     res.status(500).json({ msg: "Error en el servidor al registrar al profesor", error: error.message });
   }
 });
@@ -211,11 +216,13 @@ profesoresRouter.put("/editar-perfil", authMiddleware, upload.single("foto"), as
     userObj.school_name = user.school_id?.name || "";
     userObj.subscriptionStatus = user.school_id?.subscription?.status || "active";
 
-    console.log(`✅ Perfil de profesor ${user.email} actualizado correctamente.`);
-
     res.json({ msg: "Perfil actualizado correctamente", user: userObj });
   } catch (err) {
-    console.error(err);
+    console.error("Error updating profile:", err);
+    if (err.name === 'ValidationError') {
+      const messages = Object.values(err.errors).map(e => e.message);
+      return res.status(400).json({ msg: messages.join('. ') });
+    }
     res.status(500).json({ msg: "Error al actualizar perfil o subir foto", error: err.message });
   }
 });

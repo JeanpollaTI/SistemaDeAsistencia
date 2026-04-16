@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaCamera } from "react-icons/fa";
 import "./RegisterProfesor.css";
-
-// La URL de la API ahora apunta a tu servidor en Render (Vercel la leerá desde .env)
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+import apiClient from "../api/apiClient";
+import { useNotification } from "../COMPONENTE/NotificationContext";
 
 export default function RegisterProfesor() {
         const navigate = useNavigate();
+        const { showAlert } = useNotification();
         const [form, setForm] = useState({
                 nombre: "",
                 edad: "",
@@ -35,8 +34,8 @@ export default function RegisterProfesor() {
                 }
 
                 // Solo si NO hay token, verificamos si es el primer usuario del sistema
-                axios
-                        .get(`${API_URL}/profesores`) // Usamos la ruta principal de profesores
+                apiClient
+                        .get(`/profesores`) // Usamos la ruta principal de profesores
                         .then((res) => {
                                 // Si no hay ningún profesor/admin registrado en el sistema global (o falla)
                                 if (res.data.length === 0) {
@@ -91,10 +90,13 @@ export default function RegisterProfesor() {
                         if (token) headers.Authorization = `Bearer ${token}`;
 
                         // CAMBIO CLAVE: Usar la ruta de profesores si ya estamos logueados
-                        const endpoint = firstAdmin ? `${API_URL}/auth/register` : `${API_URL}/profesores/registrar`;
-                        const res = await axios.post(endpoint, formData, { headers });
+                        const endpoint = firstAdmin ? `/auth/register` : `/profesores/registrar`;
+                        const res = await apiClient.post(endpoint, formData, { 
+                                headers: { "Content-Type": "multipart/form-data" }
+                         });
 
-                        setMsg(res.data.msg || (res.data.error ? res.data.error : "Usuario registrado correctamente"));
+                        const message = res.data.msg || "Usuario registrado correctamente";
+                        showAlert(message, "success");
                         setForm({ nombre: "", edad: "", sexo: "Masculino", email: "", celular: "", password: "", role: "profesor" });
                         setFoto(null);
 
@@ -105,7 +107,8 @@ export default function RegisterProfesor() {
                                 setTimeout(() => setMsg(""), 3000);
                         }
                 } catch (err) {
-                        setMsg(err.response?.data?.msg || err.response?.data?.error || "Error: Ya existe la cuenta o el servidor no responde.");
+                        const errorMsg = err.response?.data?.msg || err.response?.data?.error || "Error al registrar el usuario.";
+                        showAlert(errorMsg, "danger");
                 } finally {
                         setIsSubmitting(false);
                 }

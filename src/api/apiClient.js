@@ -32,6 +32,18 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
+        // Manejo de Sesión Expirada o Token Inválido (401)
+        if (error.response && error.response.status === 401) {
+            console.warn("Sesión expirada o no autorizada. Redirigiendo a login...");
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            // Si no estamos ya en login o landing, redirigimos
+            if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
+                window.location.href = '/login?expired=true';
+            }
+        }
+
+        // Manejo de Suspensión por falta de pago (403)
         if (error.response && error.response.status === 403 && error.response.data?.subscriptionStatus === 'suspended') {
             const userStr = localStorage.getItem('user');
             if (userStr) {

@@ -24,6 +24,9 @@ function Login() {
         if (registered === "trial") {
             showAlert("¡Registro exitoso! Tu prueba gratuita de 3 días ha comenzado. Inicia sesión para empezar.", "success");
         }
+        if (queryParams.get("expired") === "true") {
+            showAlert("Su sesión ha expirado por seguridad. Por favor, ingrese de nuevo.", "warning");
+        }
     }, [registered, showAlert]);
 
     const handleLogin = async (e) => {

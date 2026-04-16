@@ -19,9 +19,9 @@ const userSchema = new mongoose.Schema(
     celular: {
       type: String,
       trim: true,
-      // unique: true, // REMOVIDO: Ahora es único por escuela mediante índice compuesto
       sparse: true,
-      match: [/^\d+$/, "El celular debe contener solo dígitos"],
+      // Permitimos espacios, guiones y paréntesis en la validación inicial para ser amigables
+      match: [/^[0-9\s\-()+]+$/, "El celular contiene caracteres no válidos"],
     },
     email: {
       type: String,
@@ -103,7 +103,17 @@ userSchema.virtual("fechaRegistroLegible").get(function () {
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 });
 
-// Índice compuesto: Celular único POR escuela (opcional, si se prefiere)
+// 🔹 Hook pre-save para limpiar el celular antes de guardar (solo dígitos)
+userSchema.pre('save', function(next) {
+  if (this.celular) {
+    // Removemos todo lo que no sea dígito para consistencia en la BD
+    this.celular = this.celular.replace(/\D/g, '');
+  }
+  next();
+});
+
+// Índice compuesto: Celular único POR escuela
+// Clave: sparse asegura que si no hay celular, no haya conflicto de duplicados
 userSchema.index({ celular: 1, school_id: 1 }, { unique: true, sparse: true });
 
 export default mongoose.model("User", userSchema);
