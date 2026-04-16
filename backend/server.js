@@ -16,7 +16,7 @@ import { calificacionesRouter } from "./routes/calificaciones.js";
 import { emailRouter } from "./routes/emailSender.js";
 import { materiasRouter } from "./routes/materias.js";
 import registrationRouter from "./routes/registration.js";
-import stripeRouter from "./routes/stripe.js"; // Se eliminará físicamente después
+// import stripeRouter from "./routes/stripe.js"; // REMOVED
 import superadminRouter from "./routes/superadmin.js";
 import parentPortalRouter from "./routes/parentPortal.js";
 import { schoolMiddleware } from "./middlewares/schoolMiddleware.js";
@@ -56,13 +56,12 @@ app.use("/calificaciones", calificacionesRouter);
 import schoolRoutes from "./routes/schools.js";
 app.use("/schools", schoolRoutes);
 app.use("/api/register-school", registrationRouter);
-app.use("/api/superadmin", superadminRouter); // Nueva ruta para gestión global
-// app.use("/api/stripe", stripeRouter); // REMOVED
-// <-- AÑADIDO: Usar la nueva ruta para el envío de boletas -->
-app.use("/api/materias", materiasRouter);
+app.use("/api/superadmin", superadminRouter); // YA incluye authMiddleware e isSuperAdmin internamente
 app.use("/api/portal-padres", parentPortalRouter);
-import { authMiddleware, isSuperAdmin } from "./middlewares/authMiddleware.js";
-// Esta ruta es genérica para /api y aplica el schoolMiddleware, debe ir después de rutas específicas
+app.use("/api/materias", materiasRouter);
+
+// Esta ruta es genérica para /api y aplica el schoolMiddleware para el resto de rutas (ej. emailSender)
+// SE EXCLUYEN las de arriba porque Express ya terminó con ellas si matchearon
 app.use("/api", authMiddleware, schoolMiddleware, emailRouter);
 
 // ----------------- MANEJO DE ERRORES -----------------

@@ -6,6 +6,7 @@ export const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    console.warn("authMiddleware: Fallo por Header ausente o malformado:", authHeader ? "Presente pero no Bearer" : "Ausente");
     return res.status(401).json({ error: "No autorizado, falta token" });
   }
 
