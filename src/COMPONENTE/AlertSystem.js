@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNotification } from './NotificationContext';
-import { FaCheckCircle, FaInfoCircle, FaExclamationTriangle, FaTimesCircle, FaThumbsUp, FaTimes } from 'react-icons/fa';
 import './AlertSystem.css';
 
 const AlertSystem = () => {
@@ -32,6 +31,7 @@ const AlertItem = ({ alert, onRemove }) => {
             case 'warning': return <FaExclamationTriangle className="start-icon animated faa-flash" />;
             case 'danger': return <FaTimesCircle className="start-icon animated faa-pulse" />;
             case 'primary': return <FaThumbsUp className="start-icon animated faa-bounce" />;
+            case 'update': return <FaMagic className="start-icon animated faa-tada" />;
             default: return <FaInfoCircle className="start-icon" />;
         }
     };
@@ -43,6 +43,7 @@ const AlertItem = ({ alert, onRemove }) => {
             case 'warning': return 'Advertencia:';
             case 'danger': return 'Error:';
             case 'primary': return 'Información:';
+            case 'update': return '✨ ¡NUEVA MEJORA!';
             default: return 'Aviso:';
         }
     };

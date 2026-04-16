@@ -14,15 +14,18 @@
 
 .alert {
     position: relative;
-    padding: 1.25rem 2.5rem 1.25rem 1.25rem;
-    border-radius: 12px;
+    padding: 1.25rem 3rem 1.25rem 1.5rem;
+    border-radius: 16px;
     font-family: 'Montserrat', sans-serif;
-    font-size: 14px;
+    font-size: 14.5px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-    animation: slideDown 0.5s ease-out forwards;
+    gap: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    animation: slideDown 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 @keyframes slideDown {
@@ -112,14 +115,18 @@
 }
 .alert-danger .close { color: #ff0303; }
 
-/* Primary (Teal/Aqua) Styles */
-.alert-primary {
-    border: 1px solid rgba(6, 241, 226, 0.81);
-    background-color: rgba(1, 204, 220, 0.16);
-    color: #03d0ff;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-}
 .alert-primary .close { color: #03d0ff; }
+
+/* Update/Premium Styles */
+.alert-update {
+    border: 1px solid rgba(168, 85, 247, 0.5);
+    background: linear-gradient(135deg, rgba(147, 51, 234, 0.2), rgba(59, 130, 246, 0.2));
+    color: #c084fc;
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+}
+.alert-update .close { color: #c084fc; }
+.alert-update strong { color: #fff; text-shadow: 0 0 8px #c084fc; }
 
 /* Animations - Minimal implementation of fonts-awesome-animation logic */
 .animated {
