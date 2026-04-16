@@ -321,29 +321,45 @@ const SuperAdminDashboard = ({ user }) => {
                                     required
                                 />
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                <div className="form-group">
-                                    <label>Tipo de Alerta:</label>
-                                    <select 
-                                        className="form-control"
-                                        value={broadcastForm.type}
-                                        onChange={(e) => setBroadcastForm({...broadcastForm, type: e.target.value})}
+                            <div className="form-group">
+                                <label style={{ marginBottom: '1rem', display: 'block', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '1px' }}>
+                                    Tipo de Comunicado:
+                                </label>
+                                <div className="alert-selection-grid">
+                                    <div 
+                                        className={`alert-card-input type-update ${broadcastForm.type === 'update' ? 'selected' : ''}`}
+                                        onClick={() => setBroadcastForm({...broadcastForm, type: 'update'})}
                                     >
-                                        <option value="update">Actualización (Azul)</option>
-                                        <option value="success">Novedad (Verde)</option>
-                                        <option value="warning">Aviso Urgente (Naranja)</option>
-                                        <option value="info">Información (Info)</option>
-                                    </select>
+                                        <FaMagic /> <span>Mejora</span>
+                                    </div>
+                                    <div 
+                                        className={`alert-card-input type-success ${broadcastForm.type === 'success' ? 'selected' : ''}`}
+                                        onClick={() => setBroadcastForm({...broadcastForm, type: 'success'})}
+                                    >
+                                        <FaCheckCircle /> <span>Novedad</span>
+                                    </div>
+                                    <div 
+                                        className={`alert-card-input type-warning ${broadcastForm.type === 'warning' ? 'selected' : ''}`}
+                                        onClick={() => setBroadcastForm({...broadcastForm, type: 'warning'})}
+                                    >
+                                        <FaExclamationTriangle /> <span>Aviso</span>
+                                    </div>
+                                    <div 
+                                        className={`alert-card-input type-info ${broadcastForm.type === 'info' ? 'selected' : ''}`}
+                                        onClick={() => setBroadcastForm({...broadcastForm, type: 'info'})}
+                                    >
+                                        <FaInfoCircle /> <span>Info</span>
+                                    </div>
                                 </div>
-                                <div className="form-group">
-                                    <label>Duración (días):</label>
-                                    <input 
-                                        type="number" 
-                                        className="form-control"
-                                        value={broadcastForm.days}
-                                        onChange={(e) => setBroadcastForm({...broadcastForm, days: parseInt(e.target.value)})}
-                                    />
-                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Duración (días):</label>
+                                <input 
+                                    type="number" 
+                                    className="form-control"
+                                    value={broadcastForm.days}
+                                    onChange={(e) => setBroadcastForm({...broadcastForm, days: parseInt(e.target.value)})}
+                                />
                             </div>
                             <button type="submit" className="btn btn-primary" disabled={isBroadcasting} style={{ width: '100%', marginTop: '1rem', padding: '12px', fontWeight: 'bold' }}>
                                 {isBroadcasting ? 'REMITIENDO...' : 'PUBLICAR COMUNICADO GLOBAL'}
