@@ -530,4 +530,115 @@ router.get("/alumno/:alumnoId/ficha", authMiddleware, schoolMiddleware, async (r
 });
 
 
+
+// [GET] /grupos/:id/analytics - Estadísticas de rendimiento del grupo
+router.get("/:id/analytics", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const school_id = req.user.school_id;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ error: "ID de grupo no válido." });
+        }
+
+        const grupo = await Grupo.findOne({ _id: id, school_id }).select('alumnos');
+        if (!grupo) {
+            return res.status(404).json({ error: "Grupo no encontrado." });
+        }
+
+        // --- 1. AGREGAR ASISTENCIA ---
+        const asistencias = await Asistencia.find({ grupo: id, school_id });
+        let totalPresentes = 0;
+        let totalFaltas = 0;
+
+        asistencias.forEach(reg => {
+            if (reg.registros) {
+                const entries = (reg.registros instanceof Map) ? Array.from(reg.registros.values()) : Object.values(reg.registros);
+                for (const item of entries) {
+                    if (['P', 'R', 'J'].includes(item.estado)) totalPresentes++;
+                    else if (item.estado === 'F') totalFaltas++;
+                }
+            }
+        });
+
+        const attendanceData = [
+            { name: 'Asistencias', value: totalPresentes, color: '#00cbcb' },
+            { name: 'Faltas', value: totalFaltas, color: '#ff6b6b' }
+        ];
+
+        // --- 2. AGREGAR CALIFICACIONES (DESEMPEÑO) ---
+        const calificacionesRaw = await Calificacion.find({ grupo: id, school_id });
+        const promediosAlumnos = {}; 
+
+        calificacionesRaw.forEach(reg => {
+            const { calificaciones: califMateria, criterios: criteriosMateria, numTareas: configTareas } = reg;
+            
+            grupo.alumnos.forEach(alumno => {
+                const aId = alumno._id.toString();
+                let sumaPuntosMateria = 0;
+                let pesoSumaMateria = 0;
+
+                [1, 2, 3].forEach(bim => {
+                    const bimKey = String(bim);
+                    const criteriosActivos = criteriosMateria?.[bimKey] || [];
+                    const califAlumnoBim = califMateria?.[aId]?.[bimKey];
+
+                    if (califAlumnoBim) {
+                        criteriosActivos.forEach(crit => {
+                            const notasCrit = califAlumnoBim[crit.nombre] || {};
+                            const maxT = configTareas?.[crit.nombre] || 999;
+                            const validas = Object.keys(notasCrit)
+                                .filter(idx => parseInt(idx) < maxT && notasCrit[idx] && typeof notasCrit[idx].nota === 'number')
+                                .map(idx => notasCrit[idx].nota);
+
+                            if (validas.length > 0) {
+                                const promCrit = validas.reduce((a, b) => a + b, 0) / validas.length;
+                                sumaPuntosMateria += promCrit * (crit.porcentaje / 100);
+                                pesoSumaMateria += (crit.porcentaje / 100);
+                            }
+                        });
+                    }
+                });
+
+                if (pesoSumaMateria > 0) {
+                    const promMateria = sumaPuntosMateria / pesoSumaMateria;
+                    if (!promediosAlumnos[aId]) promediosAlumnos[aId] = { sum: 0, count: 0 };
+                    promediosAlumnos[aId].sum += promMateria;
+                    promediosAlumnos[aId].count += 1;
+                }
+            });
+        });
+
+        const stats = { excelente: 0, bien: 0, suficiente: 0, insuficiente: 0 };
+        Object.values(promediosAlumnos).forEach(p => {
+            const finalProm = p.sum / p.count;
+            if (finalProm >= 9) stats.excelente++;
+            else if (finalProm >= 8) stats.bien++;
+            else if (finalProm >= 6) stats.suficiente++;
+            else stats.insuficiente++;
+        });
+
+        const performanceData = [
+            { name: 'Excelente (9-10)', value: stats.excelente, color: '#00cbcb' },
+            { name: 'Bien (8-8.9)', value: stats.bien, color: '#4cc9f0' },
+            { name: 'Suficiente (6-7.9)', value: stats.suficiente, color: '#f9c74f' },
+            { name: 'Insuficiente (<6)', value: stats.insuficiente, color: '#ff6b6b' }
+        ];
+
+        res.json({
+            attendanceData,
+            performanceData,
+            summary: {
+                totalAttendance: totalPresentes + totalFaltas,
+                attendanceRate: (totalPresentes + totalFaltas) > 0 ? (totalPresentes / (totalPresentes + totalFaltas) * 100).toFixed(1) : 0,
+                totalStudentsEvaluated: Object.keys(promediosAlumnos).length
+            }
+        });
+
+    } catch (err) {
+        console.error("Error en analytics:", err);
+        res.status(500).json({ error: "Error al calcular analíticas." });
+    }
+});
+
 export { router as gruposRouter };

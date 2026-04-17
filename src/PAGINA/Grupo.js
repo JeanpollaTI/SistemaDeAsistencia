@@ -12,6 +12,7 @@ import ConfirmacionModal from './ConfirmacionModal';
 import logoImage from './Logoescuela.png'; // Asegúrate que esta ruta sea correcta
 import importFormatImg from './formato.png';
 import BrandingModal from '../COMPONENTE/BrandingModal';
+import GroupPerformanceModal from '../COMPONENTE/GroupPerformanceModal';
 
 // --- URL de la API desde variables de entorno para Vercel ---
 // CORRECCIÓN: Eliminado '/api' para coincidir con Home.js y la estructura del backend
@@ -51,6 +52,8 @@ function Grupo({ user }) {
   const [showFormatGuide, setShowFormatGuide] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
+  const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
+  const [currentGroupToAnalyze, setCurrentGroupToAnalyze] = useState(null);
 
   // --- LÓGICA DE CARGA DE DATOS ---
   const location = useLocation();
@@ -1012,6 +1015,7 @@ function Grupo({ user }) {
                         : 'Sin asignar'}
                     </td>
                     <td className="acciones-cell">
+                      <button className="btn btn-primary" style={{ backgroundColor: '#00cbcb' }} onClick={() => { setCurrentGroupToAnalyze(grupo); setIsPerformanceModalOpen(true); }} title="Ver Rendimiento">📊</button>
                       <button className="btn btn-warning" onClick={() => abrirModal('gestionarGrupo', grupo)}>Editar</button>
                       <button className="btn btn-secondary" onClick={() => abrirModal('asignar', grupo)}>Asignar</button>
                       <button className="btn btn-export" onClick={() => exportarXLS(grupo)}>XLS</button>
@@ -1447,6 +1451,12 @@ function Grupo({ user }) {
             </div>
           </div>
         )}
+
+        <GroupPerformanceModal 
+          isOpen={isPerformanceModalOpen}
+          onClose={() => setIsPerformanceModalOpen(false)}
+          grupo={currentGroupToAnalyze}
+        />
       </div>
     </div>
   );
