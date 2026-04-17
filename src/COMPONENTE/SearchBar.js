@@ -66,35 +66,35 @@ const SearchBar = () => {
         <div className="search-bar-container" ref={searchRef}>
             <div className="search-input-wrapper">
                 <FaSearch className="search-icon" />
-                <input
-                    type="text"
-                    placeholder="Buscar alumno o grupo..."
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onFocus={() => query.length > 2 && setIsOpen(true)}
-                />
-                {loading && <div className="search-spinner"></div>}
-            </div>
-
-            {isOpen && results.length > 0 && (
-                <div className="search-results-dropdown">
-                    {results.map((res) => (
-                        <div
-                            key={`${res.type}-${res.id}-${res.grupoId}`}
-                            className="search-result-item"
-                            onClick={() => handleResultClick(res)}
-                        >
-                            <div className="result-info">
-                                <span className="result-name">{res.nombre}</span>
-                                <span className="result-meta">
-                                    {res.matricula && `${res.matricula} • `} {res.grupo}
-                                </span>
-                            </div>
-                            <div className="result-badge">{res.type}</div>
-                        </div>
-                    ))}
+                    <input
+                        type="text"
+                        placeholder="Buscar alumno, grupo, aula o materia..."
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onFocus={() => query.length > 2 && setIsOpen(true)}
+                    />
+                    {loading && <div className="search-spinner"></div>}
                 </div>
-            )}
+
+                {isOpen && results.length > 0 && (
+                    <div className="search-results-dropdown">
+                        {results.map((res) => (
+                            <div
+                                key={`${res.type}-${res.id}-${res.grupoId}`}
+                                className="search-result-item"
+                                onClick={() => handleResultClick(res)}
+                            >
+                                <div className="result-info">
+                                    <span className="result-name">{res.nombre}</span>
+                                    <span className="result-meta">
+                                        {res.matricula && `${res.matricula} • `} {res.grupo} {res.aula && `(${res.aula})`}
+                                    </span>
+                                </div>
+                                <div className="result-badge">{res.type}</div>
+                            </div>
+                        ))}
+                    </div>
+                )}
         </div>
     );
 };

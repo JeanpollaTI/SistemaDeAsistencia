@@ -31,7 +31,7 @@ function Grupo({ user }) {
   const [error, setError] = useState(null);
   const [modalVisible, setModalVisible] = useState(null);
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null);
-  const [nuevoGrupo, setNuevoGrupo] = useState({ nombre: '', asesor: '', alumnos: [] });
+  const [nuevoGrupo, setNuevoGrupo] = useState({ nombre: '', asesor: '', aula: '', alumnos: [] });
   const [alumnoInput, setAlumnoInput] = useState({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '' });
   const [asistencia, setAsistencia] = useState({});
   const [diasPorBimestre, setDiasPorBimestre] = useState({});
@@ -190,10 +190,12 @@ function Grupo({ user }) {
     if (tipo === 'gestionarGrupo') {
       setGrupoSeleccionado(data);
       if (data) { 
-        // FALLBACK: Usamos JSON.parse(stringify) para mejor compatibilidad en navegadores viejos (structuredClone es nuevo)
-        setNuevoGrupo(JSON.parse(JSON.stringify(data))); 
+        setNuevoGrupo({
+          ...JSON.parse(JSON.stringify(data)),
+          aula: data.aula || ''
+        }); 
       }
-      else { setNuevoGrupo({ nombre: '', asesor: '', alumnos: [] }); }
+      else { setNuevoGrupo({ nombre: '', asesor: '', aula: '', alumnos: [] }); }
       setModalVisible('gestionarGrupo');
     } else if (tipo === 'asignar') {
       setGrupoSeleccionado(data);
@@ -988,6 +990,7 @@ function Grupo({ user }) {
               <thead>
                 <tr>
                   <th>Nombre del Grupo</th>
+                  <th>Aula</th>
                   <th>Asesor</th>
                   <th>N° Alumnos</th>
                   <th>Profesores y Asignaturas</th>
@@ -998,6 +1001,7 @@ function Grupo({ user }) {
                 {grupos.map(grupo => (
                   <tr key={grupo._id}>
                     <td data-label="Grupo">{grupo.nombre}</td>
+                    <td data-label="Aula">{grupo.aula || '---'}</td>
                     <td data-label="Asesor">{grupo.asesor || 'Sin Asignar'}</td>
                     <td data-label="Alumnos">{grupo.alumnos?.length || 0}</td>
                     <td data-label="Asignaciones">
@@ -1034,6 +1038,7 @@ function Grupo({ user }) {
               <thead>
                 <tr>
                   <th>Nombre del Grupo</th>
+                  <th>Aula</th>
                   <th>N° Alumnos</th>
                   <th>Mi Asignatura</th>
                   <th>Acciones</th>
@@ -1057,6 +1062,7 @@ function Grupo({ user }) {
                   return misAsignaciones.map((asignacion, index) => (
                     <tr key={`${grupo._id}-${index}`}>
                       <td data-label="Grupo">{grupo.nombre}</td>
+                      <td data-label="Aula">{grupo.aula || '---'}</td>
                       <td data-label="Alumnos">{grupo.alumnos?.length || 0}</td>
                       <td data-label="Mi Asignatura">{asignacion.asignatura}</td>
                       <td className="acciones-cell">
@@ -1092,6 +1098,13 @@ function Grupo({ user }) {
                     <label>Asesor del Grupo:</label>
                     <input type="text" value={nuevoGrupo.asesor || ''} onChange={e => {
                       setNuevoGrupo({ ...nuevoGrupo, asesor: e.target.value });
+                      setHasChanges(true);
+                    }} />
+                  </div>
+                  <div className="form-group" style={{ marginTop: '1rem' }}>
+                    <label>Aula / Salón:</label>
+                    <input type="text" placeholder="Ej: Aula 10, Lab A..." value={nuevoGrupo.aula || ''} onChange={e => {
+                      setNuevoGrupo({ ...nuevoGrupo, aula: e.target.value });
                       setHasChanges(true);
                     }} />
                   </div>

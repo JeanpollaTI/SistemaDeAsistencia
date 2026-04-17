@@ -64,6 +64,11 @@ const GrupoSchema = new mongoose.Schema(
       type: String, // Nombre del asesor del grupo
       default: "",
     },
+    aula: {
+      type: String, // Salón o aula física
+      default: "",
+      trim: true
+    },
     alumnos: {
       type: [AlumnoSchema], // Un array de documentos de Alumno
       default: [],

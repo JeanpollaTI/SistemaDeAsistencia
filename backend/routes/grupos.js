@@ -1,4 +1,4 @@
-import express from "express";
+﻿import express from "express";
 import mongoose from "mongoose";
 import Grupo from "../models/Grupo.js";
 import Calificacion from "../models/Calificacion.js";
@@ -10,7 +10,7 @@ import { schoolMiddleware } from "../middlewares/schoolMiddleware.js";
 
 const router = express.Router();
 
-// Función auxiliar para obtener la siguiente matrícula formateada (0001, 0002...)
+// FunciÃ³n auxiliar para obtener la siguiente matrÃ­cula formateada (0001, 0002...)
 const getNextMatricula = async () => {
     const counter = await Counter.findOneAndUpdate(
         { id: 'alumnos' },
@@ -36,7 +36,7 @@ router.post("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => 
 
         const alumnosProcesados = await Promise.all((alumnos || []).map(async alumno => {
             const data = { ...alumno };
-            // Si es un alumno nuevo o no tiene matrícula, le asignamos una
+            // Si es un alumno nuevo o no tiene matrÃ­cula, le asignamos una
             if (!data.matricula) {
                 data.matricula = await getNextMatricula();
             }
@@ -49,6 +49,7 @@ router.post("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => 
         const nuevoGrupo = new Grupo({
             nombre,
             asesor: req.body.asesor || '',
+            aula: req.body.aula || '',
             alumnos: alumnosProcesados,
             school_id
         });
@@ -124,7 +125,7 @@ router.put("/:id", authMiddleware, isAdmin, async (req, res) => {
         if (alumnos) {
             const alumnosProcesados = await Promise.all(alumnos.map(async alumno => {
                 const data = { ...alumno };
-                // Asignar matrícula a alumnos nuevos que no la tengan
+                // Asignar matrÃ­cula a alumnos nuevos que no la tengan
                 if (!data.matricula) {
                     data.matricula = await getNextMatricula();
                 }
@@ -138,6 +139,7 @@ router.put("/:id", authMiddleware, isAdmin, async (req, res) => {
 
         grupo.nombre = nombre || grupo.nombre;
         grupo.asesor = req.body.asesor !== undefined ? req.body.asesor : grupo.asesor;
+        grupo.aula = req.body.aula !== undefined ? req.body.aula : grupo.aula;
 
         if (req.body.ordenMaterias) {
             grupo.ordenMaterias = req.body.ordenMaterias;
@@ -162,7 +164,7 @@ router.delete("/:id", authMiddleware, isAdmin, schoolMiddleware, async (req, res
     try {
         const school_id = req.user.school_id;
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            return res.status(400).json({ error: "ID de grupo no válido." });
+            return res.status(400).json({ error: "ID de grupo no vÃ¡lido." });
         }
 
         const grupo = await Grupo.findOneAndDelete({ _id: req.params.id, school_id });
@@ -187,7 +189,7 @@ router.get("/mis-grupos", authMiddleware, async (req, res) => {
         const profesorStringId = String(req.user._id);
 
         if (!profesorId) {
-            return res.status(401).json({ error: "ID de profesor no válido o faltante en el token." });
+            return res.status(401).json({ error: "ID de profesor no vÃ¡lido o faltante en el token." });
         }
 
         // Buscamos coincidencia tanto por ObjectId como por String para maximizar compatibilidad
@@ -217,9 +219,9 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
     try {
         const grupoId = req.params.grupoId;
 
-        // Validación de ID para prevenir el error de Mongoose
+        // ValidaciÃ³n de ID para prevenir el error de Mongoose
         if (!mongoose.Types.ObjectId.isValid(grupoId)) {
-            return res.status(400).json({ msg: "ID de grupo no válido." });
+            return res.status(400).json({ msg: "ID de grupo no vÃ¡lido." });
         }
 
         const grupo = await Grupo.findById(grupoId).select('alumnos profesoresAsignados ordenMaterias');
@@ -227,14 +229,14 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
             return res.status(404).json({ msg: "Grupo no encontrado" });
         }
 
-        // 1. Obtener TODOS los registros de calificación asociados a este grupo
+        // 1. Obtener TODOS los registros de calificaciÃ³n asociados a este grupo
         const registros = await Calificacion.find({ grupo: grupoId });
 
         const calificacionesAdmin = {};
         const { alumnos } = grupo;
 
-        // Usamos las asignaturas del grupo para saber qué materias esperar
-        // Combinamos las asignadas con las que están en el orden guardado (para no perder ninguna)
+        // Usamos las asignaturas del grupo para saber quÃ© materias esperar
+        // Combinamos las asignadas con las que estÃ¡n en el orden guardado (para no perder ninguna)
         const materiasSet = new Set(grupo.profesoresAsignados.map(asig => asig.asignatura));
         if (grupo.ordenMaterias && Array.isArray(grupo.ordenMaterias)) {
             grupo.ordenMaterias.forEach(m => materiasSet.add(m));
@@ -253,7 +255,7 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
             }
         });
 
-        // 3. Iterar sobre cada registro de calificación (cada materia)
+        // 3. Iterar sobre cada registro de calificaciÃ³n (cada materia)
         registros.forEach(registro => {
             const { asignatura, criterios: criteriosPorBimestre, calificaciones: calificacionesMateria } = registro;
 
@@ -268,10 +270,10 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
                     // OBTENER EL ARRAY DE CRITERIOS CORRECTO PARA ESTE BIMESTRE
                     const criteriosActivos = criteriosPorBimestre?.[bimestreKey] || [];
 
-                    // Si no hay criterios definidos, se considera que no hay calificación
+                    // Si no hay criterios definidos, se considera que no hay calificaciÃ³n
                     if (criteriosActivos.length === 0) return null;
 
-                    // Recuperar configuración de tareas visibles (numTareas)
+                    // Recuperar configuraciÃ³n de tareas visibles (numTareas)
                     const numTareasConfig = registro.numTareas || {};
 
                     const calificacionesAlumnoEnBimestre = calificacionesMateria?.[alumnoId]?.[bimestreKey];
@@ -280,7 +282,7 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
                     }
 
                     let promedioPonderado = 0;
-                    let pesoTotalAplicable = 0; // 🌟 FIX: Track total weight of active criteria
+                    let pesoTotalAplicable = 0; // ðŸŒŸ FIX: Track total weight of active criteria
 
                     criteriosActivos.forEach(criterio => {
                         const calificacionesCriterio = calificacionesAlumnoEnBimestre[criterio.nombre] || {};
@@ -297,8 +299,8 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
                         }
                     });
 
-                    // Solo devolvemos la calificación si el total de criterios definidos suma 100 (sanity check), 
-                    // PERO el cálculo se basa en el peso aplicable actual.
+                    // Solo devolvemos la calificaciÃ³n si el total de criterios definidos suma 100 (sanity check), 
+                    // PERO el cÃ¡lculo se basa en el peso aplicable actual.
                     // const totalPorcentaje = criteriosActivos.reduce((sum, c) => sum + (c.porcentaje || 0), 0);
                     // if (totalPorcentaje !== 100) return null; // Relaxing this strict check might be good, but keeping for safety.
 
@@ -307,7 +309,7 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
                     // Rescale: (WeightedSum / TotalWeight)
                     const promedioFinal = promedioPonderado / pesoTotalAplicable;
 
-                    // Solo se reporta la calificación si es mayor a 0 (para evitar 0s falsos)
+                    // Solo se reporta la calificaciÃ³n si es mayor a 0 (para evitar 0s falsos)
                     return promedioFinal > 0 ? parseFloat(promedioFinal.toFixed(1)) : null;
                 });
 
@@ -335,10 +337,10 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
             return res.json([]);
         }
 
-        // --- 🌟 Mejorar Búsqueda: Normalización y Sinónimos ---
+        // --- ðŸŒŸ Mejorar BÃºsqueda: NormalizaciÃ³n y SinÃ³nimos ---
         const normalize = (str) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
         
-        // Mapeo de términos comunes
+        // Mapeo de tÃ©rminos comunes
         const synonyms = {
             "primero": "1", "segundo": "2", "tercero": "3",
             "primer": "1", "segund": "2", "tercer": "3"
@@ -349,7 +351,7 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
             processedQ = processedQ.replace(new RegExp(s, 'g'), synonyms[s]);
         });
 
-        // Dividir en términos originales para búsqueda por partes
+        // Dividir en tÃ©rminos originales para bÃºsqueda por partes
         const terms = processedQ.trim().split(/\s+/).map(t => new RegExp(t, 'i'));
         const normalizedQ = normalize(processedQ);
 
@@ -360,16 +362,18 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
             query['profesoresAsignados.profesor'] = req.user._id;
         }
 
-        const grupos = await Grupo.find(query).select('nombre alumnos profesoresAsignados');
+        const grupos = await Grupo.find(query).select('nombre alumnos profesoresAsignados aula');
         
         const results = [];
         grupos.forEach(grupo => {
             const grupoNombreNorm = normalize(grupo.nombre);
+            const aulaNorm = grupo.aula ? normalize(grupo.aula) : '';
             
-            // Unir términos: si todos los términos de búsqueda coinciden entre (Nombre Alumno + Nombre Grupo)
+            // Unir tÃ©rminos: si todos los tÃ©rminos de bÃºsqueda coinciden entre (Nombre Alumno + Nombre Grupo)
             const grupoMatchScore = terms.filter(t => t.test(grupo.nombre)).length;
-            // O si la consulta normalizada está contenida en el nombre del grupo normalizado
-            const fullGrupoMatch = grupoNombreNorm.includes(normalizedQ) || normalizedQ.includes(grupoNombreNorm);
+            // O si la consulta normalizada estÃ¡ contenida en el nombre del grupo normalizado
+            const fullGrupoMatch = grupoNombreNorm.includes(normalizedQ) || normalizedQ.includes(grupoNombreNorm) || (aulaNorm && (aulaNorm.includes(normalizedQ) || normalizedQ.includes(aulaNorm)));
+            const materiasMatch = grupo.profesoresAsignados?.some(pa => normalize(pa.asignatura).includes(normalizedQ));
             
             grupo.alumnos.forEach(alumno => {
                 const nombreCompleto = `${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno}`;
@@ -377,7 +381,7 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
                 const alumnoNorm = normalize(nombreCompleto);
                 
                 // CRITERIO DE MATCH:
-                // 1. Los términos divididos cubren el nombre+grupo
+                // 1. Los tÃ©rminos divididos cubren el nombre+grupo
                 // 2. O la consulta normalizada coincide con el grupo (terceroA -> 3A)
                 // 3. O la consulta normalizada coincide con el alumno
                 if (
@@ -401,8 +405,9 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
                         nombre: nombreCompleto,
                         matricula: alumno.matricula,
                         grupo: grupo.nombre,
+                        aula: grupo.aula || '',
                         grupoId: grupo._id,
-                        asignatura // Incluimos la asignatura para navegación directa
+                        asignatura // Incluimos la asignatura para navegaciÃ³n directa
                     });
                 }
             });
@@ -412,7 +417,7 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
         res.json(results.slice(0, 10));
     } catch (err) {
         console.error("Error en global-search:", err);
-        res.status(500).json({ error: "Error en la búsqueda." });
+        res.status(500).json({ error: "Error en la bÃºsqueda." });
     }
 });
 
@@ -429,7 +434,7 @@ router.get("/alumno/:alumnoId/ficha", authMiddleware, schoolMiddleware, async (r
         }).populate('profesoresAsignados.profesor', 'nombre');
 
         if (!grupo) {
-            return res.status(404).json({ error: "Alumno no encontrado o no pertenece a su institución." });
+            return res.status(404).json({ error: "Alumno no encontrado o no pertenece a su instituciÃ³n." });
         }
 
         const alumno = grupo.alumnos.id(alumnoId);
@@ -517,7 +522,7 @@ router.get("/alumno/:alumnoId/ficha", authMiddleware, schoolMiddleware, async (r
                 grupo: grupo.nombre,
                 grupoId: grupo._id,
                 escuela: school?.name,
-                userAsignatura // Para navegación rápida
+                userAsignatura // Para navegaciÃ³n rÃ¡pida
             },
             calificaciones,
             asistencias: asistenciasDetalle
@@ -525,20 +530,20 @@ router.get("/alumno/:alumnoId/ficha", authMiddleware, schoolMiddleware, async (r
 
     } catch (err) {
         console.error("Error al obtener ficha del alumno:", err);
-        res.status(500).json({ error: "Error al obtener la información del alumno." });
+        res.status(500).json({ error: "Error al obtener la informaciÃ³n del alumno." });
     }
 });
 
 
 
-// [GET] /grupos/:id/analytics - Estad�sticas de rendimiento del grupo
+// [GET] /grupos/:id/analytics - Estadísticas de rendimiento del grupo
 router.get("/:id/analytics", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const school_id = req.user.school_id;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ error: "ID de grupo no v�lido." });
+            return res.status(400).json({ error: "ID de grupo no válido." });
         }
 
         const grupo = await Grupo.findOne({ _id: id, school_id }).select('alumnos');
@@ -566,7 +571,7 @@ router.get("/:id/analytics", authMiddleware, isAdmin, schoolMiddleware, async (r
             { name: 'Faltas', value: totalFaltas, color: '#ff6b6b' }
         ];
 
-        // --- 2. AGREGAR CALIFICACIONES (DESEMPE�O) ---
+        // --- 2. AGREGAR CALIFICACIONES (DESEMPEÑO) ---
         const calificacionesRaw = await Calificacion.find({ grupo: id, school_id });
         const promediosAlumnos = {}; 
 
@@ -637,7 +642,7 @@ router.get("/:id/analytics", authMiddleware, isAdmin, schoolMiddleware, async (r
 
     } catch (err) {
         console.error("Error en analytics:", err);
-        res.status(500).json({ error: "Error al calcular anal�ticas." });
+        res.status(500).json({ error: "Error al calcular analíticas." });
     }
 });
 
