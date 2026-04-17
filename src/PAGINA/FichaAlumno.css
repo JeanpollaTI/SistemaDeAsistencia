@@ -101,6 +101,64 @@
     color: var(--primary-color, #00CBCB);
 }
 
+.title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.title-row h1 {
+    margin-bottom: 0 !important;
+}
+
+.quick-nav-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 203, 203, 0.3);
+    background: rgba(0, 203, 203, 0.1);
+    color: white;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.nav-btn:hover {
+    background: rgba(0, 203, 203, 0.2);
+    border-color: var(--primary-color, #00CBCB);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 203, 203, 0.15);
+}
+
+.nav-btn svg {
+    color: var(--primary-color, #00CBCB);
+}
+
+.nav-btn.attendance {
+    border-color: rgba(39, 174, 96, 0.3);
+    background: rgba(39, 174, 96, 0.05);
+}
+
+.nav-btn.attendance:hover {
+    border-color: #27ae60;
+    background: rgba(39, 174, 96, 0.1);
+}
+
+.nav-btn.attendance svg {
+    color: #27ae60;
+}
+
 .ficha-sections {
     padding: 30px 40px;
     display: flex;
@@ -207,6 +265,15 @@
     }
     .info-grid { 
         justify-content: center; 
+    }
+    .title-row {
+        flex-direction: column;
+        align-items: center;
+    }
+    .quick-nav-actions {
+        margin-top: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
     }
     .ficha-sections { padding: 20px; }
 }

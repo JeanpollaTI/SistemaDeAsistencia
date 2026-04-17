@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaUser, FaSchool, FaUsers, FaGraduationCap, FaCalendarAlt, FaStar, FaArrowLeft, FaPrint, FaIdCard } from 'react-icons/fa';
+import { FaUser, FaSchool, FaUsers, FaGraduationCap, FaCalendarAlt, FaStar, FaArrowLeft, FaPrint, FaIdCard, FaClipboardCheck } from 'react-icons/fa';
 import apiClient from '../api/apiClient';
 import LoadingOverlay from '../COMPONENTE/LoadingOverlay';
 import './FichaAlumno.css';
@@ -70,7 +70,23 @@ const FichaAlumno = () => {
                             <FaUser />
                         </div>
                         <div className="student-main-info">
-                            <h1>{alumno.nombre}</h1>
+                            <div className="title-row">
+                                <h1>{alumno.nombre}</h1>
+                                <div className="quick-nav-actions no-print">
+                                    <button 
+                                        className="nav-btn attendance"
+                                        onClick={() => navigate(`/grupo?grupoId=${alumno.grupoId}&asignatura=${alumno.userAsignatura || ''}&alumnoId=${alumno.id}`)}
+                                    >
+                                        <FaClipboardCheck /> Ir a Asistencia
+                                    </button>
+                                    <button 
+                                        className="nav-btn grades"
+                                        onClick={() => navigate(`/trabajos?grupoId=${alumno.grupoId}&asignatura=${alumno.userAsignatura || ''}&alumnoId=${alumno.id}`)}
+                                    >
+                                        <FaGraduationCap /> Ir a Calificaciones
+                                    </button>
+                                </div>
+                            </div>
                             <div className="info-grid">
                                 <div className="info-item">
                                     <FaIdCard className="icon" />

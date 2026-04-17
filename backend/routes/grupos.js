@@ -474,12 +474,24 @@ router.get("/alumno/:alumnoId/ficha", authMiddleware, schoolMiddleware, async (r
             return { asignatura: asis.asignatura, presentes, faltas, retardos, justificados, totales };
         });
 
+        let userAsignatura = null;
+        if (req.user.role === 'profesor' && grupo.profesoresAsignados) {
+            const asig = grupo.profesoresAsignados.find(pa => {
+                const pId = pa.profesor?.id || pa.profesor?._id || pa.profesor;
+                return String(pId) === String(req.user.id);
+            });
+            userAsignatura = asig ? asig.asignatura : null;
+        }
+
         res.json({
             alumno: {
+                id: alumno._id,
                 nombre: `${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno}`,
                 matricula: alumno.matricula,
                 grupo: grupo.nombre,
-                escuela: school?.name
+                grupoId: grupo._id,
+                escuela: school?.name,
+                userAsignatura // Para navegación rápida
             },
             calificaciones,
             asistencias: asistenciasDetalle

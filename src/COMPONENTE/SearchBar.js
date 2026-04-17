@@ -57,14 +57,9 @@ const SearchBar = () => {
     };
 
     const handleResultClick = (alumno) => {
-        setSelectedAlumno(alumno);
         setIsOpen(false);
-    };
-
-    const navigateTo = (path) => {
-        navigate(path);
-        setSelectedAlumno(null);
         setQuery('');
+        navigate(`/alumno/${alumno.id}`);
     };
 
     return (
@@ -98,48 +93,6 @@ const SearchBar = () => {
                             <div className="result-badge">{res.type}</div>
                         </div>
                     ))}
-                </div>
-            )}
-
-            {/* 🌟 MODAL DE ELECCIÓN DE NAVEGACIÓN */}
-            {selectedAlumno && (
-                <div className="search-choice-overlay" onClick={() => setSelectedAlumno(null)}>
-                    <div className="search-choice-modal" onClick={e => e.stopPropagation()}>
-                        <button className="btn-close-choice" onClick={() => setSelectedAlumno(null)}>
-                            <FaTimes />
-                        </button>
-                        
-                        <div className="search-choice-header">
-                            <h3>{selectedAlumno.nombre}</h3>
-                            <p>{selectedAlumno.grupo}</p>
-                        </div>
-
-                        <div className="search-options-grid">
-                            <button 
-                                className="search-option-btn primary"
-                                onClick={() => navigateTo(`/alumno/${selectedAlumno.id}`)}
-                            >
-                                <FaUser />
-                                <span>Ver Ficha del Alumno</span>
-                            </button>
-
-                            <button 
-                                className="search-option-btn"
-                                onClick={() => navigateTo(`/grupo?grupoId=${selectedAlumno.grupoId}&asignatura=${selectedAlumno.asignatura || ''}&alumnoId=${selectedAlumno.id}`)}
-                            >
-                                <FaClipboardCheck />
-                                <span>Ir a Asistencia</span>
-                            </button>
-
-                            <button 
-                                className="search-option-btn"
-                                onClick={() => navigateTo(`/trabajos?grupoId=${selectedAlumno.grupoId}&asignatura=${selectedAlumno.asignatura || ''}&alumnoId=${selectedAlumno.id}`)}
-                            >
-                                <FaGraduationCap />
-                                <span>Ir a Calificaciones</span>
-                            </button>
-                        </div>
-                    </div>
                 </div>
             )}
         </div>
