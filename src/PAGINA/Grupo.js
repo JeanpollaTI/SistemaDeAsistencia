@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 import { FaTrash, FaPencilAlt, FaPlus, FaTimes, FaCheck, FaQuestionCircle } from 'react-icons/fa';
@@ -52,6 +53,9 @@ function Grupo({ user }) {
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
 
   // --- LÓGICA DE CARGA DE DATOS ---
+  const location = useLocation();
+  const [highlightedAlumnoId, setHighlightedAlumnoId] = useState(null);
+
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (hasChanges) {
@@ -158,6 +162,24 @@ function Grupo({ user }) {
     };
     fetchData();
   }, [user]);
+
+  // 🌟 NUEVO: Efecto para auto-abrir modal de asistencia desde URL
+  useEffect(() => {
+    if (!loading && grupos.length > 0) {
+      const params = new URLSearchParams(location.search);
+      const gId = params.get('grupoId');
+      const asig = params.get('asignatura');
+      const aId = params.get('alumnoId');
+
+      if (gId && asig) {
+        const targetGrupo = grupos.find(g => String(g._id) === String(gId));
+        if (targetGrupo) {
+          abrirModal('asistencia', targetGrupo, asig);
+          if (aId) setHighlightedAlumnoId(aId);
+        }
+      }
+    }
+  }, [loading, grupos, location.search]);
 
   // --- LÓGICA DE MODALES Y NOTIFICACIONES ---
 
@@ -1274,8 +1296,9 @@ function Grupo({ user }) {
                     <tbody>
                       {grupoSeleccionado?.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map((alumno, index) => {
                         const totales = calcularTotales(alumno._id, bimestreActivo, asistencia, diasPorBimestre);
+                        const isHighlighted = highlightedAlumnoId === alumno._id;
                         return (
-                          <tr key={alumno._id}>
+                          <tr key={alumno._id} className={isHighlighted ? 'highlight-row' : ''}>
                             <td className="num-col" style={{ textAlign: 'center' }}>{index + 1}</td>
                             <td className="matricula-col" style={{ textAlign: 'center', fontWeight: 'bold' }}>{alumno.matricula || '---'}</td>
                             <td className="alumno-col">

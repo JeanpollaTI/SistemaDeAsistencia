@@ -263,6 +263,12 @@ body {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
+.grupo-componente .highlight-row {
+  background-color: rgba(0, 203, 203, 0.15) !important;
+  outline: 2px solid var(--main-color);
+  transition: all 0.5s ease;
+}
+
 .grupo-componente .grupos-table tbody tr:last-of-type {
   border-bottom: 2px solid var(--main-color);
 }

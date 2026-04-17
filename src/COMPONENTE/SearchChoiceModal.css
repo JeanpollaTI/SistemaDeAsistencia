@@ -1,0 +1,101 @@
+.search-choice-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+}
+
+.search-choice-modal {
+    background: rgba(25, 29, 40, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 30px;
+    width: 450px;
+    max-width: 90%;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    position: relative;
+    text-align: center;
+}
+
+.search-choice-header {
+    margin-bottom: 25px;
+}
+
+.search-choice-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #fff;
+}
+
+.search-choice-header p {
+    margin: 5px 0 0;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+}
+
+.search-options-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.search-option-btn {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.03);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-align: left;
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.search-option-btn:hover {
+    background: rgba(0, 203, 203, 0.1);
+    border-color: rgba(0, 203, 203, 0.4);
+    transform: translateY(-3px);
+}
+
+.search-option-btn i, .search-option-btn svg {
+    font-size: 1.2rem;
+    color: #00CBCB;
+}
+
+.search-option-btn.primary {
+    background: linear-gradient(135deg, rgba(0, 203, 203, 0.2), rgba(0, 122, 122, 0.1));
+    border-color: rgba(0, 203, 203, 0.3);
+}
+
+.btn-close-choice {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: color 0.2s;
+}
+
+.btn-close-choice:hover {
+    color: #fff;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

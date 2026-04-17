@@ -359,13 +359,24 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
                 // Si la combinación de términos cubre toda la búsqueda
                 // O si el nombre del alumno contiene la mayoría de los términos
                 if (alumnoMatchCount + grupoMatchScore >= terms.length || alumnoMatchCount === terms.length) {
+                    let asignatura = null;
+                    if (req.user.role === 'profesor') {
+                        // Buscar la asignatura que tiene este profesor en este grupo
+                        const asig = grupo.profesoresAsignados.find(pa => {
+                            const pId = pa.profesor?.id || pa.profesor?._id || pa.profesor;
+                            return String(pId) === String(req.user.id);
+                        });
+                        asignatura = asig ? asig.asignatura : null;
+                    }
+
                     results.push({
                         type: 'alumno',
                         id: alumno._id,
                         nombre: nombreCompleto,
                         matricula: alumno.matricula,
                         grupo: grupo.nombre,
-                        grupoId: grupo._id
+                        grupoId: grupo._id,
+                        asignatura // Incluimos la asignatura para navegación directa
                     });
                 }
             });

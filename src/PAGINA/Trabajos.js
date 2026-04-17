@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -221,32 +222,34 @@ function Trabajos({ user }) {
     const [criteriosPorBimestre, setCriteriosPorBimestre] = useState({ 1: [], 2: [], 3: [] });
     const [notificacion, setNotificacion] = useState({ mensaje: null, tipo: '' });
 
+    const location = useLocation();
+    const [highlightedAlumnoId, setHighlightedAlumnoId] = useState(null);
+
     useEffect(() => {
         const fetchGrupos = async () => {
-            const token = localStorage.getItem('token');
-            const userId = user?._id || user?.id;
-
-            if (!token || !userId) {
-                setLoading(false);
-                setError("Error de autenticación: Usuario o token no disponible.");
-                return;
-            }
-
-            const config = { headers: { Authorization: `Bearer ${token}` } };
-            try {
-                const url = '/grupos/mis-grupos?populate=alumnos,profesoresAsignados.profesor';
-                const res = await axios.get(`${API_URL}${url}`, config);
-                setGrupos(res.data);
-            } catch (err) {
-                setError("No se pudieron cargar los grupos.");
-                console.error("Error fetching groups:", err);
-            } finally {
-                setLoading(false);
-            }
+...
         };
 
         fetchGrupos();
     }, [user]);
+
+    // 🌟 NUEVO: Efecto para auto-seleccionar grupo/asignatura desde URL
+    useEffect(() => {
+        if (!loading && grupos.length > 0) {
+            const params = new URLSearchParams(location.search);
+            const gId = params.get('grupoId');
+            const asig = params.get('asignatura');
+            const aId = params.get('alumnoId');
+
+            if (gId && asig) {
+                const targetGrupo = grupos.find(g => String(g._id) === String(gId));
+                if (targetGrupo) {
+                    handleSeleccionarGrupo(targetGrupo, asig);
+                    if (aId) setHighlightedAlumnoId(aId);
+                }
+            }
+        }
+    }, [loading, grupos, location.search]);
 
     const handleSeleccionarGrupo = (grupo, asignatura) => {
         setGrupoSeleccionado(grupo);
@@ -826,7 +829,13 @@ function Trabajos({ user }) {
                 }
                 .grupo-componente .criterio-resumen .criterio-prom {
                     font-size: 1.3em;
-                    margin-left: 10px;
+                    min-height: 40px;
+                }
+
+                .grupo-componente .highlight-row {
+                    background-color: rgba(0, 203, 203, 0.15) !important;
+                    outline: 2px solid var(--main-color);
+                    transition: all 0.5s ease;
                 }
 
                 /* Responsive adjustments for mobile */
@@ -1807,7 +1816,7 @@ const PanelCalificaciones = ({
 
     const calcularPromedioCriterio = (alumnoId, bimestre, criterioNombre) => {
         const tareas = calificaciones[alumnoId]?.[bimestre]?.[criterioNombre] || {};
-        const maxTareas = numTareas[criterioNombre] || 0;
+        const maxTareas = numTareas[criterioNombre] || 10; // 🎯 FIX: Default to 10 to avoid 0 average if uninitialized
 
         const notasValidas = Object.keys(tareas)
             .filter(index => parseInt(index) < maxTareas) // Solo tareas visibles
