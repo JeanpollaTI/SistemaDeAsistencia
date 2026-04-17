@@ -277,8 +277,10 @@ function App() {
                         <img src={logo} alt="Scholaris Logo" style={{ width: '38px', minWidth: '38px', height: 'auto', filter: 'drop-shadow(0 0 5px rgba(0, 203, 203, 0.5))' }} />
                         <span style={{ letterSpacing: '1px', fontSize: '1rem', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user && user.school_name ? user.school_name.toUpperCase() : "SCHOLARIS"}</span>
                     </a>
+                    
+                    {user && user.subscriptionStatus !== "suspended" && <SearchBar />}
+
                     <div className="nav-menu" id="nav-menu" style={{ display: 'flex', flexShrink: 0, alignItems: 'center' }}>
-                        {user && user.subscriptionStatus !== "suspended" && <SearchBar />}
                         {renderMenu()}
                     </div>
                 </nav>

@@ -16,7 +16,7 @@ const FichaAlumno = () => {
         const fetchFicha = async () => {
             setLoading(true);
             try {
-                const res = await apiClient.get(`/api/grupos/alumno/${id}/ficha`);
+                const res = await apiClient.get(`/grupos/alumno/${id}/ficha`);
                 setData(res.data);
             } catch (err) {
                 console.error("Error fetching ficha:", err);

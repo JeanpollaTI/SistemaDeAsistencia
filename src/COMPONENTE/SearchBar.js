@@ -32,7 +32,7 @@ const SearchBar = () => {
 
             setLoading(true);
             try {
-                const res = await apiClient.get(`/api/grupos/global-search?q=${encodeURIComponent(query)}`);
+                const res = await apiClient.get(`/grupos/global-search?q=${encodeURIComponent(query)}`);
                 setResults(res.data);
                 setShowDropdown(true);
             } catch (err) {
@@ -58,7 +58,7 @@ const SearchBar = () => {
                 <FaSearch className="search-icon" />
                 <input
                     type="text"
-                    placeholder="Buscar alumno o grupo (ej: Javier 3A)..."
+                    placeholder="Buscador..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onFocus={() => query.length >= 2 && setShowDropdown(true)}
