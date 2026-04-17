@@ -57,18 +57,18 @@
 
 .student-hero {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    text-align: center;
-    gap: 20px;
+    text-align: left;
+    gap: 40px;
     padding: 40px;
-    background: radial-gradient(circle at center, rgba(0, 203, 203, 0.1) 0%, transparent 70%);
+    background: linear-gradient(135deg, rgba(0, 203, 203, 0.1) 0%, transparent 100%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .avatar-placeholder {
-    width: 110px;
-    height: 110px;
+    width: 120px;
+    height: 120px;
     background: rgba(0, 203, 203, 0.15);
     border-radius: 50%;
     display: flex;
@@ -77,37 +77,39 @@
     font-size: 3.5rem;
     color: var(--primary-color, #00CBCB);
     border: 2px solid rgba(0, 203, 203, 0.3);
-    box-shadow: 0 0 30px rgba(0, 203, 203, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
 }
 
 .student-main-info {
-    width: 100%;
+    flex: 1;
 }
 
 .title-row {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
-    gap: 15px;
+    gap: 20px;
     margin-bottom: 20px;
+    flex-wrap: wrap;
 }
 
 .title-row h1 {
-    font-size: 2.5rem;
-    margin-bottom: 0 !important;
+    font-size: 2.2rem;
+    margin: 0 !important;
+    letter-spacing: -0.5px;
 }
 
 .quick-nav-actions {
     display: flex;
     gap: 12px;
-    justify-content: center;
 }
 
 .info-grid {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
-    gap: 25px;
+    justify-content: flex-start;
+    gap: 30px;
 }
 
 .nav-btn {
