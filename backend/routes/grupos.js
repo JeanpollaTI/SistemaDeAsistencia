@@ -413,12 +413,12 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
     }
 });
 
-// [GET] /grupos/alumno/:alumnoId/ficha, authMiddleware, schoolMiddleware, async (req, res) => {
+// [GET] /grupos/alumno/:alumnoId/ficha - Obtener ficha completa del alumno (Asistencia + Calificaciones)
+router.get("/alumno/:alumnoId/ficha", authMiddleware, schoolMiddleware, async (req, res) => {
     try {
         const { alumnoId } = req.params;
         const school_id = req.user.school_id;
 
-        // 1. Encontrar el grupo y el alumno
         const grupo = await Grupo.findOne({ 
             "alumnos._id": alumnoId,
             school_id 
