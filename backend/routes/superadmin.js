@@ -10,6 +10,7 @@ import Materia from '../models/Materia.js';
 import { authMiddleware, isSuperAdmin } from '../middlewares/authMiddleware.js';
 import Suggestion from '../models/Suggestion.js';
 import Broadcast from '../models/Broadcast.js';
+import SystemStatus from '../models/SystemStatus.js';
 
 const router = express.Router();
 
@@ -179,6 +180,36 @@ router.get('/broadcasts/active', authMiddleware, async (req, res) => {
             ]
         }).sort({ createdAt: -1 }).limit(5);
         res.json(broadcasts);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- GLOBAL SYSTEM SETTINGS ---
+
+// GET current system status
+router.get('/settings/status', authMiddleware, async (req, res) => {
+    try {
+        const settings = await SystemStatus.getSettings();
+        res.json(settings);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST toggle maintenance mode
+router.post('/settings/maintenance', authMiddleware, isSuperAdmin, async (req, res) => {
+    try {
+        const { active } = req.body;
+        const settings = await SystemStatus.getSettings();
+        settings.maintenanceMode = active;
+        settings.updatedAt = new Date();
+        await settings.save();
+        
+        res.json({ 
+            msg: `Modo mantenimiento ${active ? 'ACTIVADO' : 'DESACTIVADO'}`,
+            settings 
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

@@ -27,6 +27,7 @@ import ParentPortal from "./PAGINA/ParentPortal";
 import SuspendedScreen from "./PAGINA/SuspendedScreen";
 import SuperAdminDashboard from "./PAGINA/SuperAdminDashboard";
 import FichaAlumno from "./PAGINA/FichaAlumno";
+import MaintenanceScreen from "./PAGINA/MaintenanceScreen";
 
 import SearchBar from "./COMPONENTE/SearchBar";
 import {
@@ -50,6 +51,7 @@ function App() {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
     const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
+    const [maintenanceActive, setMaintenanceActive] = useState(false);
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -97,6 +99,24 @@ function App() {
             document.title = "Scholaris";
         }
     }, [user, location.pathname]);
+
+    // Fetch System Status (Maintenance)
+    useEffect(() => {
+        const checkMaintenance = async () => {
+            try {
+                const res = await apiClient.get('/api/superadmin/settings/status');
+                if (res.data.maintenanceMode) {
+                    setMaintenanceActive(true);
+                }
+            } catch (e) {
+                // Si la API devuelve 503, capturamos el flag
+                if (e.response?.status === 503 && e.response?.data?.maintenance) {
+                    setMaintenanceActive(true);
+                }
+            }
+        };
+        if (user) checkMaintenance();
+    }, [user]);
 
     // Fetch Global Broadcasts
     const { addNotification } = useNotification();
@@ -281,7 +301,7 @@ function App() {
                     </div>
                     
                     <div className="nav-center" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-                        {user && user.subscriptionStatus !== "suspended" && <SearchBar />}
+                        {user && user.subscriptionStatus !== "suspended" && user.role !== 'superadmin' && <SearchBar />}
                     </div>
 
                     <div className="nav-menu" id="nav-menu" style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -291,8 +311,13 @@ function App() {
             </header>
 
             <main>
-                {/* El SuperAdmin nunca ve la pantalla de suspendido */}
-                {user?.subscriptionStatus === "suspended" && user?.role !== "superadmin" ? (
+                {/* 🌟 BLOQUEO POR MANTENIMIENTO 🌟 */}
+                {maintenanceActive && user?.role !== 'superadmin' ? (
+                    <Routes>
+                        <Route path="/mantenimiento" element={<MaintenanceScreen />} />
+                        <Route path="*" element={<Navigate to="/mantenimiento" />} />
+                    </Routes>
+                ) : user?.subscriptionStatus === "suspended" && user?.role !== "superadmin" ? (
                     <Routes>
                         <Route path="/suspendido" element={<SuspendedScreen />} />
                         <Route path="*" element={<Navigate to="/suspendido" />} />

@@ -1,6 +1,7 @@
 // middlewares/authMiddleware.js
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import SystemStatus from "../models/SystemStatus.js";
 
 export const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -25,6 +26,18 @@ export const authMiddleware = async (req, res, next) => {
 
     req.user = user;
     req.user.school_id = school_id;
+
+    // --- 🌟 CHEQUEO DE MODO MANTENIMIENTO 🌟 ---
+    // Si no es superadmin, verificar si el sistema está bajo mantenimiento
+    if (user.role !== 'superadmin') {
+        const settings = await SystemStatus.getSettings();
+        if (settings.maintenanceMode) {
+            return res.status(503).json({ 
+                maintenance: true, 
+                msg: 'El sistema se encuentra en mantenimiento global. Intente más tarde.' 
+            });
+        }
+    }
 
     next();
   } catch (err) {

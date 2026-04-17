@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../api/apiClient';
 import { useNotification } from '../COMPONENTE/NotificationContext';
-import { FaTrash, FaCheckCircle, FaExclamationTriangle, FaClock, FaSyncAlt, FaThList, FaLightbulb, FaBullhorn, FaThumbtack, FaMagic, FaInfoCircle } from 'react-icons/fa';
+import { FaTrash, FaCheckCircle, FaExclamationTriangle, FaClock, FaSyncAlt, FaThList, FaLightbulb, FaBullhorn, FaThumbtack, FaMagic, FaInfoCircle, FaCogs, FaPowerOff } from 'react-icons/fa';
 import './SuperAdminDashboard.css';
 
 const SuperAdminDashboard = ({ user }) => {
@@ -20,6 +20,10 @@ const SuperAdminDashboard = ({ user }) => {
     const [broadcasts, setBroadcasts] = useState([]);
     const [broadcastForm, setBroadcastForm] = useState({ message: '', type: 'update', days: 7 });
     const [isBroadcasting, setIsBroadcasting] = useState(false);
+
+    // Maintenance Mode State
+    const [maintenanceMode, setMaintenanceMode] = useState(false);
+    const [isUpdatingMode, setIsUpdatingMode] = useState(false);
 
     const fetchSchools = async () => {
         setLoading(true);
@@ -51,17 +55,20 @@ const SuperAdminDashboard = ({ user }) => {
         } catch (e) { console.error(e); }
     };
 
-    const fetchBroadcasts = async () => {
+    const fetchMaintenanceStatus = async () => {
         try {
-            const res = await apiClient.get('/api/superadmin/broadcasts/active');
-            setBroadcasts(res.data);
-        } catch (e) { console.error(e); }
+            const res = await apiClient.get('/api/superadmin/settings/status');
+            setMaintenanceMode(res.data.maintenanceMode);
+        } catch (e) {
+            console.error('Error fetching maintenance status:', e);
+        }
     };
 
     const refreshData = () => {
         if (activeTab === 'schools') fetchSchools();
         if (activeTab === 'suggestions') fetchSuggestions();
         if (activeTab === 'broadcasts') fetchBroadcasts();
+        if (activeTab === 'settings') fetchMaintenanceStatus();
     };
 
     useEffect(() => {
@@ -138,6 +145,33 @@ const SuperAdminDashboard = ({ user }) => {
         finally { setIsBroadcasting(false); }
     };
 
+    const handleToggleMaintenance = async () => {
+        const newStatus = !maintenanceMode;
+        const confirmMsg = newStatus 
+            ? '¿ACTIVAR MODO MANTENIMIENTO? Esto bloqueará el acceso a todos los directores y profesores. Solo tú podrás entrar.'
+            : '¿DESACTIVAR MODO MANTENIMIENTO? El acceso se restaurará inmediatamente para todos los usuarios.';
+
+        showConfirm(
+            newStatus ? 'MODO MANTENIMIENTO' : 'RESTAURAR ACCESO',
+            confirmMsg,
+            async () => {
+                setIsUpdatingMode(true);
+                try {
+                    await apiClient.post('/api/superadmin/settings/maintenance', { active: newStatus });
+                    setMaintenanceMode(newStatus);
+                    addNotification(
+                        `Modo mantenimiento ${newStatus ? 'activado' : 'desactivado'} correctamente`, 
+                        newStatus ? 'warning' : 'success'
+                    );
+                } catch (e) {
+                    addNotification('Error al cambiar el modo de mantenimiento', 'error');
+                } finally {
+                    setIsUpdatingMode(false);
+                }
+            }
+        );
+    };
+
     if (loading && schools.length === 0) {
         return <div className="superadmin-dashboard">Cargando datos globales...</div>;
     }
@@ -163,6 +197,9 @@ const SuperAdminDashboard = ({ user }) => {
                 </button>
                 <button className={`tab-btn ${activeTab === 'broadcasts' ? 'active' : ''}`} onClick={() => setActiveTab('broadcasts')}>
                     <FaBullhorn /> Comunicados
+                </button>
+                <button className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+                    <FaCogs /> Sistema
                 </button>
             </div>
 
@@ -380,6 +417,64 @@ const SuperAdminDashboard = ({ user }) => {
                                 </div>
                             ))
                         )}
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'settings' && (
+                <div className="system-settings-section">
+                    <div className="management-card settings-card">
+                        <div className="settings-header">
+                            <FaCogs className="header-icon" />
+                            <div>
+                                <h2>Configuración del Sistema</h2>
+                                <p>Control de acceso global y mantenimiento</p>
+                            </div>
+                        </div>
+
+                        <div className="setting-item maintenance-toggle">
+                            <div className="setting-info">
+                                <div className="setting-title">
+                                    <FaPowerOff style={{ color: maintenanceMode ? '#ff4757' : '#22c55e' }} />
+                                    <span>Modo Mantenimiento</span>
+                                </div>
+                                <p className="setting-description">
+                                    Al activar este modo, todos los usuarios (Directores y Profesores) verán una pantalla de mantenimiento y no podrán realizar ninguna acción. 
+                                    <strong> El SuperAdmin mantiene acceso total.</strong>
+                                </p>
+                            </div>
+                            
+                            <div className="switch-wrapper">
+                                <label className="maintenance-switch">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={maintenanceMode} 
+                                        onChange={handleToggleMaintenance}
+                                        disabled={isUpdatingMode}
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
+                                <span className="switch-label">
+                                    {maintenanceMode ? 'ACTIVO' : 'INACTIVO'}
+                                </span>
+                            </div>
+                        </div>
+
+                        {maintenanceMode && (
+                            <div className="maintenance-active-alert">
+                                <FaExclamationTriangle />
+                                <span>El sistema se encuentra actualmente en mantenimiento. Solo tú puedes navegar.</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="management-card info-card">
+                        <h3><FaInfoCircle /> Información del Servidor</h3>
+                        <div className="info-content">
+                            <p><strong>Estado:</strong> Operativo</p>
+                            <p><strong>Entorno:</strong> Producción</p>
+                            <p><strong>Última actualización:</strong> {new Date().toLocaleDateString()}</p>
+                        </div>
                     </div>
                 </div>
             )}
