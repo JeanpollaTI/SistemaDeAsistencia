@@ -353,8 +353,12 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
         const normalizedQ = normalize(processedQ);
 
         let query = { school_id };
+        // Si es profesor, solo buscar en sus grupos asignados
         if (isProfesor) {
-            query['profesoresAsignados.profesor'] = req.user._id;
+            query.$or = [
+                { 'profesoresAsignados.profesor': req.user._id },
+                { 'profesoresAsignados.profesor': req.user._id.toString() }
+            ];
         }
 
         const grupos = await Grupo.find(query).select('nombre alumnos profesoresAsignados aula');
