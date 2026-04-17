@@ -14,6 +14,16 @@ import SystemStatus from '../models/SystemStatus.js';
 
 const router = express.Router();
 
+// PUBLIC: Get current system status (No auth required for basic check)
+router.get('/public/status', async (req, res) => {
+    try {
+        const settings = await SystemStatus.getSettings();
+        res.json({ maintenanceMode: settings.maintenanceMode });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // GET all schools with metadata
 router.get('/schools', authMiddleware, isSuperAdmin, async (req, res) => {
     try {

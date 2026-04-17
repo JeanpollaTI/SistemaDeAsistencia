@@ -104,10 +104,9 @@ function App() {
     useEffect(() => {
         const checkMaintenance = async () => {
             try {
-                const res = await apiClient.get('/api/superadmin/settings/status');
-                if (res.data.maintenanceMode) {
-                    setMaintenanceActive(true);
-                }
+                // Usamos el endpoint público para que funcione sin estar logueado
+                const res = await apiClient.get('/api/superadmin/public/status');
+                setMaintenanceActive(res.data.maintenanceMode);
             } catch (e) {
                 // Si la API devuelve 503, capturamos el flag
                 if (e.response?.status === 503 && e.response?.data?.maintenance) {
@@ -115,8 +114,12 @@ function App() {
                 }
             }
         };
-        if (user) checkMaintenance();
-    }, [user]);
+        checkMaintenance();
+        
+        // Polling cada 30 segundos
+        const interval = setInterval(checkMaintenance, 30000);
+        return () => clearInterval(interval);
+    }, []);
 
     // Fetch Global Broadcasts
     const { addNotification } = useNotification();
@@ -312,7 +315,10 @@ function App() {
 
             <main>
                 {/* 🌟 BLOQUEO POR MANTENIMIENTO 🌟 */}
-                {maintenanceActive && user?.role !== 'superadmin' ? (
+                {maintenanceActive && 
+                 user?.role !== 'superadmin' && 
+                 location.pathname !== '/' && 
+                 location.pathname !== '/login' ? (
                     <Routes>
                         <Route path="/mantenimiento" element={<MaintenanceScreen />} />
                         <Route path="*" element={<Navigate to="/mantenimiento" />} />
