@@ -55,6 +55,13 @@ const SuperAdminDashboard = ({ user }) => {
         } catch (e) { console.error(e); }
     };
 
+    const fetchBroadcasts = async () => {
+        try {
+            const res = await apiClient.get('/api/superadmin/broadcasts/active');
+            setBroadcasts(res.data);
+        } catch (e) { console.error(e); }
+    };
+
     const fetchMaintenanceStatus = async () => {
         try {
             const res = await apiClient.get('/api/superadmin/settings/status');
