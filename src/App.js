@@ -272,15 +272,19 @@ function App() {
         <div>
             <AlertSystem />
             <header className="header" id="header">
-                <nav className="nav container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 10px' }}>
-                    <a href="#home" className="nav-logo" onClick={(e) => handleNavClick(e, "home")} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ffffff', fontWeight: 'bold', fontSize: '1.5rem', textDecoration: 'none', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', flexShrink: 1, minWidth: 0, marginRight: '10px' }}>
-                        <img src={logo} alt="Scholaris Logo" style={{ width: '38px', minWidth: '38px', height: 'auto', filter: 'drop-shadow(0 0 5px rgba(0, 203, 203, 0.5))' }} />
-                        <span style={{ letterSpacing: '1px', fontSize: '1rem', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user && user.school_name ? user.school_name.toUpperCase() : "SCHOLARIS"}</span>
-                    </a>
+                <nav className="nav container" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '0 10px' }}>
+                    <div className="nav-left" style={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
+                        <a href="#home" className="nav-logo" onClick={(e) => handleNavClick(e, "home")} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ffffff', fontWeight: 'bold', fontSize: '1.5rem', textDecoration: 'none', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', flexShrink: 1, minWidth: 0 }}>
+                            <img src={logo} alt="Scholaris Logo" style={{ width: '38px', minWidth: '38px', height: 'auto', filter: 'drop-shadow(0 0 5px rgba(0, 203, 203, 0.5))' }} />
+                            <span style={{ letterSpacing: '1px', fontSize: '1rem', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user && user.school_name ? user.school_name.toUpperCase() : "SCHOLARIS"}</span>
+                        </a>
+                    </div>
                     
-                    {user && user.subscriptionStatus !== "suspended" && <SearchBar />}
+                    <div className="nav-center" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                        {user && user.subscriptionStatus !== "suspended" && <SearchBar />}
+                    </div>
 
-                    <div className="nav-menu" id="nav-menu" style={{ display: 'flex', flexShrink: 0, alignItems: 'center' }}>
+                    <div className="nav-menu" id="nav-menu" style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                         {renderMenu()}
                     </div>
                 </nav>

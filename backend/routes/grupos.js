@@ -335,8 +335,23 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
             return res.json([]);
         }
 
-        // Dividir la consulta en términos para búsqueda "inteligente" (Nombre y Grupo)
-        const terms = q.trim().split(/\s+/).map(t => new RegExp(t, 'i'));
+        // --- 🌟 Mejorar Búsqueda: Normalización y Sinónimos ---
+        const normalize = (str) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+        
+        // Mapeo de términos comunes
+        const synonyms = {
+            "primero": "1", "segundo": "2", "tercero": "3",
+            "primer": "1", "segund": "2", "tercer": "3"
+        };
+
+        let processedQ = q.toLowerCase();
+        Object.keys(synonyms).forEach(s => {
+            processedQ = processedQ.replace(new RegExp(s, 'g'), synonyms[s]);
+        });
+
+        // Dividir en términos originales para búsqueda por partes
+        const terms = processedQ.trim().split(/\s+/).map(t => new RegExp(t, 'i'));
+        const normalizedQ = normalize(processedQ);
 
         let query = { school_id };
 
@@ -349,16 +364,27 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
         
         const results = [];
         grupos.forEach(grupo => {
+            const grupoNombreNorm = normalize(grupo.nombre);
+            
             // Unir términos: si todos los términos de búsqueda coinciden entre (Nombre Alumno + Nombre Grupo)
             const grupoMatchScore = terms.filter(t => t.test(grupo.nombre)).length;
+            // O si la consulta normalizada está contenida en el nombre del grupo normalizado
+            const fullGrupoMatch = grupoNombreNorm.includes(normalizedQ) || normalizedQ.includes(grupoNombreNorm);
             
             grupo.alumnos.forEach(alumno => {
                 const nombreCompleto = `${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno}`;
                 const alumnoMatchCount = terms.filter(t => t.test(nombreCompleto)).length;
+                const alumnoNorm = normalize(nombreCompleto);
                 
-                // Si la combinación de términos cubre toda la búsqueda
-                // O si el nombre del alumno contiene la mayoría de los términos
-                if (alumnoMatchCount + grupoMatchScore >= terms.length || alumnoMatchCount === terms.length) {
+                // CRITERIO DE MATCH:
+                // 1. Los términos divididos cubren el nombre+grupo
+                // 2. O la consulta normalizada coincide con el grupo (terceroA -> 3A)
+                // 3. O la consulta normalizada coincide con el alumno
+                if (
+                    (alumnoMatchCount + grupoMatchScore >= terms.length) || 
+                    (fullGrupoMatch && (alumnoMatchCount > 0 || terms.length <= 1)) ||
+                    (alumnoNorm.includes(normalizedQ))
+                ) {
                     let asignatura = null;
                     if (req.user.role === 'profesor' && grupo.profesoresAsignados) {
                         // Buscar la asignatura que tiene este profesor en este grupo
