@@ -227,7 +227,26 @@ function Trabajos({ user }) {
 
     useEffect(() => {
         const fetchGrupos = async () => {
-...
+            const token = localStorage.getItem('token');
+            const userId = user?._id || user?.id;
+
+            if (!token || !userId) {
+                setLoading(false);
+                setError("No se pudo identificar al usuario.");
+                return;
+            }
+
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            try {
+                const url = '/grupos/mis-grupos?populate=alumnos,profesoresAsignados.profesor';
+                const res = await axios.get(`${API_URL}${url}`, config);
+                setGrupos(res.data);
+            } catch (err) {
+                setError("No se pudieron cargar los grupos.");
+                console.error("Error fetching groups:", err);
+            } finally {
+                setLoading(false);
+            }
         };
 
         fetchGrupos();
