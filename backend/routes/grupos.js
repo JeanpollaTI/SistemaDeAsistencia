@@ -345,7 +345,7 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
             query['profesoresAsignados.profesor'] = req.user._id;
         }
 
-        const grupos = await Grupo.find(query).select('nombre alumnos');
+        const grupos = await Grupo.find(query).select('nombre alumnos profesoresAsignados');
         
         const results = [];
         grupos.forEach(grupo => {
@@ -360,7 +360,7 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
                 // O si el nombre del alumno contiene la mayoría de los términos
                 if (alumnoMatchCount + grupoMatchScore >= terms.length || alumnoMatchCount === terms.length) {
                     let asignatura = null;
-                    if (req.user.role === 'profesor') {
+                    if (req.user.role === 'profesor' && grupo.profesoresAsignados) {
                         // Buscar la asignatura que tiene este profesor en este grupo
                         const asig = grupo.profesoresAsignados.find(pa => {
                             const pId = pa.profesor?.id || pa.profesor?._id || pa.profesor;
