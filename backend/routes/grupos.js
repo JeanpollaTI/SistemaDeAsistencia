@@ -1,4 +1,4 @@
-﻿import express from "express";
+import express from "express";
 import mongoose from "mongoose";
 import Grupo from "../models/Grupo.js";
 import Calificacion from "../models/Calificacion.js";
@@ -337,10 +337,8 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
             return res.json([]);
         }
 
-        // --- ðŸŒŸ Mejorar BÃºsqueda: NormalizaciÃ³n y SinÃ³nimos ---
         const normalize = (str) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
         
-        // Mapeo de tÃ©rminos comunes
         const synonyms = {
             "primero": "1", "segundo": "2", "tercero": "3",
             "primer": "1", "segund": "2", "tercer": "3"
@@ -351,13 +349,10 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
             processedQ = processedQ.replace(new RegExp(s, 'g'), synonyms[s]);
         });
 
-        // Dividir en tÃ©rminos originales para bÃºsqueda por partes
         const terms = processedQ.trim().split(/\s+/).map(t => new RegExp(t, 'i'));
         const normalizedQ = normalize(processedQ);
 
         let query = { school_id };
-
-        // Si es profesor, solo buscar en sus grupos asignados
         if (isProfesor) {
             query['profesoresAsignados.profesor'] = req.user._id;
         }
@@ -369,9 +364,7 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
             const grupoNombreNorm = normalize(grupo.nombre);
             const aulaNorm = grupo.aula ? normalize(grupo.aula) : '';
             
-            // Unir tÃ©rminos: si todos los tÃ©rminos de bÃºsqueda coinciden entre (Nombre Alumno + Nombre Grupo)
             const grupoMatchScore = terms.filter(t => t.test(grupo.nombre)).length;
-            // O si la consulta normalizada estÃ¡ contenida en el nombre del grupo normalizado
             const fullGrupoMatch = grupoNombreNorm.includes(normalizedQ) || normalizedQ.includes(grupoNombreNorm) || (aulaNorm && (aulaNorm.includes(normalizedQ) || normalizedQ.includes(aulaNorm)));
             const materiasMatch = grupo.profesoresAsignados?.some(pa => normalize(pa.asignatura).includes(normalizedQ));
             
@@ -380,18 +373,14 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
                 const alumnoMatchCount = terms.filter(t => t.test(nombreCompleto)).length;
                 const alumnoNorm = normalize(nombreCompleto);
                 
-                // CRITERIO DE MATCH:
-                // 1. Los tÃ©rminos divididos cubren el nombre+grupo
-                // 2. O la consulta normalizada coincide con el grupo (terceroA -> 3A)
-                // 3. O la consulta normalizada coincide con el alumno
                 if (
                     (alumnoMatchCount + grupoMatchScore >= terms.length) || 
                     (fullGrupoMatch && (alumnoMatchCount > 0 || terms.length <= 1)) ||
-                    (alumnoNorm.includes(normalizedQ))
+                    (alumnoNorm.includes(normalizedQ)) ||
+                    (materiasMatch)
                 ) {
                     let asignatura = null;
                     if (req.user.role === 'profesor' && grupo.profesoresAsignados) {
-                        // Buscar la asignatura que tiene este profesor en este grupo
                         const asig = grupo.profesoresAsignados.find(pa => {
                             const pId = pa.profesor?.id || pa.profesor?._id || pa.profesor;
                             return String(pId) === String(req.user.id);
@@ -407,22 +396,20 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
                         grupo: grupo.nombre,
                         aula: grupo.aula || '',
                         grupoId: grupo._id,
-                        asignatura // Incluimos la asignatura para navegaciÃ³n directa
+                        asignatura
                     });
                 }
             });
         });
 
-        // Limitar resultados para no saturar
         res.json(results.slice(0, 10));
     } catch (err) {
         console.error("Error en global-search:", err);
-        res.status(500).json({ error: "Error en la bÃºsqueda." });
+        res.status(500).json({ error: "Error en la búsqueda." });
     }
 });
 
-// [GET] /grupos/alumno/:alumnoId/ficha - Obtener ficha completa del alumno (Asistencia + Calificaciones)
-router.get("/alumno/:alumnoId/ficha", authMiddleware, schoolMiddleware, async (req, res) => {
+// [GET] /grupos/alumno/:alumnoId/ficha, authMiddleware, schoolMiddleware, async (req, res) => {
     try {
         const { alumnoId } = req.params;
         const school_id = req.user.school_id;
