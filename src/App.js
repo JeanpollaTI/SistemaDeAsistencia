@@ -26,6 +26,9 @@ import RegisterSchool from "./PAGINA/RegisterSchool";
 import ParentPortal from "./PAGINA/ParentPortal";
 import SuspendedScreen from "./PAGINA/SuspendedScreen";
 import SuperAdminDashboard from "./PAGINA/SuperAdminDashboard";
+import FichaAlumno from "./PAGINA/FichaAlumno";
+
+import SearchBar from "./COMPONENTE/SearchBar";
 import {
     FaGraduationCap, FaMoon, FaSun, FaSignOutAlt, FaUserCircle,
     FaThLarge, FaUsers, FaCalendarAlt, FaChartBar, FaTasks,
@@ -274,7 +277,8 @@ function App() {
                         <img src={logo} alt="Scholaris Logo" style={{ width: '38px', minWidth: '38px', height: 'auto', filter: 'drop-shadow(0 0 5px rgba(0, 203, 203, 0.5))' }} />
                         <span style={{ letterSpacing: '1px', fontSize: '1rem', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user && user.school_name ? user.school_name.toUpperCase() : "SCHOLARIS"}</span>
                     </a>
-                    <div className="nav-menu" id="nav-menu" style={{ display: 'flex', flexShrink: 0 }}>
+                    <div className="nav-menu" id="nav-menu" style={{ display: 'flex', flexShrink: 0, alignItems: 'center' }}>
+                        {user && user.subscriptionStatus !== "suspended" && <SearchBar />}
                         {renderMenu()}
                     </div>
                 </nav>
@@ -304,6 +308,7 @@ function App() {
                     <Route path="/calificaciones" element={<PrivateRoute requiredRole="admin"><Calificaciones user={user} /></PrivateRoute>} />
                     {/* Nueva Ruta SuperAdmin */}
                     <Route path="/manager-dashboard" element={<PrivateRoute requiredRole="superadmin"><SuperAdminDashboard user={user} /></PrivateRoute>} />
+                    <Route path="/alumno/:id" element={<PrivateRoute requiredRole={["admin", "profesor"]}><FichaAlumno /></PrivateRoute>} />
                     <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
                 )}

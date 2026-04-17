@@ -1,0 +1,212 @@
+.ficha-page-container {
+    padding: 20px;
+    min-height: 100vh;
+    animation: fadeIn 0.5s ease;
+}
+
+.ficha-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1000px;
+    margin: 0 auto 20px;
+}
+
+.back-btn, .print-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.back-btn {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.print-btn {
+    background: var(--primary-color, #00CBCB);
+    color: #1a1a1a;
+}
+
+.print-btn:hover {
+    box-shadow: 0 0 15px rgba(0, 203, 203, 0.4);
+    transform: translateY(-2px);
+}
+
+.ficha-content {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.ficha-card {
+    border-radius: 20px;
+    overflow: hidden;
+    background: rgba(23, 25, 30, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.student-hero {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    padding: 40px;
+    background: linear-gradient(135deg, rgba(0, 203, 203, 0.1) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.avatar-placeholder {
+    width: 100px;
+    height: 100px;
+    background: rgba(0, 203, 203, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: var(--primary-color, #00CBCB);
+    border: 2px solid rgba(0, 203, 203, 0.3);
+}
+
+.student-main-info h1 {
+    font-size: 2.2rem;
+    margin-bottom: 15px;
+    color: white;
+}
+
+.info-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+}
+
+.info-item .icon {
+    color: var(--primary-color, #00CBCB);
+}
+
+.ficha-sections {
+    padding: 30px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.section-title .icon {
+    color: var(--primary-color, #00CBCB);
+    font-size: 1.2rem;
+}
+
+.section-title h2 {
+    font-size: 1.4rem;
+    color: white;
+    font-weight: 500;
+}
+
+.ficha-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ficha-table th {
+    text-align: left;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.ficha-table td {
+    padding: 15px;
+    color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.reproved {
+    color: #ff6b6b !important;
+}
+
+.bold { font-weight: bold; }
+.center { text-align: center; }
+.warning { color: #f39c12 !important; }
+.info { color: #3498db !important; }
+
+.final-avg {
+    font-weight: bold;
+    color: var(--primary-color, #00CBCB);
+}
+
+.percentage-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #1a1a1a;
+}
+
+.empty-msg {
+    text-align: center;
+    padding: 30px !important;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media print {
+    .no-print { display: none; }
+    .printable { padding: 0; }
+    .ficha-card { 
+        background: white; 
+        color: black; 
+        border: none;
+        box-shadow: none;
+    }
+    .student-hero { background: #f8f9fa; border-bottom: 2px solid #ddd; }
+    .student-main-info h1 { color: black; }
+    .info-item { color: #333; }
+    .section-title h2 { color: black; }
+    .ficha-table th { background: #eee; color: #555; }
+    .ficha-table td { color: black; border-bottom: 1px solid #ddd; }
+}
+
+@media (max-width: 768px) {
+    .student-hero { 
+        flex-direction: column; 
+        text-align: center; 
+        padding: 30px 20px;
+    }
+    .info-grid { 
+        justify-content: center; 
+    }
+    .ficha-sections { padding: 20px; }
+}

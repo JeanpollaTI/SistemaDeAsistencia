@@ -2,6 +2,8 @@ import express from "express";
 import mongoose from "mongoose";
 import Grupo from "../models/Grupo.js";
 import Calificacion from "../models/Calificacion.js";
+import Asistencia from "../models/Asistencia.js";
+import School from "../models/School.js";
 import Counter from "../models/Counter.js";
 import { authMiddleware, isAdmin } from "../middlewares/authMiddleware.js";
 import { schoolMiddleware } from "../middlewares/schoolMiddleware.js";
@@ -83,12 +85,21 @@ router.get("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
 // [PUT] /grupos/:id/asignar-profesores - Asignar profesores y asignaturas (Admin)
 router.put("/:id/asignar-profesores", authMiddleware, isAdmin, async (req, res) => {
     try {
+        const { id } = req.params;
         const { asignaciones } = req.body;
 
-        grupo.profesoresAsignados = asignacionesValidas;
-        const savedGrupo = await grupo.save();
+        const grupo = await Grupo.findById(id);
+        if (!grupo) {
+            return res.status(404).json({ error: "Grupo no encontrado." });
+        }
 
-        const grupoActualizado = await Grupo.findById(req.params.id).populate({
+        // Filtrar asignaciones nulas o incompletas
+        const asignacionesValidas = (asignaciones || []).filter(a => a.profesor && a.asignatura);
+
+        grupo.profesoresAsignados = asignacionesValidas;
+        await grupo.save();
+
+        const grupoActualizado = await Grupo.findById(id).populate({
             path: 'profesoresAsignados.profesor',
             select: 'nombre email foto'
         });
@@ -96,7 +107,7 @@ router.put("/:id/asignar-profesores", authMiddleware, isAdmin, async (req, res) 
         res.json(grupoActualizado);
     } catch (err) {
         console.error("Error en [PUT /grupos/:id/asignar-profesores]:", err);
-        res.status(500).json({ error: "Error al asignar profesores." });
+        res.status(500).json({ error: "Error al asignar profesores.", details: err.message });
     }
 });
 
@@ -310,6 +321,162 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
     } catch (err) {
         console.error("Error procesando calificaciones para admin:", err.message);
         res.status(500).json({ error: "Error del Servidor: Falla al procesar las calificaciones." });
+    }
+});
+
+// [GET] /grupos/global-search - Buscador inteligente de alumnos y grupos
+router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) => {
+    try {
+        const { q } = req.query;
+        const school_id = req.user.school_id;
+        const isProfesor = req.user.role === "profesor";
+
+        if (!q || q.length < 2) {
+            return res.json([]);
+        }
+
+        // Dividir la consulta en términos para búsqueda "inteligente" (Nombre y Grupo)
+        const terms = q.trim().split(/\s+/).map(t => new RegExp(t, 'i'));
+
+        let query = { school_id };
+
+        // Si es profesor, solo buscar en sus grupos asignados
+        if (isProfesor) {
+            query['profesoresAsignados.profesor'] = req.user._id;
+        }
+
+        const grupos = await Grupo.find(query).select('nombre alumnos');
+        
+        const results = [];
+        grupos.forEach(grupo => {
+            // Unir términos: si todos los términos de búsqueda coinciden entre (Nombre Alumno + Nombre Grupo)
+            const grupoMatchScore = terms.filter(t => t.test(grupo.nombre)).length;
+            
+            grupo.alumnos.forEach(alumno => {
+                const nombreCompleto = `${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno}`;
+                const alumnoMatchCount = terms.filter(t => t.test(nombreCompleto)).length;
+                
+                // Si la combinación de términos cubre toda la búsqueda
+                // O si el nombre del alumno contiene la mayoría de los términos
+                if (alumnoMatchCount + grupoMatchScore >= terms.length || alumnoMatchCount === terms.length) {
+                    results.push({
+                        type: 'alumno',
+                        id: alumno._id,
+                        nombre: nombreCompleto,
+                        matricula: alumno.matricula,
+                        grupo: grupo.nombre,
+                        grupoId: grupo._id
+                    });
+                }
+            });
+        });
+
+        // Limitar resultados para no saturar
+        res.json(results.slice(0, 10));
+    } catch (err) {
+        console.error("Error en global-search:", err);
+        res.status(500).json({ error: "Error en la búsqueda." });
+    }
+});
+
+// [GET] /grupos/alumno/:alumnoId/ficha - Obtener ficha completa del alumno (Asistencia + Calificaciones)
+router.get("/alumno/:alumnoId/ficha", authMiddleware, schoolMiddleware, async (req, res) => {
+    try {
+        const { alumnoId } = req.params;
+        const school_id = req.user.school_id;
+
+        // 1. Encontrar el grupo y el alumno
+        const grupo = await Grupo.findOne({ 
+            "alumnos._id": alumnoId,
+            school_id 
+        }).populate('profesoresAsignados.profesor', 'nombre');
+
+        if (!grupo) {
+            return res.status(404).json({ error: "Alumno no encontrado o no pertenece a su institución." });
+        }
+
+        const alumno = grupo.alumnos.id(alumnoId);
+        const school = await School.findById(school_id).select('name');
+
+        // 2. Obtener Calificaciones
+        const calificacionesRaw = await Calificacion.find({ grupo: grupo._id, school_id });
+        
+        const redondearCalificacion = (val) => {
+            if (typeof val !== 'number' || val <= 0) return 0;
+            const valUnaDecimal = Math.round(val * 10) / 10;
+            if (valUnaDecimal >= 5 && valUnaDecimal < 6) return 5;
+            return Math.max(5, Math.round(valUnaDecimal));
+        };
+
+        const calificaciones = calificacionesRaw.map(reg => {
+            const bimestres = {};
+            const { criterios: criteriosPorBimestre, calificaciones: calificacionesMateria, numTareas: numTareasConfig } = reg;
+
+            [1, 2, 3].forEach(bimestre => {
+                const bimestreKey = String(bimestre);
+                const criteriosActivos = criteriosPorBimestre?.[bimestreKey] || [];
+                const calificacionesAlumnoEnBimestre = calificacionesMateria?.[alumnoId]?.[bimestreKey];
+
+                if (!calificacionesAlumnoEnBimestre || Object.keys(calificacionesAlumnoEnBimestre).length === 0) {
+                    bimestres[bimestre] = null;
+                    return;
+                }
+
+                let promedioPonderado = 0;
+                let pesoTotalAplicable = 0;
+
+                criteriosActivos.forEach(criterio => {
+                    const calificacionesCriterio = calificacionesAlumnoEnBimestre[criterio.nombre] || {};
+                    const maxTareas = numTareasConfig?.[criterio.nombre] || 999;
+                    const notasValidas = Object.keys(calificacionesCriterio)
+                        .filter(index => parseInt(index) < maxTareas && calificacionesCriterio[index] && typeof calificacionesCriterio[index].nota === 'number')
+                        .map(index => calificacionesCriterio[index].nota);
+
+                    if (notasValidas.length > 0) {
+                        const promedioCriterio = notasValidas.reduce((a, b) => a + b, 0) / notasValidas.length;
+                        promedioPonderado += promedioCriterio * (criterio.porcentaje / 100);
+                        pesoTotalAplicable += (criterio.porcentaje / 100);
+                    }
+                });
+
+                bimestres[bimestre] = pesoTotalAplicable === 0 ? null : redondearCalificacion(promedioPonderado / pesoTotalAplicable);
+            });
+
+            return { asignatura: reg.asignatura, bimestres };
+        });
+
+        // 3. Obtener Asistencias
+        const asistenciasRaw = await Asistencia.find({ grupo: grupo._id, school_id });
+        const asistenciasDetalle = asistenciasRaw.map(asis => {
+            let presentes = 0, faltas = 0, retardos = 0, justificados = 0, totales = 0;
+            if (asis.registros) {
+                asis.registros.forEach((valor, clave) => {
+                    if (clave.startsWith(String(alumnoId))) {
+                        totales++;
+                        if (valor.estado === 'P') presentes++;
+                        if (valor.estado === 'F') faltas++;
+                        if (valor.estado === 'R') retardos++;
+                        if (valor.estado === 'J') justificados++;
+                    }
+                });
+            }
+            return { asignatura: asis.asignatura, presentes, faltas, retardos, justificados, totales };
+        });
+
+        res.json({
+            alumno: {
+                nombre: `${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno}`,
+                matricula: alumno.matricula,
+                grupo: grupo.nombre,
+                escuela: school?.name
+            },
+            calificaciones,
+            asistencias: asistenciasDetalle
+        });
+
+    } catch (err) {
+        console.error("Error al obtener ficha del alumno:", err);
+        res.status(500).json({ error: "Error al obtener la información del alumno." });
     }
 });
 
