@@ -373,7 +373,7 @@ router.get("/global-search", authMiddleware, schoolMiddleware, async (req, res) 
             const materiasMatch = grupo.profesoresAsignados?.some(pa => normalize(pa.asignatura).includes(normalizedQ));
             
             grupo.alumnos.forEach(alumno => {
-                const nombreCompleto = `${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno}`;
+                const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
                 const alumnoMatchCount = terms.filter(t => t.test(nombreCompleto)).length;
                 const alumnoNorm = normalize(nombreCompleto);
                 
@@ -508,7 +508,7 @@ router.get("/alumno/:alumnoId/ficha", authMiddleware, schoolMiddleware, async (r
         res.json({
             alumno: {
                 id: alumno._id,
-                nombre: `${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno}`,
+                nombre: `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`,
                 matricula: alumno.matricula,
                 grupo: grupo.nombre,
                 grupoId: grupo._id,

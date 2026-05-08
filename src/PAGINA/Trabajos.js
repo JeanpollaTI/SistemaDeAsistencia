@@ -1949,7 +1949,8 @@ const PanelCalificaciones = ({
         yPos += 5;
 
         // --- TABLA ---
-        const tableHeaders = [['Nombre del Alumno', 'T1', 'T2', 'T3', 'Promedio Final']];
+        const isTec = asignatura?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('tecnologia');
+        const tableHeaders = [isTec ? ['Nombre del Alumno', 'Obs.', 'T1', 'T2', 'T3', 'Promedio Final'] : ['Nombre del Alumno', 'T1', 'T2', 'T3', 'Promedio Final']];
 
         const tableBody = grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => {
             const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
@@ -1967,13 +1968,20 @@ const PanelCalificaciones = ({
             if (p3 > 0) { suma += parseFloat(p3); count++; }
             const final = count > 0 ? redondearCalificacion(suma / count) : 0;
 
-            return [
+            const rowData = [
                 nombreCompleto,
                 p1 > 0 ? p1 : '-',
                 p2 > 0 ? p2 : '-',
                 p3 > 0 ? p3 : '-',
                 final > 0 ? final : '-'
             ];
+
+            if (isTec) {
+                const obs = calificaciones[alumno._id]?.[bimestreActivo]?.OBSERVACIONES || '';
+                rowData.splice(1, 0, obs); // Insert Obs at index 1
+            }
+
+            return rowData;
         });
 
         autoTable(doc, {
@@ -2163,11 +2171,11 @@ const PanelCalificaciones = ({
                         {/* --- VISTA 1: TABLA MASIVA (SI HAY UN CRITERIO SELECCIONADO) --- */}
                         {criterioSeleccionadoGlobal ? (
                             <div className="tabla-global-container" style={{ fontSize: `${zoomLevel}rem` }}>
-                                <table className={`tabla-global ${asignatura === 'Tecnologia' ? 'with-obs' : ''}`}>
+                                <table className={`tabla-global ${asignatura?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('tecnologia') ? 'with-obs' : ''}`}>
                                     <thead>
                                         <tr>
                                             <th className="num-col" style={{ width: '40px', minWidth: '40px', textAlign: 'center' }}>#</th>
-                                            {asignatura === 'Tecnologia' && <th className="obs-col">Obs.</th>}
+                                            {asignatura?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('tecnologia') && <th className="obs-col">Obs.</th>}
                                             <th className="alumno-col" style={{ width: '250px', minWidth: '250px' }}>Alumno</th>
                                             {/* Columnas de Tareas */}
                                             {Array.from({ length: numTareas[criterioSeleccionadoGlobal] || 10 }).map((_, tareaIndex) => {
@@ -2217,7 +2225,7 @@ const PanelCalificaciones = ({
                                         {sortedAlumnos.map((alumno, index) => (
                                             <tr key={alumno._id}>
                                                 <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{index + 1}</td>
-                                                {asignatura === 'Tecnologia' && (
+                                                {asignatura?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('tecnologia') && (
                                                     <td className="obs-col-body">
                                                         <input
                                                             id={`cell-${index}--1`}
