@@ -345,7 +345,13 @@ function Grupo({ user }) {
       const nuevoAlumno = { _id: alumnoId, ...alumnoInput };
       setNuevoGrupo(prev => ({ 
         ...prev, 
-        alumnos: [...prev.alumnos, nuevoAlumno].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)) 
+        alumnos: [...prev.alumnos, nuevoAlumno].sort((a, b) => {
+          const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', undefined, { sensitivity: 'base' });
+          if (resP !== 0) return resP;
+          const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', undefined, { sensitivity: 'base' });
+          if (resM !== 0) return resM;
+          return (a.nombre || '').localeCompare(b.nombre || '', undefined, { sensitivity: 'base' });
+        })
       }));
       handleCancelarEdicion();
     }
@@ -356,7 +362,13 @@ function Grupo({ user }) {
     if (!editingAlumno) return;
     setNuevoGrupo(prev => ({
       ...prev,
-      alumnos: prev.alumnos.map(a => a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a).sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno))
+      alumnos: prev.alumnos.map(a => a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a).sort((a, b) => {
+        const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', undefined, { sensitivity: 'base' });
+        if (resP !== 0) return resP;
+        const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', undefined, { sensitivity: 'base' });
+        if (resM !== 0) return resM;
+        return (a.nombre || '').localeCompare(b.nombre || '', undefined, { sensitivity: 'base' });
+      })
     }));
     setModalVisible('gestionarGrupo');
     setEditingAlumno(null);
@@ -535,7 +547,13 @@ function Grupo({ user }) {
   const exportarXLS = (grupo) => {
     if (!grupo || !grupo.alumnos || grupo.alumnos.length === 0) return showAlert("Este grupo no tiene alumnos para exportar.", "danger");
 
-    const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno));
+    const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => {
+      const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', undefined, { sensitivity: 'base' });
+      if (resP !== 0) return resP;
+      const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', undefined, { sensitivity: 'base' });
+      if (resM !== 0) return resM;
+      return (a.nombre || '').localeCompare(b.nombre || '', undefined, { sensitivity: 'base' });
+    });
 
     const datosParaExportar = alumnosOrdenados.map((a, i) => ({
       'N°': i + 1,
@@ -852,7 +870,13 @@ function Grupo({ user }) {
       ];
 
       const tableRows = [];
-      const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno));
+      const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => {
+        const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', undefined, { sensitivity: 'base' });
+        if (resP !== 0) return resP;
+        const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', undefined, { sensitivity: 'base' });
+        if (resM !== 0) return resM;
+        return (a.nombre || '').localeCompare(b.nombre || '', undefined, { sensitivity: 'base' });
+      });
 
       alumnosOrdenados.forEach(alumno => {
         const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
@@ -1311,7 +1335,13 @@ function Grupo({ user }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {grupoSeleccionado?.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map((alumno, index) => {
+                      {grupoSeleccionado?.alumnos.sort((a, b) => {
+                        const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', undefined, { sensitivity: 'base' });
+                        if (resP !== 0) return resP;
+                        const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', undefined, { sensitivity: 'base' });
+                        if (resM !== 0) return resM;
+                        return (a.nombre || '').localeCompare(b.nombre || '', undefined, { sensitivity: 'base' });
+                      }).map((alumno, index) => {
                         const totales = calcularTotales(alumno._id, bimestreActivo, asistencia, diasPorBimestre);
                         const isHighlighted = highlightedAlumnoId === alumno._id;
                         return (
