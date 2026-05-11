@@ -1418,9 +1418,13 @@ const PanelCalificaciones = ({
     // Fixes the issue where students shuffle randomly during render or updates.
     const sortedAlumnos = useMemo(() => {
         if (!grupo || !grupo.alumnos) return [];
-        return [...grupo.alumnos].sort((a, b) =>
-            a.apellidoPaterno.localeCompare(b.apellidoPaterno, 'es', { sensitivity: 'base' })
-        );
+        return [...grupo.alumnos].sort((a, b) => {
+            const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
+            if (resP !== 0) return resP;
+            const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
+            if (resM !== 0) return resM;
+            return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
+        });
     }, [grupo]);
   
     // --- LÓGICA PARA EVITAR SALIR SIN GUARDAR ---
@@ -1489,11 +1493,17 @@ const PanelCalificaciones = ({
         setNotificacion({ mensaje: 'Guardando nuevos criterios...', tipo: 'info' });
 
         // AUTO-SAVE: Invocamos guardarCalificaciones inmediatamente con los nuevos criterios
-        // Reutilizamos la lógica de guardarCalificaciones pero pasamos los criterios explícitamente
-        // ya que el estado criteriosPorBimestre podría no haberse actualizado aún en este closure.
         const token = localStorage.getItem('token');
         const config = { headers: { Authorization: `Bearer ${token}` } };
-        const payload = { grupoId: grupo._id, asignatura, criterios: nuevosCriterios, calificaciones };
+        
+        // 🎯 FIX: Se incluye numTareas para evitar pérdida de configuración al guardar criterios
+        const payload = { 
+            grupoId: grupo._id, 
+            asignatura, 
+            criterios: nuevosCriterios, 
+            calificaciones,
+            numTareas 
+        };
 
         try {
             await axios.post(`${API_URL}/calificaciones`, payload, config);
@@ -1503,7 +1513,7 @@ const PanelCalificaciones = ({
             console.error("Error auto-guardando criterios:", error);
             setNotificacion({ mensaje: 'Criterios actualizados localmente, pero error al guardar en servidor.', tipo: 'warning' });
         }
-    }, [grupo._id, asignatura, calificaciones, setCriteriosPorBimestre, setModalCriterios, setNotificacion]);
+    }, [grupo._id, asignatura, calificaciones, numTareas, setCriteriosPorBimestre, setModalCriterios, setNotificacion]);
 
     const getPeriodCount = () => {
         if (!schoolConfig) return 3;
@@ -1952,7 +1962,13 @@ const PanelCalificaciones = ({
         const isTec = asignatura?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('tecnologia');
         const tableHeaders = [isTec ? ['Nombre del Alumno', 'Obs.', 'T1', 'T2', 'T3', 'Promedio Final'] : ['Nombre del Alumno', 'T1', 'T2', 'T3', 'Promedio Final']];
 
-        const tableBody = grupo.alumnos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno)).map(alumno => {
+        const tableBody = [...grupo.alumnos].sort((a, b) => {
+            const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
+            if (resP !== 0) return resP;
+            const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
+            if (resM !== 0) return resM;
+            return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
+        }).map(alumno => {
             const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
 
             // Calcular promedios

@@ -172,7 +172,13 @@ function Calificaciones({ user }) {
     setLoading(true);
     setSelectedGrupo(grupo);
 
-    const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno));
+    const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => {
+      const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
+      if (resP !== 0) return resP;
+      const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
+      if (resM !== 0) return resM;
+      return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
+    });
     setAlumnos(alumnosOrdenados);
 
     // Combinar asignaturas asignadas y orden guardado
