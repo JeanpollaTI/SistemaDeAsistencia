@@ -111,7 +111,16 @@ function Grupo({ user }) {
             return;
           }
 
-          const sortedGrupos = Array.isArray(gruposRes.data) ? gruposRes.data.sort((a, b) =>
+          const sortedGrupos = Array.isArray(gruposRes.data) ? gruposRes.data.map(g => ({
+            ...g,
+            alumnos: Array.isArray(g.alumnos) ? [...g.alumnos].sort((a, b) => {
+              const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
+              if (resP !== 0) return resP;
+              const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
+              if (resM !== 0) return resM;
+              return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
+            }) : []
+          })).sort((a, b) =>
             a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
           ) : [];
           setGrupos(sortedGrupos);
@@ -136,7 +145,16 @@ function Grupo({ user }) {
             return;
           }
 
-          const sortedGrupos = Array.isArray(gruposRes.data) ? gruposRes.data.sort((a, b) =>
+          const sortedGrupos = Array.isArray(gruposRes.data) ? gruposRes.data.map(g => ({
+            ...g,
+            alumnos: Array.isArray(g.alumnos) ? [...g.alumnos].sort((a, b) => {
+              const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
+              if (resP !== 0) return resP;
+              const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
+              if (resM !== 0) return resM;
+              return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
+            }) : []
+          })).sort((a, b) =>
             a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
           ) : [];
           setGrupos(sortedGrupos);
@@ -190,9 +208,18 @@ function Grupo({ user }) {
     if (tipo === 'gestionarGrupo') {
       setGrupoSeleccionado(data);
       if (data) { 
+        const sortedAlumnos = Array.isArray(data.alumnos) ? [...data.alumnos].sort((a, b) => {
+          const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
+          if (resP !== 0) return resP;
+          const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
+          if (resM !== 0) return resM;
+          return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
+        }) : [];
+
         setNuevoGrupo({
           ...JSON.parse(JSON.stringify(data)),
-          aula: data.aula || ''
+          aula: data.aula || '',
+          alumnos: sortedAlumnos
         }); 
       }
       else { setNuevoGrupo({ nombre: '', asesor: '', aula: '', alumnos: [] }); }
@@ -476,7 +503,19 @@ function Grupo({ user }) {
     if (!nuevoGrupo.nombre.trim()) return showAlert("El nombre del grupo es requerido.", 'error');
     try {
       const response = await axios.post(`${API_URL}/grupos`, nuevoGrupo, getAxiosConfig());
-      setGrupos(prev => [...prev, response.data]);
+      const nuevoGrupoData = response.data;
+      if (nuevoGrupoData && Array.isArray(nuevoGrupoData.alumnos)) {
+        nuevoGrupoData.alumnos.sort((a, b) => {
+          const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
+          if (resP !== 0) return resP;
+          const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
+          if (resM !== 0) return resM;
+          return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
+        });
+      }
+      setGrupos(prev => [...prev, nuevoGrupoData].sort((a, b) =>
+        a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
+      ));
       showAlert(`Grupo "${nuevoGrupo.nombre}" guardado.`);
       setHasChanges(false);
       cerrarModal(true);
@@ -490,7 +529,17 @@ function Grupo({ user }) {
     if (!grupoSeleccionado) return;
     try {
       const response = await axios.put(`${API_URL}/grupos/${grupoSeleccionado._id}`, nuevoGrupo, getAxiosConfig());
-      setGrupos(prev => prev.map(g => g._id === grupoSeleccionado._id ? response.data : g));
+      const updatedGrupoData = response.data;
+      if (updatedGrupoData && Array.isArray(updatedGrupoData.alumnos)) {
+        updatedGrupoData.alumnos.sort((a, b) => {
+          const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
+          if (resP !== 0) return resP;
+          const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
+          if (resM !== 0) return resM;
+          return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
+        });
+      }
+      setGrupos(prev => prev.map(g => g._id === grupoSeleccionado._id ? updatedGrupoData : g));
       showAlert(`Grupo "${nuevoGrupo.nombre}" actualizado.`);
       setHasChanges(false);
       cerrarModal(true);
@@ -785,7 +834,19 @@ function Grupo({ user }) {
         const grupoParaGuardar = { nombre: nombreGrupoImport, alumnos: alumnosImportados };
 
         const response = await axios.post(`${API_URL}/grupos`, grupoParaGuardar, getAxiosConfig());
-        setGrupos(prev => [...prev, response.data]);
+        const nuevoGrupoData = response.data;
+        if (nuevoGrupoData && Array.isArray(nuevoGrupoData.alumnos)) {
+          nuevoGrupoData.alumnos.sort((a, b) => {
+            const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
+            if (resP !== 0) return resP;
+            const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
+            if (resM !== 0) return resM;
+            return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
+          });
+        }
+        setGrupos(prev => [...prev, nuevoGrupoData].sort((a, b) =>
+          a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
+        ));
         showAlert(`Grupo "${nombreGrupoImport}" importado con ${alumnosImportados.length} alumnos.`);
         cerrarModal();
       } catch (error) {
