@@ -84,18 +84,22 @@ router.get("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
 });
 
 // [PUT] /grupos/:id/asignar-profesores - Asignar profesores y asignaturas (Admin)
-router.put("/:id/asignar-profesores", authMiddleware, isAdmin, async (req, res) => {
+router.put("/:id/asignar-profesores", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const { asignaciones } = req.body;
+        const school_id = req.user.school_id;
 
-        const grupo = await Grupo.findById(id);
+        const grupo = await Grupo.findOne({ _id: id, school_id });
         if (!grupo) {
-            return res.status(404).json({ error: "Grupo no encontrado." });
+            return res.status(404).json({ error: "Grupo no encontrado o no pertenece a su institución." });
         }
 
-        // Filtrar asignaciones nulas o incompletas
-        const asignacionesValidas = (asignaciones || []).filter(a => a.profesor && a.asignatura);
+        // Filtrar asignaciones nulas o incompletas y validar ObjectIds
+        const asignacionesValidas = (asignaciones || []).filter(a => {
+            const isValidProf = a.profesor && mongoose.Types.ObjectId.isValid(a.profesor) && String(a.profesor) !== 'null';
+            return isValidProf && a.asignatura;
+        });
 
         grupo.profesoresAsignados = asignacionesValidas;
         await grupo.save();

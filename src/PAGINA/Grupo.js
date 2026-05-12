@@ -231,7 +231,7 @@ function Grupo({ user }) {
       data.profesoresAsignados.forEach(asig => {
         // CORRECCIÓN: Manejar tanto objetos poblados como IDs directos
         const assignedId = asig.profesor?.id || asig.profesor?._id || asig.profesor;
-        if (assignedId) {
+        if (assignedId && String(assignedId) !== 'null' && String(assignedId) !== 'undefined') {
           const profId = String(assignedId);
           if (!asignacionesIniciales[profId]) {
             asignacionesIniciales[profId] = [];
@@ -574,7 +574,9 @@ function Grupo({ user }) {
       showAlert("Asignación guardada.");
       cerrarModal();
     } catch (error) {
-      showAlert("Error al guardar la asignación.", 'error');
+      console.error("Error al guardar asignación:", error);
+      const errorMsg = error.response?.data?.error || error.response?.data?.details || error.message;
+      showAlert(`Error al guardar la asignación: ${errorMsg}`, 'error');
     }
   };
 
@@ -1310,9 +1312,10 @@ function Grupo({ user }) {
               <div className="profesores-list">
                 {profesores.map((profesor, index) => {
                   if (!profesor) return null;
-                  // Use id (from toJSON) or _id, otherwise fallback
+                  // Use id (from toJSON) or _id
                   const pId = profesor.id || profesor._id;
-                  const profId = pId ? String(pId) : `unknown-${index}`;
+                  if (!pId) return null;
+                  const profId = String(pId);
 
                   return (
                     <div key={profId} className="asignacion-row-container">
