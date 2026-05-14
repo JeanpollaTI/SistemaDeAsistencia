@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import School from './models/School.js';
 
-dotenv.config();
+dotenv.config({ path: './backend/.env' });
 
 const auditSchools = async () => {
     try {

@@ -2484,11 +2484,18 @@ const PanelCalificaciones = ({
     );
 };
 
+const getSafeId = (obj) => {
+    if (!obj) return null;
+    if (typeof obj === 'string') return obj;
+    const id = obj.id || obj._id;
+    return id ? String(id) : String(obj);
+};
+
 // ======================================
 // --- 4. Componente: Lista de Grupos (Original) ---
 // ======================================
 const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
-    const userId = user?._id || user?.id;
+    const currentUserId = getSafeId(user);
 
     return (
         <>
@@ -2501,18 +2508,16 @@ const ListaDeGrupos = ({ grupos, user, onSeleccionarGrupo }) => {
                     <tbody>
                         {grupos.flatMap(grupo => {
                             // Filtrar todas las asignaciones para este profesor con comparación robusta
-                            // Filtrar todas las asignaciones para este profesor con comparación robusta
                             const misAsignaciones = grupo.profesoresAsignados.filter(asig => {
-                                // 1. Intentar matching por ID (id o _id)
-                                const assignedId = asig.profesor?.id || asig.profesor?._id || asig.profesor;
-                                const idMatch = String(assignedId) === String(userId);
+                                // 1. Intentar matching por ID robusto
+                                const assignedId = getSafeId(asig.profesor);
+                                const idMatch = assignedId && currentUserId && (assignedId === currentUserId);
 
                                 // 2. Intentar matching por Email (Backup robusto si falla el ID)
-                                const assignedEmail = asig.profesor?.email;
-                                const userEmail = user?.email;
+                                const assignedEmail = asig.profesor?.email?.toLowerCase();
+                                const userEmail = user?.email?.toLowerCase();
                                 const emailMatch = assignedEmail && userEmail && (assignedEmail === userEmail);
 
-                                // console.log(`[DEBUG] G:${grupo.nombre} | Asig:${asig.asignatura} | ID_MATCH:${idMatch} | EMAIL_MATCH:${emailMatch}`);
                                 return idMatch || emailMatch;
                             });
 

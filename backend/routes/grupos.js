@@ -96,9 +96,24 @@ router.put("/:id/asignar-profesores", authMiddleware, isAdmin, schoolMiddleware,
         }
 
         // Filtrar asignaciones nulas o incompletas y validar ObjectIds
-        const asignacionesValidas = (asignaciones || []).filter(a => {
-            const isValidProf = a.profesor && mongoose.Types.ObjectId.isValid(a.profesor) && String(a.profesor) !== 'null';
-            return isValidProf && a.asignatura;
+        const asignacionesValidas = (asignaciones || []).filter((a, index) => {
+            if (!a.profesor || !a.asignatura) {
+                console.warn(`[WARN] Asignación ${index} incompleta en grupo ${id}`);
+                return false;
+            }
+            
+            // Extraer ID de forma robusta por si viene como objeto o string
+            const profId = a.profesor?._id || a.profesor?.id || a.profesor;
+            const isValidProf = profId && mongoose.Types.ObjectId.isValid(profId) && String(profId) !== 'null';
+            
+            if (!isValidProf) {
+                console.warn(`[WARN] Profesor ID inválido (${profId}) en asignación ${index} del grupo ${id}`);
+                return false;
+            }
+
+            // Normalizar el formato para guardar (asegurarse de que sea el ID)
+            a.profesor = profId;
+            return true;
         });
 
         grupo.profesoresAsignados = asignacionesValidas;
@@ -193,10 +208,12 @@ router.get("/mis-grupos", authMiddleware, async (req, res) => {
         const profesorStringId = String(req.user._id);
 
         if (!profesorId) {
-            return res.status(401).json({ error: "ID de profesor no vÃ¡lido o faltante en el token." });
+            console.error("[ERROR] Intento de acceso a mis-grupos sin ID de usuario válido.");
+            return res.status(401).json({ error: "No se pudo identificar al profesor. Por favor, reinicie sesión." });
         }
 
-        // Buscamos coincidencia tanto por ObjectId como por String para maximizar compatibilidad
+        // Buscamos coincidencia tanto por ObjectId como por String para maximizar compatibilidad.
+        // Esto previene fallos si el ID en el array fue guardado accidentalmente como String.
         const query = Grupo.find({
             'profesoresAsignados.profesor': { $in: [profesorId, profesorStringId] }
         })
@@ -210,6 +227,10 @@ router.get("/mis-grupos", authMiddleware, async (req, res) => {
         }
 
         const gruposAsignados = await query.exec();
+        
+        // Log informativo para depuración (ayuda a rastrear si un profesor no ve sus grupos)
+        console.log(`[DEBUG] mis-grupos: Profesor ${profesorStringId} - Encontrados: ${gruposAsignados.length}`);
+        
         res.json(gruposAsignados);
     } catch (err) {
         console.error("Error en [GET /grupos/mis-grupos]:", err);

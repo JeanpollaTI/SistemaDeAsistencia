@@ -54,6 +54,14 @@ function Grupo({ user }) {
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
   const [currentGroupToAnalyze, setCurrentGroupToAnalyze] = useState(null);
+  
+  // --- UTILERÍAS ---
+  const getSafeId = (obj) => {
+    if (!obj) return null;
+    if (typeof obj === 'string') return obj;
+    const id = obj.id || obj._id;
+    return id ? String(id) : String(obj);
+  };
 
   // --- LÓGICA DE CARGA DE DATOS ---
   const location = useLocation();
@@ -229,10 +237,8 @@ function Grupo({ user }) {
       const asignacionesIniciales = {};
       // Agrupar asignaturas por profesor
       data.profesoresAsignados.forEach(asig => {
-        // CORRECCIÓN: Manejar tanto objetos poblados como IDs directos
-        const assignedId = asig.profesor?.id || asig.profesor?._id || asig.profesor;
-        if (assignedId && String(assignedId) !== 'null' && String(assignedId) !== 'undefined') {
-          const profId = String(assignedId);
+        const profId = getSafeId(asig.profesor);
+        if (profId && profId !== 'null' && profId !== 'undefined') {
           if (!asignacionesIniciales[profId]) {
             asignacionesIniciales[profId] = [];
           }
@@ -246,13 +252,15 @@ function Grupo({ user }) {
       setAsignaturaActual(asignatura); // Guardar la asignatura actual
 
       // Validar que el usuario tenga asignada esa materia (doble check)
-      // Validar que el usuario tenga asignada esa materia (doble check)
+      // Validar que el usuario tenga asignada esa materia (doble check robusto)
       const misAsignaciones = data.profesoresAsignados.filter(asig => {
-        const assignedId = asig.profesor?.id || asig.profesor?._id || asig.profesor;
-        const idMatch = String(assignedId) === String(user.id);
+        const assignedId = getSafeId(asig.profesor);
+        const userId = getSafeId(user);
+        const idMatch = assignedId && userId && (assignedId === userId);
 
-        const assignedEmail = asig.profesor?.email;
-        const emailMatch = assignedEmail && user.email && (assignedEmail === user.email);
+        const assignedEmail = asig.profesor?.email?.toLowerCase();
+        const userEmail = user?.email?.toLowerCase();
+        const emailMatch = assignedEmail && userEmail && (assignedEmail === userEmail);
 
         return idMatch || emailMatch;
       });
@@ -1311,11 +1319,8 @@ function Grupo({ user }) {
               <h2>Asignar Profesores: {grupoSeleccionado?.nombre}</h2>
               <div className="profesores-list">
                 {profesores.map((profesor, index) => {
-                  if (!profesor) return null;
-                  // Use id (from toJSON) or _id
-                  const pId = profesor.id || profesor._id;
-                  if (!pId) return null;
-                  const profId = String(pId);
+                  const profId = getSafeId(profesor);
+                  if (!profId) return null;
 
                   return (
                     <div key={profId} className="asignacion-row-container">
@@ -1355,6 +1360,33 @@ function Grupo({ user }) {
                     </div>
                   );
                 })}
+
+                {/* NUEVO: SECCIÓN DE ASIGNACIONES HUÉRFANAS */}
+                {Object.keys(asignaciones).some(id => !profesores.some(p => getSafeId(p) === id)) && (
+                  <div className="orphaned-section" style={{ marginTop: '20px', borderTop: '1px dashed #666', paddingTop: '15px' }}>
+                    <h4 style={{ color: '#e67e22', marginBottom: '10px', fontSize: '0.9rem' }}>
+                      ⚠️ Asignaciones detectadas para IDs no listados (profesores externos o desactualizados):
+                    </h4>
+                    {Object.keys(asignaciones)
+                      .filter(id => !profesores.some(p => getSafeId(p) === id))
+                      .map(id => (
+                        <div key={id} className="asignacion-row-container orphaned" style={{ opacity: 0.8, backgroundColor: 'rgba(230, 126, 34, 0.05)' }}>
+                           <div className="profesor-header">
+                            <strong style={{ color: '#e67e22' }}>ID: {id}</strong>
+                          </div>
+                          <div className="asignaturas-asignadas">
+                            {asignaciones[id].map((asig, idx) => (
+                              <div key={idx} className="asignatura-tag" style={{ backgroundColor: '#555' }}>
+                                {asig}
+                                <button className="btn-remove-tag" onClick={() => handleRemoveAsignatura(id, asig)}><FaTimes /></button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                    }
+                  </div>
+                )}
               </div>
               <div className="modal-actions">
                 <button className="btn btn-primary" onClick={handleGuardarAsignacion}>Guardar Cambios</button>

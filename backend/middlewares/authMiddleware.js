@@ -41,10 +41,11 @@ export const authMiddleware = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.error("Error authMiddleware:", err);
     if (err.name === 'TokenExpiredError') {
+      console.warn(`[AUTH] Token expirado para el usuario (Expiró: ${err.expiredAt})`);
       return res.status(401).json({ error: "Token expirado", expired: true });
     }
+    console.error("Error authMiddleware (Token Inválido o Error de Sistema):", err.message);
     res.status(401).json({ error: "Token inválido" });
   }
 };
