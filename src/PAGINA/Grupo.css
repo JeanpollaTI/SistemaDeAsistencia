@@ -332,17 +332,28 @@ body {
 
 .grupo-componente .modal-content {
   background-color: var(--dark-color);
-  padding: 1.5rem; /* Reduced from 2rem */
+  padding: 0 1.5rem 1.5rem 1.5rem; /* Removed top padding to allow sticky header to touch the top */
   border-radius: 12px;
-  width: 95%; /* More width on mobile */
+  width: 95%; 
   max-width: 950px;
-  max-height: 95vh; /* More height on mobile */
+  max-height: 95vh; 
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
   border: 1px solid #444;
   position: relative;
   animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  /* Efecto rebote suave */
+}
+
+.grupo-componente .modal-content h2 {
+  position: sticky;
+  top: 0;
+  background-color: var(--dark-color);
+  z-index: 100;
+  padding: 1.5rem 0 1rem 0;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--dark-color-alt);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
 .grupo-componente .modal-content input[type="text"],

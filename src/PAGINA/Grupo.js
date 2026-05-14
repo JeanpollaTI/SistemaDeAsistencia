@@ -1170,7 +1170,7 @@ function Grupo({ user }) {
         {(modalVisible === 'gestionarGrupo') && (
           <div className="modal-backdrop">
             <div className="modal-content">
-              <h2>{grupoSeleccionado ? 'Editar Grupo' : 'Crear Nuevo Grupo'}</h2>
+              <h2>{grupoSeleccionado ? `Editar Grupo: ${grupoSeleccionado.nombre}` : 'Crear Nuevo Grupo'}</h2>
               <div className="modal-body-grid">
                 {/* Columna 1: Información General */}
                 <div className="modal-column-left">
@@ -1287,7 +1287,7 @@ function Grupo({ user }) {
         {modalVisible === 'editarAlumno' && (
           <div className="modal-backdrop">
             <div className="modal-content modal-sm">
-              <h2>Editar Alumno</h2>
+              <h2>Editar Alumno - {grupoSeleccionado?.nombre}</h2>
               <div className="alumno-form">
                 <div className="alumno-form-inputs">
                   <input type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} />
@@ -1308,7 +1308,7 @@ function Grupo({ user }) {
         {modalVisible === 'asignar' && (
           <div className="modal-backdrop">
             <div className="modal-content">
-              <h2>Asignar Profesores a "{grupoSeleccionado?.nombre}"</h2>
+              <h2>Asignar Profesores: {grupoSeleccionado?.nombre}</h2>
               <div className="profesores-list">
                 {profesores.map((profesor, index) => {
                   if (!profesor) return null;
