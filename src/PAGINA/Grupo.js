@@ -54,6 +54,7 @@ function Grupo({ user }) {
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
   const [currentGroupToAnalyze, setCurrentGroupToAnalyze] = useState(null);
+  const [searchTermProfesor, setSearchTermProfesor] = useState('');
   
   // --- UTILERÍAS ---
   const getSafeId = (obj) => {
@@ -1144,11 +1145,13 @@ function Grupo({ user }) {
                   // Filtrar todas las asignaciones para este profesor
                   // Filtrar todas las asignaciones para este profesor
                   const misAsignaciones = grupo.profesoresAsignados.filter(asig => {
-                    const assignedId = asig.profesor?.id || asig.profesor?._id || asig.profesor;
-                    const idMatch = String(assignedId) === String(user.id);
+                    const assignedId = getSafeId(asig.profesor);
+                    const currentUserId = getSafeId(user);
+                    const idMatch = assignedId && currentUserId && (assignedId === currentUserId);
 
-                    const assignedEmail = asig.profesor?.email;
-                    const emailMatch = assignedEmail && user.email && (assignedEmail === user.email);
+                    const assignedEmail = asig.profesor?.email?.toLowerCase();
+                    const userEmail = user?.email?.toLowerCase();
+                    const emailMatch = assignedEmail && userEmail && (assignedEmail === userEmail);
 
                     return idMatch || emailMatch;
                   });
@@ -1317,8 +1320,27 @@ function Grupo({ user }) {
           <div className="modal-backdrop">
             <div className="modal-content">
               <h2>Asignar Profesores: {grupoSeleccionado?.nombre}</h2>
+              
+              {/* BUSCADOR DE PROFESORES */}
+              <div className="search-profesor-container" style={{ marginBottom: '15px' }}>
+                <input
+                  type="text"
+                  placeholder="🔍 Buscar profesor por nombre o email..."
+                  className="form-control"
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+                  value={searchTermProfesor}
+                  onChange={(e) => setSearchTermProfesor(e.target.value)}
+                />
+              </div>
+
               <div className="profesores-list">
-                {profesores.map((profesor, index) => {
+                {profesores
+                  .filter(p => {
+                    if (!searchTermProfesor) return true;
+                    const term = searchTermProfesor.toLowerCase();
+                    return p.nombre?.toLowerCase().includes(term) || p.email?.toLowerCase().includes(term);
+                  })
+                  .map((profesor, index) => {
                   const profId = getSafeId(profesor);
                   if (!profId) return null;
 

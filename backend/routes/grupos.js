@@ -103,7 +103,7 @@ router.put("/:id/asignar-profesores", authMiddleware, isAdmin, schoolMiddleware,
             }
             
             // Extraer ID de forma robusta por si viene como objeto o string
-            const profId = a.profesor?._id || a.profesor?.id || a.profesor;
+            let profId = a.profesor?._id || a.profesor?.id || a.profesor;
             const isValidProf = profId && mongoose.Types.ObjectId.isValid(profId) && String(profId) !== 'null';
             
             if (!isValidProf) {
@@ -111,8 +111,14 @@ router.put("/:id/asignar-profesores", authMiddleware, isAdmin, schoolMiddleware,
                 return false;
             }
 
-            // Normalizar el formato para guardar (asegurarse de que sea el ID)
-            a.profesor = profId;
+            // Normalizar el formato para guardar (asegurarse de que sea un ObjectId de Mongoose)
+            // Esto es CRUCIAL para que las queries posteriores funcionen correctamente.
+            try {
+                a.profesor = new mongoose.Types.ObjectId(String(profId));
+            } catch (err) {
+                console.error(`[ERROR] Falló el cast a ObjectId para ${profId}:`, err.message);
+                return false;
+            }
             return true;
         });
 
