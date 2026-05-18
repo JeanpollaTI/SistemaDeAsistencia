@@ -134,7 +134,7 @@ function ParentPortal() {
                     <div className="portal-student-name-display">
                         <FaUser className="student-icon" />
                         <div className="student-details">
-                            <span className="student-name">{alumno?.nombre} {alumno?.apellidoPaterno} {alumno?.apellidoMaterno}</span>
+                            <span className="student-name">{alumno?.apellidoPaterno} {alumno?.apellidoMaterno || ''} {alumno?.nombre}</span>
                             <span className="student-group">{alumno?.grupo} | Matrícula: {alumno?.matricula}</span>
                         </div>
                     </div>

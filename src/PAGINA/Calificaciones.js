@@ -754,7 +754,7 @@ function Calificaciones({ user }) {
           {modalPdf.visible && (
             <div className="modal-overlay" onClick={() => setModalPdf({ visible: false, alumno: null })}>
               <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <h3>Descargar Boleta de {`${modalPdf.alumno?.apellidoPaterno} ${modalPdf.alumno?.nombre}`}</h3>
+                <h3>Descargar Boleta de {`${modalPdf.alumno?.apellidoPaterno} ${modalPdf.alumno?.apellidoMaterno || ''} ${modalPdf.alumno?.nombre}`}</h3>
                 <p>Selecciona los trimestres que deseas incluir:</p>
                 <form onSubmit={(e) => {
                   e.preventDefault();
