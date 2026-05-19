@@ -71,7 +71,7 @@ const FichaAlumno = () => {
                         </div>
                         <div className="student-main-info">
                             <div className="title-row">
-                                <h1>{alumno.nombre}</h1>
+                                <h1>{`${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''} ${alumno.nombre || ''}`.replace(/\s+/g, ' ').trim()}</h1>
                                 <div className="quick-nav-actions no-print">
                                     <button 
                                         className="nav-btn attendance"

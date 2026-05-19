@@ -264,34 +264,45 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
         const registros = await Calificacion.find({ grupo: grupoId });
 
         const calificacionesAdmin = {};
-        const { alumnos } = grupo;
+        const alumnos = grupo.alumnos || [];
 
         // Usamos las asignaturas del grupo para saber quÃ© materias esperar
         // Combinamos las asignadas con las que estÃ¡n en el orden guardado (para no perder ninguna)
-        const materiasSet = new Set(grupo.profesoresAsignados.map(asig => asig.asignatura));
+        const profesoresAsignados = grupo.profesoresAsignados || [];
+        const materiasSet = new Set();
+        profesoresAsignados.forEach(asig => {
+            if (asig && asig.asignatura) {
+                materiasSet.add(asig.asignatura);
+            }
+        });
+
         if (grupo.ordenMaterias && Array.isArray(grupo.ordenMaterias)) {
-            grupo.ordenMaterias.forEach(m => materiasSet.add(m));
+            grupo.ordenMaterias.forEach(m => {
+                if (m) materiasSet.add(m);
+            });
         }
         const materiasAsignadas = [...materiasSet];
 
         // 2. Inicializar la estructura para cada alumno
         alumnos.forEach(alumno => {
-            const alumnoId = alumno._id ? alumno._id.toString() : null;
-            if (alumnoId) {
-                calificacionesAdmin[alumnoId] = {};
-                // Inicializar con arrays de 3 nulos para T1, T2, T3
-                materiasAsignadas.forEach(materia => {
-                    calificacionesAdmin[alumnoId][materia] = [null, null, null];
-                });
-            }
+            if (!alumno || !alumno._id) return;
+            const alumnoId = alumno._id.toString();
+            calificacionesAdmin[alumnoId] = {};
+            // Inicializar con arrays de 3 nulos para T1, T2, T3
+            materiasAsignadas.forEach(materia => {
+                calificacionesAdmin[alumnoId][materia] = [null, null, null];
+            });
         });
 
         // 3. Iterar sobre cada registro de calificaciÃ³n (cada materia)
         registros.forEach(registro => {
+            if (!registro) return;
             const { asignatura, criterios: criteriosPorBimestre, calificaciones: calificacionesMateria } = registro;
+            if (!asignatura) return;
 
             // 4. Calcular el promedio ponderado para cada alumno en esta materia, por bimestre
             alumnos.forEach(alumno => {
+                if (!alumno || !alumno._id) return;
                 const alumnoId = alumno._id.toString();
                 if (!calificacionesAdmin[alumnoId]) return;
 
@@ -302,13 +313,13 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
                     const criteriosActivos = criteriosPorBimestre?.[bimestreKey] || [];
 
                     // Si no hay criterios definidos, se considera que no hay calificaciÃ³n
-                    if (criteriosActivos.length === 0) return null;
+                    if (!Array.isArray(criteriosActivos) || criteriosActivos.length === 0) return null;
 
                     // Recuperar configuraciÃ³n de tareas visibles (numTareas)
                     const numTareasConfig = registro.numTareas || {};
 
                     const calificacionesAlumnoEnBimestre = calificacionesMateria?.[alumnoId]?.[bimestreKey];
-                    if (!calificacionesAlumnoEnBimestre) {
+                    if (!calificacionesAlumnoEnBimestre || typeof calificacionesAlumnoEnBimestre !== 'object') {
                         return null;
                     }
 
@@ -316,24 +327,26 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
                     let pesoTotalAplicable = 0; // ðŸŒŸ FIX: Track total weight of active criteria
 
                     criteriosActivos.forEach(criterio => {
+                        if (!criterio || !criterio.nombre || typeof criterio.porcentaje !== 'number') return;
+
                         const calificacionesCriterio = calificacionesAlumnoEnBimestre[criterio.nombre] || {};
-                        const maxTareas = numTareasConfig[criterio.nombre] || 999; // Si no hay config, asumimos todo visible (safe fallback)
+                        const maxTareas = numTareasConfig[criterio.nombre] || 999;
 
                         const notasValidas = Object.keys(calificacionesCriterio)
-                            .filter(index => parseInt(index) < maxTareas && calificacionesCriterio[index] && typeof calificacionesCriterio[index].nota === 'number')
+                            .filter(index => {
+                                const idx = parseInt(index);
+                                return idx < maxTareas && 
+                                       calificacionesCriterio[index] && 
+                                       typeof calificacionesCriterio[index].nota === 'number';
+                            })
                             .map(index => calificacionesCriterio[index].nota);
 
                         if (notasValidas.length > 0) {
                             const promedioCriterio = notasValidas.reduce((a, b) => a + b, 0) / notasValidas.length;
                             promedioPonderado += promedioCriterio * (criterio.porcentaje / 100);
-                            pesoTotalAplicable += (criterio.porcentaje / 100); // Add weight only if criterion is active
+                            pesoTotalAplicable += (criterio.porcentaje / 100);
                         }
                     });
-
-                    // Solo devolvemos la calificaciÃ³n si el total de criterios definidos suma 100 (sanity check), 
-                    // PERO el cÃ¡lculo se basa en el peso aplicable actual.
-                    // const totalPorcentaje = criteriosActivos.reduce((sum, c) => sum + (c.porcentaje || 0), 0);
-                    // if (totalPorcentaje !== 100) return null; // Relaxing this strict check might be good, but keeping for safety.
 
                     if (pesoTotalAplicable === 0) return null; // No active grades
 
