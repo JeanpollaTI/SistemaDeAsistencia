@@ -193,10 +193,39 @@
 
 /* --- NOBLE STICKY HIERARCHY (4 TIERS) --- */
 
-/* TIER 3: TOP HEADERS (VERTICAL STICKY ONLY) */
+/* TIER 3: TOP & LEFT HEADERS (STICKY BOTH AXES FOR FIRST 3 COLUMNS) */
 /* This ensures headers stay at the top when scrolling down,
-   but move naturally with the data when scrolling sideways. */
+   and the first 3 columns stay at the left when scrolling sideways. */
 
+/* Widths and Minimum Widths for the first 3 sticky columns */
+.num-header,
+.sabana-num,
+.calificaciones-table tbody td:first-child,
+.sabana-num-cell {
+  width: 45px !important;
+  min-width: 45px !important;
+  max-width: 45px !important;
+}
+
+.matricula-header,
+.sabana-matricula,
+.matricula-cell,
+.sabana-matricula-cell {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+}
+
+.nombre-header,
+.sabana-nombre,
+.nombre-cell,
+.sabana-nombre-cell {
+  width: 280px !important;
+  min-width: 280px !important;
+  max-width: 280px !important;
+}
+
+/* Row 1 Sticky top headers */
 .calificaciones-table thead tr:first-child th,
 .sabana-table thead tr:first-child th {
   position: sticky !important;
@@ -205,33 +234,57 @@
   background-color: #34495e !important;
   color: white !important;
   height: 60px !important;
-  /* Fixed height for first row */
   font-size: 13px !important;
   border-bottom: 2px solid rgba(0, 0, 0, 0.2) !important;
   white-space: nowrap !important;
   padding: 10px !important;
 }
 
-/* Corner/Intersection exceptions for colors but NO horizontal stickiness */
-.calificaciones-table thead .corner-header,
-.sabana-table thead .corner-header {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  font-weight: 700 !important;
-  z-index: 1000 !important;
-}
-
-/* Row 2 Top Headers */
+/* Row 2 Sticky top headers */
 .calificaciones-table thead tr:nth-child(2) th,
 .sabana-table thead tr:nth-child(2) th {
   position: sticky !important;
   top: 60px !important;
-  /* MATCH ROW 1 HEIGHT (60px) */
   z-index: 940 !important;
   background-color: #2c3e50 !important;
   color: white !important;
   height: 40px !important;
   font-size: 11px !important;
+}
+
+/* Intersection Corner Headers sticky both Top and Left */
+.calificaciones-table thead .num-header,
+.sabana-table thead .sabana-num {
+  position: sticky !important;
+  top: 0 !important;
+  left: 0 !important;
+  z-index: 1100 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+.calificaciones-table thead .matricula-header,
+.sabana-table thead .sabana-matricula {
+  position: sticky !important;
+  top: 0 !important;
+  left: 45px !important;
+  z-index: 1100 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+.calificaciones-table thead .nombre-header,
+.sabana-table thead .sabana-nombre {
+  position: sticky !important;
+  top: 0 !important;
+  left: 145px !important;
+  z-index: 1100 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1) !important;
 }
 
 .sabana-table {
@@ -246,30 +299,56 @@
   background-color: #9b59b6 !important;
 }
 
-/* TIER 2: BODY CELLS (NO LATERAL STICKY) */
+/* TIER 2: BODY CELLS (STICKY AXIS FOR FIRST 3 COLUMNS) */
 .calificaciones-table tbody td,
 .sabana-table tbody td {
-  position: static !important;
-  /* THE USER REQUESTED NORMAL FLOW */
+  position: static;
   background-color: #ffffff;
   color: #000000;
   font-size: 12px !important;
 }
 
-/* Special High Visibility for specific columns (Still normal flow) */
+/* Horizontal Stickiness for Body Cells */
+.calificaciones-table tbody td:first-child,
+.sabana-num-cell {
+  position: sticky !important;
+  left: 0px !important;
+  z-index: 100 !important;
+  background-color: #ffffff !important;
+}
+
 .matricula-cell,
 .sabana-matricula-cell {
+  position: sticky !important;
+  left: 45px !important;
+  z-index: 100 !important;
+  background-color: #ffffff !important;
   color: #16a085 !important;
   font-weight: 600 !important;
 }
 
 .nombre-cell,
 .sabana-nombre-cell {
+  position: sticky !important;
+  left: 145px !important;
+  z-index: 100 !important;
+  background-color: #ffffff !important;
   text-align: left !important;
   font-weight: 600 !important;
   white-space: nowrap !important;
   overflow: hidden;
   text-overflow: ellipsis;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Hover effects for row: preserve background on sticky cells */
+.calificaciones-table tbody tr:hover td:nth-child(1),
+.calificaciones-table tbody tr:hover td:nth-child(2),
+.calificaciones-table tbody tr:hover td:nth-child(3),
+.sabana-table tbody tr:hover td:nth-child(1),
+.sabana-table tbody tr:hover td:nth-child(2),
+.sabana-table tbody tr:hover td:nth-child(3) {
+  background-color: #f2f2f2 !important;
 }
 
 /* TIER 1: UTILITY & SCROLLBAR */
@@ -537,8 +616,10 @@
 }
 
 .sabana-table {
-  width: 100%;
-  border-collapse: collapse;
+  width: max-content !important;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 0.8rem;
   table-layout: auto;
 }
