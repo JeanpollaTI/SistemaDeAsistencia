@@ -11,7 +11,7 @@
   color: white;
   font-family: 'Poppins', sans-serif;
   font-weight: 500;
-  z-index: 2100;
+  z-index: 210000;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   backdrop-filter: blur(8px);
@@ -52,7 +52,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 2200;
+  z-index: 220000;
 }
 
 .confirm-modal-content {
