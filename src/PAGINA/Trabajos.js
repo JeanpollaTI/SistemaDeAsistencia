@@ -1360,6 +1360,162 @@ function Trabajos({ user }) {
                         box-shadow: none !important;
                     }
                 }
+
+                /* 🔒 CORTE CONTROLLER CARD STYLES */
+                .corte-controller-card {
+                    background: rgba(255, 255, 255, 0.03);
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 12px;
+                    padding: 15px 20px;
+                    margin: 15px 20px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 20px;
+                    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+                    transition: all 0.3s ease;
+                }
+                .corte-controller-card.has-corte {
+                    border: 1px solid rgba(46, 204, 113, 0.3);
+                    background: rgba(46, 204, 113, 0.02);
+                }
+                .corte-info-sec {
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                }
+                .corte-status-icon {
+                    font-size: 1.8rem;
+                }
+                .corte-status-details h4 {
+                    margin: 0 0 4px 0;
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    color: #fff;
+                }
+                .corte-status-details p {
+                    margin: 0;
+                    font-size: 0.85rem;
+                    color: rgba(255, 255, 255, 0.6);
+                    line-height: 1.3;
+                }
+                .corte-actions-sec {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+
+                /* 🔄 MIGRACIÓN MODAL STYLES */
+                .migracion-modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    background: rgba(0, 0, 0, 0.6);
+                    backdrop-filter: blur(8px);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 99999;
+                    animation: fadeIn 0.2s ease-out;
+                }
+                .migracion-modal-content {
+                    background: rgba(20, 20, 20, 0.85);
+                    backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 16px;
+                    width: 500px;
+                    max-width: 90%;
+                    padding: 30px;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+                    color: #fff;
+                    animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes slideUp {
+                    from { transform: translateY(30px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+                .migracion-modal-header {
+                    margin-bottom: 20px;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                    padding-bottom: 15px;
+                }
+                .migracion-modal-header h3 {
+                    margin: 0;
+                    font-size: 1.4rem;
+                    font-weight: 600;
+                    color: #fff;
+                }
+                .migracion-form-group {
+                    margin-bottom: 20px;
+                }
+                .migracion-form-group label {
+                    display: block;
+                    margin-bottom: 8px;
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                    color: rgba(255, 255, 255, 0.8);
+                }
+                .migracion-select {
+                    width: 100%;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    border-radius: 8px;
+                    padding: 10px 12px;
+                    color: #fff;
+                    font-size: 0.95rem;
+                    outline: none;
+                    transition: border-color 0.2s;
+                }
+                .migracion-select:focus {
+                    border-color: #8e44ad;
+                }
+                .migracion-select option {
+                    background: #1e1e1e;
+                    color: #fff;
+                }
+                .migracion-options-grid {
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    gap: 15px;
+                    margin-bottom: 25px;
+                    background: rgba(255, 255, 255, 0.02);
+                    padding: 15px;
+                    border-radius: 10px;
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                }
+                .migracion-warning {
+                    background: rgba(231, 76, 60, 0.15);
+                    border: 1px solid rgba(231, 76, 60, 0.3);
+                    border-radius: 8px;
+                    padding: 12px 15px;
+                    color: #e74c3c;
+                    font-size: 0.8rem;
+                    line-height: 1.4;
+                    margin-bottom: 25px;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 10px;
+                }
+                .migracion-warning span {
+                    font-size: 1.2rem;
+                    flex-shrink: 0;
+                    margin-top: -2px;
+                }
+                .migracion-actions {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 12px;
+                }
              `}</style>
             <div className="trabajos-container grupo-componente">
                 {!grupoSeleccionado ? (
@@ -1420,6 +1576,17 @@ const PanelCalificaciones = ({
     const [zoomLevel, setZoomLevel] = useState(1);
     const [hasChanges, setHasChanges] = useState(false);
     const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
+
+    // 🌟 ESTADOS NUEVOS PARA CORTES Y MIGRACIÓN
+    const [cortes, setCortes] = useState({});
+    const [isMigrarModalOpen, setIsMigrarModalOpen] = useState(false);
+    const [isCorteLoading, setIsCorteLoading] = useState(false);
+    const [migracionConfig, setMigracionConfig] = useState({
+        origenBimestre: '1',
+        destinoBimestre: '2',
+        accionConflictos: 'merge', // 'merge' o 'overwrite'
+        accionOrigen: 'keep' // 'keep' o 'clear'
+    });
 
     // 🌟 ESTADO AGREGADO: Historial para Deshacer/Rehacer (Undo/Redo)
     const [history, setHistory] = useState({ past: [], future: [] });
@@ -1568,6 +1735,7 @@ const PanelCalificaciones = ({
                 setCriteriosPorBimestre(fetchedCriterios);
 
                 setCalificaciones(res.data?.calificaciones || {});
+                setCortes(res.data?.cortes || {});
 
                 // Lógica de numTareas (se mantiene igual, ajustando para la nueva estructura)
                 const allCriterios = [...fetchedCriterios[1], ...fetchedCriterios[2], ...fetchedCriterios[3]];
@@ -1818,6 +1986,68 @@ const PanelCalificaciones = ({
             setNotificacion({ mensaje: 'Error al guardar las calificaciones.', tipo: 'error' });
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    // 🌟 FUNCIONES PARA MIGRACIÓN Y GESTIÓN DE CORTES
+    const handleMigrarCalificaciones = async (configuracion) => {
+        const token = localStorage.getItem('token');
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+        const payload = {
+            grupoId: grupo._id,
+            asignatura,
+            origenBimestre: Number(configuracion.origenBimestre),
+            destinoBimestre: Number(configuracion.destinoBimestre),
+            accionConflictos: configuracion.accionConflictos,
+            accionOrigen: configuracion.accionOrigen
+        };
+
+        try {
+            const res = await axios.post(`${API_URL}/calificaciones/migrar`, payload, config);
+            const fetchedCriterios = {
+                1: res.data.data?.criterios?.[1] || [],
+                2: res.data.data?.criterios?.[2] || [],
+                3: res.data.data?.criterios?.[3] || [],
+            };
+            setCriteriosPorBimestre(fetchedCriterios);
+            setCalificaciones(res.data.data?.calificaciones || {});
+            setCortes(res.data.data?.cortes || {});
+            
+            setHasChanges(false);
+            setIsMigrarModalOpen(false);
+            setNotificacion({ mensaje: res.data.msg || 'Calificaciones migradas exitosamente.', tipo: 'exito' });
+        } catch (error) {
+            console.error("Error al migrar calificaciones:", error);
+            setNotificacion({ 
+                mensaje: error.response?.data?.msg || 'Error al migrar las calificaciones.', 
+                tipo: 'error' 
+            });
+        }
+    };
+
+    const handleGestionarCorte = async (trimestre, accion) => {
+        setIsCorteLoading(true);
+        const token = localStorage.getItem('token');
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+        const payload = {
+            grupoId: grupo._id,
+            asignatura,
+            trimestre: Number(trimestre),
+            accion
+        };
+
+        try {
+            const res = await axios.post(`${API_URL}/calificaciones/corte`, payload, config);
+            setCortes(res.data.data?.cortes || {});
+            setNotificacion({ mensaje: res.data.msg || 'Operación de corte exitosa.', tipo: 'exito' });
+        } catch (error) {
+            console.error("Error al gestionar corte:", error);
+            setNotificacion({ 
+                mensaje: error.response?.data?.msg || 'Error al gestionar el corte.', 
+                tipo: 'error' 
+            });
+        } finally {
+            setIsCorteLoading(false);
         }
     };
 
@@ -2098,6 +2328,114 @@ const PanelCalificaciones = ({
                 cancelText="Seguir calificando"
             />
 
+            {/* 🔄 MODAL PARA MIGRACIÓN DE CALIFICACIONES */}
+            {isMigrarModalOpen && (
+                <div className="migracion-modal-overlay">
+                    <div className="migracion-modal-content">
+                        <div className="migracion-modal-header">
+                            <span style={{ fontSize: '1.8rem' }}>🔄</span>
+                            <h3>Migrar Calificaciones</h3>
+                        </div>
+
+                        <div className="migracion-form-group">
+                            <label>Trimestre de Origen (Desde donde se copiarán los datos):</label>
+                            <select
+                                className="migracion-select"
+                                value={migracionConfig.origenBimestre}
+                                onChange={(e) => setMigracionConfig({ ...migracionConfig, origenBimestre: e.target.value })}
+                            >
+                                {Array.from({ length: getPeriodCount() }).map((_, i) => (
+                                    <option key={i+1} value={i+1}>{getPeriodLabel(i)}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="migracion-form-group">
+                            <label>Trimestre de Destino (Hacia donde se enviarán):</label>
+                            <select
+                                className="migracion-select"
+                                value={migracionConfig.destinoBimestre}
+                                onChange={(e) => setMigracionConfig({ ...migracionConfig, destinoBimestre: e.target.value })}
+                            >
+                                {Array.from({ length: getPeriodCount() }).map((_, i) => (
+                                    <option key={i+1} value={i+1}>{getPeriodLabel(i)}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="migracion-options-grid">
+                            <div className="migracion-form-group" style={{ marginBottom: '10px' }}>
+                                <label>Acción sobre el Trimestre Origen:</label>
+                                <select
+                                    className="migracion-select"
+                                    value={migracionConfig.accionOrigen}
+                                    onChange={(e) => setMigracionConfig({ ...migracionConfig, accionOrigen: e.target.value })}
+                                >
+                                    <option value="keep">Copiar (Mantener calificaciones en origen)</option>
+                                    <option value="clear">Mover (Limpiar origen después de migrar)</option>
+                                </select>
+                            </div>
+
+                            <div className="migracion-form-group" style={{ marginBottom: 0 }}>
+                                <label>Resolución de Conflictos (Si el destino ya tiene datos):</label>
+                                <select
+                                    className="migracion-select"
+                                    value={migracionConfig.accionConflictos}
+                                    onChange={(e) => setMigracionConfig({ ...migracionConfig, accionConflictos: e.target.value })}
+                                >
+                                    <option value="merge">Combinar (Solo copiar donde esté vacío)</option>
+                                    <option value="overwrite">Sobrescribir (Reemplazar todo en destino)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {migracionConfig.origenBimestre === migracionConfig.destinoBimestre ? (
+                            <div className="migracion-warning" style={{ background: 'rgba(230, 126, 34, 0.15)', borderColor: 'rgba(230, 126, 34, 0.3)', color: '#f39c12' }}>
+                                <span>⚠️</span>
+                                <div>El trimestre de origen y destino no pueden ser el mismo. Seleccione trimestres diferentes.</div>
+                            </div>
+                        ) : (migracionConfig.accionOrigen === 'clear' || migracionConfig.accionConflictos === 'overwrite') ? (
+                            <div className="migracion-warning">
+                                <span>⚠️</span>
+                                <div>
+                                    <strong>¡Atención!</strong> esta acción {migracionConfig.accionOrigen === 'clear' ? 'borrará las calificaciones de origen' : ''} 
+                                    {migracionConfig.accionOrigen === 'clear' && migracionConfig.accionConflictos === 'overwrite' ? ' y ' : ''}
+                                    {migracionConfig.accionConflictos === 'overwrite' ? 'sobrescribirá las calificaciones de destino' : ''}. 
+                                    Esta acción no se puede deshacer.
+                                </div>
+                            </div>
+                        ) : null}
+
+                        <div className="migracion-actions">
+                            <button 
+                                className="btn btn-secondary" 
+                                onClick={() => setIsMigrarModalOpen(false)}
+                                style={{ backgroundColor: '#7f8c8d', borderColor: '#7f8c8d', color: 'white' }}
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                className="btn" 
+                                onClick={() => {
+                                    if (window.confirm("¿Está seguro de que desea migrar las calificaciones con la configuración seleccionada?")) {
+                                        handleMigrarCalificaciones(migracionConfig);
+                                    }
+                                }}
+                                disabled={migracionConfig.origenBimestre === migracionConfig.destinoBimestre}
+                                style={{ 
+                                    backgroundColor: migracionConfig.origenBimestre === migracionConfig.destinoBimestre ? '#95a5a6' : '#8e44ad', 
+                                    borderColor: migracionConfig.origenBimestre === migracionConfig.destinoBimestre ? '#95a5a6' : '#8e44ad', 
+                                    color: 'white',
+                                    cursor: migracionConfig.origenBimestre === migracionConfig.destinoBimestre ? 'not-allowed' : 'pointer'
+                                }}
+                            >
+                                Migrar Datos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
 
             {/* Contenido principal del panel de calificaciones */}
@@ -2141,6 +2479,22 @@ const PanelCalificaciones = ({
 
                             {/* Botón para abrir el modal de criterios */}
                             <button className="btn" onClick={() => setModalCriterios(true)}>Criterios</button>
+                            <button 
+                                className="btn" 
+                                onClick={() => {
+                                    setMigracionConfig({
+                                        origenBimestre: String(bimestreActivo),
+                                        destinoBimestre: String(bimestreActivo === getPeriodCount() ? 1 : bimestreActivo + 1),
+                                        accionConflictos: 'merge',
+                                        accionOrigen: 'keep'
+                                    });
+                                    setIsMigrarModalOpen(true);
+                                }} 
+                                style={{ marginLeft: '10px', backgroundColor: '#8e44ad', borderColor: '#8e44ad', color: 'white' }}
+                                title="Migrar calificaciones entre trimestres"
+                            >
+                                🔄 Migrar Calificaciones
+                            </button>
                             <button className="btn btn-cancel" onClick={handleConfirmarVolver} style={{ marginLeft: '10px' }}>Cerrar</button>
                         </div>
                     </header>
@@ -2169,6 +2523,73 @@ const PanelCalificaciones = ({
                             return buttons;
                         })()}
                     </div>
+
+                    {/* 🔒 PANEL DE GESTIÓN DE CORTES OFICIALES */}
+                    {(() => {
+                        const hasCorte = cortes[bimestreActivo] && cortes[bimestreActivo].fecha;
+                        const fechaCorte = hasCorte ? formatFechaTooltip(cortes[bimestreActivo].fecha) : null;
+                        const totalPorcentaje = criteriosActivos.reduce((acc, c) => acc + (c.porcentaje || 0), 0);
+                        const periodLabel = schoolConfig?.evaluationPeriod || 'Trimestre';
+                        const currentPeriodName = `${periodLabel} ${bimestreActivo}`;
+
+                        return (
+                            <div className={`corte-controller-card ${hasCorte ? 'has-corte' : ''}`}>
+                                <div className="corte-info-sec">
+                                    <div className="corte-status-icon">
+                                        {hasCorte ? '🔒' : '🔓'}
+                                    </div>
+                                    <div className="corte-status-details">
+                                        <h4>Corte Oficial: {currentPeriodName}</h4>
+                                        {hasCorte ? (
+                                            <p>Las calificaciones de la boleta fueron congeladas el <strong>{fechaCorte}</strong>. Las modificaciones posteriores se guardan de forma dinámica.</p>
+                                        ) : (
+                                            <p>Sin corte oficial. Las calificaciones de los alumnos son completamente dinámicas.</p>
+                                        )}
+                                        {totalPorcentaje !== 100 && !hasCorte && (
+                                            <p style={{ color: '#e67e22', marginTop: '5px', fontWeight: '500' }}>
+                                                ⚠️ La suma de criterios debe ser exactamente 100% para realizar un corte (Actual: {totalPorcentaje}%).
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="corte-actions-sec">
+                                    {isCorteLoading ? (
+                                        <span style={{ color: '#ccc', fontSize: '0.9rem' }}>Procesando...</span>
+                                    ) : hasCorte ? (
+                                        <button 
+                                            className="btn" 
+                                            onClick={() => {
+                                                if (window.confirm(`¿Está seguro de que desea REVERTIR el corte oficial del ${currentPeriodName}? Esto eliminará el promedio congelado y todas las calificaciones volverán a ser dinámicas en las boletas.`)) {
+                                                    handleGestionarCorte(bimestreActivo, 'eliminar');
+                                                }
+                                            }}
+                                            style={{ backgroundColor: '#d35400', borderColor: '#d35400', color: 'white' }}
+                                        >
+                                            🔓 Revertir Corte
+                                        </button>
+                                    ) : (
+                                        <button 
+                                            className="btn" 
+                                            onClick={() => {
+                                                if (window.confirm(`¿Está seguro de que desea REALIZAR el corte oficial del ${currentPeriodName}? Se calculará y guardará el promedio ponderado de todos los alumnos en este momento. Este promedio será el oficial impreso en las boletas.`)) {
+                                                    handleGestionarCorte(bimestreActivo, 'crear');
+                                                }
+                                            }}
+                                            disabled={totalPorcentaje !== 100}
+                                            style={{ 
+                                                backgroundColor: totalPorcentaje !== 100 ? '#7f8c8d' : '#27ae60', 
+                                                borderColor: totalPorcentaje !== 100 ? '#7f8c8d' : '#27ae60', 
+                                                color: 'white',
+                                                cursor: totalPorcentaje !== 100 ? 'not-allowed' : 'pointer'
+                                            }}
+                                        >
+                                            🔒 Congelar Promedios
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     {/* 🌟 SELECTOR DE CRITERIOS (TABS) */}
                     {criteriosActivos.length > 0 && (
@@ -2355,8 +2776,38 @@ const PanelCalificaciones = ({
                                                         </div>
                                                     ))}
                                                 </div>
-                                                <div className="promedio-final-display" style={{ color: calcularPromedioBimestre(alumno._id, bimestreActivo) >= 6 ? '#27ae60' : '#d32f2f' }}>
-                                                    Prom: {calcularPromedioBimestre(alumno._id, bimestreActivo)}
+                                                <div className="promedio-final-display-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', minWidth: '90px' }}>
+                                                    <div className="promedio-final-display" style={{ color: calcularPromedioBimestre(alumno._id, bimestreActivo) >= 6 ? '#27ae60' : '#d32f2f', fontWeight: 'bold' }}>
+                                                        Prom: {calcularPromedioBimestre(alumno._id, bimestreActivo)}
+                                                    </div>
+                                                    {(() => {
+                                                        const frozenGrade = cortes[bimestreActivo]?.promedios?.[alumno._id];
+                                                        if (frozenGrade !== undefined && frozenGrade !== null) {
+                                                            const currentGrade = Number(calcularPromedioBimestre(alumno._id, bimestreActivo)) || 0;
+                                                            const diff = Number((currentGrade - frozenGrade).toFixed(1));
+                                                            const diffColor = diff > 0 ? '#2ecc71' : (diff < 0 ? '#e74c3c' : '#7f8c8d');
+                                                            const diffText = diff > 0 ? `+${diff}` : `${diff}`;
+                                                            
+                                                            return (
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', marginTop: '2px' }}>
+                                                                    <span style={{ color: '#aaa' }}>Boleta: {frozenGrade}</span>
+                                                                    {diff !== 0 && (
+                                                                        <span style={{ 
+                                                                            backgroundColor: diffColor, 
+                                                                            color: 'white', 
+                                                                            borderRadius: '3px', 
+                                                                            padding: '1px 4px', 
+                                                                            fontWeight: 'bold',
+                                                                            fontSize: '0.65rem'
+                                                                        }}>
+                                                                            {diffText}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return null;
+                                                    })()}
                                                 </div>
                                             </div>
                                             {/* Desplegable en Vista General */}

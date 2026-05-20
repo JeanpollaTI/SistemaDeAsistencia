@@ -264,6 +264,7 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
         const registros = await Calificacion.find({ grupo: grupoId });
 
         const calificacionesAdmin = {};
+        const cortesAdmin = {}; // 🌟 Nuevo: Almacena los cortes oficiales por asignatura
         const alumnos = grupo.alumnos || [];
 
         // Usamos las asignaturas del grupo para saber quÃ© materias esperar
@@ -297,8 +298,11 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
         // 3. Iterar sobre cada registro de calificaciÃ³n (cada materia)
         registros.forEach(registro => {
             if (!registro) return;
-            const { asignatura, criterios: criteriosPorBimestre, calificaciones: calificacionesMateria } = registro;
+            const { asignatura, criterios: criteriosPorBimestre, calificaciones: calificacionesMateria, cortes: cortesMateria } = registro;
             if (!asignatura) return;
+
+            // Guardamos los cortes oficiales para esta asignatura
+            cortesAdmin[asignatura] = cortesMateria || {};
 
             // 4. Calcular el promedio ponderado para cada alumno en esta materia, por bimestre
             alumnos.forEach(alumno => {
@@ -362,7 +366,10 @@ router.get("/:grupoId/calificaciones-admin", authMiddleware, isAdmin, async (req
             });
         });
 
-        res.json(calificacionesAdmin);
+        res.json({
+            calificaciones: calificacionesAdmin,
+            cortes: cortesAdmin
+        });
 
     } catch (err) {
         console.error("Error procesando calificaciones para admin:", err.message);
@@ -487,12 +494,21 @@ router.get("/alumno/:alumnoId/ficha", authMiddleware, schoolMiddleware, async (r
 
         const calificaciones = calificacionesRaw.map(reg => {
             const bimestres = {};
-            const { criterios: criteriosPorBimestre, calificaciones: calificacionesMateria, numTareas: numTareasConfig } = reg;
+            const cortes = {};
+            const { criterios: criteriosPorBimestre, calificaciones: calificacionesMateria, numTareas: numTareasConfig, cortes: cortesMateria } = reg;
 
             [1, 2, 3].forEach(bimestre => {
                 const bimestreKey = String(bimestre);
                 const criteriosActivos = criteriosPorBimestre?.[bimestreKey] || [];
                 const calificacionesAlumnoEnBimestre = calificacionesMateria?.[alumnoId]?.[bimestreKey];
+
+                // Extraer corte oficial si existe
+                if (cortesMateria && cortesMateria[bimestreKey] && cortesMateria[bimestreKey].promedios) {
+                    const frozenGrade = cortesMateria[bimestreKey].promedios[alumnoId];
+                    cortes[bimestre] = (frozenGrade !== undefined && frozenGrade !== null) ? frozenGrade : null;
+                } else {
+                    cortes[bimestre] = null;
+                }
 
                 if (!calificacionesAlumnoEnBimestre || Object.keys(calificacionesAlumnoEnBimestre).length === 0) {
                     bimestres[bimestre] = null;
@@ -519,7 +535,7 @@ router.get("/alumno/:alumnoId/ficha", authMiddleware, schoolMiddleware, async (r
                 bimestres[bimestre] = pesoTotalAplicable === 0 ? null : redondearCalificacion(promedioPonderado / pesoTotalAplicable);
             });
 
-            return { asignatura: reg.asignatura, bimestres };
+            return { asignatura: reg.asignatura, bimestres, cortes };
         });
 
         // 3. Obtener Asistencias

@@ -120,12 +120,21 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
 
         const calificaciones = calificacionesRaw.map(reg => {
             const bimestres = {};
-            const { criterios: criteriosPorBimestre, calificaciones: calificacionesMateria, numTareas: numTareasConfig } = reg;
+            const cortes = {};
+            const { criterios: criteriosPorBimestre, calificaciones: calificacionesMateria, numTareas: numTareasConfig, cortes: cortesMateria } = reg;
 
             [1, 2, 3].forEach(bimestre => {
                 const bimestreKey = String(bimestre);
                 const criteriosActivos = criteriosPorBimestre?.[bimestreKey] || [];
                 const calificacionesAlumnoEnBimestre = calificacionesMateria?.[id]?.[bimestreKey];
+
+                // Extraer corte oficial si existe
+                if (cortesMateria && cortesMateria[bimestreKey] && cortesMateria[bimestreKey].promedios) {
+                    const frozenGrade = cortesMateria[bimestreKey].promedios[id];
+                    cortes[bimestre] = (frozenGrade !== undefined && frozenGrade !== null) ? frozenGrade : null;
+                } else {
+                    cortes[bimestre] = null;
+                }
 
                 if (!calificacionesAlumnoEnBimestre || Object.keys(calificacionesAlumnoEnBimestre).length === 0) {
                     bimestres[bimestre] = null;
@@ -167,7 +176,7 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
                 bimestres[bimestre] = pesoTotalAplicable === 0 ? null : redondearCalificacion(promedioPonderado / pesoTotalAplicable);
             });
 
-            return { asignatura: reg.asignatura, bimestres };
+            return { asignatura: reg.asignatura, bimestres, cortes };
         });
 
         // 2. Obtener asistencias detalladas

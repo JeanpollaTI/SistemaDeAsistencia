@@ -54,6 +54,7 @@ function Calificaciones({ user }) {
   const [alumnos, setAlumnos] = useState([]);
   const [materias, setMaterias] = useState([]);
   const [calificaciones, setCalificaciones] = useState({});
+  const [cortes, setCortes] = useState({});
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -208,11 +209,18 @@ function Calificaciones({ user }) {
     try {
       // --- CAMBIO: Usar API_URL ---
       const res = await axios.get(`${API_URL}/grupos/${grupo._id}/calificaciones-admin`, getAxiosConfig());
-      setCalificaciones(res.data || {});
+      if (res.data && res.data.calificaciones) {
+        setCalificaciones(res.data.calificaciones || {});
+        setCortes(res.data.cortes || {});
+      } else {
+        setCalificaciones(res.data || {});
+        setCortes({});
+      }
     } catch (err) {
       console.error("Error detallado al cargar calificaciones:", err.response || err);
       showAlert("No se pudieron cargar las calificaciones consolidadas de este grupo.", "danger");
       setCalificaciones({});
+      setCortes({});
     } finally {
       setLoading(false);
     }
@@ -245,10 +253,19 @@ function Calificaciones({ user }) {
     if (!alumnoCal) return 0;
     let suma = 0;
     let count = 0;
+    const trimesterKey = String(bimestreIndex + 1);
+
     materias.forEach(materia => {
-      // Usamos clampGrade antes de sumar
-      const rawCal = alumnoCal[materia] && alumnoCal[materia][bimestreIndex];
-      const cal = clampGrade(rawCal);
+      // Check if there is a frozen grade for this student, materia, and trimester
+      const frozenGrade = cortes[materia]?.[trimesterKey]?.promedios?.[alumnoId];
+      let cal;
+
+      if (frozenGrade !== undefined && frozenGrade !== null) {
+        cal = frozenGrade;
+      } else {
+        const rawCal = alumnoCal[materia] && alumnoCal[materia][bimestreIndex];
+        cal = clampGrade(rawCal);
+      }
 
       if (typeof cal === 'number' && cal > 0) {
         suma += cal;
@@ -350,13 +367,34 @@ function Calificaciones({ user }) {
     if (bimestresSeleccionados[2]) tableHeaders.push("Trim. 3");
 
     const alumnoCal = calificaciones[alumno._id] || {};
+    const updatesList = []; // 🌟 Track any updates post-cut to print as a legend
+
     const tableBody = materias.map(materia => {
       const cals = alumnoCal[materia] || [null, null, null];
       const row = [materia];
       cals.forEach((cal, index) => {
         if (bimestresSeleccionados[index]) {
-          const roundedCal = redondearCalificacion(cal);
-          row.push(roundedCal > 0 ? roundedCal : '-');
+          const trimesterKey = String(index + 1);
+          const rawCal = clampGrade(cal);
+          const roundedCal = rawCal != null ? redondearCalificacion(rawCal) : null;
+          const frozenGrade = cortes[materia]?.[trimesterKey]?.promedios?.[alumno._id];
+
+          if (frozenGrade !== undefined && frozenGrade !== null) {
+            const isDifferent = roundedCal !== null && roundedCal !== frozenGrade;
+            if (isDifferent) {
+              row.push(`${frozenGrade}*`);
+              updatesList.push({
+                materia,
+                trimestre: index + 1,
+                oficial: frozenGrade,
+                actual: roundedCal
+              });
+            } else {
+              row.push(frozenGrade > 0 ? frozenGrade : '-');
+            }
+          } else {
+            row.push(roundedCal !== null && roundedCal > 0 ? roundedCal : '-');
+          }
         }
       });
       return row;
@@ -459,6 +497,28 @@ function Calificaciones({ user }) {
     const splitLeyenda = doc.splitTextToSize(leyenda, pageWidth - (margin * 2));
     const leyendaY = footerY - 15;
 
+    // 🌟 DIBUJAR FOOTNOTES PARA ACTUALIZACIONES DE CORTE
+    if (updatesList.length > 0) {
+      doc.setFontSize(7.5);
+      doc.setFont(undefined, 'italic');
+      doc.setTextColor(231, 76, 60); // A warning red color
+      
+      const footnotes = updatesList.map(item => 
+        `* En ${item.materia} (${getPeriodLabel(item.trimestre - 1)}): Calificación en boleta congelada en ${item.oficial}, pero actualizada a ${item.actual} por mejora.`
+      );
+      
+      let noteY = leyendaY - 4 - (footnotes.length * 3.5);
+      footnotes.forEach(note => {
+        doc.text(note, margin, noteY);
+        noteY += 3.5;
+      });
+      
+      doc.setTextColor(0);
+      doc.setFont(undefined, 'normal');
+    }
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'italic');
     doc.setTextColor(100);
     doc.text(splitLeyenda, margin, leyendaY);
     doc.setTextColor(0);
@@ -958,9 +1018,49 @@ function Calificaciones({ user }) {
                                 {getPeriodsArray().map(bimestreIndex => {
                                   const rawCal = calificaciones[alumno._id]?.[materia]?.[bimestreIndex];
                                   const cal = clampGrade(rawCal);
+                                  const liveGradeNum = cal != null ? redondearCalificacion(cal) : null;
+                                  
+                                  const trimesterKey = String(bimestreIndex + 1);
+                                  const frozenGrade = cortes[materia]?.[trimesterKey]?.promedios?.[alumno._id];
+
+                                  let cellContent = '-';
+                                  let cellClass = '';
+                                  
+                                  if (frozenGrade !== undefined && frozenGrade !== null) {
+                                    cellClass = frozenGrade < 6 ? 'reprobado' : 'aprobado';
+                                    const isDifferent = liveGradeNum !== null && liveGradeNum !== frozenGrade;
+                                    if (isDifferent) {
+                                      const diff = liveGradeNum - frozenGrade;
+                                      const diffText = diff > 0 ? `+${diff}` : `${diff}`;
+                                      const diffColor = diff > 0 ? '#2ecc71' : '#e74c3c';
+                                      cellContent = (
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                          <strong style={{ fontSize: '1rem', color: '#fff' }}>{frozenGrade}</strong>
+                                          <span style={{ 
+                                            fontSize: '0.65rem', 
+                                            color: diffColor, 
+                                            backgroundColor: diff > 0 ? 'rgba(46, 204, 113, 0.15)' : 'rgba(231, 76, 60, 0.15)',
+                                            padding: '1px 5px',
+                                            borderRadius: '4px',
+                                            marginTop: '2px',
+                                            fontWeight: 'bold',
+                                            whiteSpace: 'nowrap'
+                                          }} title={`Promedio en boleta: ${frozenGrade} | Promedio actual: ${liveGradeNum}`}>
+                                            {diffText} Act: {liveGradeNum}
+                                          </span>
+                                        </div>
+                                      );
+                                    } else {
+                                      cellContent = <strong>{frozenGrade}</strong>;
+                                    }
+                                  } else if (liveGradeNum !== null) {
+                                    cellClass = liveGradeNum < 6 ? 'reprobado' : 'aprobado';
+                                    cellContent = liveGradeNum;
+                                  }
+
                                   return (
-                                    <td key={`${materia}-b${bimestreIndex}`} className={typeof cal === 'number' ? (cal < 6 ? 'reprobado' : 'aprobado') : ''}>
-                                      {cal != null ? redondearCalificacion(cal) : '-'}
+                                    <td key={`${materia}-b${bimestreIndex}`} className={cellClass}>
+                                      {cellContent}
                                     </td>
                                   )
                                 })}
@@ -1025,10 +1125,50 @@ function Calificaciones({ user }) {
                           <React.Fragment key={`${alumno._id}-${materia}`}>
                             {getPeriodsArray().map(bim => {
                               const rawCal = calificaciones[alumno._id]?.[materia]?.[bim];
-                              const cal = redondearCalificacion(rawCal);
+                              const cal = clampGrade(rawCal);
+                              const liveGradeNum = cal != null ? redondearCalificacion(cal) : null;
+                              
+                              const trimesterKey = String(bim + 1);
+                              const frozenGrade = cortes[materia]?.[trimesterKey]?.promedios?.[alumno._id];
+
+                              let cellContent = '-';
+                              let cellClass = '';
+                              
+                              if (frozenGrade !== undefined && frozenGrade !== null) {
+                                cellClass = frozenGrade < 6 ? 'reprobado-sabana' : 'aprobado-sabana';
+                                const isDifferent = liveGradeNum !== null && liveGradeNum !== frozenGrade;
+                                if (isDifferent) {
+                                  const diff = liveGradeNum - frozenGrade;
+                                  const diffText = diff > 0 ? `+${diff}` : `${diff}`;
+                                  const diffColor = diff > 0 ? '#2ecc71' : '#e74c3c';
+                                  cellContent = (
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                      <strong style={{ fontSize: '0.9rem' }}>{frozenGrade}</strong>
+                                      <span style={{ 
+                                        fontSize: '0.6rem', 
+                                        color: diffColor, 
+                                        backgroundColor: diff > 0 ? 'rgba(46, 204, 113, 0.12)' : 'rgba(231, 76, 60, 0.12)',
+                                        padding: '0 4px',
+                                        borderRadius: '3px',
+                                        fontWeight: 'bold',
+                                        whiteSpace: 'nowrap',
+                                        marginTop: '1px'
+                                      }} title={`Promedio en boleta: ${frozenGrade} | Promedio actual: ${liveGradeNum}`}>
+                                        {diffText} ({liveGradeNum})
+                                      </span>
+                                    </div>
+                                  );
+                                } else {
+                                  cellContent = <strong>{frozenGrade}</strong>;
+                                }
+                              } else if (liveGradeNum !== null) {
+                                cellClass = liveGradeNum < 6 ? 'reprobado-sabana' : 'aprobado-sabana';
+                                cellContent = liveGradeNum;
+                              }
+
                               return (
-                                <td key={bim} className={cal > 0 ? (cal < 6 ? 'reprobado-sabana' : 'aprobado-sabana') : ''}>
-                                  {cal > 0 ? cal : '-'}
+                                <td key={bim} className={cellClass}>
+                                  {cellContent}
                                 </td>
                               );
                             })}

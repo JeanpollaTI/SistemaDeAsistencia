@@ -28,6 +28,11 @@ const CalificacionSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: {}
   },
+  // Almacena los cortes oficiales (congelamientos) por trimestre
+  cortes: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  },
   school_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'School',
