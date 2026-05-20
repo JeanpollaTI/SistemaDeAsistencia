@@ -43,6 +43,7 @@ function Horario({ user }) {
   const [brandingModal, setBrandingModal] = useState({ visible: false, onConfirm: null, title: '' });
   const [hasChanges, setHasChanges] = useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: '', onConfirm: null, confirmText: 'Aceptar', cancelText: 'Cancelar' });
   const [pendingAnio, setPendingAnio] = useState(null);
   const horarioTableRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -135,21 +136,27 @@ function Horario({ user }) {
 
   const generarHorarioVacio = useCallback(() => {
     if (isLoading) return;
-    if (!window.confirm("¿Estás seguro de que quieres limpiar todo el horario? Esta acción es irreversible.")) return;
-
-    const nuevoHorario = {};
-    profesores.forEach(prof => {
-      nuevoHorario[prof.nombre] = {};
-      dias.forEach(d => {
-        horas.forEach(h => {
-          nuevoHorario[prof.nombre][`General-${d}-${h}`] = { text: "", color: "transparent" };
+    setConfirmModal({
+      isOpen: true,
+      message: "¿Estás seguro de que quieres limpiar todo el horario? Esta acción es irreversible.",
+      confirmText: "Sí, Limpiar Todo",
+      cancelText: "Cancelar",
+      onConfirm: () => {
+        const nuevoHorario = {};
+        profesores.forEach(prof => {
+          nuevoHorario[prof.nombre] = {};
+          dias.forEach(d => {
+            horas.forEach(h => {
+              nuevoHorario[prof.nombre][`General-${d}-${h}`] = { text: "", color: "transparent" };
+            });
+          });
         });
-      });
+        setHorario(nuevoHorario);
+        setLeyenda({});
+        setHasChanges(true); // 🌟 ALERTA: Horario limpiado
+        showAlert("Horario limpiado correctamente ✅", "success");
+      }
     });
-    setHorario(nuevoHorario);
-    setLeyenda({});
-    setHasChanges(true); // 🌟 ALERTA: Horario limpiado
-    showAlert("Horario limpiado correctamente ✅", "success");
   }, [isLoading, profesores, showAlert]);
 
   const handleCellChange = useCallback((profesor, asignatura, dia, hora, value) => {
@@ -421,6 +428,18 @@ function Horario({ user }) {
           setPendingAnio(null);
         }} 
         mensaje="Tienes cambios sin guardar. ¿Estás seguro de que deseas salir o cambiar de ciclo?" 
+      />
+
+      <ConfirmacionModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={() => {
+          if (confirmModal.onConfirm) confirmModal.onConfirm();
+          setConfirmModal({ ...confirmModal, isOpen: false });
+        }}
+        mensaje={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        cancelText={confirmModal.cancelText}
       />
 
       {/* Estructura Header del código nuevo */}

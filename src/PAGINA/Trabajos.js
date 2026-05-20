@@ -365,16 +365,16 @@ function Trabajos({ user }) {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: 2rem;
-                    border-bottom: 2px solid var(--dark-color-alt);
-                    padding-bottom: 1.5rem;
+                    margin-bottom: 0.8rem;
+                    border-bottom: 1px solid var(--dark-color-alt);
+                    padding-bottom: 0.6rem;
                     width: 100%;
                 }
                 .grupo-componente .main-header h1 {
                     font-size: 2.5rem;
                 }
                 .grupo-componente .main-header h2 {
-                    font-size: 1.8rem;
+                    font-size: 1.25rem;
                 }
 
                 .grupo-componente .subtitulo {
@@ -422,6 +422,23 @@ function Trabajos({ user }) {
                     cursor: not-allowed;
                     transform: none;
                     filter: none;
+                }
+
+                .grupo-componente .btn-compact {
+                    padding: 0.4rem 0.8rem !important;
+                    font-size: 0.8rem !important;
+                    height: 32px !important;
+                    line-height: 1 !important;
+                    border-radius: 6px !important;
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    gap: 5px !important;
+                    font-weight: 500 !important;
+                    transition: all 0.2s ease-in-out !important;
+                }
+                .grupo-componente .btn-compact:hover {
+                    transform: translateY(-1px) !important;
                 }
 
                 /* --- TABLA DE SELECCIÓN DE GRUPO --- */
@@ -731,14 +748,55 @@ function Trabajos({ user }) {
 
                 .grupo-componente .bimestre-selector {
                     display: flex;
+                    justify-content: space-between;
+                    align-items: center;
                     gap: 15px;
-                    margin-bottom: 2rem;
-                    padding: 10px 20px;
+                    margin-bottom: 0.8rem;
+                    padding: 6px 20px;
                     border-bottom: 1px solid #333;
                 }
+                .grupo-componente .bimestre-selector-buttons {
+                    display: flex;
+                    gap: 10px;
+                }
                 .grupo-componente .bimestre-selector .btn {
-                    padding: 10px 20px;
-                    font-size: 1rem;
+                    padding: 5px 12px;
+                    font-size: 0.85rem;
+                    border-radius: 6px;
+                }
+                .grupo-componente .zoom-controls {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 6px;
+                    padding: 3px 8px;
+                }
+                .grupo-componente .zoom-controls .btn-zoom {
+                    background: none;
+                    border: none;
+                    color: #ccc;
+                    font-size: 0.85rem;
+                    cursor: pointer;
+                    width: 26px;
+                    height: 26px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 4px;
+                    transition: all 0.2s;
+                }
+                .grupo-componente .zoom-controls .btn-zoom:hover {
+                    background: rgba(255, 255, 255, 0.08);
+                    color: #fff;
+                }
+                .grupo-componente .zoom-controls span {
+                    font-size: 0.8rem;
+                    color: #aaa;
+                    font-weight: 500;
+                    min-width: 40px;
+                    text-align: center;
                 }
 
                 .grupo-componente .asistencia-grid {
@@ -1363,42 +1421,50 @@ function Trabajos({ user }) {
 
                 /* 🔒 CORTE CONTROLLER CARD STYLES */
                 .corte-controller-card {
-                    background: rgba(255, 255, 255, 0.03);
+                    background: rgba(255, 255, 255, 0.02);
                     backdrop-filter: blur(10px);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
-                    border-radius: 12px;
-                    padding: 15px 20px;
-                    margin: 15px 20px;
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    border-radius: 8px;
+                    padding: 6px 16px;
+                    margin: 4px 20px 8px 20px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    gap: 20px;
-                    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+                    gap: 15px;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
                     transition: all 0.3s ease;
                 }
                 .corte-controller-card.has-corte {
-                    border: 1px solid rgba(46, 204, 113, 0.3);
-                    background: rgba(46, 204, 113, 0.02);
+                    border: 1px solid rgba(46, 204, 113, 0.2);
+                    background: rgba(46, 204, 113, 0.015);
                 }
                 .corte-info-sec {
                     display: flex;
                     align-items: center;
-                    gap: 15px;
+                    gap: 10px;
+                    flex: 1;
                 }
                 .corte-status-icon {
-                    font-size: 1.8rem;
+                    font-size: 1.2rem;
+                }
+                .corte-status-details {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    flex-wrap: wrap;
                 }
                 .corte-status-details h4 {
-                    margin: 0 0 4px 0;
-                    font-size: 1.1rem;
+                    margin: 0;
+                    font-size: 0.85rem;
                     font-weight: 600;
                     color: #fff;
+                    white-space: nowrap;
                 }
                 .corte-status-details p {
                     margin: 0;
-                    font-size: 0.85rem;
-                    color: rgba(255, 255, 255, 0.6);
-                    line-height: 1.3;
+                    font-size: 0.78rem;
+                    color: rgba(255, 255, 255, 0.55);
+                    line-height: 1.2;
                 }
                 .corte-actions-sec {
                     display: flex;
@@ -2312,7 +2378,8 @@ const PanelCalificaciones = ({
                 onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
                 onConfirm={confirmModal.onConfirm}
                 mensaje={confirmModal.message}
-                confirmText="Sí, Eliminar Todo"
+                confirmText={confirmModal.confirmText || "Sí, Eliminar Todo"}
+                cancelText={confirmModal.cancelText || "Cancelar"}
             />
   
             <ConfirmacionModal
@@ -2417,9 +2484,15 @@ const PanelCalificaciones = ({
                             <button 
                                 className="btn" 
                                 onClick={() => {
-                                    if (window.confirm("¿Está seguro de que desea migrar las calificaciones con la configuración seleccionada?")) {
-                                        handleMigrarCalificaciones(migracionConfig);
-                                    }
+                                    setConfirmModal({
+                                        isOpen: true,
+                                        message: "¿Está seguro de que desea migrar las calificaciones con la configuración seleccionada?",
+                                        confirmText: "Sí, Migrar",
+                                        cancelText: "Cancelar",
+                                        onConfirm: () => {
+                                            handleMigrarCalificaciones(migracionConfig);
+                                        }
+                                    });
                                 }}
                                 disabled={migracionConfig.origenBimestre === migracionConfig.destinoBimestre}
                                 style={{ 
@@ -2441,14 +2514,14 @@ const PanelCalificaciones = ({
             {/* Contenido principal del panel de calificaciones */}
             <div className="asistencia-modal-content">
                 <div className="sticky-context">
-                    <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '10px 20px' }}>
+                    <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '6px 20px' }}>
                         <h2>Calificaciones: {grupo.nombre} - {asignatura}</h2>
                         <div>
                             {/* Botones de Acción Nuevos */}
-                            <div style={{ display: 'inline-flex', gap: '5px', marginRight: '15px', verticalAlign: 'middle' }}>
+                            <div style={{ display: 'inline-flex', gap: '5px', marginRight: '15px', verticalAlign: 'middle', alignItems: 'center' }}>
                                 <button
-                                    className="btn"
-                                    style={{ padding: '0 12px', height: '35px', backgroundColor: '#95a5a6', color: 'white', opacity: history.past.length === 0 ? 0.5 : 1, cursor: history.past.length === 0 ? 'not-allowed' : 'pointer' }}
+                                    className="btn btn-compact"
+                                    style={{ backgroundColor: '#95a5a6', color: 'white', opacity: history.past.length === 0 ? 0.5 : 1, cursor: history.past.length === 0 ? 'not-allowed' : 'pointer' }}
                                     onClick={handleUndo}
                                     disabled={history.past.length === 0}
                                     title="Deshacer (Ctrl+Z)"
@@ -2456,8 +2529,8 @@ const PanelCalificaciones = ({
                                     <FaArrowLeft />
                                 </button>
                                 <button
-                                    className="btn"
-                                    style={{ padding: '0 12px', height: '35px', backgroundColor: '#95a5a6', color: 'white', opacity: history.future.length === 0 ? 0.5 : 1, cursor: history.future.length === 0 ? 'not-allowed' : 'pointer' }}
+                                    className="btn btn-compact"
+                                    style={{ backgroundColor: '#95a5a6', color: 'white', opacity: history.future.length === 0 ? 0.5 : 1, cursor: history.future.length === 0 ? 'not-allowed' : 'pointer' }}
                                     onClick={handleRedo}
                                     disabled={history.future.length === 0}
                                     title="Rehacer"
@@ -2465,22 +2538,22 @@ const PanelCalificaciones = ({
                                     <FaArrowRight />
                                 </button>
                             </div>
-                            <button className="btn" onClick={() => setBrandingModal({
+                            <button className="btn btn-compact" onClick={() => setBrandingModal({
                                 visible: true,
                                 title: 'Reporte de Asignatura',
                                 onConfirm: (brandingData) => generateSubjectReport(brandingData)
                             })} style={{ marginRight: '10px', backgroundColor: '#2980b9', borderColor: '#2980b9', color: 'white' }}>
                                 📄 Reporte PDF
                             </button>
-                            <button className="btn" onClick={handleLimpiarCalificaciones} style={{ marginRight: '10px', backgroundColor: '#c0392b', borderColor: '#c0392b', color: 'white' }}>
+                            <button className="btn btn-compact" onClick={handleLimpiarCalificaciones} style={{ marginRight: '10px', backgroundColor: '#c0392b', borderColor: '#c0392b', color: 'white' }}>
                                 🗑️ Limpiar Calificaciones
                             </button>
 
 
                             {/* Botón para abrir el modal de criterios */}
-                            <button className="btn" onClick={() => setModalCriterios(true)}>Criterios</button>
+                            <button className="btn btn-compact" onClick={() => setModalCriterios(true)}>Criterios</button>
                             <button 
-                                className="btn" 
+                                className="btn btn-compact" 
                                 onClick={() => {
                                     setMigracionConfig({
                                         origenBimestre: String(bimestreActivo),
@@ -2495,33 +2568,34 @@ const PanelCalificaciones = ({
                             >
                                 🔄 Migrar Calificaciones
                             </button>
-                            <button className="btn btn-cancel" onClick={handleConfirmarVolver} style={{ marginLeft: '10px' }}>Cerrar</button>
+                            <button className="btn btn-cancel btn-compact" onClick={handleConfirmarVolver} style={{ marginLeft: '10px' }}>Cerrar</button>
                         </div>
                     </header>
 
-                    {/* 🌟 ZOOM CONTROLS */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', paddingRight: '20px', marginBottom: '10px', gap: '10px' }}>
-                        <button className="btn btn-secondary" onClick={handleZoomOut} style={{ padding: '5px 10px' }}>🔍 -</button>
-                        <span style={{ alignSelf: 'center', color: '#ccc' }}>{Math.round(zoomLevel * 100)}%</span>
-                        <button className="btn btn-secondary" onClick={handleZoomIn} style={{ padding: '5px 10px' }}>🔍 +</button>
-                    </div>
                     <div className="bimestre-selector">
-                        {(() => {
-                            const buttons = [];
-                            const count = getPeriodCount();
-                            for (let i = 1; i <= count; i++) {
-                                buttons.push(
-                                    <button
-                                        key={i}
-                                        className={`btn ${bimestreActivo === i ? 'btn-primary' : ''}`}
-                                        onClick={() => { setBimestreActivo(i); setCriterioSeleccionadoGlobal(null); }}
-                                    >
-                                        {getPeriodLabel(i - 1)}
-                                    </button>
-                                );
-                            }
-                            return buttons;
-                        })()}
+                        <div className="bimestre-selector-buttons">
+                            {(() => {
+                                const buttons = [];
+                                const count = getPeriodCount();
+                                for (let i = 1; i <= count; i++) {
+                                    buttons.push(
+                                        <button
+                                            key={i}
+                                            className={`btn ${bimestreActivo === i ? 'btn-primary' : ''}`}
+                                            onClick={() => { setBimestreActivo(i); setCriterioSeleccionadoGlobal(null); }}
+                                        >
+                                            {getPeriodLabel(i - 1)}
+                                        </button>
+                                    );
+                                }
+                                return buttons;
+                            })()}
+                        </div>
+                        <div className="zoom-controls">
+                            <button className="btn-zoom" onClick={handleZoomOut} title="Alejar">🔍 -</button>
+                            <span>{Math.round(zoomLevel * 100)}%</span>
+                            <button className="btn-zoom" onClick={handleZoomIn} title="Acercar">🔍 +</button>
+                        </div>
                     </div>
 
                     {/* 🔒 PANEL DE GESTIÓN DE CORTES OFICIALES */}
@@ -2546,7 +2620,7 @@ const PanelCalificaciones = ({
                                             <p>Sin corte oficial. Las calificaciones de los alumnos son completamente dinámicas.</p>
                                         )}
                                         {totalPorcentaje !== 100 && !hasCorte && (
-                                            <p style={{ color: '#e67e22', marginTop: '5px', fontWeight: '500' }}>
+                                            <p style={{ color: '#e67e22', fontWeight: '500' }}>
                                                 ⚠️ La suma de criterios debe ser exactamente 100% para realizar un corte (Actual: {totalPorcentaje}%).
                                             </p>
                                         )}
@@ -2557,11 +2631,17 @@ const PanelCalificaciones = ({
                                         <span style={{ color: '#ccc', fontSize: '0.9rem' }}>Procesando...</span>
                                     ) : hasCorte ? (
                                         <button 
-                                            className="btn" 
+                                            className="btn btn-compact" 
                                             onClick={() => {
-                                                if (window.confirm(`¿Está seguro de que desea REVERTIR el corte oficial del ${currentPeriodName}? Esto eliminará el promedio congelado y todas las calificaciones volverán a ser dinámicas en las boletas.`)) {
-                                                    handleGestionarCorte(bimestreActivo, 'eliminar');
-                                                }
+                                                setConfirmModal({
+                                                    isOpen: true,
+                                                    message: `¿Está seguro de que desea REVERTIR el corte oficial del ${currentPeriodName}? Esto eliminará el promedio congelado y todas las calificaciones volverán a ser dinámicas en las boletas.`,
+                                                    confirmText: "Sí, Revertir",
+                                                    cancelText: "Cancelar",
+                                                    onConfirm: () => {
+                                                        handleGestionarCorte(bimestreActivo, 'eliminar');
+                                                    }
+                                                });
                                             }}
                                             style={{ backgroundColor: '#d35400', borderColor: '#d35400', color: 'white' }}
                                         >
@@ -2569,11 +2649,17 @@ const PanelCalificaciones = ({
                                         </button>
                                     ) : (
                                         <button 
-                                            className="btn" 
+                                            className="btn btn-compact" 
                                             onClick={() => {
-                                                if (window.confirm(`¿Está seguro de que desea REALIZAR el corte oficial del ${currentPeriodName}? Se calculará y guardará el promedio ponderado de todos los alumnos en este momento. Este promedio será el oficial impreso en las boletas.`)) {
-                                                    handleGestionarCorte(bimestreActivo, 'crear');
-                                                }
+                                                setConfirmModal({
+                                                    isOpen: true,
+                                                    message: `¿Está seguro de que desea REALIZAR el corte oficial del ${currentPeriodName}? Se calculará y guardará el promedio ponderado de todos los alumnos en este momento. Este promedio será el oficial impreso en las boletas.`,
+                                                    confirmText: "Congelar",
+                                                    cancelText: "Cancelar",
+                                                    onConfirm: () => {
+                                                        handleGestionarCorte(bimestreActivo, 'crear');
+                                                    }
+                                                });
                                             }}
                                             disabled={totalPorcentaje !== 100}
                                             style={{ 
