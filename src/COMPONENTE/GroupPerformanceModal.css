@@ -64,6 +64,53 @@
     font-size: 0.9rem;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.download-pdf-btn {
+    background: rgba(0, 203, 203, 0.1);
+    border: 1px solid rgba(0, 203, 203, 0.25);
+    color: #00cbcb;
+    padding: 10px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.2s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.download-pdf-btn:hover:not(:disabled) {
+    background: rgba(0, 203, 203, 0.2);
+    border-color: #00cbcb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 203, 203, 0.2);
+}
+
+.download-pdf-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.download-pdf-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.spinner-mini {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(0, 203, 203, 0.2);
+    border-top: 2px solid #00cbcb;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
 .close-btn {
     background: rgba(255, 255, 255, 0.05);
     border: none;

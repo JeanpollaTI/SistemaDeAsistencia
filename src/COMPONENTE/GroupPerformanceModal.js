@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend 
 } from 'recharts';
-import { FaTimes, FaChartPie, FaUsers, FaGraduationCap } from 'react-icons/fa';
+import { FaTimes, FaChartPie, FaUsers, FaGraduationCap, FaFilePdf } from 'react-icons/fa';
 import axios from 'axios';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import './GroupPerformanceModal.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-const GroupPerformanceModal = ({ isOpen, onClose, grupo }) => {
+const GroupPerformanceModal = ({ isOpen, onClose, grupo, schoolConfig }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [downloading, setDownloading] = useState(false);
+  const modalRef = useRef(null);
 
   useEffect(() => {
     if (isOpen && grupo?._id) {
@@ -36,11 +40,82 @@ const GroupPerformanceModal = ({ isOpen, onClose, grupo }) => {
     }
   };
 
+  const handleDownloadPDF = async () => {
+    if (!modalRef.current) return;
+    setDownloading(true);
+    try {
+      const modalElement = modalRef.current;
+      
+      const canvas = await html2canvas(modalElement, {
+        scale: 2,
+        backgroundColor: '#1e1e2d', // Solid dark color matching the theme background
+        useCORS: true,
+        onclone: (clonedDocument) => {
+          // Hide action buttons in the cloned document so they don't appear in the PDF
+          const actions = clonedDocument.querySelector('.header-actions');
+          if (actions) {
+            actions.style.display = 'none';
+          }
+          
+          // Add school header if available
+          if (schoolConfig?.name) {
+            const headerTitle = clonedDocument.querySelector('.header-title');
+            if (headerTitle) {
+              const schoolHeader = clonedDocument.createElement('div');
+              schoolHeader.style.color = '#00cbcb';
+              schoolHeader.style.fontSize = '0.9rem';
+              schoolHeader.style.fontWeight = 'bold';
+              schoolHeader.style.textTransform = 'uppercase';
+              schoolHeader.style.marginBottom = '4px';
+              schoolHeader.style.letterSpacing = '1px';
+              schoolHeader.innerText = schoolConfig.name;
+              headerTitle.insertBefore(schoolHeader, headerTitle.firstChild);
+            }
+          }
+        }
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pdfWidth = doc.internal.pageSize.getWidth() - 20; // 10mm margins on both sides
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      const pageHeight = doc.internal.pageSize.getHeight() - 20; // 10mm margins on top/bottom
+      
+      let finalWidth = pdfWidth;
+      let finalHeight = pdfHeight;
+      
+      // If the rendered height exceeds the A4 landscape page height, scale it down to fit
+      if (pdfHeight > pageHeight) {
+        finalHeight = pageHeight;
+        finalWidth = (canvas.width * finalHeight) / canvas.height;
+      }
+
+      const xOffset = (doc.internal.pageSize.getWidth() - finalWidth) / 2;
+      const yOffset = (doc.internal.pageSize.getHeight() - finalHeight) / 2;
+
+      doc.addImage(imgData, 'PNG', xOffset, yOffset, finalWidth, finalHeight);
+      
+      // Save the PDF
+      const groupName = grupo?.nombre?.replace(/\s+/g, '_') || 'grupo';
+      doc.save(`Rendimiento_Grupo_${groupName}.pdf`);
+    } catch (err) {
+      console.error("Error al exportar PDF:", err);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="analytics-overlay" onClick={onClose}>
-      <div className="analytics-modal" onClick={e => e.stopPropagation()}>
+      <div ref={modalRef} className="analytics-modal" onClick={e => e.stopPropagation()}>
         <header className="analytics-header">
           <div className="header-title">
             <FaChartPie className="title-icon" />
@@ -49,7 +124,27 @@ const GroupPerformanceModal = ({ isOpen, onClose, grupo }) => {
               <p>{grupo?.nombre} - {grupo?.asesor || 'Sin asesor'}</p>
             </div>
           </div>
-          <button className="close-btn" onClick={onClose}><FaTimes /></button>
+          <div className="header-actions">
+            {!loading && !error && data && (
+              <button 
+                className="download-pdf-btn" 
+                onClick={handleDownloadPDF}
+                disabled={downloading}
+                title="Descargar reporte en PDF"
+              >
+                {downloading ? (
+                  <>
+                    <div className="spinner-mini"></div> Generando...
+                  </>
+                ) : (
+                  <>
+                    <FaFilePdf /> Descargar PDF
+                  </>
+                )}
+              </button>
+            )}
+            <button className="close-btn" onClick={onClose} title="Cerrar"><FaTimes /></button>
+          </div>
         </header>
 
         <div className="analytics-content">

@@ -1617,6 +1617,7 @@ function Grupo({ user }) {
           isOpen={isPerformanceModalOpen}
           onClose={() => setIsPerformanceModalOpen(false)}
           grupo={currentGroupToAnalyze}
+          schoolConfig={schoolConfig}
         />
       </div>
     </div>
