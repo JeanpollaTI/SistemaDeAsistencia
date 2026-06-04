@@ -886,16 +886,18 @@ function Grupo({ user }) {
       const schoolDirector = brandingData.directorName || schoolConfig?.directorName || '';
 
       // --- INICIO DE CAMBIOS PARA LOGO Y ESTILOS ---
-      const img = new Image();
-      img.src = schoolLogo;
-      await img.decode().catch(() => { }); // Esperar a que la imagen se cargue
-
-      const logoWidth = 25; // Ancho del logo en mm
-      const logoHeight = (img.height * logoWidth) / img.width; // Calcular altura para mantener proporción
       const margin = 14;
       const pageWidth = doc.internal.pageSize.width;
 
-      doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+      if (user?.role !== 'profesor') {
+        const img = new Image();
+        img.src = schoolLogo;
+        await img.decode().catch(() => { }); // Esperar a que la imagen se cargue
+
+        const logoWidth = 25; // Ancho del logo en mm
+        const logoHeight = (img.height * logoWidth) / img.width; // Calcular altura para mantener proporción
+        doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+      }
 
       doc.setFontSize(12);
 
@@ -918,8 +920,10 @@ function Grupo({ user }) {
       doc.text(`Asignatura: ${asignatura}`, margin, yPos);
 
       // 7. Director(a)
-      yPos += 7;
-      doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, yPos);
+      if (user?.role !== 'profesor') {
+        yPos += 7;
+        doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, yPos);
+      }
 
       // 8. AUMENTO CLAVE: Añadir un espacio adicional (e.g., 7mm) para que el texto NO toque la tabla.
       yPos += 7; // Espacio entre el texto de "Asignatura" y el inicio de la tabla
@@ -1165,11 +1169,17 @@ function Grupo({ user }) {
                       <td data-label="Mi Asignatura">{asignacion.asignatura}</td>
                       <td className="acciones-cell">
                         <button className="btn btn-primary" onClick={() => abrirModal('asistencia', grupo, asignacion.asignatura)}>Tomar Asistencia</button>
-                        <button className="btn btn-export" onClick={() => setBrandingModal({
-                          visible: true,
-                          title: 'Reporte de Asistencia',
-                          onConfirm: (brandingData) => generarPDF(grupo, asignacion.asignatura, brandingData)
-                        })}>PDF</button>
+                        <button className="btn btn-export" onClick={() => {
+                          if (user?.role === 'profesor') {
+                            generarPDF(grupo, asignacion.asignatura, {});
+                          } else {
+                            setBrandingModal({
+                              visible: true,
+                              title: 'Reporte de Asistencia',
+                              onConfirm: (brandingData) => generarPDF(grupo, asignacion.asignatura, brandingData)
+                            });
+                          }
+                        }}>PDF</button>
                       </td>
                     </tr>
                   ));

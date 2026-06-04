@@ -2239,13 +2239,17 @@ const PanelCalificaciones = ({
         const schoolDirector = brandingData.directorName || schoolConfig?.directorName || '';
 
         // --- LOGO Y ENCABEZADO (Reutilizado de Calificaciones.js) ---
-        const img = new Image();
-        img.src = schoolLogo;
-        await img.decode();
-        const logoWidth = 25, margin = 14;
-        const logoHeight = (img.height * logoWidth) / img.width;
+        const margin = 14;
         const pageWidth = doc.internal.pageSize.width;
-        doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+
+        if (user?.role !== 'profesor') {
+            const img = new Image();
+            img.src = schoolLogo;
+            await img.decode().catch(() => { });
+            const logoWidth = 25;
+            const logoHeight = (img.height * logoWidth) / img.width;
+            doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+        }
 
         doc.setFontSize(12);
         let yPos = margin + 5;
@@ -2255,8 +2259,12 @@ const PanelCalificaciones = ({
         doc.text('Reporte de Calificaciones por Asignatura', margin, yPos);
         doc.setFont(undefined, 'normal');
         yPos += 7;
-        doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, yPos);
-        yPos += 7;
+
+        if (user?.role !== 'profesor') {
+            doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, yPos);
+            yPos += 7;
+        }
+
         doc.text(`Grupo: ${grupo.nombre} - Asignatura: ${asignatura}`, margin, yPos);
         yPos += 7;
         // 🌟 AGREGADO: Nombre del docente
@@ -2538,11 +2546,17 @@ const PanelCalificaciones = ({
                                     <FaArrowRight />
                                 </button>
                             </div>
-                            <button className="btn btn-compact" onClick={() => setBrandingModal({
-                                visible: true,
-                                title: 'Reporte de Asignatura',
-                                onConfirm: (brandingData) => generateSubjectReport(brandingData)
-                            })} style={{ marginRight: '10px', backgroundColor: '#2980b9', borderColor: '#2980b9', color: 'white' }}>
+                            <button className="btn btn-compact" onClick={() => {
+                                if (user?.role === 'profesor') {
+                                    generateSubjectReport({});
+                                } else {
+                                    setBrandingModal({
+                                        visible: true,
+                                        title: 'Reporte de Asignatura',
+                                        onConfirm: (brandingData) => generateSubjectReport(brandingData)
+                                    });
+                                }
+                            }} style={{ marginRight: '10px', backgroundColor: '#2980b9', borderColor: '#2980b9', color: 'white' }}>
                                 📄 Reporte PDF
                             </button>
                             <button className="btn btn-compact" onClick={handleLimpiarCalificaciones} style={{ marginRight: '10px', backgroundColor: '#c0392b', borderColor: '#c0392b', color: 'white' }}>

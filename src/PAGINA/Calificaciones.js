@@ -323,22 +323,18 @@ function Calificaciones({ user }) {
 
     const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
 
-    // Logo (Simulado o real si cargado previamente, para optimizar en loop)
-    // Para simplificar en batch, idealmente cargar imagen una vez fuera. 
-    // Pero jsPDF addImage maneja cache o base64 bien.
-    const img = new Image();
-    img.src = schoolLogo;
-    // await img.decode(); // En batch puede ser lento, pero necesario para layout.
-    // Hack: Asumimos que ya cargó o usamos dimensiones fijas si es posible.
-    // Para asegurar sin await en cada uno, podríamos precargar, pero mantengamos await por seguridad visual.
-    await img.decode().catch(() => { }); // Catch error si ya está decodificada o falla
-
     const logoWidth = 25, margin = 14;
-    const logoHeight = (img.height * logoWidth) / img.width;
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
 
-    doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+    // Solo agregar el logo/sello si el rol no es profesor
+    if (user?.role !== 'profesor') {
+      const img = new Image();
+      img.src = schoolLogo;
+      await img.decode().catch(() => { }); // Catch error si ya está decodificada o falla
+      const logoHeight = (img.height * logoWidth) / img.width;
+      doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+    }
 
     doc.setFontSize(12);
     let yPos = margin + 5;
@@ -433,26 +429,29 @@ function Calificaciones({ user }) {
     doc.setFontSize(8);
     doc.setTextColor(0, 0, 0);
 
-    // 1. Docente
-    doc.text("Nombre y firma del asesor (a)", margin, ySignatures);
-    ySignatures += 10;
-    if (nombreDocente) {
-      doc.setFont(undefined, 'bold');
-      doc.text(nombreDocente.toUpperCase(), margin, ySignatures);
-      doc.setFont(undefined, 'normal');
-    }
-    doc.line(margin, ySignatures + 1, margin + 80, ySignatures + 1);
+    // Solo agregar firmas oficiales si el rol no es profesor
+    if (user?.role !== 'profesor') {
+      // 1. Docente
+      doc.text("Nombre y firma del asesor (a)", margin, ySignatures);
+      ySignatures += 10;
+      if (nombreDocente) {
+        doc.setFont(undefined, 'bold');
+        doc.text(nombreDocente.toUpperCase(), margin, ySignatures);
+        doc.setFont(undefined, 'normal');
+      }
+      doc.line(margin, ySignatures + 1, margin + 80, ySignatures + 1);
 
-    // 2. Director
-    ySignatures += 25;
-    doc.text("Nombre y firma del director (a)", margin, ySignatures);
-    ySignatures += 10;
-    if (nombreDirector) {
-      doc.setFont(undefined, 'bold');
-      doc.text(nombreDirector.toUpperCase(), margin, ySignatures);
-      doc.setFont(undefined, 'normal');
+      // 2. Director
+      ySignatures += 25;
+      doc.text("Nombre y firma del director (a)", margin, ySignatures);
+      ySignatures += 10;
+      if (nombreDirector) {
+        doc.setFont(undefined, 'bold');
+        doc.text(nombreDirector.toUpperCase(), margin, ySignatures);
+        doc.setFont(undefined, 'normal');
+      }
+      doc.line(margin, ySignatures + 1, margin + 80, ySignatures + 1);
     }
-    doc.line(margin, ySignatures + 1, margin + 80, ySignatures + 1);
 
     // Tabla Firmas Padres (Derecha)
     autoTable(doc, {
@@ -579,15 +578,17 @@ function Calificaciones({ user }) {
     let currentY = 0;
 
     // --- ENCABEZADO REPORTE ---
-    const img = new Image();
-    img.src = schoolLogo;
-    await img.decode().catch(() => { });
-
-    const logoWidth = 25, margin = 14;
-    const logoHeight = (img.height * logoWidth) / img.width;
+    const margin = 14;
     const pageHeight = doc.internal.pageSize.height;
 
-    doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+    if (user?.role !== 'profesor') {
+      const img = new Image();
+      img.src = schoolLogo;
+      await img.decode().catch(() => { });
+      const logoWidth = 25;
+      const logoHeight = (img.height * logoWidth) / img.width;
+      doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+    }
 
     doc.setFontSize(12);
     let yPos = margin + 5;
@@ -601,8 +602,10 @@ function Calificaciones({ user }) {
     doc.text(`Grupo: ${selectedGrupo.nombre}`, margin, yPos);
     yPos += 7;
 
-    doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, yPos);
-    yPos += 5;
+    if (user?.role !== 'profesor') {
+      doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, yPos);
+      yPos += 5;
+    }
 
     // --- TÍTULO LARGO (opcional, si se desea mantener) ---
     // doc.setFontSize(14);
@@ -691,13 +694,15 @@ function Calificaciones({ user }) {
     const schoolDirector = schoolConfig?.directorName || '';
 
     // Logo
-    const img = new Image();
-    img.src = schoolLogo;
-    await img.decode().catch(() => { });
+    if (user?.role !== 'profesor') {
+      const img = new Image();
+      img.src = schoolLogo;
+      await img.decode().catch(() => { });
 
-    const logoWidth = 25;
-    const logoHeight = (img.height * logoWidth) / img.width;
-    doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+      const logoWidth = 25;
+      const logoHeight = (img.height * logoWidth) / img.width;
+      doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+    }
 
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
@@ -707,7 +712,10 @@ function Calificaciones({ user }) {
     doc.setFont(undefined, 'normal');
     doc.setFontSize(10);
     doc.text(`Asesor: ${selectedGrupo.asesor || 'N/A'}`, margin, margin + 18);
-    doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, margin + 24);
+    
+    if (user?.role !== 'profesor') {
+      doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, margin + 24);
+    }
 
     const head = [
       [{ content: 'Nombre del Alumno', rowSpan: 2, styles: { fillColor: [0, 203, 203] } }],
@@ -756,33 +764,35 @@ function Calificaciones({ user }) {
     });
 
     // Signatures
-    let finalY = doc.lastAutoTable.finalY + 20;
-    if (finalY > pageHeight - 40) {
-      doc.addPage();
-      finalY = 30;
-    }
+    if (user?.role !== 'profesor') {
+      let finalY = doc.lastAutoTable.finalY + 20;
+      if (finalY > pageHeight - 40) {
+        doc.addPage();
+        finalY = 30;
+      }
 
-    const colWidth = (pageWidth - margin * 3) / 2;
-    doc.setFontSize(9);
+      const colWidth = (pageWidth - margin * 3) / 2;
+      doc.setFontSize(9);
 
-    // Director
-    doc.text("Nombre y firma del director (a)", margin, finalY);
-    const directorName = schoolDirector || localStorage.getItem('current_director_name') || '';
-    if (directorName) {
-      doc.setFont(undefined, 'bold');
-      doc.text(directorName.toUpperCase(), margin, finalY + 10);
-      doc.setFont(undefined, 'normal');
-    }
-    doc.line(margin, finalY + 11, margin + colWidth - 20, finalY + 11);
+      // Director
+      doc.text("Nombre y firma del director (a)", margin, finalY);
+      const directorName = schoolDirector || localStorage.getItem('current_director_name') || '';
+      if (directorName) {
+        doc.setFont(undefined, 'bold');
+        doc.text(directorName.toUpperCase(), margin, finalY + 10);
+        doc.setFont(undefined, 'normal');
+      }
+      doc.line(margin, finalY + 11, margin + colWidth - 20, finalY + 11);
 
-    // Asesor
-    doc.text("Nombre y firma del asesor (a)", margin + colWidth + 10, finalY);
-    if (selectedGrupo.asesor) {
-      doc.setFont(undefined, 'bold');
-      doc.text(selectedGrupo.asesor.toUpperCase(), margin + colWidth + 10, finalY + 10);
-      doc.setFont(undefined, 'normal');
+      // Asesor
+      doc.text("Nombre y firma del asesor (a)", margin + colWidth + 10, finalY);
+      if (selectedGrupo.asesor) {
+        doc.setFont(undefined, 'bold');
+        doc.text(selectedGrupo.asesor.toUpperCase(), margin + colWidth + 10, finalY + 10);
+        doc.setFont(undefined, 'normal');
+      }
+      doc.line(margin + colWidth + 10, finalY + 11, margin + colWidth * 2 + 10 - 20, finalY + 11);
     }
-    doc.line(margin + colWidth + 10, finalY + 11, margin + colWidth * 2 + 10 - 20, finalY + 11);
 
     doc.save(`Sabana_Calificaciones_Grupo_${selectedGrupo.nombre.replace(/\s/g, '_')}.pdf`);
     showAlert("Sábana de calificaciones generada correctamente.");
@@ -823,13 +833,17 @@ function Calificaciones({ user }) {
                     showAlert("Debes seleccionar al menos un Trimestre.", "danger");
                     return;
                   }
-                  // Al confirmar trimestres, pasamos a pedir Branding
+                  // Al confirmar trimestres, pasamos a pedir Branding si es admin
                   setModalPdf({ ...modalPdf, visible: false });
-                  setBrandingModal({
-                    visible: true,
-                    title: `Boleta de ${modalPdf.alumno?.nombre}`,
-                    onConfirm: (brandingData) => generatePdfIndividual(modalPdf.alumno, bimestresSeleccionados, brandingData)
-                  });
+                  if (user?.role === 'profesor') {
+                    generatePdfIndividual(modalPdf.alumno, bimestresSeleccionados, {});
+                  } else {
+                    setBrandingModal({
+                      visible: true,
+                      title: `Boleta de ${modalPdf.alumno?.nombre}`,
+                      onConfirm: (brandingData) => generatePdfIndividual(modalPdf.alumno, bimestresSeleccionados, brandingData)
+                    });
+                  }
                 }}>
                   <div className="checkbox-group">
                     <label><input type="checkbox" name="b1" defaultChecked /> Trimestre 1</label>
@@ -862,11 +876,17 @@ function Calificaciones({ user }) {
 
               <button
                 className="button"
-                onClick={() => setBrandingModal({
-                  visible: true,
-                  title: 'Boletas Grupales',
-                  onConfirm: (brandingData) => generatePdfGrupal(brandingData)
-                })}
+                onClick={() => {
+                  if (user?.role === 'profesor') {
+                    generatePdfGrupal({});
+                  } else {
+                    setBrandingModal({
+                      visible: true,
+                      title: 'Boletas Grupales',
+                      onConfirm: (brandingData) => generatePdfGrupal(brandingData)
+                    });
+                  }
+                }}
                 style={{ backgroundColor: '#2980b9', color: 'white' }}
                 title="Generar un solo PDF con todas las boletas del grupo"
               >
@@ -923,11 +943,15 @@ function Calificaciones({ user }) {
                 <form onSubmit={(e) => {
                   e.preventDefault();
                   setModalBajoRendimiento({ ...modalBajoRendimiento, visible: false });
-                  setBrandingModal({
-                    visible: true,
-                    title: 'Reporte de Riesgo',
-                    onConfirm: (brandingData) => generatePdfBajoRendimiento(modalBajoRendimiento.seleccion, brandingData)
-                  });
+                  if (user?.role === 'profesor') {
+                    generatePdfBajoRendimiento(modalBajoRendimiento.seleccion, {});
+                  } else {
+                    setBrandingModal({
+                      visible: true,
+                      title: 'Reporte de Riesgo',
+                      onConfirm: (brandingData) => generatePdfBajoRendimiento(modalBajoRendimiento.seleccion, brandingData)
+                    });
+                  }
                 }}>
                   <div className="checkbox-group" style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '20px 0' }}>
                     {[0, 1, 2].map(index => (
