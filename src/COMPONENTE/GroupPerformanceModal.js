@@ -127,8 +127,11 @@ const GroupPerformanceModal = ({ isOpen, onClose, grupo, schoolConfig }) => {
             rw.style.height = '250px';
           });
           
-          const clonedSvgs = clonedDocument.querySelectorAll('.recharts-wrapper svg');
+          const clonedSvgs = clonedDocument.querySelectorAll('.recharts-wrapper > svg');
           clonedSvgs.forEach(svg => {
+            // Skip legend icons (which have recharts-surface class) to avoid rendering them as giant squares
+            if (svg.classList.contains('recharts-surface')) return;
+            
             svg.setAttribute('width', '400');
             svg.setAttribute('height', '250');
             svg.style.width = '400px';

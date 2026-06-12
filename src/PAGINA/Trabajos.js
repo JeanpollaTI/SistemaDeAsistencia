@@ -353,7 +353,7 @@ function Trabajos({ user }) {
                     padding-right: 1rem;
                 }
 
-                .grupo-componente h1, h2, h3 {
+                .grupo-componente h1, .grupo-componente h2, .grupo-componente h3 {
                     color: var(--title-color);
                     font-weight: var(--font-semi-bold);
                 }
@@ -363,7 +363,7 @@ function Trabajos({ user }) {
                     justify-content: space-between;
                     align-items: center;
                     margin-bottom: 0.8rem;
-                    border-bottom: 1px solid var(--dark-color-alt);
+                    border-bottom: 1px solid var(--border-color);
                     padding-bottom: 0.6rem;
                     width: 100%;
                 }
@@ -390,8 +390,8 @@ function Trabajos({ user }) {
                     transition: all .3s;
                     cursor: pointer;
                     color: var(--text-color);
-                    background-color: #3C414C;
-                    border: 1px solid #555;
+                    background-color: var(--dark-color-alt);
+                    border: 1px solid var(--border-color);
                 }
                 .grupo-componente .btn:hover {
                     filter: brightness(1.1);
@@ -400,7 +400,7 @@ function Trabajos({ user }) {
                 }
                 .grupo-componente .btn-primary {
                     background-color: var(--main-color);
-                    color: var(--dark-color);
+                    color: #1a1a1a;
                     border-color: var(--main-color);
                     font-weight: 600;
                 }
@@ -545,8 +545,8 @@ function Trabajos({ user }) {
 
                 /* Estilos de Contenedor y Títulos (Mantenidos) */
                 .grupo-componente .trabajos-container { padding-top: 8rem; padding-bottom: 2rem; max-width: 98%; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
-                .grupo-componente h1, h2, h3 { color: var(--title-color); font-weight: var(--font-semi-bold); }
-                .grupo-componente .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid var(--dark-color-alt); padding-bottom: 1.5rem; width: 100%; }
+                .grupo-componente h1, .grupo-componente h2, .grupo-componente h3 { color: var(--title-color); font-weight: var(--font-semi-bold); }
+                .grupo-componente .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid var(--border-color); padding-bottom: 1.5rem; width: 100%; }
                 .grupo-componente .main-header h1 { font-size: 2.5rem; }
                 .grupo-componente .main-header h2 { font-size: 1.8rem; }
                 .grupo-componente .subtitulo { text-align: center; margin-bottom: 3rem; font-size: 1.4rem; color: var(--main-color); }
@@ -555,13 +555,13 @@ function Trabajos({ user }) {
                 .grupo-componente .btn {
                     display: inline-block; padding: 0.8rem 1.5rem; border-radius: .5rem;
                     font-weight: 500; transition: all .3s; cursor: pointer; color: var(--text-color);
-                    background-color: #3C414C; border: 1px solid #555;
+                    background-color: var(--dark-color-alt); border: 1px solid var(--border-color);
                 }
                 .grupo-componente .btn:hover {
                     filter: brightness(1.1); transform: translateY(-2px); border-color: var(--main-color);
                 }
                 .grupo-componente .btn-primary {
-                    background-color: var(--main-color); color: var(--dark-color);
+                    background-color: var(--main-color); color: #1a1a1a;
                     border-color: var(--main-color); font-weight: 600;
                 }
                 .grupo-componente .btn-cancel {
@@ -616,7 +616,7 @@ function Trabajos({ user }) {
                 }
                 .grupo-componente .modal-content .bimestre-selector .btn-primary {
                     background-color: var(--main-color);
-                    color: var(--dark-color);
+                    color: #1a1a1a;
                     border-color: var(--main-color);
                     font-weight: 700;
                 }
