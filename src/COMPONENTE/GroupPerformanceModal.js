@@ -70,6 +70,14 @@ const GroupPerformanceModal = ({ isOpen, onClose, grupo, schoolConfig }) => {
         scale: 2,
         backgroundColor: captureBg,
         useCORS: true,
+        ignoreElements: (element) => {
+          return (
+            element.classList.contains('header-actions') || 
+            element.classList.contains('download-pdf-btn') || 
+            element.classList.contains('close-btn') ||
+            element.classList.contains('pdf-style-selector-container')
+          );
+        },
         onclone: (clonedDocument) => {
           // Hide action buttons in the cloned document so they don't appear in the PDF
           const actions = clonedDocument.querySelector('.header-actions');
@@ -125,6 +133,20 @@ const GroupPerformanceModal = ({ isOpen, onClose, grupo, schoolConfig }) => {
             svg.setAttribute('height', '250');
             svg.style.width = '400px';
             svg.style.height = '250px';
+            
+            // Remove SVG clipPath references that cause rendering blocks/squares in html2canvas
+            const clipped = svg.querySelectorAll('[clip-path]');
+            clipped.forEach(el => el.removeAttribute('clip-path'));
+            
+            const clippedCamel = svg.querySelectorAll('[clipPath]');
+            clippedCamel.forEach(el => el.removeAttribute('clipPath'));
+            
+            const allElements = svg.querySelectorAll('*');
+            allElements.forEach(el => {
+              if (el.style.clipPath) {
+                el.style.clipPath = 'none';
+              }
+            });
           });
           
           // Apply dynamic PDF Style Overrides

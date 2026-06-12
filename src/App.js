@@ -277,6 +277,10 @@ function App() {
                         <FaUserCircle /> MI PERFIL
                     </button>
 
+                    <button className="nav-link-dropdown" onClick={() => { toggleTheme(); closeDropdowns(); }}>
+                        {theme === 'light' ? <FaMoon /> : <FaSun />} {theme === 'light' ? 'MODO OSCURO' : 'MODO CLARO'}
+                    </button>
+
                     {user?.role !== "superadmin" && (
                         <button className="nav-link-dropdown" onClick={() => { setIsSuggestionModalOpen(true); closeDropdowns(); }}>
                             <FaLightbulb /> SUGERENCIAS
