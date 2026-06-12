@@ -19,6 +19,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  will-change: transform, opacity;
 }
 
 .notificacion.success {
@@ -69,6 +70,7 @@
   border-top: 5px solid #8e44ad; /* Púrpura elegante */
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
   animation: modalScaleIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  will-change: transform, opacity;
 }
 
 .confirm-modal-content h4 {
@@ -126,4 +128,54 @@
 @keyframes modalScaleIn {
   from { opacity: 0; transform: scale(0.9) translateY(15px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ================================================= */
+/* OPTIMIZACIONES PARA MÓVILES (PANTALLAS <= 768px)  */
+/* ================================================= */
+@media screen and (max-width: 768px) {
+  .modal-backdrop-confirm,
+  .confirm-modal-content,
+  .notificacion,
+  .analytics-overlay,
+  .analytics-modal,
+  .search-choice-modal-backdrop,
+  .loading-overlay,
+  .search-bar-modal-backdrop,
+  .suggest-modal-backdrop {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .confirm-modal-content {
+    background: #191d28 !important; /* Totalmente opaco para evitar mezcla de textos */
+    animation: simpleFadeIn 0.2s ease-out forwards !important;
+  }
+
+  .notificacion {
+    background: #191d28 !important;
+    animation: simpleSlideIn 0.25s ease-out forwards !important;
+  }
+
+  .notificacion.success {
+    background: #1e7e34 !important;
+  }
+
+  .notificacion.error {
+    background: #bd2130 !important;
+  }
+
+  .notificacion.info {
+    background: #117a8b !important;
+  }
+}
+
+@keyframes simpleFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes simpleSlideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }

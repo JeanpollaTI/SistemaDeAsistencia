@@ -313,11 +313,7 @@ function Trabajos({ user }) {
 
                 /* --- FUENTES Y VARIABLES GLOBALES --- */
                 .grupo-componente {
-                    --dark-color: #191D28;
-                    --dark-color-alt: #1E222D;
                     --main-color: #007A7A; /* Teal/Aqua formal */
-                    --title-color: #FFFFFF;
-                    --text-color: #E9E9E9;
                     --danger-color: #d32f2f; /* Rojo formal */
                     --success-color: #27ae60; /* Verde formal */
                     --warning-color: #f39c12; /* Naranja/Amarillo de advertencia */
@@ -325,6 +321,7 @@ function Trabajos({ user }) {
                     --body-font: 'Poppins', sans-serif;
                     --font-semi-bold: 600;
                     background-color: var(--dark-color);
+                    color: var(--text-color);
                     min-height: 100vh;
                 }
                 /* ... Estilos restantes ... */
@@ -512,11 +509,7 @@ function Trabajos({ user }) {
 
                 /* --- FUENTES Y VARIABLES GLOBALES --- */
                 .grupo-componente {
-                    --dark-color: #191D28;
-                    --dark-color-alt: #1E222D;
                     --main-color: #007A7A; /* Teal/Aqua formal */
-                    --title-color: #FFFFFF;
-                    --text-color: #E9E9E9;
                     --danger-color: #d32f2f; /* Rojo formal */
                     --success-color: #27ae60; /* Verde formal */
                     --warning-color: #f39c12; /* Naranja/Amarillo de advertencia */
@@ -524,6 +517,7 @@ function Trabajos({ user }) {
                     --body-font: 'Poppins', sans-serif;
                     --font-semi-bold: 600;
                     background-color: var(--dark-color);
+                    color: var(--text-color);
                     min-height: 100vh;
                 }
 
@@ -616,7 +610,7 @@ function Trabajos({ user }) {
                     font-weight: 500;
                     background-color: var(--dark-color);
                     color: var(--text-color);
-                    border: 1px solid #444;
+                    border: 1px solid var(--border-color);
                     box-shadow: none;
                     transition: all 0.2s;
                 }
@@ -631,7 +625,7 @@ function Trabajos({ user }) {
                 .grupo-componente h3 {
                     margin-top: 1rem;
                     font-size: 1.3rem;
-                    border-bottom: 1px solid #333;
+                    border-bottom: 1px solid var(--border-color);
                     padding-bottom: 10px;
                 }
                 .grupo-componente .criterio-item {
@@ -659,7 +653,7 @@ function Trabajos({ user }) {
                 .grupo-componente .criterio-form input {
                     /* Estilo base de input más formal */
                     background: var(--dark-color);
-                    border: 1px solid #444;
+                    border: 1px solid var(--border-color);
                     border-radius: 6px;
                     color: var(--text-color);
                     padding: 10px 12px;
@@ -670,7 +664,7 @@ function Trabajos({ user }) {
                 .grupo-componente .criterio-form input:focus {
                     border-color: var(--main-color);
                     box-shadow: 0 0 3px rgba(0, 122, 122, 0.8);
-                    background-color: #242935;
+                    background-color: var(--dark-color-alt);
                 }
                 .grupo-componente .criterio-form input[type="text"] {
                     flex-grow: 2; /* El nombre toma la mayor parte del espacio */
@@ -709,7 +703,7 @@ function Trabajos({ user }) {
                 /* Total del Bimestre y Acciones */
                 .grupo-componente .criterio-total {
                     text-align: right; font-size: 1.1rem; font-weight: bold;
-                    margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #444;
+                    margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);
                 }
                 .grupo-componente .modal-actions {
                     margin-top: 1.5rem;
@@ -721,11 +715,11 @@ function Trabajos({ user }) {
                 .grupo-componente .modal-actions .btn-cancel {
                     background-color: transparent;
                     color: var(--text-color);
-                    border-color: #555;
+                    border-color: var(--border-color);
                     padding: 0.8rem 1.5rem;
                 }
                 .grupo-componente .modal-actions .btn-cancel:hover {
-                    background-color: #2a2f3c;
+                    background-color: var(--dark-color);
                     transform: none;
                 }
 
@@ -743,7 +737,7 @@ function Trabajos({ user }) {
                     display: flex;
                     flex-direction: column;
                     overflow: hidden;
-                    border: 1px solid #444;
+                    border: 1px solid var(--border-color);
                 }
 
                 .grupo-componente .bimestre-selector {
@@ -753,7 +747,7 @@ function Trabajos({ user }) {
                     gap: 15px;
                     margin-bottom: 0.8rem;
                     padding: 6px 20px;
-                    border-bottom: 1px solid #333;
+                    border-bottom: 1px solid var(--border-color);
                 }
                 .grupo-componente .bimestre-selector-buttons {
                     display: flex;
@@ -969,10 +963,10 @@ function Trabajos({ user }) {
                     width: 30px; 
                     height: 30px;
                     line-height: 40px; /* Centrado vertical del texto */
-                    background-color: #4a4a4a;
-                    border: 1px solid #777;
+                    background-color: var(--light-gray-color);
+                    border: 1px solid var(--border-color);
                     border-radius: 6px;
-                    color: white;
+                    color: var(--text-color);
                     text-align: center;
                     font-weight: 600;
                     font-family: var(--body-font);
@@ -983,12 +977,13 @@ function Trabajos({ user }) {
                     box-sizing: border-box;
                 }
                 .grupo-componente .cuadrito-calificacion::placeholder {
-                    color: #999;
+                    color: var(--text-color);
+                    opacity: 0.5;
                     font-size: 0.9em;
                 }
                 .grupo-componente .cuadrito-calificacion:focus {
                     outline: 2px solid var(--main-color);
-                    background-color: #5f5f5f;
+                    background-color: var(--dark-color-alt);
                 }
                 .grupo-componente .cuadrito-calificacion::-webkit-outer-spin-button,
                 .grupo-componente .cuadrito-calificacion::-webkit-inner-spin-button {
@@ -1250,7 +1245,7 @@ function Trabajos({ user }) {
                     overflow-y: auto;
                     padding: 0 0 40px 0; /* Eliminado el padding lateral que causaba el filtrado visual */
                     flex-grow: 1; /* fills remaining height */
-                    border-bottom: 1px solid #444;
+                    border-bottom: 1px solid var(--border-color);
                     position: relative;
                 }
                 .grupo-componente .tabla-global {
@@ -1262,14 +1257,14 @@ function Trabajos({ user }) {
                 .grupo-componente .tabla-global th,
                 .grupo-componente .tabla-global td {
                     padding: 8px 5px;
-                    border-bottom: 1px solid #444;
-                    border-right: 1px solid #444;
+                    border-bottom: 1px solid var(--border-color);
+                    border-right: 1px solid var(--border-color);
                     text-align: center;
                     vertical-align: middle;
                 }
                 .grupo-componente .tabla-global th {
-                    background-color: #2c3e50;
-                    color: white;
+                    background-color: var(--light-gray-color);
+                    color: var(--title-color);
                     font-weight: 600;
                     font-size: 0.9rem;
                     position: sticky;
@@ -1286,9 +1281,9 @@ function Trabajos({ user }) {
                     left: 40px; 
                     top: 0; 
                     z-index: 250; /* Mayor que el resto de headers */
-                    background-color: #2c3e50 !important;
-                    color: white !important;
-                    border-right: 2px solid #555; 
+                    background-color: var(--light-gray-color) !important;
+                    color: var(--title-color) !important;
+                    border-right: 2px solid var(--border-color); 
                     box-shadow: 6px 0 10px -2px rgba(0,0,0,0.5); 
                 }
                 .grupo-componente .tabla-global td.alumno-col {
@@ -1296,11 +1291,11 @@ function Trabajos({ user }) {
                     padding-left: 15px;
                     position: sticky;
                     left: 40px; 
-                    background-color: #1E222D !important; /* var(--dark-color-alt) hardcoded and forced */
+                    background-color: var(--dark-color-alt) !important;
                     z-index: 150; 
-                    border-right: 2px solid #555;
+                    border-right: 2px solid var(--border-color);
                     font-weight: 500;
-                    color: white !important;
+                    color: var(--text-color) !important;
                     box-shadow: 6px 0 10px -2px rgba(0,0,0,0.5); 
                 }
                 .grupo-componente .tabla-global .num-col {
@@ -1308,17 +1303,17 @@ function Trabajos({ user }) {
                     left: 0;
                     z-index: 250; 
                     top: 0;
-                    background-color: #2c3e50 !important;
-                    color: white !important;
-                    border-right: 1px solid #444;
+                    background-color: var(--light-gray-color) !important;
+                    color: var(--title-color) !important;
+                    border-right: 1px solid var(--border-color);
                 }
                 .grupo-componente .tabla-global tbody td:first-child {
                     position: sticky;
                     left: 0;
                     z-index: 150; 
-                    background-color: #1E222D !important;
-                    color: white !important;
-                    border-right: 1px solid #444;
+                    background-color: var(--dark-color-alt) !important;
+                    color: var(--text-color) !important;
+                    border-right: 1px solid var(--border-color);
                 }
                 
                 /* 🌟 OFFSETS FOR TECNOLOGIA (Approx +50px for Obs column) */
@@ -1331,16 +1326,17 @@ function Trabajos({ user }) {
                     position: sticky;
                     left: 40px;
                     z-index: 250; 
-                    background-color: #2c3e50 !important;
-                    border-right: 1px solid #444;
+                    background-color: var(--light-gray-color) !important;
+                    color: var(--title-color) !important;
+                    border-right: 1px solid var(--border-color);
                     width: 50px;
                 }
                 .grupo-componente .tabla-global tbody td.obs-col-body {
                      position: sticky;
                      left: 40px;
                      z-index: 150;
-                     background-color: #1E222D !important;
-                     border-right: 1px solid #444;
+                     background-color: var(--dark-color-alt) !important;
+                     border-right: 1px solid var(--border-color);
                      padding: 0;
                 }
                 .grupo-componente .tabla-global tbody td.obs-col-body input {
@@ -1359,7 +1355,7 @@ function Trabajos({ user }) {
                 .grupo-componente .tabla-global tr:hover td.alumno-col,
                 .grupo-componente .tabla-global tr:hover td:first-child,
                 .grupo-componente .tabla-global tr:hover td.obs-col-body {
-                    background-color: #2a2f3c !important; 
+                    background-color: var(--dark-color) !important; 
                 }
 
                 .grupo-componente .tabla-header-task {
