@@ -1,61 +1,36 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import './DynamicBackground.css';
+import logo from '../logo.png';
 
 const DynamicBackground = () => {
-    const canvasRef = useRef(null);
-    const effectRef = useRef(null);
+    return (
+        <div className="css-dynamic-background" aria-hidden="true">
+            {/* Ambient Cyan/Blue Light Orbs */}
+            <div className="bg-glow-orb orb-1"></div>
+            <div className="bg-glow-orb orb-2"></div>
+            <div className="bg-glow-orb orb-3"></div>
 
-    useEffect(() => {
-        let isMounted = true;
+            {/* Subtle Cyber Tech Grid */}
+            <div className="bg-tech-grid"></div>
 
-        const initEffect = async () => {
-            try {
-                // Importación dinámica del componente de Three.js
-                const module = await import("https://cdn.jsdelivr.net/npm/threejs-components@0.0.19/build/cursors/tubes1.min.js");
-                const TubesCursor = module.default;
+            {/* Central Animated Glowing Logo (Infinity Loop) */}
+            <div className="infinity-logo-wrapper">
+                <div className="infinity-glow-ring ring-outer"></div>
+                <div className="infinity-glow-ring ring-inner"></div>
+                <img src={logo} alt="" className="infinity-logo-img" />
+            </div>
 
-                if (isMounted && canvasRef.current) {
-                    effectRef.current = TubesCursor(canvasRef.current, {
-                        tubes: {
-                            colors: ["#00CBCB", "#007A7A", "#B8E2F2"],
-                            lights: {
-                                intensity: 200,
-                                colors: ["#00CBCB", "#00B5B5", "#007A7A", "#60aed5"]
-                            }
-                        }
-                    });
-
-                    const handleRandomize = () => {
-                        if (effectRef.current) {
-                            const randomColorsArray = (count) => 
-                                new Array(count).fill(0).map(() => 
-                                    "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')
-                                );
-                            
-                            effectRef.current.tubes.setColors(randomColorsArray(3));
-                            effectRef.current.tubes.setLightsColors(randomColorsArray(4));
-                        }
-                    };
-
-                    document.body.addEventListener('click', handleRandomize);
-
-                    return () => {
-                        document.body.removeEventListener('click', handleRandomize);
-                    };
-                }
-            } catch (error) {
-                console.error("Error loading DynamicBackground effect:", error);
-            }
-        };
-
-        initEffect();
-
-        return () => {
-            isMounted = false;
-        };
-    }, []);
-
-    return <canvas id="canvas-dynamic" ref={canvasRef}></canvas>;
+            {/* Floating Particles */}
+            <div className="cyber-particles">
+                <span className="particle p1"></span>
+                <span className="particle p2"></span>
+                <span className="particle p3"></span>
+                <span className="particle p4"></span>
+                <span className="particle p5"></span>
+                <span className="particle p6"></span>
+            </div>
+        </div>
+    );
 };
 
 export default DynamicBackground;

@@ -1,9 +1,217 @@
-#canvas-dynamic {
+/* ============================================== */
+/* PURE CSS DYNAMIC BACKGROUND (INFINITY GLOW)   */
+/* Zero JS, zero canvas, 100% lightweight & smooth */
+/* ============================================== */
+
+.css-dynamic-background {
     position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 50%, #0a1826 0%, #060d14 60%, #020508 100%);
+}
+
+/* Ambient Glowing Orbs */
+.bg-glow-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.45;
+    will-change: transform, opacity;
+}
+
+.orb-1 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, #00CBCB 0%, rgba(0, 203, 203, 0) 70%);
+    top: -100px;
+    left: -100px;
+    animation: orbFloat1 12s ease-in-out infinite alternate;
+}
+
+.orb-2 {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, #007A7A 0%, rgba(0, 122, 122, 0) 70%);
+    bottom: -150px;
+    right: -150px;
+    animation: orbFloat2 15s ease-in-out infinite alternate;
+}
+
+.orb-3 {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, #00E6E6 0%, rgba(0, 230, 230, 0) 70%);
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: orbPulse 8s ease-in-out infinite alternate;
+}
+
+/* Subtle Cyber Tech Grid */
+.bg-tech-grid {
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 0;
-    pointer-events: none; /* Let clicks pass to body for randomize */
+    background-image: 
+        linear-gradient(rgba(0, 203, 203, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 203, 203, 0.05) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 80%);
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 80%);
+    animation: gridPulse 6s ease-in-out infinite alternate;
+}
+
+/* Infinity Logo Wrapper */
+.infinity-logo-wrapper {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 340px;
+    height: 340px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    will-change: transform, opacity;
+}
+
+/* Glowing Neon Logo Image */
+.infinity-logo-img {
+    width: 220px;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 25px rgba(0, 203, 203, 0.8)) drop-shadow(0 0 50px rgba(0, 122, 122, 0.6));
+    animation: infinityFloat 5s ease-in-out infinite alternate, infinityGlow 3s ease-in-out infinite alternate;
+    opacity: 0.75;
+}
+
+/* Concentric Tech Rings around Logo */
+.infinity-glow-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px dashed rgba(0, 203, 203, 0.25);
+    box-shadow: 0 0 20px rgba(0, 203, 203, 0.15);
+    pointer-events: none;
+}
+
+.ring-outer {
+    width: 320px;
+    height: 320px;
+    border-color: rgba(0, 203, 203, 0.3);
+    animation: ringRotate 25s linear infinite;
+}
+
+.ring-inner {
+    width: 260px;
+    height: 260px;
+    border: 1px solid rgba(0, 230, 230, 0.2);
+    border-top-color: rgba(0, 230, 230, 0.6);
+    border-bottom-color: rgba(0, 230, 230, 0.6);
+    animation: ringRotateRev 18s linear infinite;
+}
+
+/* Floating Cyber Particles */
+.cyber-particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.particle {
+    position: absolute;
+    border-radius: 50%;
+    background: #00CBCB;
+    box-shadow: 0 0 10px #00CBCB, 0 0 20px #00CBCB;
+    opacity: 0.6;
+    will-change: transform, opacity;
+}
+
+.p1 { width: 6px; height: 6px; top: 20%; left: 25%; animation: particleFloat 7s ease-in-out infinite alternate; }
+.p2 { width: 8px; height: 8px; top: 70%; left: 15%; animation: particleFloat 9s ease-in-out infinite alternate 1s; }
+.p3 { width: 5px; height: 5px; top: 30%; left: 80%; animation: particleFloat 8s ease-in-out infinite alternate 2s; }
+.p4 { width: 7px; height: 7px; top: 75%; left: 75%; animation: particleFloat 10s ease-in-out infinite alternate 0.5s; }
+.p5 { width: 4px; height: 4px; top: 15%; left: 60%; animation: particleFloat 6s ease-in-out infinite alternate 1.5s; }
+.p6 { width: 9px; height: 9px; top: 85%; left: 45%; animation: particleFloat 11s ease-in-out infinite alternate 3s; }
+
+/* Keyframe Animations */
+@keyframes orbFloat1 {
+    0% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+    100% { transform: translate(120px, 80px) scale(1.15); opacity: 0.6; }
+}
+
+@keyframes orbFloat2 {
+    0% { transform: translate(0, 0) scale(1); opacity: 0.35; }
+    100% { transform: translate(-100px, -90px) scale(1.2); opacity: 0.55; }
+}
+
+@keyframes orbPulse {
+    0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.3; }
+    100% { transform: translate(-50%, -50%) scale(1.25); opacity: 0.6; }
+}
+
+@keyframes gridPulse {
+    0% { opacity: 0.4; }
+    100% { opacity: 0.8; }
+}
+
+@keyframes infinityFloat {
+    0% { transform: translateY(-10px) scale(0.98); }
+    100% { transform: translateY(10px) scale(1.04); }
+}
+
+@keyframes infinityGlow {
+    0% {
+        filter: drop-shadow(0 0 15px rgba(0, 203, 203, 0.6)) drop-shadow(0 0 35px rgba(0, 122, 122, 0.4));
+        opacity: 0.65;
+    }
+    100% {
+        filter: drop-shadow(0 0 35px rgba(0, 230, 230, 0.95)) drop-shadow(0 0 70px rgba(0, 203, 203, 0.7));
+        opacity: 0.95;
+    }
+}
+
+@keyframes ringRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes ringRotateRev {
+    0% { transform: rotate(360deg); }
+    100% { transform: rotate(0deg); }
+}
+
+@keyframes particleFloat {
+    0% { transform: translateY(0) scale(1); opacity: 0.3; }
+    100% { transform: translateY(-30px) scale(1.3); opacity: 0.8; }
+}
+
+/* Mobile responsive adjustments for high efficiency */
+@media screen and (max-width: 768px) {
+    .infinity-logo-wrapper {
+        width: 260px;
+        height: 260px;
+    }
+    .infinity-logo-img {
+        width: 160px;
+    }
+    .ring-outer {
+        width: 240px;
+        height: 240px;
+    }
+    .ring-inner {
+        width: 190px;
+        height: 190px;
+    }
+    .bg-glow-orb {
+        filter: blur(50px);
+    }
 }
