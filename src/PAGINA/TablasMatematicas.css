@@ -79,6 +79,7 @@
     padding: 1.5rem;
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    position: relative;
 }
 
 .grupo-meta-bar {
@@ -87,7 +88,7 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -98,6 +99,7 @@
     color: #fff;
 }
 
+/* Buscador y selector de evaluador */
 .evaluador-select-container {
     display: flex;
     align-items: center;
@@ -186,6 +188,35 @@
     border: 1px solid rgba(0, 203, 203, 0.3);
 }
 
+/* LEYENDA BAR */
+.table-legend-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 1.2rem;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.legend-title {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: #00cbcb;
+}
+
+.legend-item {
+    font-size: 0.82rem;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
 .empty-roster-msg {
     padding: 4rem;
     text-align: center;
@@ -199,6 +230,9 @@
     max-width: 100%;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    max-height: 70vh; /* Permite scroll vertical con encabezados fijos */
+    overflow-y: auto;
 }
 
 .matrix-table {
@@ -212,17 +246,23 @@
 .matrix-table th {
     background: #252538;
     color: #ffffff;
-    padding: 10px 8px;
+    padding: 8px 4px;
     text-align: center;
     font-weight: 600;
     border-bottom: 1px solid rgba(255, 255, 255, 0.15);
     border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.matrix-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
 .periodo-header {
     background: #191929 !important;
     color: #00cbcb !important;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border-bottom: 2px solid #00cbcb !important;
@@ -232,77 +272,98 @@
     background: #2a2a40 !important;
     color: #e0e0e0 !important;
     font-weight: 700;
-    width: 110px;
-    min-width: 100px;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
 }
 
-/* Sticky left columns */
+/* Sticky left columns - 100% Opaco y prioridad de capas para evitar encimamientos */
 .matrix-table .sticky-col {
     position: sticky;
-    z-index: 10;
-    background: #1e1e2d;
+    z-index: 30 !important;
+    background-color: #1e1e2d !important; /* Fondo 100% opaco */
 }
 
 .matrix-table thead .sticky-col {
-    z-index: 20;
-    background: #252538;
+    z-index: 40 !important;
+    background-color: #252538 !important;
 }
 
 .matrix-table .num-col {
     left: 0;
-    width: 45px;
-    min-width: 45px;
+    width: 42px;
+    min-width: 42px;
+    max-width: 42px;
     text-align: center;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .matrix-table .name-col {
-    left: 45px;
-    width: 260px;
+    left: 42px;
+    width: 250px;
     min-width: 220px;
+    max-width: 250px;
     text-align: left;
-    padding-left: 12px;
+    padding-left: 10px;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    border-right: 2px solid rgba(0, 203, 203, 0.4);
+    border-right: 3px solid #00cbcb !important; /* Línea divisoria nítida */
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.5); /* Sombra para separar de las celdas */
 }
 
-.matrix-table td {
-    padding: 6px 4px;
+.matrix-cell {
+    padding: 4px 3px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     border-right: 1px solid rgba(255, 255, 255, 0.05);
     text-align: center;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    overflow: hidden;
 }
 
 .matrix-table tr:hover td {
-    background-color: rgba(255, 255, 255, 0.03);
+    background-color: rgba(255, 255, 255, 0.04);
 }
 
-/* STATUS SELECT BADGE STYLING */
+.matrix-table tr:hover .sticky-col {
+    background-color: #25253a !important;
+}
+
+/* STATUS SELECT BADGE STYLING (Compacto I, O, S, -) */
 .status-select {
-    width: 100%;
-    padding: 6px 8px;
-    border-radius: 20px;
-    font-size: 0.82rem;
-    font-weight: 700;
+    width: 38px;
+    height: 32px;
+    padding: 0;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-weight: 800;
     text-align: center;
+    text-align-last: center;
     cursor: pointer;
     border: 1px solid transparent;
     outline: none;
     transition: all 0.2s ease;
     appearance: none;
     -webkit-appearance: none;
-    background-position: right 8px center;
-    background-repeat: no-repeat;
+    display: inline-block;
+}
+
+.status-select option {
+    background: #1e1e2d;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 6px;
 }
 
 /* Badge Option Colors */
 .badge-empty {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: #888;
-    border-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: #888 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 .badge-incompleta {
@@ -323,35 +384,39 @@
     border-color: #1f6b41 !important;
 }
 
-/* Save Actions Bar */
-.actions-bar {
+/* BARRA DE GUARDADO FLOTANTE (Sticky en la pantalla para no tener que scrollear) */
+.floating-save-bar {
+    position: sticky;
+    bottom: 15px;
+    z-index: 100;
     display: flex;
-    justify-content: flex-end;
-    margin-top: 1.5rem;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    justify-content: center;
+    margin: 1.2rem auto 0.5rem auto;
+    pointer-events: none;
 }
 
 .btn-save-tablas {
+    pointer-events: auto;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 26px;
+    gap: 10px;
+    padding: 12px 28px;
     background: linear-gradient(135deg, #00cbcb, #009999);
     color: #0d1117;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 1rem;
     border: none;
-    border-radius: 8px;
+    border-radius: 30px;
     cursor: pointer;
     transition: all 0.25s ease;
-    box-shadow: 0 4px 15px rgba(0, 203, 203, 0.3);
+    box-shadow: 0 6px 20px rgba(0, 203, 203, 0.4), 0 2px 8px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .btn-save-tablas:hover:not(:disabled) {
     background: linear-gradient(135deg, #00e6e6, #00cbcb);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 203, 203, 0.5);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(0, 203, 203, 0.6), 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
 /* Light Mode Adaptations */
@@ -372,6 +437,11 @@
     border-color: #cbd5e0;
 }
 
+[data-theme='light'] .table-legend-bar {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
 [data-theme='light'] .matrix-table th {
     background: #e2e8f0;
     color: #1e293b;
@@ -388,7 +458,15 @@
 }
 
 [data-theme='light'] .matrix-table .sticky-col {
-    background: #ffffff;
+    background-color: #ffffff !important;
+}
+
+[data-theme='light'] .matrix-table thead .sticky-col {
+    background-color: #e2e8f0 !important;
+}
+
+[data-theme='light'] .matrix-table tr:hover .sticky-col {
+    background-color: #f1f5f9 !important;
 }
 
 [data-theme='light'] .badge-incompleta {
@@ -407,4 +485,9 @@
     background-color: #def7ec !important;
     color: #03543f !important;
     border-color: #31c48d !important;
+}
+
+[data-theme='light'] .status-select option {
+    background: #ffffff;
+    color: #111;
 }

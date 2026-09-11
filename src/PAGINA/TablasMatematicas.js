@@ -21,10 +21,10 @@ const PERIODOS_CONFIG = [
 ];
 
 const OPTIONS = [
-    { value: '', label: '- Sin evaluar -', colorClass: 'badge-empty' },
-    { value: 'Incompleta', label: 'Incompleta', colorClass: 'badge-incompleta' },
-    { value: 'En orden', label: 'En orden', colorClass: 'badge-enorden' },
-    { value: 'Salteadas', label: 'Salteadas', colorClass: 'badge-salteadas' }
+    { value: '', label: '-', fullText: 'Sin evaluar', colorClass: 'badge-empty' },
+    { value: 'Incompleta', label: 'I', fullText: 'Incompleta', colorClass: 'badge-incompleta' },
+    { value: 'En orden', label: 'O', fullText: 'En orden', colorClass: 'badge-enorden' },
+    { value: 'Salteadas', label: 'S', fullText: 'Salteadas', colorClass: 'badge-salteadas' }
 ];
 
 const TablasMatematicas = ({ user }) => {
@@ -227,6 +227,15 @@ const TablasMatematicas = ({ user }) => {
                         </div>
                     </div>
 
+                    {/* LEYENDA GUÍA DE EVALUACIÓN Y COLORES */}
+                    <div className="table-legend-bar">
+                        <span className="legend-title">Leyenda:</span>
+                        <span className="legend-item badge-incompleta">🔴 <strong>I</strong> = Incompleta</span>
+                        <span className="legend-item badge-enorden">🟡 <strong>O</strong> = En orden</span>
+                        <span className="legend-item badge-salteadas">🟢 <strong>S</strong> = Salteadas</span>
+                        <span className="legend-item badge-empty">⚪ <strong>-</strong> = Sin evaluar</span>
+                    </div>
+
                     {alumnosGrupo.length === 0 ? (
                         <div className="empty-roster-msg">
                             No hay alumnos registrados en el grupo {selectedGrupo}.
@@ -260,12 +269,13 @@ const TablasMatematicas = ({ user }) => {
                                     {alumnosGrupo.map((alumno, index) => {
                                         const id = String(alumno._id || alumno.id);
                                         const alumnoMatrix = matrix[id] || {};
+                                        const fullStudentName = `${alumno.nombre} ${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''}`.trim();
 
                                         return (
                                             <tr key={id}>
                                                 <td className="sticky-col num-col">{index + 1}</td>
-                                                <td className="sticky-col name-col">
-                                                    {alumno.nombre} {alumno.apellidoPaterno} {alumno.apellidoMaterno}
+                                                <td className="sticky-col name-col" title={fullStudentName}>
+                                                    {fullStudentName}
                                                 </td>
                                                 {PERIODOS_CONFIG.map(p => (
                                                     p.tablas.map((tNum, idx) => {
@@ -279,6 +289,7 @@ const TablasMatematicas = ({ user }) => {
                                                                     value={val}
                                                                     onChange={(e) => handleCellChange(id, cellKey, e.target.value)}
                                                                     className={`status-select ${matchedOpt.colorClass}`}
+                                                                    title={`${matchedOpt.fullText} (Tabla ${tNum} - ${p.name})`}
                                                                 >
                                                                     {OPTIONS.map(opt => (
                                                                         <option key={opt.value} value={opt.value}>
@@ -296,8 +307,10 @@ const TablasMatematicas = ({ user }) => {
                                 </tbody>
                             </table>
 
-                            <div className="actions-bar">
+                            {/* BARRA DE GUARDADO FLOTANTE VISIBLE PERMANENTEMENTE */}
+                            <div className="floating-save-bar">
                                 <button
+                                    type="button"
                                     className="btn-save-tablas"
                                     onClick={handleSaveEvaluations}
                                     disabled={saving}
