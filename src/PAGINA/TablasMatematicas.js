@@ -20,6 +20,8 @@ const PERIODOS_CONFIG = [
     { name: 'Séptimo Periodo', key: 'p7', tablas: [6, 7, 8, 9, 10] }
 ];
 
+const STATUS_CYCLE = ['', 'Incompleta', 'En orden', 'Salteadas'];
+
 const OPTIONS = [
     { value: '', label: '-', fullText: 'Sin evaluar', colorClass: 'badge-empty' },
     { value: 'Incompleta', label: 'I', fullText: 'Incompleta', colorClass: 'badge-incompleta' },
@@ -131,14 +133,21 @@ const TablasMatematicas = ({ user }) => {
         }
     };
 
-    const handleCellChange = (alumnoId, cellKey, value) => {
-        setMatrix(prev => ({
-            ...prev,
-            [alumnoId]: {
-                ...(prev[alumnoId] || {}),
-                [cellKey]: value
-            }
-        }));
+    const handleCellClick = (alumnoId, cellKey) => {
+        setMatrix(prev => {
+            const currentVal = prev[alumnoId]?.[cellKey] || '';
+            const currentIndex = STATUS_CYCLE.indexOf(currentVal);
+            const nextIndex = (currentIndex + 1) % STATUS_CYCLE.length;
+            const nextVal = STATUS_CYCLE[nextIndex];
+
+            return {
+                ...prev,
+                [alumnoId]: {
+                    ...(prev[alumnoId] || {}),
+                    [cellKey]: nextVal
+                }
+            };
+        });
     };
 
     const handleSaveEvaluations = async () => {
@@ -182,7 +191,7 @@ const TablasMatematicas = ({ user }) => {
         <div className="tablas-matematicas-page">
             <header className="tablas-header">
                 <h1><FaCalculator className="header-icon" /> Evaluación de Tablas Matemáticas</h1>
-                <p>Captura por 7 periodos y tablas (Incompleta, En orden, Salteadas) por cada grupo.</p>
+                <p>Captura rápida con clics por 7 periodos (Incompleta, En orden, Salteadas) por cada grupo.</p>
             </header>
 
             {/* BARRA DE PESTAÑAS DE GRUPOS (1A a 3E) */}
@@ -267,13 +276,13 @@ const TablasMatematicas = ({ user }) => {
                         </div>
                     </div>
 
-                    {/* LEYENDA GUÍA DE EVALUACIÓN Y COLORES */}
+                    {/* LEYENDA GUÍA DE EVALUACIÓN CON CLICS */}
                     <div className="table-legend-bar">
-                        <span className="legend-title">Leyenda:</span>
-                        <span className="legend-item badge-incompleta">🔴 <strong>I</strong> = Incompleta</span>
-                        <span className="legend-item badge-enorden">🟡 <strong>O</strong> = En orden</span>
-                        <span className="legend-item badge-salteadas">🟢 <strong>S</strong> = Salteadas</span>
-                        <span className="legend-item badge-empty">⚪ <strong>-</strong> = Sin evaluar</span>
+                        <span className="legend-title">Modo Clics:</span>
+                        <span className="legend-item badge-incompleta">1 Clic ➔ 🔴 <strong>I</strong> (Incompleta)</span>
+                        <span className="legend-item badge-enorden">2 Clics ➔ 🟡 <strong>O</strong> (En orden)</span>
+                        <span className="legend-item badge-salteadas">3 Clics ➔ 🟢 <strong>S</strong> (Salteadas)</span>
+                        <span className="legend-item badge-empty">4 Clics ➔ ⚪ <strong>-</strong> (Limpiar)</span>
                     </div>
 
                     {alumnosGrupo.length === 0 ? (
@@ -325,18 +334,14 @@ const TablasMatematicas = ({ user }) => {
 
                                                         return (
                                                             <td key={cellKey} className="matrix-cell">
-                                                                <select
-                                                                    value={val}
-                                                                    onChange={(e) => handleCellChange(id, cellKey, e.target.value)}
-                                                                    className={`status-select ${matchedOpt.colorClass}`}
-                                                                    title={`${matchedOpt.fullText} (Tabla ${tNum} - ${p.name})`}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleCellClick(id, cellKey)}
+                                                                    className={`status-btn ${matchedOpt.colorClass}`}
+                                                                    title={`${matchedOpt.fullText} (Tabla ${tNum} - ${p.name}). Clic para cambiar.`}
                                                                 >
-                                                                    {OPTIONS.map(opt => (
-                                                                        <option key={opt.value} value={opt.value}>
-                                                                            {opt.label}
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
+                                                                    {matchedOpt.label}
+                                                                </button>
                                                             </td>
                                                         );
                                                     })
