@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from '../api/apiClient';
 import { useNotification } from '../COMPONENTE/NotificationContext';
-import { FaSave, FaUserCheck, FaCalculator } from 'react-icons/fa';
+import { FaSave, FaUserCheck, FaCalculator, FaSearch } from 'react-icons/fa';
 import './TablasMatematicas.css';
 
 const GRUPOS_TABLAS = [
@@ -11,21 +11,13 @@ const GRUPOS_TABLAS = [
 ];
 
 const PERIODOS_CONFIG = [
-    {
-        name: 'Primer periodo',
-        key: 'p1',
-        tablas: [1, 2, 3, 4, 5]
-    },
-    {
-        name: 'Segundo Periodo',
-        key: 'p2',
-        tablas: [1, 2, 3, 4, 5]
-    },
-    {
-        name: 'Tercer Periodo',
-        key: 'p3',
-        tablas: [6, 7, 8, 9, 10]
-    }
+    { name: 'Primer periodo', key: 'p1', tablas: [1, 2, 3, 4, 5] },
+    { name: 'Segundo Periodo', key: 'p2', tablas: [1, 2, 3, 4, 5] },
+    { name: 'Tercer Periodo', key: 'p3', tablas: [6, 7, 8, 9, 10] },
+    { name: 'Cuarto Periodo', key: 'p4', tablas: [1, 2, 3, 4, 5] },
+    { name: 'Quinto Periodo', key: 'p5', tablas: [1, 2, 3, 4, 5] },
+    { name: 'Sexto Periodo', key: 'p6', tablas: [6, 7, 8, 9, 10] },
+    { name: 'Séptimo Periodo', key: 'p7', tablas: [6, 7, 8, 9, 10] }
 ];
 
 const OPTIONS = [
@@ -42,6 +34,7 @@ const TablasMatematicas = ({ user }) => {
     const [saving, setSaving] = useState(false);
     
     const [profesoresList, setProfesoresList] = useState([]);
+    const [searchTeacherTerm, setSearchTeacherTerm] = useState('');
     const [alumnosGrupo, setAlumnosGrupo] = useState([]);
     const [selectedEvaluadorId, setSelectedEvaluadorId] = useState('');
     
@@ -155,11 +148,19 @@ const TablasMatematicas = ({ user }) => {
 
     const isAdminUser = user && (user.role === 'admin' || user.role === 'superadmin');
 
+    const filteredProfesores = profesoresList.filter(prof => {
+        if (!searchTeacherTerm.trim()) return true;
+        const term = searchTeacherTerm.toLowerCase();
+        const nameMatch = prof.nombre?.toLowerCase().includes(term);
+        const emailMatch = prof.email?.toLowerCase().includes(term);
+        return nameMatch || emailMatch;
+    });
+
     return (
         <div className="tablas-matematicas-page">
             <header className="tablas-header">
                 <h1><FaCalculator className="header-icon" /> Evaluación de Tablas Matemáticas</h1>
-                <p>Captura por periodos y tablas (Incompleta, En orden, Salteadas) por cada grupo.</p>
+                <p>Captura por 7 periodos y tablas (Incompleta, En orden, Salteadas) por cada grupo.</p>
             </header>
 
             {/* BARRA DE PESTAÑAS DE GRUPOS (1A a 3E) */}
@@ -185,18 +186,39 @@ const TablasMatematicas = ({ user }) => {
                         <div className="evaluador-select-container">
                             <label><FaUserCheck /> Docente Evaluador:</label>
                             {isAdminUser ? (
-                                <select
-                                    value={selectedEvaluadorId}
-                                    onChange={handleEvaluadorChange}
-                                    className="evaluador-select"
-                                >
-                                    <option value="">-- Sin Evaluador Asignado --</option>
-                                    {profesoresList.map(prof => (
-                                        <option key={prof._id} value={prof._id}>
-                                            {prof.nombre} ({prof.email})
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="evaluador-search-wrapper">
+                                    <div className="evaluador-search-box">
+                                        <FaSearch className="search-icon" />
+                                        <input
+                                            type="text"
+                                            placeholder="Buscar por nombre o correo..."
+                                            value={searchTeacherTerm}
+                                            onChange={(e) => setSearchTeacherTerm(e.target.value)}
+                                            className="evaluador-search-input"
+                                        />
+                                        {searchTeacherTerm && (
+                                            <button
+                                                type="button"
+                                                className="clear-search-btn"
+                                                onClick={() => setSearchTeacherTerm('')}
+                                            >
+                                                &times;
+                                            </button>
+                                        )}
+                                    </div>
+                                    <select
+                                        value={selectedEvaluadorId}
+                                        onChange={handleEvaluadorChange}
+                                        className="evaluador-select"
+                                    >
+                                        <option value="">-- Sin Evaluador Asignado ({filteredProfesores.length}) --</option>
+                                        {filteredProfesores.map(prof => (
+                                            <option key={prof._id} value={prof._id}>
+                                                {prof.nombre} ({prof.email})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             ) : (
                                 <span className="evaluador-name">
                                     {profesoresList.find(p => p._id === selectedEvaluadorId)?.nombre || 'Sin asignar'}
@@ -213,7 +235,7 @@ const TablasMatematicas = ({ user }) => {
                         <div className="matrix-table-wrapper">
                             <table className="matrix-table">
                                 <thead>
-                                    {/* Fila 1 de Encabezados: N°, Nombre y Periodos */}
+                                    {/* Fila 1 de Encabezados: N°, Nombre y 7 Periodos */}
                                     <tr>
                                         <th rowSpan="2" className="sticky-col num-col">N°</th>
                                         <th rowSpan="2" className="sticky-col name-col">NOMBRE DEL ALUMNO</th>

@@ -101,7 +101,8 @@
 .evaluador-select-container {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .evaluador-select-container label {
@@ -113,6 +114,58 @@
     gap: 6px;
 }
 
+.evaluador-search-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.evaluador-search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.evaluador-search-box .search-icon {
+    position: absolute;
+    left: 10px;
+    color: #00cbcb;
+    font-size: 0.85rem;
+}
+
+.evaluador-search-input {
+    padding: 7px 30px 7px 30px;
+    background: #14141f;
+    border: 1px solid rgba(0, 203, 203, 0.4);
+    color: #ffffff;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    outline: none;
+    width: 220px;
+    transition: all 0.2s ease;
+}
+
+.evaluador-search-input:focus {
+    border-color: #00cbcb;
+    box-shadow: 0 0 8px rgba(0, 203, 203, 0.3);
+    width: 250px;
+}
+
+.clear-search-btn {
+    position: absolute;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: #aaa;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+.clear-search-btn:hover {
+    color: #ff4d4d;
+}
+
 .evaluador-select {
     padding: 8px 14px;
     background: #14141f;
@@ -121,6 +174,7 @@
     border-radius: 8px;
     font-size: 0.9rem;
     outline: none;
+    max-width: 280px;
 }
 
 .evaluador-name {
