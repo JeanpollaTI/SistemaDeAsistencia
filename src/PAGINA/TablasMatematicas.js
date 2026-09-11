@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import apiClient from '../api/apiClient';
 import { useNotification } from '../COMPONENTE/NotificationContext';
-import { FaSave, FaUserCheck, FaCalculator, FaSearch } from 'react-icons/fa';
+import { FaSave, FaUserCheck, FaCalculator, FaSearch, FaChevronDown } from 'react-icons/fa';
 import './TablasMatematicas.css';
 
 const GRUPOS_TABLAS = [
@@ -35,11 +35,25 @@ const TablasMatematicas = ({ user }) => {
     
     const [profesoresList, setProfesoresList] = useState([]);
     const [searchTeacherTerm, setSearchTeacherTerm] = useState('');
+    const [isTeacherDropdownOpen, setIsTeacherDropdownOpen] = useState(false);
     const [alumnosGrupo, setAlumnosGrupo] = useState([]);
     const [selectedEvaluadorId, setSelectedEvaluadorId] = useState('');
     
+    const comboboxRef = useRef(null);
+
     // Matrix data: { [alumno_id]: { [p_t_key]: "Incompleta" | "En orden" | "Salteadas" | "" } }
     const [matrix, setMatrix] = useState({});
+
+    // Close combobox dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (comboboxRef.current && !comboboxRef.current.contains(e.target)) {
+                setIsTeacherDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // Fetch all math tables records and group roster
     const fetchData = useCallback(async () => {
@@ -51,7 +65,8 @@ const TablasMatematicas = ({ user }) => {
             ]);
 
             const fetchedTablas = tablasRes.data.tablas || [];
-            setProfesoresList(tablasRes.data.profesores || []);
+            const profs = tablasRes.data.profesores || [];
+            setProfesoresList(profs);
 
             // Store groups roster from /grupos
             const allGrupos = gruposRes.data || [];
@@ -65,6 +80,9 @@ const TablasMatematicas = ({ user }) => {
             if (currentRecord) {
                 const evalId = currentRecord.evaluador_id?._id || currentRecord.evaluador_id || '';
                 setSelectedEvaluadorId(evalId);
+
+                const assignedProf = profs.find(p => p._id === evalId);
+                setSearchTeacherTerm(assignedProf ? `${assignedProf.nombre} (${assignedProf.email})` : '');
 
                 const existingMatrix = {};
                 (currentRecord.evaluaciones || []).forEach(ev => {
@@ -80,6 +98,7 @@ const TablasMatematicas = ({ user }) => {
                 setMatrix(existingMatrix);
             } else {
                 setSelectedEvaluadorId('');
+                setSearchTeacherTerm('');
                 setMatrix({});
             }
         } catch (err) {
@@ -94,13 +113,16 @@ const TablasMatematicas = ({ user }) => {
         fetchData();
     }, [fetchData]);
 
-    const handleEvaluadorChange = async (e) => {
-        const newEvaluadorId = e.target.value;
-        setSelectedEvaluadorId(newEvaluadorId);
+    const handleSelectEvaluador = async (evaluadorId) => {
+        setSelectedEvaluadorId(evaluadorId);
+        const prof = profesoresList.find(p => p._id === evaluadorId);
+        setSearchTeacherTerm(prof ? `${prof.nombre} (${prof.email})` : '');
+        setIsTeacherDropdownOpen(false);
+
         try {
             await apiClient.post('/api/tablas-matematicas/evaluador', {
                 grupoNombre: selectedGrupo,
-                evaluador_id: newEvaluadorId || null
+                evaluador_id: evaluadorId || null
             });
             if (addNotification) addNotification(`Evaluador actualizado para ${selectedGrupo}`, 'success');
         } catch (err) {
@@ -186,38 +208,56 @@ const TablasMatematicas = ({ user }) => {
                         <div className="evaluador-select-container">
                             <label><FaUserCheck /> Docente Evaluador:</label>
                             {isAdminUser ? (
-                                <div className="evaluador-search-wrapper">
-                                    <div className="evaluador-search-box">
-                                        <FaSearch className="search-icon" />
+                                <div className="evaluador-fused-combobox" ref={comboboxRef}>
+                                    <div className="combobox-input-wrapper">
+                                        <FaSearch className="combobox-icon" />
                                         <input
                                             type="text"
-                                            placeholder="Buscar por nombre o correo..."
+                                            className="combobox-input"
+                                            placeholder="Buscar docente por nombre o correo..."
                                             value={searchTeacherTerm}
-                                            onChange={(e) => setSearchTeacherTerm(e.target.value)}
-                                            className="evaluador-search-input"
+                                            onFocus={() => setIsTeacherDropdownOpen(true)}
+                                            onChange={(e) => {
+                                                setSearchTeacherTerm(e.target.value);
+                                                setIsTeacherDropdownOpen(true);
+                                            }}
                                         />
-                                        {searchTeacherTerm && (
-                                            <button
-                                                type="button"
-                                                className="clear-search-btn"
-                                                onClick={() => setSearchTeacherTerm('')}
-                                            >
-                                                &times;
-                                            </button>
-                                        )}
+                                        <button
+                                            type="button"
+                                            className="combobox-toggle-arrow"
+                                            onClick={() => setIsTeacherDropdownOpen(prev => !prev)}
+                                            title="Desplegar docentes"
+                                        >
+                                            <FaChevronDown />
+                                        </button>
                                     </div>
-                                    <select
-                                        value={selectedEvaluadorId}
-                                        onChange={handleEvaluadorChange}
-                                        className="evaluador-select"
-                                    >
-                                        <option value="">-- Sin Evaluador Asignado ({filteredProfesores.length}) --</option>
-                                        {filteredProfesores.map(prof => (
-                                            <option key={prof._id} value={prof._id}>
-                                                {prof.nombre} ({prof.email})
-                                            </option>
-                                        ))}
-                                    </select>
+
+                                    {isTeacherDropdownOpen && (
+                                        <ul className="combobox-dropdown-list">
+                                            <li
+                                                className={`combobox-item ${!selectedEvaluadorId ? 'selected' : ''}`}
+                                                onClick={() => handleSelectEvaluador('')}
+                                            >
+                                                -- Sin Evaluador Asignado --
+                                            </li>
+                                            {filteredProfesores.length > 0 ? (
+                                                filteredProfesores.map(prof => (
+                                                    <li
+                                                        key={prof._id}
+                                                        className={`combobox-item ${selectedEvaluadorId === prof._id ? 'selected' : ''}`}
+                                                        onClick={() => handleSelectEvaluador(prof._id)}
+                                                    >
+                                                        <span className="prof-name">{prof.nombre}</span>
+                                                        <span className="prof-email"> ({prof.email})</span>
+                                                    </li>
+                                                ))
+                                            ) : (
+                                                <li className="combobox-no-results">
+                                                    Sin resultados para "{searchTeacherTerm}"
+                                                </li>
+                                            )}
+                                        </ul>
+                                    )}
                                 </div>
                             ) : (
                                 <span className="evaluador-name">
@@ -306,22 +346,21 @@ const TablasMatematicas = ({ user }) => {
                                     })}
                                 </tbody>
                             </table>
-
-                            {/* BARRA DE GUARDADO FLOTANTE VISIBLE PERMANENTEMENTE */}
-                            <div className="floating-save-bar">
-                                <button
-                                    type="button"
-                                    className="btn-save-tablas"
-                                    onClick={handleSaveEvaluations}
-                                    disabled={saving}
-                                >
-                                    <FaSave /> {saving ? 'Guardando...' : `Guardar Tablas Matemáticas (${selectedGrupo})`}
-                                </button>
-                            </div>
                         </div>
                     )}
                 </div>
             )}
+
+            {/* BOTÓN FLOTANTE CIRCULAR FIJO EN LA ESQUINA INFERIOR DERECHA DE LA PANTALLA (FAB) */}
+            <button
+                type="button"
+                className="btn-save-fab"
+                onClick={handleSaveEvaluations}
+                disabled={saving}
+                title={`Guardar Tablas Matemáticas (${selectedGrupo})`}
+            >
+                <FaSave className="fab-icon" />
+            </button>
         </div>
     );
 };

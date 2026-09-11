@@ -116,67 +116,109 @@
     gap: 6px;
 }
 
-.evaluador-search-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+/* FUSED SEARCH-SELECT COMBOBOX */
+.evaluador-fused-combobox {
+    position: relative;
+    width: 320px;
+    max-width: 100%;
 }
 
-.evaluador-search-box {
+.combobox-input-wrapper {
     position: relative;
     display: flex;
     align-items: center;
 }
 
-.evaluador-search-box .search-icon {
+.combobox-icon {
     position: absolute;
-    left: 10px;
+    left: 12px;
     color: #00cbcb;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    pointer-events: none;
 }
 
-.evaluador-search-input {
-    padding: 7px 30px 7px 30px;
+.combobox-input {
+    width: 100%;
+    padding: 9px 36px 9px 34px;
     background: #14141f;
-    border: 1px solid rgba(0, 203, 203, 0.4);
+    border: 1.5px solid rgba(0, 203, 203, 0.4);
     color: #ffffff;
     border-radius: 8px;
-    font-size: 0.88rem;
+    font-size: 0.9rem;
     outline: none;
-    width: 220px;
     transition: all 0.2s ease;
 }
 
-.evaluador-search-input:focus {
+.combobox-input:focus {
     border-color: #00cbcb;
-    box-shadow: 0 0 8px rgba(0, 203, 203, 0.3);
-    width: 250px;
+    box-shadow: 0 0 10px rgba(0, 203, 203, 0.35);
 }
 
-.clear-search-btn {
+.combobox-toggle-arrow {
     position: absolute;
     right: 8px;
     background: transparent;
     border: none;
-    color: #aaa;
-    font-size: 1.1rem;
+    color: #00cbcb;
+    font-size: 0.85rem;
     cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.clear-search-btn:hover {
-    color: #ff4d4d;
-}
-
-.evaluador-select {
-    padding: 8px 14px;
-    background: #14141f;
+.combobox-dropdown-list {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: #181824;
     border: 1px solid rgba(0, 203, 203, 0.4);
-    color: #fff;
     border-radius: 8px;
-    font-size: 0.9rem;
-    outline: none;
-    max-width: 280px;
+    max-height: 240px;
+    overflow-y: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+    margin: 0;
+    padding: 4px 0;
+    list-style: none;
+}
+
+.combobox-item {
+    padding: 10px 14px;
+    color: #e0e0e0;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.combobox-item:last-child {
+    border-bottom: none;
+}
+
+.combobox-item:hover {
+    background: rgba(0, 203, 203, 0.2);
+    color: #ffffff;
+}
+
+.combobox-item.selected {
+    background: rgba(0, 203, 203, 0.25);
+    color: #00cbcb;
+    font-weight: 700;
+}
+
+.combobox-item .prof-email {
+    color: #8888aa;
+    font-size: 0.8rem;
+}
+
+.combobox-no-results {
+    padding: 12px;
+    color: #888;
+    font-size: 0.88rem;
+    text-align: center;
 }
 
 .evaluador-name {
@@ -384,39 +426,43 @@
     border-color: #1f6b41 !important;
 }
 
-/* BARRA DE GUARDADO FLOTANTE (Sticky en la pantalla para no tener que scrollear) */
-.floating-save-bar {
-    position: sticky;
-    bottom: 15px;
-    z-index: 100;
-    display: flex;
-    justify-content: center;
-    margin: 1.2rem auto 0.5rem auto;
-    pointer-events: none;
-}
-
-.btn-save-tablas {
-    pointer-events: auto;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 28px;
+/* BOTÓN FLOTANTE CIRCULAR FIJO (FAB) */
+.btn-save-fab {
+    position: fixed;
+    bottom: 35px;
+    right: 35px;
+    z-index: 999;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
     background: linear-gradient(135deg, #00cbcb, #009999);
     color: #0d1117;
-    font-weight: 800;
-    font-size: 1rem;
-    border: none;
-    border-radius: 30px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: all 0.25s ease;
-    box-shadow: 0 6px 20px rgba(0, 203, 203, 0.4), 0 2px 8px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 25px rgba(0, 203, 203, 0.5), 0 4px 15px rgba(0, 0, 0, 0.5);
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.btn-save-tablas:hover:not(:disabled) {
+.btn-save-fab:hover:not(:disabled) {
+    transform: scale(1.12);
     background: linear-gradient(135deg, #00e6e6, #00cbcb);
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(0, 203, 203, 0.6), 0 4px 12px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 12px 30px rgba(0, 203, 203, 0.7), 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
+.btn-save-fab:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.btn-save-fab:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-save-fab .fab-icon {
+    font-size: 1.5rem;
 }
 
 /* Light Mode Adaptations */
