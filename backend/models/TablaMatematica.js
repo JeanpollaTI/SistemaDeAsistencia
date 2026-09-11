@@ -3,8 +3,13 @@ import mongoose from "mongoose";
 const evaluacionSchema = new mongoose.Schema({
     alumno_id: { type: String, required: true },
     alumnoNombre: { type: String, required: true },
-    puntaje: { type: Number, default: 0, min: 0, max: 10 },
-    observacion: { type: String, default: "" },
+    // Matrix storage: p1 (t1..t5), p2 (t1..t5), p3 (t6..t10)
+    // Values: "Incompleta" | "En orden" | "Salteadas" | ""
+    registros: {
+        type: Map,
+        of: String,
+        default: {}
+    },
     fecha: { type: Date, default: Date.now }
 });
 

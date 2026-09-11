@@ -1,12 +1,38 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from '../api/apiClient';
 import { useNotification } from '../COMPONENTE/NotificationContext';
+import { FaSave, FaUserCheck, FaCalculator } from 'react-icons/fa';
 import './TablasMatematicas.css';
 
 const GRUPOS_TABLAS = [
     '1A', '1B', '1C', '1D', '1E',
     '2A', '2B', '2C', '2D', '2E',
     '3A', '3B', '3C', '3D', '3E'
+];
+
+const PERIODOS_CONFIG = [
+    {
+        name: 'Primer periodo',
+        key: 'p1',
+        tablas: [1, 2, 3, 4, 5]
+    },
+    {
+        name: 'Segundo Periodo',
+        key: 'p2',
+        tablas: [1, 2, 3, 4, 5]
+    },
+    {
+        name: 'Tercer Periodo',
+        key: 'p3',
+        tablas: [6, 7, 8, 9, 10]
+    }
+];
+
+const OPTIONS = [
+    { value: '', label: '- Sin evaluar -', colorClass: 'badge-empty' },
+    { value: 'Incompleta', label: 'Incompleta', colorClass: 'badge-incompleta' },
+    { value: 'En orden', label: 'En orden', colorClass: 'badge-enorden' },
+    { value: 'Salteadas', label: 'Salteadas', colorClass: 'badge-salteadas' }
 ];
 
 const TablasMatematicas = ({ user }) => {
@@ -18,7 +44,9 @@ const TablasMatematicas = ({ user }) => {
     const [profesoresList, setProfesoresList] = useState([]);
     const [alumnosGrupo, setAlumnosGrupo] = useState([]);
     const [selectedEvaluadorId, setSelectedEvaluadorId] = useState('');
-    const [scores, setScores] = useState({}); // { alumno_id: { puntaje: number, observacion: string } }
+    
+    // Matrix data: { [alumno_id]: { [p_t_key]: "Incompleta" | "En orden" | "Salteadas" | "" } }
+    const [matrix, setMatrix] = useState({});
 
     // Fetch all math tables records and group roster
     const fetchData = useCallback(async () => {
@@ -39,23 +67,27 @@ const TablasMatematicas = ({ user }) => {
             const alumnos = currentGrupoData?.alumnos || [];
             setAlumnosGrupo(alumnos);
 
-            // Populate current group's evaluator and scores
+            // Populate current group's evaluator and matrix
             const currentRecord = fetchedTablas.find(t => t.grupoNombre === selectedGrupo);
             if (currentRecord) {
                 const evalId = currentRecord.evaluador_id?._id || currentRecord.evaluador_id || '';
                 setSelectedEvaluadorId(evalId);
 
-                const existingScores = {};
+                const existingMatrix = {};
                 (currentRecord.evaluaciones || []).forEach(ev => {
-                    existingScores[ev.alumno_id] = {
-                        puntaje: ev.puntaje ?? 0,
-                        observacion: ev.observacion || ''
-                    };
+                    const reg = ev.registros;
+                    let obj = {};
+                    if (reg instanceof Map) {
+                        obj = Object.fromEntries(reg);
+                    } else if (reg && typeof reg === 'object') {
+                        obj = { ...reg };
+                    }
+                    existingMatrix[ev.alumno_id] = obj;
                 });
-                setScores(existingScores);
+                setMatrix(existingMatrix);
             } else {
                 setSelectedEvaluadorId('');
-                setScores({});
+                setMatrix({});
             }
         } catch (err) {
             console.error("Error al cargar datos de Tablas Matemáticas:", err);
@@ -84,12 +116,12 @@ const TablasMatematicas = ({ user }) => {
         }
     };
 
-    const handleScoreChange = (alumnoId, field, value) => {
-        setScores(prev => ({
+    const handleCellChange = (alumnoId, cellKey, value) => {
+        setMatrix(prev => ({
             ...prev,
             [alumnoId]: {
-                ...prev[alumnoId],
-                [field]: value
+                ...(prev[alumnoId] || {}),
+                [cellKey]: value
             }
         }));
     };
@@ -98,13 +130,12 @@ const TablasMatematicas = ({ user }) => {
         setSaving(true);
         try {
             const evaluacionesArray = alumnosGrupo.map(alumno => {
-                const id = alumno._id || alumno.id;
-                const scoreData = scores[id] || { puntaje: 0, observacion: '' };
+                const id = String(alumno._id || alumno.id);
+                const regMap = matrix[id] || {};
                 return {
-                    alumno_id: String(id),
+                    alumno_id: id,
                     alumnoNombre: `${alumno.nombre} ${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''}`.trim(),
-                    puntaje: parseFloat(scoreData.puntaje) || 0,
-                    observacion: scoreData.observacion || ''
+                    registros: regMap
                 };
             });
 
@@ -113,7 +144,7 @@ const TablasMatematicas = ({ user }) => {
                 evaluaciones: evaluacionesArray
             });
 
-            if (addNotification) addNotification(`Evaluaciones de ${selectedGrupo} guardadas con éxito`, 'success');
+            if (addNotification) addNotification(`Tablas Matemáticas de ${selectedGrupo} guardadas con éxito`, 'success');
         } catch (err) {
             console.error(err);
             if (addNotification) addNotification('Error al guardar las evaluaciones', 'error');
@@ -127,8 +158,8 @@ const TablasMatematicas = ({ user }) => {
     return (
         <div className="tablas-matematicas-page">
             <header className="tablas-header">
-                <h1>🧮 Evaluación de Tablas Matemáticas</h1>
-                <p>Captura y seguimiento de la habilidad en tablas matemáticas por grupo.</p>
+                <h1><FaCalculator className="header-icon" /> Evaluación de Tablas Matemáticas</h1>
+                <p>Captura por periodos y tablas (Incompleta, En orden, Salteadas) por cada grupo.</p>
             </header>
 
             {/* BARRA DE PESTAÑAS DE GRUPOS (1A a 3E) */}
@@ -145,14 +176,14 @@ const TablasMatematicas = ({ user }) => {
             </div>
 
             {loading ? (
-                <div className="loading-state">Cargando evaluaciones del grupo {selectedGrupo}...</div>
+                <div className="loading-state">Cargando la matriz del grupo {selectedGrupo}...</div>
             ) : (
                 <div className="tablas-content-card">
                     <div className="grupo-meta-bar">
                         <h2>Grupo {selectedGrupo}</h2>
                         
                         <div className="evaluador-select-container">
-                            <label>Docente Evaluador:</label>
+                            <label><FaUserCheck /> Docente Evaluador:</label>
                             {isAdminUser ? (
                                 <select
                                     value={selectedEvaluadorId}
@@ -179,46 +210,64 @@ const TablasMatematicas = ({ user }) => {
                             No hay alumnos registrados en el grupo {selectedGrupo}.
                         </div>
                     ) : (
-                        <div className="evaluacion-table-wrapper">
-                            <table className="evaluacion-table">
+                        <div className="matrix-table-wrapper">
+                            <table className="matrix-table">
                                 <thead>
+                                    {/* Fila 1 de Encabezados: N°, Nombre y Periodos */}
                                     <tr>
-                                        <th>#</th>
-                                        <th>Nombre del Alumno</th>
-                                        <th>Calificación (0 - 10)</th>
-                                        <th>Observaciones</th>
+                                        <th rowSpan="2" className="sticky-col num-col">N°</th>
+                                        <th rowSpan="2" className="sticky-col name-col">NOMBRE DEL ALUMNO</th>
+                                        {PERIODOS_CONFIG.map(p => (
+                                            <th key={p.key} colSpan={p.tablas.length} className="periodo-header">
+                                                {p.name}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                    {/* Fila 2 de Encabezados: Números de Tablas */}
+                                    <tr>
+                                        {PERIODOS_CONFIG.map(p => (
+                                            p.tablas.map((tNum, idx) => (
+                                                <th key={`${p.key}_${tNum}_${idx}`} className="tabla-num-header">
+                                                    {tNum}
+                                                </th>
+                                            ))
+                                        ))}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {alumnosGrupo.map((alumno, index) => {
-                                        const id = alumno._id || alumno.id;
-                                        const scoreObj = scores[id] || { puntaje: 0, observacion: '' };
+                                        const id = String(alumno._id || alumno.id);
+                                        const alumnoMatrix = matrix[id] || {};
+
                                         return (
-                                            <tr key={id || index}>
-                                                <td>{index + 1}</td>
-                                                <td className="alumno-name-cell">
+                                            <tr key={id}>
+                                                <td className="sticky-col num-col">{index + 1}</td>
+                                                <td className="sticky-col name-col">
                                                     {alumno.nombre} {alumno.apellidoPaterno} {alumno.apellidoMaterno}
                                                 </td>
-                                                <td>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        max="10"
-                                                        step="0.5"
-                                                        value={scoreObj.puntaje}
-                                                        onChange={(e) => handleScoreChange(id, 'puntaje', e.target.value)}
-                                                        className="score-input"
-                                                    />
-                                                </td>
-                                                <td>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Comentarios u observaciones..."
-                                                        value={scoreObj.observacion}
-                                                        onChange={(e) => handleScoreChange(id, 'observacion', e.target.value)}
-                                                        className="obs-input"
-                                                    />
-                                                </td>
+                                                {PERIODOS_CONFIG.map(p => (
+                                                    p.tablas.map((tNum, idx) => {
+                                                        const cellKey = `${p.key}_t${tNum}_i${idx}`;
+                                                        const val = alumnoMatrix[cellKey] || '';
+                                                        const matchedOpt = OPTIONS.find(o => o.value === val) || OPTIONS[0];
+
+                                                        return (
+                                                            <td key={cellKey} className="matrix-cell">
+                                                                <select
+                                                                    value={val}
+                                                                    onChange={(e) => handleCellChange(id, cellKey, e.target.value)}
+                                                                    className={`status-select ${matchedOpt.colorClass}`}
+                                                                >
+                                                                    {OPTIONS.map(opt => (
+                                                                        <option key={opt.value} value={opt.value}>
+                                                                            {opt.label}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                            </td>
+                                                        );
+                                                    })
+                                                ))}
                                             </tr>
                                         );
                                     })}
@@ -227,11 +276,11 @@ const TablasMatematicas = ({ user }) => {
 
                             <div className="actions-bar">
                                 <button
-                                    className="btn btn-primary btn-save-tablas"
+                                    className="btn-save-tablas"
                                     onClick={handleSaveEvaluations}
                                     disabled={saving}
                                 >
-                                    {saving ? 'Guardando...' : '💾 Guardar Calificaciones de ' + selectedGrupo}
+                                    <FaSave /> {saving ? 'Guardando...' : `Guardar Tablas Matemáticas (${selectedGrupo})`}
                                 </button>
                             </div>
                         </div>
