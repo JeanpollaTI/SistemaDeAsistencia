@@ -166,6 +166,9 @@ const TablasMatematicas = ({ user }) => {
     };
 
     const handleCellClick = (alumnoId, cellKey) => {
+        // La administradora en vista previa NO puede modificar los valores. Solo el docente asignado.
+        if (!isProfesorUser) return;
+
         setMatrix(prev => {
             const currentVal = prev[alumnoId]?.[cellKey] || '';
             const currentIndex = STATUS_CYCLE.indexOf(currentVal);
@@ -415,7 +418,9 @@ const TablasMatematicas = ({ user }) => {
                     {(isProfesorUser || (isAdminUser && showAdminTablePreview)) && (
                         <>
                             <div className="table-legend-bar">
-                                <span className="legend-title">Modo Clics:</span>
+                                <span className="legend-title">
+                                    {isAdminUser ? 'Vista Previa (Solo Lectura - El administrador no altera valores):' : 'Modo Clics:'}
+                                </span>
                                 <span className="legend-item badge-incompleta">1 Clic ➔ 🔴 <strong>I</strong> (Incompleta)</span>
                                 <span className="legend-item badge-enorden">2 Clics ➔ 🟡 <strong>O</strong> (En orden)</span>
                                 <span className="legend-item badge-salteadas">3 Clics ➔ 🟢 <strong>S</strong> (Salteadas)</span>
@@ -472,8 +477,13 @@ const TablasMatematicas = ({ user }) => {
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => handleCellClick(id, cellKey)}
-                                                                            className={`status-btn ${matchedOpt.colorClass}`}
-                                                                            title={`${matchedOpt.fullText} (Tabla ${tNum} - ${p.name}). Clic para cambiar.`}
+                                                                            disabled={!isProfesorUser}
+                                                                            className={`status-btn ${matchedOpt.colorClass} ${!isProfesorUser ? 'readonly-btn' : ''}`}
+                                                                            title={
+                                                                                isProfesorUser
+                                                                                    ? `${matchedOpt.fullText} (Tabla ${tNum} - ${p.name}). Clic para cambiar.`
+                                                                                    : `${matchedOpt.fullText} (Tabla ${tNum} - ${p.name}) - Solo Lectura`
+                                                                            }
                                                                         >
                                                                             {matchedOpt.label}
                                                                         </button>
@@ -493,8 +503,8 @@ const TablasMatematicas = ({ user }) => {
                 </div>
             )}
 
-            {/* BOTÓN FLOTANTE CIRCULAR FIJO EN LA ESQUINA INFERIOR DERECHA (DOCENTES O ADMIN EN PREVIEW) */}
-            {(isProfesorUser || (isAdminUser && showAdminTablePreview)) && (
+            {/* BOTÓN FLOTANTE CIRCULAR FIJO EN LA ESQUINA INFERIOR DERECHA (SOLO PARA DOCENTES QUE EVALÚAN) */}
+            {isProfesorUser && (
                 <button
                     type="button"
                     className="btn-save-fab"

@@ -393,13 +393,21 @@
     user-select: none;
 }
 
-.status-btn:hover {
+.status-btn:hover:not(:disabled):not(.readonly-btn) {
     transform: scale(1.08);
     filter: brightness(1.2);
 }
 
-.status-btn:active {
+.status-btn:active:not(:disabled):not(.readonly-btn) {
     transform: scale(0.92);
+}
+
+.status-btn:disabled,
+.status-btn.readonly-btn {
+    cursor: default !important;
+    opacity: 0.9;
+    transform: none !important;
+    filter: none !important;
 }
 
 /* Badge Option Colors */

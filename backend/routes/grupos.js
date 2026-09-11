@@ -68,8 +68,8 @@ router.post("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => 
     }
 });
 
-// [GET] /grupos - Obtener todos los grupos (Admin)
-router.get("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
+// [GET] /grupos - Obtener todos los grupos (Admin y Profesores de la escuela)
+router.get("/", authMiddleware, schoolMiddleware, async (req, res) => {
     try {
         const school_id = req.user.school_id;
         const grupos = await Grupo.find({ school_id }).populate({
