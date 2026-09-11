@@ -1164,3 +1164,33 @@
   font-weight: 800 !important;
   text-transform: uppercase;
 }
+
+/* --- PROFESORES COLAPSABLES --- */
+.teachers-collapsible-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.btn-toggle-teachers {
+  background: rgba(0, 203, 203, 0.12);
+  color: var(--main-color, #00cbcb);
+  border: 1px solid var(--main-color, #00cbcb);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-toggle-teachers:hover {
+  background: var(--main-color, #00cbcb);
+  color: #1a1a1a;
+}
+
+.animated-fade {
+  animation: fadeIn 0.3s ease-in-out;
+}

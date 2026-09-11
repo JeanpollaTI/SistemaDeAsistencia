@@ -55,6 +55,14 @@ function Grupo({ user }) {
   const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
   const [currentGroupToAnalyze, setCurrentGroupToAnalyze] = useState(null);
   const [searchTermProfesor, setSearchTermProfesor] = useState('');
+  const [expandedTeachersGroups, setExpandedTeachersGroups] = useState({});
+
+  const toggleTeachersExpand = (grupoId) => {
+    setExpandedTeachersGroups(prev => ({
+      ...prev,
+      [grupoId]: !prev[grupoId]
+    }));
+  };
   
   // --- UTILERÍAS ---
   const getSafeId = (obj) => {
@@ -1105,18 +1113,33 @@ function Grupo({ user }) {
                     <td data-label="Asesor">{grupo.asesor || 'Sin Asignar'}</td>
                     <td data-label="Alumnos">{grupo.alumnos?.length || 0}</td>
                     <td data-label="Asignaciones">
-                      {grupo.profesoresAsignados && grupo.profesoresAsignados.length > 0
-                        ? <ul className="asignacion-lista">
-                          {[...grupo.profesoresAsignados]
-                            .sort((a, b) => a.asignatura.localeCompare(b.asignatura))
-                            .map((asig, index) => (
-                              <li key={index}>
-                                {asig.profesor?.nombre || 'Profesor Eliminado'}
-                                <span className="asignatura-text"> - {asig.asignatura}</span>
-                              </li>
-                            ))}
-                        </ul>
-                        : 'Sin asignar'}
+                      {grupo.profesoresAsignados && grupo.profesoresAsignados.length > 0 ? (
+                        <div className="teachers-collapsible-wrapper">
+                          <button
+                            type="button"
+                            className="btn-toggle-teachers"
+                            onClick={() => toggleTeachersExpand(grupo._id)}
+                          >
+                            {expandedTeachersGroups[grupo._id] 
+                              ? `▲ Ocultar Profesores (${grupo.profesoresAsignados.length})` 
+                              : `▼ Ver Profesores (${grupo.profesoresAsignados.length})`}
+                          </button>
+                          {expandedTeachersGroups[grupo._id] && (
+                            <ul className="asignacion-lista animated-fade">
+                              {[...grupo.profesoresAsignados]
+                                .sort((a, b) => a.asignatura.localeCompare(b.asignatura))
+                                .map((asig, index) => (
+                                  <li key={index}>
+                                    {asig.profesor?.nombre || 'Profesor Eliminado'}
+                                    <span className="asignatura-text"> - {asig.asignatura}</span>
+                                  </li>
+                                ))}
+                            </ul>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted" style={{ fontSize: '0.9rem', color: '#888' }}>Sin asignar</span>
+                      )}
                     </td>
                     <td className="acciones-cell">
                       <button className="btn btn-primary" style={{ backgroundColor: '#00cbcb' }} onClick={() => { setCurrentGroupToAnalyze(grupo); setIsPerformanceModalOpen(true); }} title="Ver Rendimiento">📊</button>

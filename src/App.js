@@ -28,12 +28,14 @@ import SuspendedScreen from "./PAGINA/SuspendedScreen";
 import SuperAdminDashboard from "./PAGINA/SuperAdminDashboard";
 import FichaAlumno from "./PAGINA/FichaAlumno";
 import MaintenanceScreen from "./PAGINA/MaintenanceScreen";
+import TablasMatematicas from "./PAGINA/TablasMatematicas";
+import SchoolConfigModal from "./COMPONENTE/SchoolConfigModal";
 
 import SearchBar from "./COMPONENTE/SearchBar";
 import {
     FaGraduationCap, FaMoon, FaSun, FaSignOutAlt, FaUserCircle,
     FaThLarge, FaUsers, FaCalendarAlt, FaChartBar, FaTasks,
-    FaUserPlus, FaChevronDown, FaBell, FaLightbulb
+    FaUserPlus, FaChevronDown, FaBell, FaLightbulb, FaCalculator, FaCogs
 } from 'react-icons/fa';
 
 // Estilos y logo
@@ -52,6 +54,21 @@ function App() {
     const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
     const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
     const [maintenanceActive, setMaintenanceActive] = useState(false);
+    const [isSchoolConfigModalOpen, setIsSchoolConfigModalOpen] = useState(false);
+    const [currentSchoolData, setCurrentSchoolData] = useState(null);
+
+    const handleOpenSchoolConfig = async () => {
+        try {
+            if (user && user.school_id) {
+                const res = await apiClient.get(`/schools/${user.school_id}`);
+                setCurrentSchoolData(res.data);
+                setIsSchoolConfigModalOpen(true);
+            }
+        } catch (e) {
+            console.error(e);
+            if (addNotification) addNotification('Error al cargar configuración de la escuela', 'error');
+        }
+    };
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -197,12 +214,14 @@ function App() {
             roleSections = [
                 { id: "trabajos", label: "TRABAJOS", path: "/trabajos", icon: <FaTasks /> },
                 { id: "grupo", label: "ASISTENCIA", path: "/grupo", icon: <FaUsers /> },
+                { id: "tablas", label: "TABLAS MATEMÁTICAS", path: "/tablas-matematicas", icon: <FaCalculator /> },
             ];
         } else if (user?.role === "admin") {
             roleSections = [
                 { id: "grupo", label: "GRUPOS", path: "/grupo", icon: <FaUsers /> },
                 { id: "horario", label: "HORARIO GENERAL", path: "/horario", icon: <FaCalendarAlt /> },
                 { id: "calificaciones", label: "CALIFICACIONES", path: "/calificaciones", icon: <FaChartBar /> },
+                { id: "tablas", label: "TABLAS MATEMÁTICAS", path: "/tablas-matematicas", icon: <FaCalculator /> },
             ];
         } else if (user?.role === "superadmin") {
             roleSections = [
@@ -268,9 +287,14 @@ function App() {
                     ))}
 
                     {user?.role === "admin" && (
-                        <button className="nav-link-dropdown" onClick={() => { navigate("/register-profesor"); closeDropdowns(); }}>
-                            <FaUserPlus /> REGISTRAR PROFESOR
-                        </button>
+                        <>
+                            <button className="nav-link-dropdown" onClick={() => { navigate("/register-profesor"); closeDropdowns(); }}>
+                                <FaUserPlus /> REGISTRAR PROFESOR
+                            </button>
+                            <button className="nav-link-dropdown" onClick={() => { handleOpenSchoolConfig(); closeDropdowns(); }}>
+                                <FaCogs /> CONFIGURACIÓN DE ESCUELA
+                            </button>
+                        </>
                     )}
 
                     <button className="nav-link-dropdown" onClick={() => { navigate("/perfil"); closeDropdowns(); }}>
@@ -347,6 +371,7 @@ function App() {
                     <Route path="/trabajos" element={<PrivateRoute requiredRole="profesor"><Trabajos user={user} /></PrivateRoute>} />
                     <Route path="/register-profesor" element={<PrivateRoute requiredRole="admin"><RegisterProfesor user={user} /></PrivateRoute>} />
                     <Route path="/calificaciones" element={<PrivateRoute requiredRole="admin"><Calificaciones user={user} /></PrivateRoute>} />
+                    <Route path="/tablas-matematicas" element={<PrivateRoute requiredRole={["admin", "profesor"]}><TablasMatematicas user={user} /></PrivateRoute>} />
                     {/* Nueva Ruta SuperAdmin */}
                     <Route path="/manager-dashboard" element={<PrivateRoute requiredRole="superadmin"><SuperAdminDashboard user={user} /></PrivateRoute>} />
                     <Route path="/alumno/:id" element={<PrivateRoute requiredRole={["admin", "profesor"]}><FichaAlumno /></PrivateRoute>} />
@@ -358,6 +383,12 @@ function App() {
             <SuggestionModal 
                 isOpen={isSuggestionModalOpen} 
                 onClose={() => setIsSuggestionModalOpen(false)} 
+            />
+            <SchoolConfigModal
+                isOpen={isSchoolConfigModalOpen}
+                onClose={() => setIsSchoolConfigModalOpen(false)}
+                school={currentSchoolData}
+                onSave={(updatedSchool) => setCurrentSchoolData(updatedSchool)}
             />
             <ConfirmModal />
         </div>

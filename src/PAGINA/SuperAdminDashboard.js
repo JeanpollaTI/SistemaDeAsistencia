@@ -103,6 +103,24 @@ const SuperAdminDashboard = ({ user }) => {
         }
     };
 
+    const handleToggleFeature = async (schoolId, featureKey, currentVal) => {
+        const school = schools.find(s => s._id === schoolId);
+        const currentFeatures = school?.features || { tablasMatematicas: true, roundingConfig: true };
+        const updatedFeatures = {
+            ...currentFeatures,
+            [featureKey]: !currentVal
+        };
+
+        try {
+            await apiClient.put(`/api/superadmin/schools/${schoolId}/features`, { features: updatedFeatures });
+            addNotification(`Módulo ${featureKey} ${!currentVal ? 'activado' : 'desactivado'} para ${school.name}`, 'success');
+            fetchSchools();
+        } catch (error) {
+            console.error(error);
+            addNotification('Error al actualizar funciones de la escuela', 'error');
+        }
+    };
+
     const handleDeleteSchool = async (id, name) => {
         showConfirm(
             'ELIMINAR INSTITUCIÓN',
@@ -239,12 +257,16 @@ const SuperAdminDashboard = ({ user }) => {
                                     <th>Admin / Contacto</th>
                                     <th>Usuarios</th>
                                     <th>Estado</th>
+                                    <th>Módulos Activos</th>
                                     <th>Próximo Pago</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {schools.map(school => (
+                                {schools.map(school => {
+                                    const featTablas = school.features?.tablasMatematicas !== false;
+                                    const featRound = school.features?.roundingConfig !== false;
+                                    return (
                                     <tr key={school._id}>
                                         <td>
                                             <strong>{school.name}</strong>
@@ -277,6 +299,46 @@ const SuperAdminDashboard = ({ user }) => {
                                             </span>
                                         </td>
                                         <td>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                <button
+                                                    type="button"
+                                                    style={{
+                                                        background: featTablas ? 'rgba(0, 203, 203, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                                                        color: featTablas ? '#00cbcb' : '#666',
+                                                        border: `1px solid ${featTablas ? '#00cbcb' : '#444'}`,
+                                                        borderRadius: '4px',
+                                                        padding: '4px 8px',
+                                                        fontSize: '0.75rem',
+                                                        cursor: 'pointer',
+                                                        fontWeight: 'bold',
+                                                        textAlign: 'left'
+                                                    }}
+                                                    onClick={() => handleToggleFeature(school._id, 'tablasMatematicas', featTablas)}
+                                                    title="Alternar módulo Tablas Matemáticas"
+                                                >
+                                                    {featTablas ? '✓' : '✗'} Tablas Matemáticas
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    style={{
+                                                        background: featRound ? 'rgba(0, 203, 203, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                                                        color: featRound ? '#00cbcb' : '#666',
+                                                        border: `1px solid ${featRound ? '#00cbcb' : '#444'}`,
+                                                        borderRadius: '4px',
+                                                        padding: '4px 8px',
+                                                        fontSize: '0.75rem',
+                                                        cursor: 'pointer',
+                                                        fontWeight: 'bold',
+                                                        textAlign: 'left'
+                                                    }}
+                                                    onClick={() => handleToggleFeature(school._id, 'roundingConfig', featRound)}
+                                                    title="Alternar módulo Redondeo"
+                                                >
+                                                    {featRound ? '✓' : '✗'} Config. Redondeo
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td>
                                             <span className="admin-info">
                                                 {school.subscription.nextBilling ? 
                                                     new Date(school.subscription.nextBilling).toLocaleDateString() : 
@@ -300,8 +362,9 @@ const SuperAdminDashboard = ({ user }) => {
                                                 </button>
                                             </div>
                                         </td>
-                                    </tr>
-                                ))}
+                                     </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

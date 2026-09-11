@@ -17,6 +17,15 @@ const schoolSchema = new mongoose.Schema(
             logoUrl: { type: String, default: "" },
             primaryColor: { type: String, default: "#1a73e8" },
             scaleMax: { type: Number, enum: [10, 100], default: 10 },
+            rounding: {
+                enabled: { type: Boolean, default: false },
+                threshold: { type: Number, default: 0.5 },
+                roundFailing: { type: Boolean, default: false },
+            },
+        },
+        features: {
+            tablasMatematicas: { type: Boolean, default: true },
+            roundingConfig: { type: Boolean, default: true },
         },
         evaluationPeriod: {
             type: String,

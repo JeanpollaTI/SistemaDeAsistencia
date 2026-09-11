@@ -20,6 +20,7 @@ import registrationRouter from "./routes/registration.js";
 import superadminRouter from "./routes/superadmin.js";
 import parentPortalRouter from "./routes/parentPortal.js";
 import suggestionRouter from "./routes/suggestionRoutes.js";
+import tablasMatematicasRouter from "./routes/tablasMatematicas.js";
 import { schoolMiddleware } from "./middlewares/schoolMiddleware.js";
 import { authMiddleware } from "./middlewares/authMiddleware.js";
 
@@ -62,6 +63,7 @@ app.use("/api/superadmin", superadminRouter); // YA incluye authMiddleware e isS
 app.use("/api/portal-padres", parentPortalRouter);
 app.use("/api/materias", materiasRouter);
 app.use("/api/suggestions", suggestionRouter);
+app.use("/api/tablas-matematicas", tablasMatematicasRouter);
 
 // Esta ruta es genérica para /api y aplica el schoolMiddleware para el resto de rutas (ej. emailSender)
 // SE EXCLUYEN las de arriba porque Express ya terminó con ellas si matchearon

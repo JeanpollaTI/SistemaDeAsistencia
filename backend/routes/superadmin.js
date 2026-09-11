@@ -84,6 +84,25 @@ router.put('/schools/:id/status', authMiddleware, isSuperAdmin, async (req, res)
     }
 });
 
+// UPDATE school feature flags
+router.put('/schools/:id/features', authMiddleware, isSuperAdmin, async (req, res) => {
+    try {
+        const { features } = req.body;
+        if (!features) return res.status(400).json({ msg: 'Datos de funciones requeridos' });
+
+        const school = await School.findByIdAndUpdate(
+            req.params.id,
+            { $set: { features } },
+            { new: true }
+        );
+
+        if (!school) return res.status(404).json({ msg: 'Escuela no encontrada' });
+        res.json(school);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // DELETE school and all associated data
 router.delete('/schools/:id', authMiddleware, isSuperAdmin, async (req, res) => {
     try {
