@@ -141,9 +141,11 @@ const RegisterSchool = () => {
                             <div className="input-group">
                                 <label><FaCalendarAlt /> Periodo de Evaluación</label>
                                 <select name="evaluationPeriod" value={formData.evaluationPeriod} onChange={handleChange}>
+                                    <option value="Parcial">Parciales / Periodos</option>
                                     <option value="Bimestre">Bimestral</option>
                                     <option value="Trimestre">Trimestral</option>
                                     <option value="Cuatrimestre">Cuatrimestral</option>
+                                    <option value="Semestre">Semestral</option>
                                 </select>
                             </div>
                         </div>

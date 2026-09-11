@@ -29,7 +29,8 @@ const schoolSchema = new mongoose.Schema(
         },
         evaluationPeriod: {
             type: String,
-            enum: ["Bimestre", "Trimestre", "Cuatrimestre", "Semestre"],
+            enum: ["Bimestre", "Trimestre", "Cuatrimestre", "Semestre", "Parcial"],
+            default: "Bimestre",
             required: [true, "El periodo de evaluación es obligatorio"],
         },
         subscription: {

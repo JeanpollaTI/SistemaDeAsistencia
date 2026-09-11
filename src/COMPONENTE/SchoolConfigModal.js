@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../api/apiClient';
 import { useNotification } from './NotificationContext';
-import { FaTimes, FaSave, FaCogs } from 'react-icons/fa';
+import { FaTimes, FaSave, FaCogs, FaCalendarAlt } from 'react-icons/fa';
 import './SchoolConfigModal.css';
 
 const SchoolConfigModal = ({ isOpen, onClose, school, onSave }) => {
     const { addNotification } = useNotification() || {};
     const [loading, setLoading] = useState(false);
+    const [evaluationPeriod, setEvaluationPeriod] = useState('Bimestre');
     const [roundingConfig, setRoundingConfig] = useState({
         enabled: false,
         threshold: 0.5,
@@ -14,12 +15,17 @@ const SchoolConfigModal = ({ isOpen, onClose, school, onSave }) => {
     });
 
     useEffect(() => {
-        if (school && school.config && school.config.rounding) {
-            setRoundingConfig({
-                enabled: !!school.config.rounding.enabled,
-                threshold: school.config.rounding.threshold ?? 0.5,
-                roundFailing: !!school.config.rounding.roundFailing
-            });
+        if (school) {
+            if (school.evaluationPeriod) {
+                setEvaluationPeriod(school.evaluationPeriod);
+            }
+            if (school.config && school.config.rounding) {
+                setRoundingConfig({
+                    enabled: !!school.config.rounding.enabled,
+                    threshold: school.config.rounding.threshold ?? 0.5,
+                    roundFailing: !!school.config.rounding.roundFailing
+                });
+            }
         }
     }, [school, isOpen]);
 
@@ -36,13 +42,13 @@ const SchoolConfigModal = ({ isOpen, onClose, school, onSave }) => {
             const response = await apiClient.put(`/schools/${school._id}`, {
                 name: school.name,
                 type: school.type,
-                evaluationPeriod: school.evaluationPeriod,
+                evaluationPeriod: evaluationPeriod,
                 directorName: school.directorName,
                 config: updatedConfig
             });
 
             if (addNotification) {
-                addNotification('Configuración de escuela guardada correctamente', 'success');
+                addNotification('Configuración de la escuela guardada correctamente', 'success');
             }
             if (onSave) onSave(response.data);
             onClose();
@@ -66,10 +72,36 @@ const SchoolConfigModal = ({ isOpen, onClose, school, onSave }) => {
 
                 <div className="school-config-body">
                     <p className="school-config-subtitle">
-                        Ajusta las reglas de redondeo de calificaciones exclusivas para <strong>{school.name}</strong>.
+                        Personaliza los periodos de evaluación y reglas de redondeo exclusivas para <strong>{school.name}</strong>.
                     </p>
 
+                    {/* SECCIÓN 1: SISTEMA DE PERIODOS ACADÉMICOS */}
                     <div className="config-section">
+                        <label className="config-label">
+                            <FaCalendarAlt style={{ color: '#00cbcb', marginRight: '6px' }} />
+                            Sistema de Periodos de Evaluación
+                        </label>
+                        <p className="config-desc">
+                            Selecciona cómo se estructura el ciclo académico de tu institución (parciales, trimestres, bimestres, etc.).
+                        </p>
+
+                        <div className="form-group" style={{ marginTop: '12px' }}>
+                            <select
+                                value={evaluationPeriod}
+                                onChange={(e) => setEvaluationPeriod(e.target.value)}
+                                className="config-select"
+                            >
+                                <option value="Parcial">Parciales / Periodos (1°, 2°, 3°, ...)</option>
+                                <option value="Bimestre">Bimestral (1°, 2°, 3°, 4°, 5° Bimestre)</option>
+                                <option value="Trimestre">Trimestral (1°, 2°, 3° Trimestre)</option>
+                                <option value="Cuatrimestre">Cuatrimestral (1°, 2°, 3° Cuatrimestre)</option>
+                                <option value="Semestre">Semestral (1°, 2° Semestre)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* SECCIÓN 2: REDONDEO DE CALIFICACIONES */}
+                    <div className="config-section" style={{ marginTop: '1.2rem' }}>
                         <div className="toggle-row">
                             <div>
                                 <label className="config-label">Activar Redondeo de Calificaciones</label>
