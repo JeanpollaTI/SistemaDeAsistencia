@@ -13,6 +13,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
         const tablas = await TablaMatematica.find({ school_id: schoolId })
             .populate('evaluador_id', 'nombre email role')
+            .populate('evaluadores', 'nombre email role')
             .lean();
 
         // Also fetch teachers list for school to populate dropdown options
@@ -30,7 +31,7 @@ router.get('/', authMiddleware, async (req, res) => {
 // POST assign evaluator teacher to a group tab (Admin only)
 router.post('/evaluador', authMiddleware, isAdmin, async (req, res) => {
     try {
-        const { grupoNombre, evaluador_id } = req.body;
+        const { grupoNombre, evaluador_id, evaluadores } = req.body;
         const schoolId = req.user.school_id;
 
         if (!grupoNombre) {
@@ -43,14 +44,27 @@ router.post('/evaluador', authMiddleware, isAdmin, async (req, res) => {
                 school_id: schoolId,
                 grupoNombre,
                 evaluador_id: evaluador_id || null,
+                evaluadores: Array.isArray(evaluadores) ? evaluadores : (evaluador_id ? [evaluador_id] : []),
                 evaluaciones: []
             });
         } else {
             record.evaluador_id = evaluador_id || null;
+            if (Array.isArray(evaluadores)) {
+                record.evaluadores = evaluadores;
+            } else if (evaluador_id) {
+                if (!record.evaluadores) record.evaluadores = [];
+                if (!record.evaluadores.includes(evaluador_id)) {
+                    record.evaluadores.push(evaluador_id);
+                }
+            } else {
+                record.evaluadores = [];
+            }
         }
 
         await record.save();
-        const populated = await TablaMatematica.findById(record._id).populate('evaluador_id', 'nombre email role');
+        const populated = await TablaMatematica.findById(record._id)
+            .populate('evaluador_id', 'nombre email role')
+            .populate('evaluadores', 'nombre email role');
         res.json(populated);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -81,7 +95,9 @@ router.post('/evaluar', authMiddleware, async (req, res) => {
         record.evaluaciones = evaluaciones;
         await record.save();
 
-        const populated = await TablaMatematica.findById(record._id).populate('evaluador_id', 'nombre email role');
+        const populated = await TablaMatematica.findById(record._id)
+            .populate('evaluador_id', 'nombre email role')
+            .populate('evaluadores', 'nombre email role');
         res.json(populated);
     } catch (err) {
         res.status(500).json({ error: err.message });
