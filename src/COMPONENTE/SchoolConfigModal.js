@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../api/apiClient';
 import { useNotification } from './NotificationContext';
+import { FaTimes, FaSave, FaCogs } from 'react-icons/fa';
 import './SchoolConfigModal.css';
 
 const SchoolConfigModal = ({ isOpen, onClose, school, onSave }) => {
@@ -56,11 +57,11 @@ const SchoolConfigModal = ({ isOpen, onClose, school, onSave }) => {
     };
 
     return (
-        <div className="school-config-overlay">
-            <div className="school-config-modal">
+        <div className="school-config-overlay" onClick={onClose}>
+            <div className="school-config-modal" onClick={(e) => e.stopPropagation()}>
                 <header className="school-config-header">
-                    <h2>⚙️ Configuración de la Escuela</h2>
-                    <button className="close-btn" onClick={onClose}>&times;</button>
+                    <h2><FaCogs className="header-icon" /> Configuración de la Escuela</h2>
+                    <button className="close-btn" onClick={onClose} title="Cerrar">&times;</button>
                 </header>
 
                 <div className="school-config-body">
@@ -87,7 +88,7 @@ const SchoolConfigModal = ({ isOpen, onClose, school, onSave }) => {
                         {roundingConfig.enabled && (
                             <div className="rounding-details animated-fade">
                                 <div className="form-group">
-                                    <label>Umbral de Redondeo Aprobatorio (≥ 6.0)</label>
+                                    <label className="config-label-sub">Umbral de Redondeo Aprobatorio (≥ 6.0)</label>
                                     <p className="field-hint">
                                         Ejemplo: Con umbral 0.5, calificaciones como 6.5 suben a 7, mientras 6.4 se mantiene en 6.4.
                                     </p>
@@ -98,7 +99,7 @@ const SchoolConfigModal = ({ isOpen, onClose, school, onSave }) => {
                                     >
                                         <option value={0.5}>0.5 (ej. 6.5 ➔ 7.0)</option>
                                         <option value={0.6}>0.6 (ej. 6.6 ➔ 7.0)</option>
-                                        <option value={0.51}>A partir de .51</option>
+                                        <option value={0.51}>A partir de .51 (ej. 6.51 ➔ 7.0)</option>
                                     </select>
                                 </div>
 
@@ -124,11 +125,11 @@ const SchoolConfigModal = ({ isOpen, onClose, school, onSave }) => {
                 </div>
 
                 <footer className="school-config-footer">
-                    <button className="btn btn-secondary" onClick={onClose} disabled={loading}>
-                        Cancelar
+                    <button className="school-config-btn btn-cancel" onClick={onClose} disabled={loading}>
+                        <FaTimes /> Cancelar
                     </button>
-                    <button className="btn btn-primary" onClick={handleSave} disabled={loading}>
-                        {loading ? 'Guardando...' : 'Guardar Cambios'}
+                    <button className="school-config-btn btn-save" onClick={handleSave} disabled={loading}>
+                        <FaSave /> {loading ? 'Guardando...' : 'Guardar Cambios'}
                     </button>
                 </footer>
             </div>

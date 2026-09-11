@@ -1,40 +1,55 @@
+/* ================================================= */
+/* ESTILOS DEL MODAL DE CONFIGURACIÓN DE ESCUELA     */
+/* ================================================= */
+
 .school-config-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.78);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1100;
-    backdrop-filter: blur(4px);
+    z-index: 10000; /* Prioridad máxima por encima del header */
+    backdrop-filter: blur(6px);
+    padding: 1.2rem;
+    animation: overlayFadeIn 0.25s ease-out;
+}
+
+@keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .school-config-modal {
     background: #1e1e2d;
     color: #e0e0e0;
-    width: 90%;
-    max-width: 540px;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+    max-width: 550px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 203, 203, 0.2);
+    border: 1px solid rgba(0, 203, 203, 0.3);
     overflow: hidden;
-    animation: modalSlideIn 0.3s ease;
+    animation: modalPopIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes modalSlideIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
+@keyframes modalPopIn {
+    from { opacity: 0; transform: scale(0.94) translateY(-15px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+/* Header */
 .school-config-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.2rem 1.5rem;
-    background: #252538;
+    padding: 1.2rem 1.6rem;
+    background: #181824;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -42,36 +57,52 @@
     margin: 0;
     font-size: 1.25rem;
     color: #00cbcb;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+}
+
+.school-config-header .header-icon {
+    font-size: 1.3rem;
+    color: #00cbcb;
 }
 
 .school-config-header .close-btn {
-    background: none;
+    background: transparent;
     border: none;
     color: #888;
-    font-size: 1.6rem;
+    font-size: 1.8rem;
+    line-height: 1;
     cursor: pointer;
+    transition: color 0.2s ease;
+    padding: 0 4px;
 }
 
 .school-config-header .close-btn:hover {
-    color: #fff;
+    color: #ff4d4d;
 }
 
+/* Body scrollable */
 .school-config-body {
-    padding: 1.5rem;
+    padding: 1.6rem;
+    overflow-y: auto;
+    flex: 1;
 }
 
 .school-config-subtitle {
     margin-top: 0;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1.4rem;
     font-size: 0.95rem;
-    color: #aaa;
+    color: #b0b0cc;
+    line-height: 1.5;
 }
 
 .config-section {
     background: rgba(255, 255, 255, 0.03);
-    border-radius: 8px;
-    padding: 1rem 1.2rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 1.2rem 1.4rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .toggle-row {
@@ -83,59 +114,124 @@
 
 .toggle-row.border-top {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
-    padding-top: 1rem;
-    margin-top: 1rem;
+    padding-top: 1.2rem;
+    margin-top: 1.2rem;
 }
 
 .config-label {
     font-weight: 600;
-    font-size: 0.98rem;
-    color: #fff;
+    font-size: 1rem;
+    color: #ffffff;
+}
+
+.config-label-sub {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #00cbcb;
+    display: block;
+    margin-bottom: 4px;
 }
 
 .config-desc {
-    font-size: 0.82rem;
+    font-size: 0.84rem;
     color: #888;
     margin: 4px 0 0 0;
 }
 
 .rounding-details {
     margin-top: 1.2rem;
-    padding-top: 1rem;
+    padding-top: 1.2rem;
     border-top: 1px dashed rgba(255, 255, 255, 0.1);
 }
 
 .field-hint {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     color: #aaa;
-    margin: 4px 0 8px 0;
+    margin: 4px 0 10px 0;
+    line-height: 1.4;
 }
 
 .config-select {
     width: 100%;
-    padding: 8px 12px;
-    background: #181824;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #fff;
-    border-radius: 6px;
-    font-size: 0.9rem;
+    padding: 10px 14px;
+    background: #14141f;
+    border: 1px solid rgba(0, 203, 203, 0.3);
+    color: #ffffff;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.config-select:focus {
+    border-color: #00cbcb;
+    box-shadow: 0 0 8px rgba(0, 203, 203, 0.4);
+}
+
+/* Footer & Buttons */
 .school-config-footer {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
-    padding: 1rem 1.5rem;
-    background: #252538;
+    align-items: center;
+    gap: 12px;
+    padding: 1.2rem 1.6rem;
+    background: #181824;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Toggle Switch Styling */
+.school-config-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.25s ease;
+    letter-spacing: 0.3px;
+}
+
+.school-config-btn.btn-cancel {
+    background: rgba(255, 255, 255, 0.08);
+    color: #dddddd;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.school-config-btn.btn-cancel:hover:not(:disabled) {
+    background: rgba(231, 76, 60, 0.2);
+    color: #ff5252;
+    border-color: #ff5252;
+    transform: translateY(-1px);
+}
+
+.school-config-btn.btn-save {
+    background: linear-gradient(135deg, #00cbcb, #009999);
+    color: #0d1117;
+    font-weight: 700;
+    box-shadow: 0 4px 14px rgba(0, 203, 203, 0.3);
+}
+
+.school-config-btn.btn-save:hover:not(:disabled) {
+    background: linear-gradient(135deg, #00e6e6, #00cbcb);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 203, 203, 0.5);
+}
+
+.school-config-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Switch */
 .switch {
     position: relative;
     display: inline-block;
-    width: 46px;
-    height: 24px;
+    width: 48px;
+    height: 26px;
     flex-shrink: 0;
 }
 
@@ -149,23 +245,24 @@
     position: absolute;
     cursor: pointer;
     top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #444;
-    transition: .3s;
+    background-color: #3f3f5a;
+    transition: .3s ease;
 }
 
 .slider:before {
     position: absolute;
     content: "";
-    height: 18px;
-    width: 18px;
+    height: 20px;
+    width: 20px;
     left: 3px;
     bottom: 3px;
     background-color: white;
-    transition: .3s;
+    transition: .3s ease;
 }
 
 input:checked + .slider {
     background-color: #00cbcb;
+    box-shadow: 0 0 10px rgba(0, 203, 203, 0.5);
 }
 
 input:checked + .slider:before {
@@ -173,9 +270,52 @@ input:checked + .slider:before {
 }
 
 .slider.round {
-    border-radius: 24px;
+    border-radius: 26px;
 }
 
 .slider.round:before {
     border-radius: 50%;
+}
+
+/* Soporte para modo claro */
+[data-theme='light'] .school-config-modal {
+    background: #ffffff;
+    color: #222222;
+    border-color: #00cbcb;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme='light'] .school-config-header {
+    background: #f4f7f6;
+    border-bottom-color: #e0e0e0;
+}
+
+[data-theme='light'] .school-config-footer {
+    background: #f4f7f6;
+    border-top-color: #e0e0e0;
+}
+
+[data-theme='light'] .school-config-subtitle {
+    color: #555555;
+}
+
+[data-theme='light'] .config-section {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+[data-theme='light'] .config-label {
+    color: #1a202c;
+}
+
+[data-theme='light'] .config-select {
+    background: #ffffff;
+    color: #1a202c;
+    border-color: #cbd5e0;
+}
+
+[data-theme='light'] .school-config-btn.btn-cancel {
+    background: #edf2f7;
+    color: #4a5568;
+    border-color: #cbd5e0;
 }
