@@ -46,12 +46,15 @@ function SortableHeader({ id, children, disabled, colSpan }) {
 // --- CAMBIO: URL de la API desde variables de entorno para Vercel ---
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-const sortAlumnosWithNuevoIngreso = (alumnosList = []) => {
+const sortAlumnosWithStatus = (alumnosList = []) => {
   const reg = [];
   const nuevos = [];
+  const bajas = [];
 
   (alumnosList || []).forEach(a => {
-    if (a.esNuevoIngreso) {
+    if (a.esBaja) {
+      bajas.push(a);
+    } else if (a.esNuevoIngreso) {
       nuevos.push(a);
     } else {
       reg.push(a);
@@ -68,8 +71,9 @@ const sortAlumnosWithNuevoIngreso = (alumnosList = []) => {
 
   reg.sort(sortFn);
   nuevos.sort(sortFn);
+  bajas.sort(sortFn);
 
-  return [...reg, ...nuevos];
+  return [...reg, ...nuevos, ...bajas];
 };
 
 // --- Componente Principal de Calificaciones (Vista Admin) ---
@@ -199,7 +203,7 @@ function Calificaciones({ user }) {
     setLoading(true);
     setSelectedGrupo(grupo);
 
-    const alumnosOrdenados = sortAlumnosWithNuevoIngreso(grupo.alumnos || []);
+    const alumnosOrdenados = sortAlumnosWithStatus(grupo.alumnos || []);
     setAlumnos(alumnosOrdenados);
 
     // Combinar asignaturas asignadas y orden guardado
@@ -1051,7 +1055,8 @@ function Calificaciones({ user }) {
                     </thead>
                     <tbody>
                       {alumnos.map((alumno, index) => {
-                        const isFirstNuevo = alumno.esNuevoIngreso && (index === 0 || !alumnos[index - 1]?.esNuevoIngreso);
+                        const isFirstNuevo = alumno.esNuevoIngreso && !alumno.esBaja && (index === 0 || (!alumnos[index - 1]?.esNuevoIngreso || alumnos[index - 1]?.esBaja));
+                        const isFirstBaja = alumno.esBaja && (index === 0 || !alumnos[index - 1]?.esBaja);
                         const promFinal = calcularPromedioFinal(alumno._id);
                         const totalCols = 5 + materias.length * getPeriodCount() + getPeriodCount();
                         return (
@@ -1063,12 +1068,32 @@ function Calificaciones({ user }) {
                                 </td>
                               </tr>
                             )}
-                            <tr className={alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : ''} style={{ backgroundColor: alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined }}>
+                            {isFirstBaja && (
+                              <tr className="divider-baja-row" style={{ backgroundColor: 'rgba(255, 77, 77, 0.18)', color: '#ff4d4d', fontWeight: 'bold' }}>
+                                <td colSpan={totalCols} style={{ padding: '6px 12px', fontSize: '0.78rem', letterSpacing: '0.5px', textTransform: 'uppercase', textAlign: 'left' }}>
+                                  🚫 ALUMNOS DADOS DE BAJA
+                                </td>
+                              </tr>
+                            )}
+                            <tr className={alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')} style={{ backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.08)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined) }}>
                               <td>{index + 1}</td>
                               <td className="matricula-cell">{alumno.matricula || '---'}</td>
                               <td className="nombre-cell">
                                 {`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}
-                                {alumno.esNuevoIngreso && (
+                                {alumno.esBaja ? (
+                                  <span style={{
+                                    backgroundColor: '#570000',
+                                    color: '#ff4d4d',
+                                    padding: '1px 5px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 'bold',
+                                    marginLeft: '6px',
+                                    border: '1px solid #850404'
+                                  }}>
+                                    🚫 Baja {alumno.fechaBaja ? `(${alumno.fechaBaja})` : ''}
+                                  </span>
+                                ) : (alumno.esNuevoIngreso && (
                                   <span style={{
                                     backgroundColor: '#574100',
                                     color: '#ffd866',
@@ -1079,9 +1104,9 @@ function Calificaciones({ user }) {
                                     marginLeft: '6px',
                                     border: '1px solid #856404'
                                   }}>
-                                    🌟 Nuevo
+                                    🌟 Nuevo {alumno.fechaIngreso ? `(${alumno.fechaIngreso})` : ''}
                                   </span>
-                                )}
+                                ))}
                               </td>
                               {materias.map(materia => (
                                 <React.Fragment key={`${alumno._id}-${materia}`}>

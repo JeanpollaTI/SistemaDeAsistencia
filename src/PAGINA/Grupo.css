@@ -330,7 +330,8 @@
 }
 
 .grupo-componente .modal-content input[type="text"],
-.grupo-componente .modal-content input[type="email"] {
+.grupo-componente .modal-content input[type="email"],
+.grupo-componente .modal-content input[type="date"] {
   width: 100%;
   padding: 8px 12px; /* Reduced from 12px */
   height: 40px; /* Fixed height for consistency */
@@ -342,7 +343,8 @@
 }
 
 .grupo-componente .modal-content input[type="text"]:focus,
-.grupo-componente .modal-content input[type="email"]:focus {
+.grupo-componente .modal-content input[type="email"]:focus,
+.grupo-componente .modal-content input[type="date"]:focus {
   outline: none;
   border-color: var(--main-color);
 }
@@ -359,6 +361,14 @@
   display: flex;
   flex-direction: column;
   gap: 15px;
+}
+
+.grupo-componente .modal-column-center {
+  display: flex;
+  flex-direction: column;
+  max-height: 72vh;
+  overflow-y: auto;
+  padding-right: 8px;
 }
 
 .grupo-componente .modal-column-right {

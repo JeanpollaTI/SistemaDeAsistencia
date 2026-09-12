@@ -37,6 +37,18 @@ const AlumnoSchema = new mongoose.Schema({
   esNuevoIngreso: {
     type: Boolean,
     default: false,
+  },
+  fechaIngreso: {
+    type: String,
+    default: "",
+  },
+  esBaja: {
+    type: Boolean,
+    default: false,
+  },
+  fechaBaja: {
+    type: String,
+    default: "",
   }
 });
 

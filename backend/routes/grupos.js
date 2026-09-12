@@ -208,7 +208,7 @@ router.delete("/:id", authMiddleware, isAdmin, schoolMiddleware, async (req, res
 // [POST] /grupos/promover-alumnos - Promover/Copiar lista de alumnos entre grupos (Admin)
 router.post("/promover-alumnos", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
     try {
-        const { sourceGrupoId, targetGrupoId, alumnoIds, action } = req.body;
+        const { sourceGrupoId, targetGrupoId, alumnoIds, action, markUnselectedAsBaja, fechaBaja } = req.body;
         const school_id = req.user.school_id;
 
         if (!sourceGrupoId || !targetGrupoId || !Array.isArray(alumnoIds) || alumnoIds.length === 0) {
@@ -250,6 +250,9 @@ router.post("/promover-alumnos", authMiddleware, isAdmin, schoolMiddleware, asyn
                 const newStudentData = { ...rawObj };
                 delete newStudentData._id;
                 delete newStudentData.id;
+                // Al promoverse a un nuevo grupo, se limpia su estado de baja si lo tenía
+                newStudentData.esBaja = false;
+                newStudentData.fechaBaja = "";
                 
                 if (!newStudentData.matricula) {
                     newStudentData.matricula = await getNextMatricula();
@@ -263,6 +266,21 @@ router.post("/promover-alumnos", authMiddleware, isAdmin, schoolMiddleware, asyn
         }
 
         await targetGrupo.save();
+
+        const todayStr = fechaBaja || new Date().toISOString().split('T')[0];
+
+        if (markUnselectedAsBaja) {
+            sourceGrupo.alumnos.forEach(a => {
+                const idStr = String(a._id || a.id);
+                if (!alumnoIds.includes(idStr)) {
+                    a.esBaja = true;
+                    if (!a.fechaBaja) {
+                        a.fechaBaja = todayStr;
+                    }
+                }
+            });
+            await sourceGrupo.save();
+        }
 
         if (action === 'move') {
             sourceGrupo.alumnos = sourceGrupo.alumnos.filter(a => {

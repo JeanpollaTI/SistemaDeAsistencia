@@ -23,12 +23,15 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const NUM_BIMESTRES = 3;
 const DIAS_INICIALES = 30;
 
-const sortAlumnosWithNuevoIngreso = (alumnosList = []) => {
+const sortAlumnosWithStatus = (alumnosList = []) => {
   const reg = [];
   const nuevos = [];
+  const bajas = [];
 
   (alumnosList || []).forEach(a => {
-    if (a.esNuevoIngreso) {
+    if (a.esBaja) {
+      bajas.push(a);
+    } else if (a.esNuevoIngreso) {
       nuevos.push(a);
     } else {
       reg.push(a);
@@ -45,8 +48,9 @@ const sortAlumnosWithNuevoIngreso = (alumnosList = []) => {
 
   reg.sort(sortFn);
   nuevos.sort(sortFn);
+  bajas.sort(sortFn);
 
-  return [...reg, ...nuevos];
+  return [...reg, ...nuevos, ...bajas];
 };
 
 function Grupo({ user }) {
@@ -59,7 +63,17 @@ function Grupo({ user }) {
   const [modalVisible, setModalVisible] = useState(null);
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null);
   const [nuevoGrupo, setNuevoGrupo] = useState({ nombre: '', asesor: '', aula: '', alumnos: [] });
-  const [alumnoInput, setAlumnoInput] = useState({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '', esNuevoIngreso: false });
+  const [alumnoInput, setAlumnoInput] = useState({
+    nombre: '',
+    apellidoPaterno: '',
+    apellidoMaterno: '',
+    emailPadre: '',
+    telefonoPadre: '',
+    esNuevoIngreso: false,
+    fechaIngreso: '',
+    esBaja: false,
+    fechaBaja: ''
+  });
   const [asistencia, setAsistencia] = useState({});
   const [diasPorBimestre, setDiasPorBimestre] = useState({});
   const [bimestreAbierto, setBimestreAbierto] = useState({});
@@ -158,7 +172,7 @@ function Grupo({ user }) {
 
           const sortedGrupos = Array.isArray(gruposRes.data) ? gruposRes.data.map(g => ({
             ...g,
-            alumnos: Array.isArray(g.alumnos) ? sortAlumnosWithNuevoIngreso(g.alumnos) : []
+            alumnos: Array.isArray(g.alumnos) ? sortAlumnosWithStatus(g.alumnos) : []
           })).sort((a, b) =>
             a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
           ) : [];
@@ -186,7 +200,7 @@ function Grupo({ user }) {
 
           const sortedGrupos = Array.isArray(gruposRes.data) ? gruposRes.data.map(g => ({
             ...g,
-            alumnos: Array.isArray(g.alumnos) ? sortAlumnosWithNuevoIngreso(g.alumnos) : []
+            alumnos: Array.isArray(g.alumnos) ? sortAlumnosWithStatus(g.alumnos) : []
           })).sort((a, b) =>
             a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
           ) : [];
@@ -241,7 +255,7 @@ function Grupo({ user }) {
     if (tipo === 'gestionarGrupo') {
       setGrupoSeleccionado(data);
       if (data) { 
-        const sortedAlumnos = Array.isArray(data.alumnos) ? sortAlumnosWithNuevoIngreso(data.alumnos) : [];
+        const sortedAlumnos = Array.isArray(data.alumnos) ? sortAlumnosWithStatus(data.alumnos) : [];
 
         setNuevoGrupo({
           ...JSON.parse(JSON.stringify(data)),
@@ -320,7 +334,10 @@ function Grupo({ user }) {
         apellidoMaterno: data.apellidoMaterno || '',
         emailPadre: data.emailPadre || '',
         telefonoPadre: data.telefonoPadre || '',
-        esNuevoIngreso: !!data.esNuevoIngreso
+        esNuevoIngreso: !!data.esNuevoIngreso,
+        fechaIngreso: data.fechaIngreso || '',
+        esBaja: !!data.esBaja,
+        fechaBaja: data.fechaBaja || ''
       });
       setModalVisible('editarAlumno');
     } else if (tipo === 'importar') {
@@ -339,7 +356,17 @@ function Grupo({ user }) {
     setHasChanges(false);
     setGrupoSeleccionado(null);
     setNuevoGrupo({ nombre: '', asesor: '', alumnos: [] });
-    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '', esNuevoIngreso: false });
+    setAlumnoInput({
+      nombre: '',
+      apellidoPaterno: '',
+      apellidoMaterno: '',
+      emailPadre: '',
+      telefonoPadre: '',
+      esNuevoIngreso: false,
+      fechaIngreso: '',
+      esBaja: false,
+      fechaBaja: ''
+    });
     setBimestreAbierto({});
     setAsignaciones({});
     setEditingAlumno(null);
@@ -360,7 +387,10 @@ function Grupo({ user }) {
       apellidoMaterno: alumno.apellidoMaterno || '',
       emailPadre: alumno.emailPadre || '',
       telefonoPadre: alumno.telefonoPadre || '',
-      esNuevoIngreso: !!alumno.esNuevoIngreso
+      esNuevoIngreso: !!alumno.esNuevoIngreso,
+      fechaIngreso: alumno.fechaIngreso || '',
+      esBaja: !!alumno.esBaja,
+      fechaBaja: alumno.fechaBaja || ''
     });
     setEditingAlumno(alumno);
 
@@ -376,7 +406,17 @@ function Grupo({ user }) {
   const handleCancelarEdicion = () => {
     setEditingAlumno(null);
     setSelectedAlumnoIndex(-1);
-    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '', esNuevoIngreso: false });
+    setAlumnoInput({
+      nombre: '',
+      apellidoPaterno: '',
+      apellidoMaterno: '',
+      emailPadre: '',
+      telefonoPadre: '',
+      esNuevoIngreso: false,
+      fechaIngreso: '',
+      esBaja: false,
+      fechaBaja: ''
+    });
   };
 
   // --- FUNCIONES CRUD Y LÓGICA ---
@@ -391,7 +431,7 @@ function Grupo({ user }) {
       // ACTUALIZAR INLINE
       setNuevoGrupo(prev => ({
         ...prev,
-        alumnos: sortAlumnosWithNuevoIngreso(prev.alumnos.map(a => a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a))
+        alumnos: sortAlumnosWithStatus(prev.alumnos.map(a => a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a))
       }));
       showAlert("Alumno actualizado en la lista.");
     } else {
@@ -400,7 +440,7 @@ function Grupo({ user }) {
       const nuevoAlumno = { _id: alumnoId, ...alumnoInput };
       setNuevoGrupo(prev => ({ 
         ...prev, 
-        alumnos: sortAlumnosWithNuevoIngreso([...prev.alumnos, nuevoAlumno])
+        alumnos: sortAlumnosWithStatus([...prev.alumnos, nuevoAlumno])
       }));
       handleCancelarEdicion();
     }
@@ -411,7 +451,7 @@ function Grupo({ user }) {
     if (!editingAlumno) return;
     setNuevoGrupo(prev => ({
       ...prev,
-      alumnos: sortAlumnosWithNuevoIngreso(prev.alumnos.map(a => a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a))
+      alumnos: sortAlumnosWithStatus(prev.alumnos.map(a => a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a))
     }));
     setModalVisible('gestionarGrupo');
     setEditingAlumno(null);
@@ -1285,15 +1325,70 @@ function Grupo({ user }) {
                         onChange={(e) => setAlumnoInput({ ...alumnoInput, telefonoPadre: e.target.value })} 
                         onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
                       />
-                      <label className="checkbox-nuevo-ingreso-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '10px', fontSize: '0.88rem', color: '#ffb703', fontWeight: 'bold' }}>
-                        <input 
-                          type="checkbox" 
-                          checked={!!alumnoInput.esNuevoIngreso} 
-                          onChange={(e) => setAlumnoInput({ ...alumnoInput, esNuevoIngreso: e.target.checked })} 
-                          style={{ accentColor: '#ffb703', width: '16px', height: '16px', cursor: 'pointer' }}
-                        />
-                        <span>🌟 Alumno de Nuevo Ingreso (Ingresó a mitad de curso)</span>
-                      </label>
+                      
+                      {/* Casilla y Fecha: Nuevo Ingreso */}
+                      <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                        <label className="checkbox-nuevo-ingreso-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', color: '#ffb703', fontWeight: 'bold' }}>
+                          <input 
+                            type="checkbox" 
+                            checked={!!alumnoInput.esNuevoIngreso} 
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              const today = new Date().toISOString().split('T')[0];
+                              setAlumnoInput({
+                                ...alumnoInput,
+                                esNuevoIngreso: checked,
+                                fechaIngreso: checked ? (alumnoInput.fechaIngreso || today) : ''
+                              });
+                            }} 
+                            style={{ accentColor: '#ffb703', width: '16px', height: '16px', cursor: 'pointer' }}
+                          />
+                          <span>🌟 Alumno de Nuevo Ingreso (Ingresó a mitad de curso)</span>
+                        </label>
+                        {alumnoInput.esNuevoIngreso && (
+                          <div style={{ marginTop: '6px', paddingLeft: '24px' }}>
+                            <label style={{ fontSize: '0.78rem', color: '#ffb703', display: 'block', marginBottom: '3px' }}>Fecha de Ingreso:</label>
+                            <input 
+                              type="date" 
+                              value={alumnoInput.fechaIngreso || ''} 
+                              onChange={(e) => setAlumnoInput({ ...alumnoInput, fechaIngreso: e.target.value })} 
+                              style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #ffb703', backgroundColor: 'rgba(255,183,3,0.1)', color: '#fff' }}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Casilla y Fecha: Dado de Baja */}
+                      <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                        <label className="checkbox-baja-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', color: '#ff4d4d', fontWeight: 'bold' }}>
+                          <input 
+                            type="checkbox" 
+                            checked={!!alumnoInput.esBaja} 
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              const today = new Date().toISOString().split('T')[0];
+                              setAlumnoInput({
+                                ...alumnoInput,
+                                esBaja: checked,
+                                fechaBaja: checked ? (alumnoInput.fechaBaja || today) : ''
+                              });
+                            }} 
+                            style={{ accentColor: '#ff4d4d', width: '16px', height: '16px', cursor: 'pointer' }}
+                          />
+                          <span>🚫 Alumno Dado de Baja</span>
+                        </label>
+                        {alumnoInput.esBaja && (
+                          <div style={{ marginTop: '6px', paddingLeft: '24px' }}>
+                            <label style={{ fontSize: '0.78rem', color: '#ff4d4d', display: 'block', marginBottom: '3px' }}>Fecha de Baja:</label>
+                            <input 
+                              type="date" 
+                              value={alumnoInput.fechaBaja || ''} 
+                              onChange={(e) => setAlumnoInput({ ...alumnoInput, fechaBaja: e.target.value })} 
+                              style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #ff4d4d', backgroundColor: 'rgba(255,77,77,0.1)', color: '#fff' }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="alumno-form-actions" style={{ marginTop: '15px' }}>
                       <button className="btn btn-add" onClick={handleAgregarOActualizarAlumno}>
@@ -1313,7 +1408,9 @@ function Grupo({ user }) {
                     <div className="alumnos-count-header">Alumnos en el grupo: {nuevoGrupo.alumnos.length}</div>
                     <ul>
                       {nuevoGrupo.alumnos.map((a, index) => {
-                        const isFirstNuevo = a.esNuevoIngreso && (index === 0 || !nuevoGrupo.alumnos[index - 1]?.esNuevoIngreso);
+                        const isFirstNuevo = a.esNuevoIngreso && !a.esBaja && (index === 0 || (!nuevoGrupo.alumnos[index - 1]?.esNuevoIngreso || nuevoGrupo.alumnos[index - 1]?.esBaja));
+                        const isFirstBaja = a.esBaja && (index === 0 || !nuevoGrupo.alumnos[index - 1]?.esBaja);
+                        
                         return (
                           <React.Fragment key={a._id || index}>
                             {isFirstNuevo && (
@@ -1333,14 +1430,50 @@ function Grupo({ user }) {
                                 🌟 ALUMNOS DE NUEVO INGRESO (INGRESARON A MITAD DE CURSO)
                               </li>
                             )}
+                            {isFirstBaja && (
+                              <li className="divider-baja-header" style={{
+                                backgroundColor: 'rgba(255, 77, 77, 0.15)',
+                                color: '#ff4d4d',
+                                borderTop: '1px solid #ff4d4d',
+                                borderBottom: '1px solid #ff4d4d',
+                                padding: '6px 10px',
+                                fontWeight: 'bold',
+                                fontSize: '0.75rem',
+                                letterSpacing: '0.5px',
+                                cursor: 'default',
+                                marginTop: '8px',
+                                marginBottom: '4px'
+                              }}>
+                                🚫 ALUMNOS DADOS DE BAJA
+                              </li>
+                            )}
                             <li 
-                              className={`${selectedAlumnoIndex === index ? 'selected' : ''} ${editingAlumno?._id === a._id ? 'editing' : ''} ${a.esNuevoIngreso ? 'row-nuevo-ingreso' : ''}`}
+                              className={`${selectedAlumnoIndex === index ? 'selected' : ''} ${editingAlumno?._id === a._id ? 'editing' : ''}`}
                               onClick={() => handleSelectAlumno(index)}
-                              style={{ cursor: 'pointer', background: a.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined }}
+                              style={{ 
+                                cursor: 'pointer', 
+                                background: a.esBaja ? 'rgba(255, 77, 77, 0.08)' : (a.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined) 
+                              }}
                             >
                               <span className="alumno-nombre-display">
                                 <strong>{a.matricula || '---'}</strong> - {`${index + 1}. ${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`}
-                                {a.esNuevoIngreso && (
+                                {a.esBaja ? (
+                                  <span style={{
+                                    backgroundColor: '#570000',
+                                    color: '#ff4d4d',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 'bold',
+                                    marginLeft: '6px',
+                                    border: '1px solid #850404',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px'
+                                  }}>
+                                    🚫 Baja {a.fechaBaja ? `(${a.fechaBaja})` : ''}
+                                  </span>
+                                ) : (a.esNuevoIngreso && (
                                   <span style={{
                                     backgroundColor: '#574100',
                                     color: '#ffd866',
@@ -1354,9 +1487,9 @@ function Grupo({ user }) {
                                     alignItems: 'center',
                                     gap: '3px'
                                   }}>
-                                    🌟 Nuevo
+                                    🌟 Nuevo {a.fechaIngreso ? `(${a.fechaIngreso})` : ''}
                                   </span>
-                                )}
+                                ))}
                                 <br />
                                 <small style={{ color: '#666' }}>{a.emailPadre || 'Sin correo'} | {a.telefonoPadre || 'Sin tel'}</small>
                               </span>
@@ -1393,15 +1526,70 @@ function Grupo({ user }) {
                   <input type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} />
                   <input type="email" placeholder="Correo del Padre/Alumno" value={alumnoInput.emailPadre} onChange={(e) => setAlumnoInput({ ...alumnoInput, emailPadre: e.target.value })} />
                   <input type="text" placeholder="Teléfono (Opcional)" value={alumnoInput.telefonoPadre || ''} onChange={(e) => setAlumnoInput({ ...alumnoInput, telefonoPadre: e.target.value })} />
-                  <label className="checkbox-nuevo-ingreso-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '10px', fontSize: '0.88rem', color: '#ffb703', fontWeight: 'bold' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={!!alumnoInput.esNuevoIngreso} 
-                      onChange={(e) => setAlumnoInput({ ...alumnoInput, esNuevoIngreso: e.target.checked })} 
-                      style={{ accentColor: '#ffb703', width: '16px', height: '16px', cursor: 'pointer' }}
-                    />
-                    <span>🌟 Alumno de Nuevo Ingreso (Ingresó a mitad de curso)</span>
-                  </label>
+                  
+                  {/* Casilla y Fecha: Nuevo Ingreso */}
+                  <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                    <label className="checkbox-nuevo-ingreso-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', color: '#ffb703', fontWeight: 'bold' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={!!alumnoInput.esNuevoIngreso} 
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          const today = new Date().toISOString().split('T')[0];
+                          setAlumnoInput({
+                            ...alumnoInput,
+                            esNuevoIngreso: checked,
+                            fechaIngreso: checked ? (alumnoInput.fechaIngreso || today) : ''
+                          });
+                        }} 
+                        style={{ accentColor: '#ffb703', width: '16px', height: '16px', cursor: 'pointer' }}
+                      />
+                      <span>🌟 Alumno de Nuevo Ingreso (Ingresó a mitad de curso)</span>
+                    </label>
+                    {alumnoInput.esNuevoIngreso && (
+                      <div style={{ marginTop: '6px', paddingLeft: '24px' }}>
+                        <label style={{ fontSize: '0.78rem', color: '#ffb703', display: 'block', marginBottom: '3px' }}>Fecha de Ingreso:</label>
+                        <input 
+                          type="date" 
+                          value={alumnoInput.fechaIngreso || ''} 
+                          onChange={(e) => setAlumnoInput({ ...alumnoInput, fechaIngreso: e.target.value })} 
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #ffb703', backgroundColor: 'rgba(255,183,3,0.1)', color: '#fff' }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Casilla y Fecha: Dado de Baja */}
+                  <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                    <label className="checkbox-baja-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', color: '#ff4d4d', fontWeight: 'bold' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={!!alumnoInput.esBaja} 
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          const today = new Date().toISOString().split('T')[0];
+                          setAlumnoInput({
+                            ...alumnoInput,
+                            esBaja: checked,
+                            fechaBaja: checked ? (alumnoInput.fechaBaja || today) : ''
+                          });
+                        }} 
+                        style={{ accentColor: '#ff4d4d', width: '16px', height: '16px', cursor: 'pointer' }}
+                      />
+                      <span>🚫 Alumno Dado de Baja</span>
+                    </label>
+                    {alumnoInput.esBaja && (
+                      <div style={{ marginTop: '6px', paddingLeft: '24px' }}>
+                        <label style={{ fontSize: '0.78rem', color: '#ff4d4d', display: 'block', marginBottom: '3px' }}>Fecha de Baja:</label>
+                        <input 
+                          type="date" 
+                          value={alumnoInput.fechaBaja || ''} 
+                          onChange={(e) => setAlumnoInput({ ...alumnoInput, fechaBaja: e.target.value })} 
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #ff4d4d', backgroundColor: 'rgba(255,77,77,0.1)', color: '#fff' }}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="modal-actions">
@@ -1550,10 +1738,11 @@ function Grupo({ user }) {
                     </thead>
                     <tbody>
                       {(() => {
-                        const sortedAlumnos = sortAlumnosWithNuevoIngreso(grupoSeleccionado?.alumnos || []);
+                        const sortedAlumnos = sortAlumnosWithStatus(grupoSeleccionado?.alumnos || []);
                         const totalDias = diasPorBimestre[bimestreActivo] || DIAS_INICIALES;
                         return sortedAlumnos.map((alumno, index) => {
-                          const isFirstNuevo = alumno.esNuevoIngreso && (index === 0 || !sortedAlumnos[index - 1]?.esNuevoIngreso);
+                          const isFirstNuevo = alumno.esNuevoIngreso && !alumno.esBaja && (index === 0 || (!sortedAlumnos[index - 1]?.esNuevoIngreso || sortedAlumnos[index - 1]?.esBaja));
+                          const isFirstBaja = alumno.esBaja && (index === 0 || !sortedAlumnos[index - 1]?.esBaja);
                           const totales = calcularTotales(alumno._id, bimestreActivo, asistencia, diasPorBimestre);
                           const isHighlighted = highlightedAlumnoId === alumno._id;
                           return (
@@ -1565,12 +1754,32 @@ function Grupo({ user }) {
                                   </td>
                                 </tr>
                               )}
-                              <tr className={`${isHighlighted ? 'highlight-row' : ''} ${alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : ''}`} style={{ backgroundColor: alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined }}>
+                              {isFirstBaja && (
+                                <tr className="divider-baja-row" style={{ backgroundColor: 'rgba(255, 77, 77, 0.18)', color: '#ff4d4d', fontWeight: 'bold' }}>
+                                  <td colSpan={5 + totalDias} style={{ padding: '6px 12px', fontSize: '0.78rem', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                                    🚫 ALUMNOS DADOS DE BAJA
+                                  </td>
+                                </tr>
+                              )}
+                              <tr className={`${isHighlighted ? 'highlight-row' : ''} ${alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')}`} style={{ backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.08)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined) }}>
                                 <td className="num-col" style={{ textAlign: 'center' }}>{index + 1}</td>
                                 <td className="matricula-col" style={{ textAlign: 'center', fontWeight: 'bold' }}>{alumno.matricula || '---'}</td>
                                 <td className="alumno-col">
                                   {alumno.apellidoPaterno} {alumno.apellidoMaterno || ''} {alumno.nombre}
-                                  {alumno.esNuevoIngreso && (
+                                  {alumno.esBaja ? (
+                                    <span style={{
+                                      backgroundColor: '#570000',
+                                      color: '#ff4d4d',
+                                      padding: '1px 5px',
+                                      borderRadius: '4px',
+                                      fontSize: '0.7rem',
+                                      fontWeight: 'bold',
+                                      marginLeft: '6px',
+                                      border: '1px solid #850404'
+                                    }}>
+                                      🚫 Baja {alumno.fechaBaja ? `(${alumno.fechaBaja})` : ''}
+                                    </span>
+                                  ) : (alumno.esNuevoIngreso && (
                                     <span style={{
                                       backgroundColor: '#574100',
                                       color: '#ffd866',
@@ -1581,9 +1790,9 @@ function Grupo({ user }) {
                                       marginLeft: '6px',
                                       border: '1px solid #856404'
                                     }}>
-                                      🌟 Nuevo
+                                      🌟 Nuevo {alumno.fechaIngreso ? `(${alumno.fechaIngreso})` : ''}
                                     </span>
-                                  )}
+                                  ))}
                                 </td>
                                 <td style={{ textAlign: 'center', fontSize: '0.85rem' }}>
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>

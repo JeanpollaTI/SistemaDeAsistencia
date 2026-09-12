@@ -12,6 +12,8 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
     const [targetGrupoId, setTargetGrupoId] = useState('');
     const [selectedAlumnoIds, setSelectedAlumnoIds] = useState([]);
     const [action, setAction] = useState('copy'); // 'copy' | 'move'
+    const [markUnselectedAsBaja, setMarkUnselectedAsBaja] = useState(true);
+    const [fechaBaja, setFechaBaja] = useState(new Date().toISOString().split('T')[0]);
     const [loading, setLoading] = useState(false);
 
     // Initial selections when modal opens or groups change
@@ -90,11 +92,13 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post(`${API_URL}/api/grupos/promover-alumnos`, {
+            const res = await axios.post(`${API_URL}/grupos/promover-alumnos`, {
                 sourceGrupoId,
                 targetGrupoId,
                 alumnoIds: selectedAlumnoIds,
-                action
+                action,
+                markUnselectedAsBaja,
+                fechaBaja
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -192,6 +196,30 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
                                     <span>Transfiere los alumnos a {targetGrupo?.nombre || 'Destino'} y los quita de {sourceGrupo?.nombre || 'Origen'}.</span>
                                 </div>
                             </label>
+                        </div>
+
+                        {/* OPCIÓN: MARCAR COMO BAJA A LOS NO SELECCIONADOS */}
+                        <div className="promover-baja-option" style={{ marginTop: '15px', padding: '12px', background: 'rgba(255, 77, 77, 0.08)', borderRadius: '8px', border: '1px solid rgba(255, 77, 77, 0.3)' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontWeight: 'bold', color: '#ff4d4d', fontSize: '0.88rem' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={markUnselectedAsBaja}
+                                    onChange={(e) => setMarkUnselectedAsBaja(e.target.checked)}
+                                    style={{ accentColor: '#ff4d4d', width: '18px', height: '18px', cursor: 'pointer' }}
+                                />
+                                <span>🚫 Marcar automáticamente como BAJA en {sourceGrupo?.nombre || 'grupo origen'} a los alumnos no seleccionados</span>
+                            </label>
+                            {markUnselectedAsBaja && (
+                                <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px', paddingLeft: '28px' }}>
+                                    <span style={{ fontSize: '0.8rem', color: '#ccc' }}>Fecha de Baja para no seleccionados:</span>
+                                    <input
+                                        type="date"
+                                        value={fechaBaja}
+                                        onChange={(e) => setFechaBaja(e.target.value)}
+                                        style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #ff4d4d', background: '#1a1a1a', color: '#fff', fontSize: '0.85rem' }}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
 

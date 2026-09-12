@@ -29,12 +29,15 @@ const OPTIONS = [
     { value: 'Salteadas', label: 'S', fullText: 'Salteadas', colorClass: 'badge-salteadas' }
 ];
 
-const sortAlumnosWithNuevoIngreso = (alumnosList = []) => {
+const sortAlumnosWithStatus = (alumnosList = []) => {
     const reg = [];
     const nuevos = [];
+    const bajas = [];
 
-    alumnosList.forEach(a => {
-        if (a.esNuevoIngreso) {
+    (alumnosList || []).forEach(a => {
+        if (a.esBaja) {
+            bajas.push(a);
+        } else if (a.esNuevoIngreso) {
             nuevos.push(a);
         } else {
             reg.push(a);
@@ -51,8 +54,9 @@ const sortAlumnosWithNuevoIngreso = (alumnosList = []) => {
 
     reg.sort(sortFn);
     nuevos.sort(sortFn);
+    bajas.sort(sortFn);
 
-    return [...reg, ...nuevos];
+    return [...reg, ...nuevos, ...bajas];
 };
 
 const TablasMatematicas = ({ user }) => {
@@ -108,7 +112,7 @@ const TablasMatematicas = ({ user }) => {
             const currentGrupoData = allGrupos.find(g => g.nombre.toUpperCase() === selectedGrupo.toUpperCase());
             
             const rawAlumnos = currentGrupoData?.alumnos || [];
-            const alumnos = sortAlumnosWithNuevoIngreso(rawAlumnos);
+            const alumnos = sortAlumnosWithStatus(rawAlumnos);
             setAlumnosGrupo(alumnos);
 
             // Populate current group's evaluator and matrix
@@ -518,7 +522,8 @@ const TablasMatematicas = ({ user }) => {
                                                  const id = String(alumno._id || alumno.id);
                                                  const alumnoMatrix = matrix[id] || {};
                                                  const fullStudentName = `${alumno.nombre} ${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''}`.trim();
-                                                 const isFirstNuevo = alumno.esNuevoIngreso && (index === 0 || !alumnosGrupo[index - 1]?.esNuevoIngreso);
+                                                 const isFirstNuevo = alumno.esNuevoIngreso && !alumno.esBaja && (index === 0 || (!alumnosGrupo[index - 1]?.esNuevoIngreso || alumnosGrupo[index - 1]?.esBaja));
+                                                 const isFirstBaja = alumno.esBaja && (index === 0 || !alumnosGrupo[index - 1]?.esBaja);
 
                                                  return (
                                                      <React.Fragment key={id}>
@@ -539,11 +544,42 @@ const TablasMatematicas = ({ user }) => {
                                                                  </td>
                                                              </tr>
                                                          )}
-                                                         <tr className={alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : ''}>
+                                                         {isFirstBaja && (
+                                                             <tr key={`divider_baja_${index}`} className="divider-baja-row">
+                                                                 <td colSpan={37} style={{
+                                                                     background: 'rgba(255, 77, 77, 0.15)',
+                                                                     color: '#ff4d4d',
+                                                                     borderTop: '2px solid #ff4d4d',
+                                                                     borderBottom: '2px solid #ff4d4d',
+                                                                     padding: '8px 16px',
+                                                                     fontWeight: '800',
+                                                                     fontSize: '0.85rem',
+                                                                     letterSpacing: '0.5px',
+                                                                     textAlign: 'center'
+                                                                 }}>
+                                                                     🚫 ALUMNOS DADOS DE BAJA
+                                                                 </td>
+                                                             </tr>
+                                                         )}
+                                                         <tr className={alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')} style={{ backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.08)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined) }}>
                                                              <td className="sticky-col num-col">{index + 1}</td>
                                                              <td className="sticky-col name-col" title={fullStudentName}>
                                                                  {fullStudentName}
-                                                                 {alumno.esNuevoIngreso && (
+                                                                 {alumno.esBaja ? (
+                                                                     <span style={{
+                                                                         background: '#570000',
+                                                                         color: '#ff4d4d',
+                                                                         border: '1px solid #850404',
+                                                                         borderRadius: '4px',
+                                                                         fontSize: '0.7rem',
+                                                                         padding: '1px 5px',
+                                                                         fontWeight: '800',
+                                                                         marginLeft: '6px',
+                                                                         display: 'inline-block'
+                                                                     }}>
+                                                                         🚫 Baja {alumno.fechaBaja ? `(${alumno.fechaBaja})` : ''}
+                                                                     </span>
+                                                                 ) : (alumno.esNuevoIngreso && (
                                                                      <span style={{
                                                                          background: '#574100',
                                                                          color: '#ffd866',
@@ -555,9 +591,9 @@ const TablasMatematicas = ({ user }) => {
                                                                          marginLeft: '6px',
                                                                          display: 'inline-block'
                                                                      }}>
-                                                                         🌟 Nuevo
+                                                                         🌟 Nuevo {alumno.fechaIngreso ? `(${alumno.fechaIngreso})` : ''}
                                                                      </span>
-                                                                 )}
+                                                                 ))}
                                                              </td>
                                                              {PERIODOS_CONFIG.map(p => (
                                                                  p.tablas.map((tNum, idx) => {
