@@ -23,6 +23,32 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const NUM_BIMESTRES = 3;
 const DIAS_INICIALES = 30;
 
+const sortAlumnosWithNuevoIngreso = (alumnosList = []) => {
+  const reg = [];
+  const nuevos = [];
+
+  (alumnosList || []).forEach(a => {
+    if (a.esNuevoIngreso) {
+      nuevos.push(a);
+    } else {
+      reg.push(a);
+    }
+  });
+
+  const sortFn = (a, b) => {
+    const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', undefined, { sensitivity: 'base' });
+    if (resP !== 0) return resP;
+    const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', undefined, { sensitivity: 'base' });
+    if (resM !== 0) return resM;
+    return (a.nombre || '').localeCompare(b.nombre || '', undefined, { sensitivity: 'base' });
+  };
+
+  reg.sort(sortFn);
+  nuevos.sort(sortFn);
+
+  return [...reg, ...nuevos];
+};
+
 function Grupo({ user }) {
   const { showAlert } = useNotification();
   const [grupos, setGrupos] = useState([]);
@@ -33,7 +59,7 @@ function Grupo({ user }) {
   const [modalVisible, setModalVisible] = useState(null);
   const [grupoSeleccionado, setGrupoSeleccionado] = useState(null);
   const [nuevoGrupo, setNuevoGrupo] = useState({ nombre: '', asesor: '', aula: '', alumnos: [] });
-  const [alumnoInput, setAlumnoInput] = useState({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '' });
+  const [alumnoInput, setAlumnoInput] = useState({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '', esNuevoIngreso: false });
   const [asistencia, setAsistencia] = useState({});
   const [diasPorBimestre, setDiasPorBimestre] = useState({});
   const [bimestreAbierto, setBimestreAbierto] = useState({});
@@ -132,13 +158,7 @@ function Grupo({ user }) {
 
           const sortedGrupos = Array.isArray(gruposRes.data) ? gruposRes.data.map(g => ({
             ...g,
-            alumnos: Array.isArray(g.alumnos) ? [...g.alumnos].sort((a, b) => {
-              const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
-              if (resP !== 0) return resP;
-              const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
-              if (resM !== 0) return resM;
-              return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
-            }) : []
+            alumnos: Array.isArray(g.alumnos) ? sortAlumnosWithNuevoIngreso(g.alumnos) : []
           })).sort((a, b) =>
             a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
           ) : [];
@@ -166,13 +186,7 @@ function Grupo({ user }) {
 
           const sortedGrupos = Array.isArray(gruposRes.data) ? gruposRes.data.map(g => ({
             ...g,
-            alumnos: Array.isArray(g.alumnos) ? [...g.alumnos].sort((a, b) => {
-              const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
-              if (resP !== 0) return resP;
-              const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
-              if (resM !== 0) return resM;
-              return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
-            }) : []
+            alumnos: Array.isArray(g.alumnos) ? sortAlumnosWithNuevoIngreso(g.alumnos) : []
           })).sort((a, b) =>
             a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
           ) : [];
@@ -227,13 +241,7 @@ function Grupo({ user }) {
     if (tipo === 'gestionarGrupo') {
       setGrupoSeleccionado(data);
       if (data) { 
-        const sortedAlumnos = Array.isArray(data.alumnos) ? [...data.alumnos].sort((a, b) => {
-          const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
-          if (resP !== 0) return resP;
-          const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
-          if (resM !== 0) return resM;
-          return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
-        }) : [];
+        const sortedAlumnos = Array.isArray(data.alumnos) ? sortAlumnosWithNuevoIngreso(data.alumnos) : [];
 
         setNuevoGrupo({
           ...JSON.parse(JSON.stringify(data)),
@@ -311,7 +319,8 @@ function Grupo({ user }) {
         apellidoPaterno: data.apellidoPaterno,
         apellidoMaterno: data.apellidoMaterno || '',
         emailPadre: data.emailPadre || '',
-        telefonoPadre: data.telefonoPadre || ''
+        telefonoPadre: data.telefonoPadre || '',
+        esNuevoIngreso: !!data.esNuevoIngreso
       });
       setModalVisible('editarAlumno');
     } else if (tipo === 'importar') {
@@ -330,7 +339,7 @@ function Grupo({ user }) {
     setHasChanges(false);
     setGrupoSeleccionado(null);
     setNuevoGrupo({ nombre: '', asesor: '', alumnos: [] });
-    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '' });
+    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '', esNuevoIngreso: false });
     setBimestreAbierto({});
     setAsignaciones({});
     setEditingAlumno(null);
@@ -350,7 +359,8 @@ function Grupo({ user }) {
       apellidoPaterno: alumno.apellidoPaterno,
       apellidoMaterno: alumno.apellidoMaterno || '',
       emailPadre: alumno.emailPadre || '',
-      telefonoPadre: alumno.telefonoPadre || ''
+      telefonoPadre: alumno.telefonoPadre || '',
+      esNuevoIngreso: !!alumno.esNuevoIngreso
     });
     setEditingAlumno(alumno);
 
@@ -366,7 +376,7 @@ function Grupo({ user }) {
   const handleCancelarEdicion = () => {
     setEditingAlumno(null);
     setSelectedAlumnoIndex(-1);
-    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '' });
+    setAlumnoInput({ nombre: '', apellidoPaterno: '', apellidoMaterno: '', emailPadre: '', telefonoPadre: '', esNuevoIngreso: false });
   };
 
   // --- FUNCIONES CRUD Y LÓGICA ---
@@ -381,8 +391,7 @@ function Grupo({ user }) {
       // ACTUALIZAR INLINE
       setNuevoGrupo(prev => ({
         ...prev,
-        alumnos: prev.alumnos.map(a => a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a)
-        // No ordenamos aquí para no perder el índice de navegación si el usuario está en racha
+        alumnos: sortAlumnosWithNuevoIngreso(prev.alumnos.map(a => a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a))
       }));
       showAlert("Alumno actualizado en la lista.");
     } else {
@@ -391,13 +400,7 @@ function Grupo({ user }) {
       const nuevoAlumno = { _id: alumnoId, ...alumnoInput };
       setNuevoGrupo(prev => ({ 
         ...prev, 
-        alumnos: [...prev.alumnos, nuevoAlumno].sort((a, b) => {
-          const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', undefined, { sensitivity: 'base' });
-          if (resP !== 0) return resP;
-          const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', undefined, { sensitivity: 'base' });
-          if (resM !== 0) return resM;
-          return (a.nombre || '').localeCompare(b.nombre || '', undefined, { sensitivity: 'base' });
-        })
+        alumnos: sortAlumnosWithNuevoIngreso([...prev.alumnos, nuevoAlumno])
       }));
       handleCancelarEdicion();
     }
@@ -408,13 +411,7 @@ function Grupo({ user }) {
     if (!editingAlumno) return;
     setNuevoGrupo(prev => ({
       ...prev,
-      alumnos: prev.alumnos.map(a => a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a).sort((a, b) => {
-        const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', undefined, { sensitivity: 'base' });
-        if (resP !== 0) return resP;
-        const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', undefined, { sensitivity: 'base' });
-        if (resM !== 0) return resM;
-        return (a.nombre || '').localeCompare(b.nombre || '', undefined, { sensitivity: 'base' });
-      })
+      alumnos: sortAlumnosWithNuevoIngreso(prev.alumnos.map(a => a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a))
     }));
     setModalVisible('gestionarGrupo');
     setEditingAlumno(null);
@@ -1288,8 +1285,17 @@ function Grupo({ user }) {
                         onChange={(e) => setAlumnoInput({ ...alumnoInput, telefonoPadre: e.target.value })} 
                         onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
                       />
+                      <label className="checkbox-nuevo-ingreso-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '10px', fontSize: '0.88rem', color: '#ffb703', fontWeight: 'bold' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={!!alumnoInput.esNuevoIngreso} 
+                          onChange={(e) => setAlumnoInput({ ...alumnoInput, esNuevoIngreso: e.target.checked })} 
+                          style={{ accentColor: '#ffb703', width: '16px', height: '16px', cursor: 'pointer' }}
+                        />
+                        <span>🌟 Alumno de Nuevo Ingreso (Ingresó a mitad de curso)</span>
+                      </label>
                     </div>
-                    <div className="alumno-form-actions">
+                    <div className="alumno-form-actions" style={{ marginTop: '15px' }}>
                       <button className="btn btn-add" onClick={handleAgregarOActualizarAlumno}>
                         {editingAlumno ? 'Actualizar' : 'Agregar Alumno'}
                       </button>
@@ -1306,23 +1312,61 @@ function Grupo({ user }) {
                   <div className="alumnos-list" ref={alumnosListRef} tabIndex={0}>
                     <div className="alumnos-count-header">Alumnos en el grupo: {nuevoGrupo.alumnos.length}</div>
                     <ul>
-                      {nuevoGrupo.alumnos.map((a, index) => (
-                        <li 
-                          key={a._id} 
-                          className={`${selectedAlumnoIndex === index ? 'selected' : ''} ${editingAlumno?._id === a._id ? 'editing' : ''}`}
-                          onClick={() => handleSelectAlumno(index)}
-                          style={{ cursor: 'pointer' }}
-                        >
-                          <span className="alumno-nombre-display">
-                            <strong>{a.matricula || '---'}</strong> - {`${index + 1}. ${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`}
-                            <br />
-                            <small style={{ color: '#666' }}>{a.emailPadre || 'Sin correo'} | {a.telefonoPadre || 'Sin tel'}</small>
-                          </span>
-                          <div className="alumno-actions">
-                            <button className="btn-delete-alumno" onClick={(e) => { e.stopPropagation(); handleDeleteAlumno(a); }}><FaTrash /></button>
-                          </div>
-                        </li>
-                      ))}
+                      {nuevoGrupo.alumnos.map((a, index) => {
+                        const isFirstNuevo = a.esNuevoIngreso && (index === 0 || !nuevoGrupo.alumnos[index - 1]?.esNuevoIngreso);
+                        return (
+                          <React.Fragment key={a._id || index}>
+                            {isFirstNuevo && (
+                              <li className="divider-nuevo-ingreso-header" style={{
+                                backgroundColor: 'rgba(255, 216, 102, 0.15)',
+                                color: '#ffd866',
+                                borderTop: '1px solid #ffd866',
+                                borderBottom: '1px solid #ffd866',
+                                padding: '6px 10px',
+                                fontWeight: 'bold',
+                                fontSize: '0.75rem',
+                                letterSpacing: '0.5px',
+                                cursor: 'default',
+                                marginTop: '8px',
+                                marginBottom: '4px'
+                              }}>
+                                🌟 ALUMNOS DE NUEVO INGRESO (INGRESARON A MITAD DE CURSO)
+                              </li>
+                            )}
+                            <li 
+                              className={`${selectedAlumnoIndex === index ? 'selected' : ''} ${editingAlumno?._id === a._id ? 'editing' : ''} ${a.esNuevoIngreso ? 'row-nuevo-ingreso' : ''}`}
+                              onClick={() => handleSelectAlumno(index)}
+                              style={{ cursor: 'pointer', background: a.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined }}
+                            >
+                              <span className="alumno-nombre-display">
+                                <strong>{a.matricula || '---'}</strong> - {`${index + 1}. ${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`}
+                                {a.esNuevoIngreso && (
+                                  <span style={{
+                                    backgroundColor: '#574100',
+                                    color: '#ffd866',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 'bold',
+                                    marginLeft: '6px',
+                                    border: '1px solid #856404',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px'
+                                  }}>
+                                    🌟 Nuevo
+                                  </span>
+                                )}
+                                <br />
+                                <small style={{ color: '#666' }}>{a.emailPadre || 'Sin correo'} | {a.telefonoPadre || 'Sin tel'}</small>
+                              </span>
+                              <div className="alumno-actions">
+                                <button className="btn-delete-alumno" onClick={(e) => { e.stopPropagation(); handleDeleteAlumno(a); }}><FaTrash /></button>
+                              </div>
+                            </li>
+                          </React.Fragment>
+                        );
+                      })}
                     </ul>
                     <div className="list-hint">Tip: Usa las flechas ↑ ↓ para navegar</div>
                   </div>
@@ -1349,6 +1393,15 @@ function Grupo({ user }) {
                   <input type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} />
                   <input type="email" placeholder="Correo del Padre/Alumno" value={alumnoInput.emailPadre} onChange={(e) => setAlumnoInput({ ...alumnoInput, emailPadre: e.target.value })} />
                   <input type="text" placeholder="Teléfono (Opcional)" value={alumnoInput.telefonoPadre || ''} onChange={(e) => setAlumnoInput({ ...alumnoInput, telefonoPadre: e.target.value })} />
+                  <label className="checkbox-nuevo-ingreso-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '10px', fontSize: '0.88rem', color: '#ffb703', fontWeight: 'bold' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={!!alumnoInput.esNuevoIngreso} 
+                      onChange={(e) => setAlumnoInput({ ...alumnoInput, esNuevoIngreso: e.target.checked })} 
+                      style={{ accentColor: '#ffb703', width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    <span>🌟 Alumno de Nuevo Ingreso (Ingresó a mitad de curso)</span>
+                  </label>
                 </div>
               </div>
               <div className="modal-actions">
@@ -1496,51 +1549,73 @@ function Grupo({ user }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {grupoSeleccionado?.alumnos.sort((a, b) => {
-                        const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', undefined, { sensitivity: 'base' });
-                        if (resP !== 0) return resP;
-                        const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', undefined, { sensitivity: 'base' });
-                        if (resM !== 0) return resM;
-                        return (a.nombre || '').localeCompare(b.nombre || '', undefined, { sensitivity: 'base' });
-                      }).map((alumno, index) => {
-                        const totales = calcularTotales(alumno._id, bimestreActivo, asistencia, diasPorBimestre);
-                        const isHighlighted = highlightedAlumnoId === alumno._id;
-                        return (
-                          <tr key={alumno._id} className={isHighlighted ? 'highlight-row' : ''}>
-                            <td className="num-col" style={{ textAlign: 'center' }}>{index + 1}</td>
-                            <td className="matricula-col" style={{ textAlign: 'center', fontWeight: 'bold' }}>{alumno.matricula || '---'}</td>
-                            <td className="alumno-col">
-                              {alumno.apellidoPaterno} {alumno.apellidoMaterno || ''} {alumno.nombre}
-                            </td>
-                            <td style={{ textAlign: 'center', fontSize: '0.85rem' }}>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                <span style={{ color: 'var(--success-color)' }}>✅ {totales.presentes}</span>
-                                <span style={{ color: 'var(--danger-color)' }}>❌ {totales.faltas}</span>
-                                <span style={{ color: 'var(--warning-color)' }}>⚠️ {totales.justificados}</span>
-                                <span style={{ color: '#ff9800' }}>🕒 {totales.retardos}</span>
-                              </div>
-                            </td>
-                            {Array.from({ length: diasPorBimestre[bimestreActivo] || DIAS_INICIALES }).map((_, diaIndex) => {
-                              const key = `${alumno._id}-b${bimestreActivo}-d${diaIndex + 1}`;
-                              const registro = asistencia[key];
-                              return (
-                                <td key={diaIndex} style={{ padding: '2px', textAlign: 'center' }}>
-                                  <div
-                                    className={`cuadrito estado-${registro?.estado.toLowerCase() || ''}`}
-                                    style={{ margin: '0 auto' }}
-                                    onClick={() => handleMarcarAsistencia(alumno._id, bimestreActivo, diaIndex + 1)}
-                                    onMouseEnter={(e) => handleMouseEnterCell(e, alumno._id, bimestreActivo, diaIndex + 1, registro?.fecha)}
-                                    onMouseLeave={handleMouseLeaveCell}
-                                  >
-                                    {registro?.estado || ''}
+                      {(() => {
+                        const sortedAlumnos = sortAlumnosWithNuevoIngreso(grupoSeleccionado?.alumnos || []);
+                        const totalDias = diasPorBimestre[bimestreActivo] || DIAS_INICIALES;
+                        return sortedAlumnos.map((alumno, index) => {
+                          const isFirstNuevo = alumno.esNuevoIngreso && (index === 0 || !sortedAlumnos[index - 1]?.esNuevoIngreso);
+                          const totales = calcularTotales(alumno._id, bimestreActivo, asistencia, diasPorBimestre);
+                          const isHighlighted = highlightedAlumnoId === alumno._id;
+                          return (
+                            <React.Fragment key={alumno._id}>
+                              {isFirstNuevo && (
+                                <tr className="divider-nuevo-ingreso-row" style={{ backgroundColor: 'rgba(255, 216, 102, 0.18)', color: '#ffd866', fontWeight: 'bold' }}>
+                                  <td colSpan={5 + totalDias} style={{ padding: '6px 12px', fontSize: '0.78rem', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                                    🌟 ALUMNOS DE NUEVO INGRESO (INGRESARON A MITAD DE CURSO)
+                                  </td>
+                                </tr>
+                              )}
+                              <tr className={`${isHighlighted ? 'highlight-row' : ''} ${alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : ''}`} style={{ backgroundColor: alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined }}>
+                                <td className="num-col" style={{ textAlign: 'center' }}>{index + 1}</td>
+                                <td className="matricula-col" style={{ textAlign: 'center', fontWeight: 'bold' }}>{alumno.matricula || '---'}</td>
+                                <td className="alumno-col">
+                                  {alumno.apellidoPaterno} {alumno.apellidoMaterno || ''} {alumno.nombre}
+                                  {alumno.esNuevoIngreso && (
+                                    <span style={{
+                                      backgroundColor: '#574100',
+                                      color: '#ffd866',
+                                      padding: '1px 5px',
+                                      borderRadius: '4px',
+                                      fontSize: '0.7rem',
+                                      fontWeight: 'bold',
+                                      marginLeft: '6px',
+                                      border: '1px solid #856404'
+                                    }}>
+                                      🌟 Nuevo
+                                    </span>
+                                  )}
+                                </td>
+                                <td style={{ textAlign: 'center', fontSize: '0.85rem' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                    <span style={{ color: 'var(--success-color)' }}>✅ {totales.presentes}</span>
+                                    <span style={{ color: 'var(--danger-color)' }}>❌ {totales.faltas}</span>
+                                    <span style={{ color: 'var(--warning-color)' }}>⚠️ {totales.justificados}</span>
+                                    <span style={{ color: '#ff9800' }}>🕒 {totales.retardos}</span>
                                   </div>
                                 </td>
-                              );
-                            })}
-                            <td></td>
-                          </tr>
-                        );
-                      })}
+                                {Array.from({ length: totalDias }).map((_, diaIndex) => {
+                                  const key = `${alumno._id}-b${bimestreActivo}-d${diaIndex + 1}`;
+                                  const registro = asistencia[key];
+                                  return (
+                                    <td key={diaIndex} style={{ padding: '2px', textAlign: 'center' }}>
+                                      <div
+                                        className={`cuadrito estado-${registro?.estado.toLowerCase() || ''}`}
+                                        style={{ margin: '0 auto' }}
+                                        onClick={() => handleMarcarAsistencia(alumno._id, bimestreActivo, diaIndex + 1)}
+                                        onMouseEnter={(e) => handleMouseEnterCell(e, alumno._id, bimestreActivo, diaIndex + 1, registro?.fecha)}
+                                        onMouseLeave={handleMouseLeaveCell}
+                                      >
+                                        {registro?.estado || ''}
+                                      </div>
+                                    </td>
+                                  );
+                                })}
+                                <td></td>
+                              </tr>
+                            </React.Fragment>
+                          );
+                        });
+                      })()}
                     </tbody>
                   </table>
                 </div>

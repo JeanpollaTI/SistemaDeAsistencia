@@ -33,6 +33,10 @@ const AlumnoSchema = new mongoose.Schema({
     // unique: true, // REMOVIDO: Ahora es único por escuela (se valida en la lógica si es necesario o se deja por matricula global)
     sparse: true,
     trim: true,
+  },
+  esNuevoIngreso: {
+    type: Boolean,
+    default: false,
   }
 });
 

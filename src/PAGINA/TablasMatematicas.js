@@ -29,6 +29,32 @@ const OPTIONS = [
     { value: 'Salteadas', label: 'S', fullText: 'Salteadas', colorClass: 'badge-salteadas' }
 ];
 
+const sortAlumnosWithNuevoIngreso = (alumnosList = []) => {
+    const reg = [];
+    const nuevos = [];
+
+    alumnosList.forEach(a => {
+        if (a.esNuevoIngreso) {
+            nuevos.push(a);
+        } else {
+            reg.push(a);
+        }
+    });
+
+    const sortFn = (a, b) => {
+        const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', undefined, { sensitivity: 'base' });
+        if (resP !== 0) return resP;
+        const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', undefined, { sensitivity: 'base' });
+        if (resM !== 0) return resM;
+        return (a.nombre || '').localeCompare(b.nombre || '', undefined, { sensitivity: 'base' });
+    };
+
+    reg.sort(sortFn);
+    nuevos.sort(sortFn);
+
+    return [...reg, ...nuevos];
+};
+
 const TablasMatematicas = ({ user }) => {
     const { addNotification } = useNotification() || {};
     const [selectedGrupo, setSelectedGrupo] = useState('1A');
@@ -81,7 +107,8 @@ const TablasMatematicas = ({ user }) => {
             const allGrupos = gruposRes.data || [];
             const currentGrupoData = allGrupos.find(g => g.nombre.toUpperCase() === selectedGrupo.toUpperCase());
             
-            const alumnos = currentGrupoData?.alumnos || [];
+            const rawAlumnos = currentGrupoData?.alumnos || [];
+            const alumnos = sortAlumnosWithNuevoIngreso(rawAlumnos);
             setAlumnosGrupo(alumnos);
 
             // Populate current group's evaluator and matrix
@@ -486,46 +513,81 @@ const TablasMatematicas = ({ user }) => {
                                                 ))}
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            {alumnosGrupo.map((alumno, index) => {
-                                                const id = String(alumno._id || alumno.id);
-                                                const alumnoMatrix = matrix[id] || {};
-                                                const fullStudentName = `${alumno.nombre} ${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''}`.trim();
+                                         <tbody>
+                                             {alumnosGrupo.map((alumno, index) => {
+                                                 const id = String(alumno._id || alumno.id);
+                                                 const alumnoMatrix = matrix[id] || {};
+                                                 const fullStudentName = `${alumno.nombre} ${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''}`.trim();
+                                                 const isFirstNuevo = alumno.esNuevoIngreso && (index === 0 || !alumnosGrupo[index - 1]?.esNuevoIngreso);
 
-                                                return (
-                                                    <tr key={id}>
-                                                        <td className="sticky-col num-col">{index + 1}</td>
-                                                        <td className="sticky-col name-col" title={fullStudentName}>
-                                                            {fullStudentName}
-                                                        </td>
-                                                        {PERIODOS_CONFIG.map(p => (
-                                                            p.tablas.map((tNum, idx) => {
-                                                                const cellKey = `${p.key}_t${tNum}_i${idx}`;
-                                                                const val = alumnoMatrix[cellKey] || '';
-                                                                const matchedOpt = OPTIONS.find(o => o.value === val) || OPTIONS[0];
+                                                 return (
+                                                     <React.Fragment key={id}>
+                                                         {isFirstNuevo && (
+                                                             <tr key={`divider_nuevo_${index}`} className="divider-nuevo-ingreso-row">
+                                                                 <td colSpan={37} style={{
+                                                                     background: 'rgba(255, 216, 102, 0.15)',
+                                                                     color: '#ffd866',
+                                                                     borderTop: '2px solid #ffd866',
+                                                                     borderBottom: '2px solid #ffd866',
+                                                                     padding: '8px 16px',
+                                                                     fontWeight: '800',
+                                                                     fontSize: '0.85rem',
+                                                                     letterSpacing: '0.5px',
+                                                                     textAlign: 'center'
+                                                                 }}>
+                                                                     🌟 ALUMNOS DE NUEVO INGRESO (Ingresaron a mitad de curso)
+                                                                 </td>
+                                                             </tr>
+                                                         )}
+                                                         <tr className={alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : ''}>
+                                                             <td className="sticky-col num-col">{index + 1}</td>
+                                                             <td className="sticky-col name-col" title={fullStudentName}>
+                                                                 {fullStudentName}
+                                                                 {alumno.esNuevoIngreso && (
+                                                                     <span style={{
+                                                                         background: '#574100',
+                                                                         color: '#ffd866',
+                                                                         border: '1px solid #856404',
+                                                                         borderRadius: '4px',
+                                                                         fontSize: '0.7rem',
+                                                                         padding: '1px 5px',
+                                                                         fontWeight: '800',
+                                                                         marginLeft: '6px',
+                                                                         display: 'inline-block'
+                                                                     }}>
+                                                                         🌟 Nuevo
+                                                                     </span>
+                                                                 )}
+                                                             </td>
+                                                             {PERIODOS_CONFIG.map(p => (
+                                                                 p.tablas.map((tNum, idx) => {
+                                                                     const cellKey = `${p.key}_t${tNum}_i${idx}`;
+                                                                     const val = alumnoMatrix[cellKey] || '';
+                                                                     const matchedOpt = OPTIONS.find(o => o.value === val) || OPTIONS[0];
 
-                                                                return (
-                                                                    <td key={cellKey} className="matrix-cell">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleCellClick(id, cellKey)}
-                                                                            disabled={!canEditCurrentGroup}
-                                                                            className={`status-btn ${matchedOpt.colorClass} ${!canEditCurrentGroup ? 'readonly-btn' : ''}`}
-                                                                            title={
-                                                                                canEditCurrentGroup
-                                                                                    ? `${matchedOpt.fullText} (Tabla ${tNum} - ${p.name}). Clic para cambiar.`
-                                                                                    : `${matchedOpt.fullText} (Tabla ${tNum} - ${p.name}) - Solo Lectura`
-                                                                            }
-                                                                        >
-                                                                            {matchedOpt.label}
-                                                                        </button>
-                                                                    </td>
-                                                                );
-                                                            })
-                                                        ))}
-                                                    </tr>
-                                                );
-                                            })}
+                                                                     return (
+                                                                         <td key={cellKey} className="matrix-cell">
+                                                                             <button
+                                                                                 type="button"
+                                                                                 onClick={() => handleCellClick(id, cellKey)}
+                                                                                 disabled={!canEditCurrentGroup}
+                                                                                 className={`status-btn ${matchedOpt.colorClass} ${!canEditCurrentGroup ? 'readonly-btn' : ''}`}
+                                                                                 title={
+                                                                                     canEditCurrentGroup
+                                                                                         ? `${matchedOpt.fullText} (Tabla ${tNum} - ${p.name}). Clic para cambiar.`
+                                                                                         : `${matchedOpt.fullText} (Tabla ${tNum} - ${p.name}) - Solo Lectura`
+                                                                                 }
+                                                                             >
+                                                                                 {matchedOpt.label}
+                                                                             </button>
+                                                                         </td>
+                                                                     );
+                                                                 })
+                                                             ))}
+                                                         </tr>
+                                                     </React.Fragment>
+                                                 );
+                                             })}
                                         </tbody>
                                     </table>
                                 </div>

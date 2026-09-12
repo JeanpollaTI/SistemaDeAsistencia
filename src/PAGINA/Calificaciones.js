@@ -46,6 +46,32 @@ function SortableHeader({ id, children, disabled, colSpan }) {
 // --- CAMBIO: URL de la API desde variables de entorno para Vercel ---
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+const sortAlumnosWithNuevoIngreso = (alumnosList = []) => {
+  const reg = [];
+  const nuevos = [];
+
+  (alumnosList || []).forEach(a => {
+    if (a.esNuevoIngreso) {
+      nuevos.push(a);
+    } else {
+      reg.push(a);
+    }
+  });
+
+  const sortFn = (a, b) => {
+    const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
+    if (resP !== 0) return resP;
+    const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
+    if (resM !== 0) return resM;
+    return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
+  };
+
+  reg.sort(sortFn);
+  nuevos.sort(sortFn);
+
+  return [...reg, ...nuevos];
+};
+
 // --- Componente Principal de Calificaciones (Vista Admin) ---
 function Calificaciones({ user }) {
   const { showAlert } = useNotification();
@@ -173,13 +199,7 @@ function Calificaciones({ user }) {
     setLoading(true);
     setSelectedGrupo(grupo);
 
-    const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => {
-      const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
-      if (resP !== 0) return resP;
-      const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
-      if (resM !== 0) return resM;
-      return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
-    });
+    const alumnosOrdenados = sortAlumnosWithNuevoIngreso(grupo.alumnos || []);
     setAlumnos(alumnosOrdenados);
 
     // Combinar asignaturas asignadas y orden guardado
@@ -1030,81 +1050,108 @@ function Calificaciones({ user }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {alumnos.map(alumno => {
+                      {alumnos.map((alumno, index) => {
+                        const isFirstNuevo = alumno.esNuevoIngreso && (index === 0 || !alumnos[index - 1]?.esNuevoIngreso);
                         const promFinal = calcularPromedioFinal(alumno._id);
+                        const totalCols = 5 + materias.length * getPeriodCount() + getPeriodCount();
                         return (
-                          <tr key={alumno._id}>
-                            <td>{alumnos.indexOf(alumno) + 1}</td>
-                            <td className="matricula-cell">{alumno.matricula || '---'}</td>
-                            <td className="nombre-cell">{`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</td>
-                            {materias.map(materia => (
-                              <React.Fragment key={`${alumno._id}-${materia}`}>
-                                {getPeriodsArray().map(bimestreIndex => {
-                                  const rawCal = calificaciones[alumno._id]?.[materia]?.[bimestreIndex];
-                                  const cal = clampGrade(rawCal);
-                                  const liveGradeNum = cal != null ? redondearCalificacion(cal) : null;
-                                  
-                                  const trimesterKey = String(bimestreIndex + 1);
-                                  const frozenGrade = cortes[materia]?.[trimesterKey]?.promedios?.[alumno._id];
-
-                                  let cellContent = '-';
-                                  let cellClass = '';
-                                  
-                                  if (frozenGrade !== undefined && frozenGrade !== null) {
-                                    cellClass = frozenGrade < 6 ? 'reprobado' : 'aprobado';
-                                    const isDifferent = liveGradeNum !== null && liveGradeNum !== frozenGrade;
-                                    if (isDifferent) {
-                                      const diff = liveGradeNum - frozenGrade;
-                                      const diffText = diff > 0 ? `+${diff}` : `${diff}`;
-                                      const diffColor = diff > 0 ? '#2ecc71' : '#e74c3c';
-                                      cellContent = (
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                                          <strong style={{ fontSize: '1rem', color: '#fff' }}>{frozenGrade}</strong>
-                                          <span style={{ 
-                                            fontSize: '0.65rem', 
-                                            color: diffColor, 
-                                            backgroundColor: diff > 0 ? 'rgba(46, 204, 113, 0.15)' : 'rgba(231, 76, 60, 0.15)',
-                                            padding: '1px 5px',
-                                            borderRadius: '4px',
-                                            marginTop: '2px',
-                                            fontWeight: 'bold',
-                                            whiteSpace: 'nowrap'
-                                          }} title={`Promedio en boleta: ${frozenGrade} | Promedio actual: ${liveGradeNum}`}>
-                                            {diffText} Act: {liveGradeNum}
-                                          </span>
-                                        </div>
-                                      );
-                                    } else {
-                                      cellContent = <strong>{frozenGrade}</strong>;
-                                    }
-                                  } else if (liveGradeNum !== null) {
-                                    cellClass = liveGradeNum < 6 ? 'reprobado' : 'aprobado';
-                                    cellContent = liveGradeNum;
-                                  }
-
-                                  return (
-                                    <td key={`${materia}-b${bimestreIndex}`} className={cellClass}>
-                                      {cellContent}
-                                    </td>
-                                  )
-                                })}
-                              </React.Fragment>
-                            ))}
-                            {getPeriodsArray().map(i => {
-                              const promedio = calcularPromedioBimestre(alumno._id, i);
-                              return (
-                                <td key={`prom-${i}`} className={`promedio-cell ${promedio > 0 && promedio < 6 ? 'reprobado' : 'aprobado'}`}>
-                                  <strong>{promedio > 0 ? promedio.toFixed(1) : '-'}</strong>
+                          <React.Fragment key={alumno._id}>
+                            {isFirstNuevo && (
+                              <tr className="divider-nuevo-ingreso-row" style={{ backgroundColor: 'rgba(255, 216, 102, 0.18)', color: '#ffd866', fontWeight: 'bold' }}>
+                                <td colSpan={totalCols} style={{ padding: '6px 12px', fontSize: '0.78rem', letterSpacing: '0.5px', textTransform: 'uppercase', textAlign: 'left' }}>
+                                  🌟 ALUMNOS DE NUEVO INGRESO (INGRESARON A MITAD DE CURSO)
                                 </td>
-                              );
-                            })}
-                            <td className={`promedio-final-cell ${promFinal > 0 && promFinal < 6 ? 'reprobado' : 'aprobado'}`}>
-                              <strong>{promFinal > 0 ? promFinal.toFixed(2) : '-'}</strong>
-                            </td>
-                            <td className="actions-cell">
-                                <button onClick={() => setModalPdf({ visible: true, alumno })} title="Descargar Boleta Individual">📄</button>
-                            </td>
-                          </tr>
+                              </tr>
+                            )}
+                            <tr className={alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : ''} style={{ backgroundColor: alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined }}>
+                              <td>{index + 1}</td>
+                              <td className="matricula-cell">{alumno.matricula || '---'}</td>
+                              <td className="nombre-cell">
+                                {`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}
+                                {alumno.esNuevoIngreso && (
+                                  <span style={{
+                                    backgroundColor: '#574100',
+                                    color: '#ffd866',
+                                    padding: '1px 5px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 'bold',
+                                    marginLeft: '6px',
+                                    border: '1px solid #856404'
+                                  }}>
+                                    🌟 Nuevo
+                                  </span>
+                                )}
+                              </td>
+                              {materias.map(materia => (
+                                <React.Fragment key={`${alumno._id}-${materia}`}>
+                                  {getPeriodsArray().map(bimestreIndex => {
+                                    const rawCal = calificaciones[alumno._id]?.[materia]?.[bimestreIndex];
+                                    const cal = clampGrade(rawCal);
+                                    const liveGradeNum = cal != null ? redondearCalificacion(cal) : null;
+                                    
+                                    const trimesterKey = String(bimestreIndex + 1);
+                                    const frozenGrade = cortes[materia]?.[trimesterKey]?.promedios?.[alumno._id];
+
+                                    let cellContent = '-';
+                                    let cellClass = '';
+                                    
+                                    if (frozenGrade !== undefined && frozenGrade !== null) {
+                                      cellClass = frozenGrade < 6 ? 'reprobado' : 'aprobado';
+                                      const isDifferent = liveGradeNum !== null && liveGradeNum !== frozenGrade;
+                                      if (isDifferent) {
+                                        const diff = liveGradeNum - frozenGrade;
+                                        const diffText = diff > 0 ? `+${diff}` : `${diff}`;
+                                        const diffColor = diff > 0 ? '#2ecc71' : '#e74c3c';
+                                        cellContent = (
+                                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                            <strong style={{ fontSize: '1rem', color: '#fff' }}>{frozenGrade}</strong>
+                                            <span style={{ 
+                                              fontSize: '0.65rem', 
+                                              color: diffColor, 
+                                              backgroundColor: diff > 0 ? 'rgba(46, 204, 113, 0.15)' : 'rgba(231, 76, 60, 0.15)',
+                                              padding: '1px 5px',
+                                              borderRadius: '4px',
+                                              marginTop: '2px',
+                                              fontWeight: 'bold',
+                                              whiteSpace: 'nowrap'
+                                            }} title={`Promedio en boleta: ${frozenGrade} | Promedio actual: ${liveGradeNum}`}>
+                                              {diffText} Act: {liveGradeNum}
+                                            </span>
+                                          </div>
+                                        );
+                                      } else {
+                                        cellContent = <strong>{frozenGrade}</strong>;
+                                      }
+                                    } else if (liveGradeNum !== null) {
+                                      cellClass = liveGradeNum < 6 ? 'reprobado' : 'aprobado';
+                                      cellContent = liveGradeNum;
+                                    }
+
+                                    return (
+                                      <td key={`${materia}-b${bimestreIndex}`} className={cellClass}>
+                                        {cellContent}
+                                      </td>
+                                    )
+                                  })}
+                                </React.Fragment>
+                              ))}
+                              {getPeriodsArray().map(i => {
+                                const promedio = calcularPromedioBimestre(alumno._id, i);
+                                return (
+                                  <td key={`prom-${i}`} className={`promedio-cell ${promedio > 0 && promedio < 6 ? 'reprobado' : 'aprobado'}`}>
+                                    <strong>{promedio > 0 ? promedio.toFixed(1) : '-'}</strong>
+                                  </td>
+                                );
+                              })}
+                              <td className={`promedio-final-cell ${promFinal > 0 && promFinal < 6 ? 'reprobado' : 'aprobado'}`}>
+                                <strong>{promFinal > 0 ? promFinal.toFixed(2) : '-'}</strong>
+                              </td>
+                              <td className="actions-cell">
+                                  <button onClick={() => setModalPdf({ visible: true, alumno })} title="Descargar Boleta Individual">📄</button>
+                              </td>
+                            </tr>
+                          </React.Fragment>
                         );
                       })}
                     </tbody>
