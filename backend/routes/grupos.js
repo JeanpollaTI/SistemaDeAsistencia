@@ -205,6 +205,84 @@ router.delete("/:id", authMiddleware, isAdmin, schoolMiddleware, async (req, res
     }
 });
 
+// [POST] /grupos/promover-alumnos - Promover/Copiar lista de alumnos entre grupos (Admin)
+router.post("/promover-alumnos", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
+    try {
+        const { sourceGrupoId, targetGrupoId, alumnoIds, action } = req.body;
+        const school_id = req.user.school_id;
+
+        if (!sourceGrupoId || !targetGrupoId || !Array.isArray(alumnoIds) || alumnoIds.length === 0) {
+            return res.status(400).json({ error: "Debe seleccionar un grupo origen, grupo destino y al menos un alumno." });
+        }
+
+        if (sourceGrupoId === targetGrupoId) {
+            return res.status(400).json({ error: "El grupo origen y el grupo destino no pueden ser el mismo." });
+        }
+
+        const sourceGrupo = await Grupo.findOne({ _id: sourceGrupoId, school_id });
+        const targetGrupo = await Grupo.findOne({ _id: targetGrupoId, school_id });
+
+        if (!sourceGrupo || !targetGrupo) {
+            return res.status(404).json({ error: "No se encontró el grupo origen o destino especificado." });
+        }
+
+        const selectedAlumnos = sourceGrupo.alumnos.filter(a => {
+            const idStr = String(a._id || a.id);
+            return alumnoIds.includes(idStr);
+        });
+
+        let addedCount = 0;
+        let skippedCount = 0;
+
+        for (const alumno of selectedAlumnos) {
+            const rawObj = alumno.toObject ? alumno.toObject() : { ...alumno };
+            
+            // Comprobación anti-conflicto: verificar si el alumno ya existe en el grupo destino
+            const alreadyExists = targetGrupo.alumnos.some(targetA => {
+                const sameMatricula = targetA.matricula && rawObj.matricula && String(targetA.matricula) === String(rawObj.matricula);
+                const sameFullName = targetA.nombre?.trim().toLowerCase() === rawObj.nombre?.trim().toLowerCase() &&
+                    (targetA.apellidoPaterno || '').trim().toLowerCase() === (rawObj.apellidoPaterno || '').trim().toLowerCase() &&
+                    (targetA.apellidoMaterno || '').trim().toLowerCase() === (rawObj.apellidoMaterno || '').trim().toLowerCase();
+                return sameMatricula || sameFullName;
+            });
+
+            if (!alreadyExists) {
+                const newStudentData = { ...rawObj };
+                delete newStudentData._id;
+                delete newStudentData.id;
+                
+                if (!newStudentData.matricula) {
+                    newStudentData.matricula = await getNextMatricula();
+                }
+
+                targetGrupo.alumnos.push(newStudentData);
+                addedCount++;
+            } else {
+                skippedCount++;
+            }
+        }
+
+        await targetGrupo.save();
+
+        if (action === 'move') {
+            sourceGrupo.alumnos = sourceGrupo.alumnos.filter(a => {
+                const idStr = String(a._id || a.id);
+                return !alumnoIds.includes(idStr);
+            });
+            await sourceGrupo.save();
+        }
+
+        res.json({
+            msg: `Se ${action === 'move' ? 'movieron' : 'copiaron'} ${addedCount} alumnos a ${targetGrupo.nombre}.${skippedCount > 0 ? ` (${skippedCount} ya estaban registrados previamente)` : ''}`,
+            addedCount,
+            skippedCount
+        });
+    } catch (err) {
+        console.error("Error en [POST /grupos/promover-alumnos]:", err);
+        res.status(500).json({ error: "Error al promover alumnos entre grupos.", details: err.message });
+    }
+});
+
 // --- RUTA PARA PROFESORES ---
 
 // [GET] /grupos/mis-grupos - Obtener los grupos asignados al profesor logueado

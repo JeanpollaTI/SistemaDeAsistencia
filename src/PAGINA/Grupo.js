@@ -13,6 +13,7 @@ import logoImage from './Logoescuela.png'; // Asegúrate que esta ruta sea corre
 import importFormatImg from './formato.png';
 import BrandingModal from '../COMPONENTE/BrandingModal';
 import GroupPerformanceModal from '../COMPONENTE/GroupPerformanceModal';
+import PromoverAlumnosModal from '../COMPONENTE/PromoverAlumnosModal';
 
 // --- URL de la API desde variables de entorno para Vercel ---
 // CORRECCIÓN: Eliminado '/api' para coincidir con Home.js y la estructura del backend
@@ -53,6 +54,7 @@ function Grupo({ user }) {
   const [hasChanges, setHasChanges] = useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const [isPerformanceModalOpen, setIsPerformanceModalOpen] = useState(false);
+  const [isPromoverModalOpen, setIsPromoverModalOpen] = useState(false);
   const [currentGroupToAnalyze, setCurrentGroupToAnalyze] = useState(null);
   const [searchTermProfesor, setSearchTermProfesor] = useState('');
   const [expandedTeachersGroups, setExpandedTeachersGroups] = useState({});
@@ -1083,6 +1085,14 @@ function Grupo({ user }) {
               <h1>Gestión de Grupos</h1>
               <div className="header-actions">
                 <button className="btn btn-primary" onClick={() => abrirModal('gestionarGrupo')}>Crear Grupo</button>
+                <button
+                  className="btn btn-secondary"
+                  style={{ background: 'linear-gradient(135deg, #00cbcb, #009999)', color: '#111', fontWeight: 'bold', border: 'none' }}
+                  onClick={() => setIsPromoverModalOpen(true)}
+                  title="Copiar o promover lista de alumnos entre grupos (ej. 1°A a 2°A)"
+                >
+                  📋 Paso de Grado (Promover)
+                </button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <button className="btn btn-secondary" onClick={() => abrirModal('importar')}>Importar Alumnos XLS</button>
                   <FaQuestionCircle
@@ -1651,6 +1661,20 @@ function Grupo({ user }) {
           onClose={() => setIsPerformanceModalOpen(false)}
           grupo={currentGroupToAnalyze}
           schoolConfig={schoolConfig}
+        />
+
+        <PromoverAlumnosModal
+          isOpen={isPromoverModalOpen}
+          onClose={() => setIsPromoverModalOpen(false)}
+          grupos={grupos}
+          onSuccess={() => {
+            const token = localStorage.getItem('token');
+            if (token) {
+              axios.get(`${API_URL}/grupos`, { headers: { Authorization: `Bearer ${token}` } })
+                .then(res => setGrupos(res.data))
+                .catch(err => console.error(err));
+            }
+          }}
         />
       </div>
     </div>

@@ -165,9 +165,20 @@ const TablasMatematicas = ({ user }) => {
         }
     };
 
+    // Check if user is assigned to currently selected group
+    const currentRecord = allTablasData.find(t => t.grupoNombre === selectedGrupo);
+    const evalId = currentRecord?.evaluador_id?._id || currentRecord?.evaluador_id || selectedEvaluadorId;
+    const currentUserId = String(user?._id || user?.id || '');
+
+    const isUserAssignedToCurrentGroup = 
+        (evalId && String(evalId) === currentUserId) ||
+        (Array.isArray(currentRecord?.evaluadores) && currentRecord.evaluadores.some(e => String(e._id || e) === currentUserId));
+
+    const canEditCurrentGroup = isProfesorUser || (isAdminUser && isUserAssignedToCurrentGroup);
+
     const handleCellClick = (alumnoId, cellKey) => {
-        // La administradora en vista previa NO puede modificar los valores. Solo el docente asignado.
-        if (!isProfesorUser) return;
+        // Solo se permite modificar si el usuario puede editar este grupo
+        if (!canEditCurrentGroup) return;
 
         setMatrix(prev => {
             const currentVal = prev[alumnoId]?.[cellKey] || '';
@@ -367,6 +378,27 @@ const TablasMatematicas = ({ user }) => {
                     {/* VISTA ADMINISTRADOR: RESUMEN Y RENDIMIENTO DEL GRUPO */}
                     {isAdminUser && (
                         <div className="admin-performance-dashboard">
+                            {isUserAssignedToCurrentGroup && (
+                                <div className="admin-assigned-notice animated-fade" style={{
+                                    background: 'rgba(0, 203, 203, 0.12)',
+                                    border: '1px solid rgba(0, 203, 203, 0.4)',
+                                    color: '#00cbcb',
+                                    borderRadius: '10px',
+                                    padding: '12px 18px',
+                                    marginBottom: '1rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    fontWeight: '600',
+                                    fontSize: '0.92rem'
+                                }}>
+                                    <FaUserCheck style={{ fontSize: '1.2rem' }} />
+                                    <span>
+                                        Te has asignado como <strong>Evaluador</strong> del grupo {selectedGrupo}. Tienes habilitada la captura por clics y el botón de guardado.
+                                    </span>
+                                </div>
+                            )}
+
                             <div className="performance-cards-grid">
                                 <div className="perf-card">
                                     <span className="perf-label">Docente Evaluador</span>
@@ -414,12 +446,12 @@ const TablasMatematicas = ({ user }) => {
                         </div>
                     )}
 
-                    {/* VISTA TABLA DE EVALUACIÓN (PROFESORES O ADMIN PREVIEW) */}
-                    {(isProfesorUser || (isAdminUser && showAdminTablePreview)) && (
+                    {/* VISTA TABLA DE EVALUACIÓN (PROFESORES, ADMIN ASIGNADO O ADMIN PREVIEW) */}
+                    {(isProfesorUser || canEditCurrentGroup || (isAdminUser && showAdminTablePreview)) && (
                         <>
                             <div className="table-legend-bar">
                                 <span className="legend-title">
-                                    {isAdminUser ? 'Vista Previa (Solo Lectura - El administrador no altera valores):' : 'Modo Clics:'}
+                                    {canEditCurrentGroup ? 'Modo Clics (Captura Activa):' : 'Vista Previa (Solo Lectura - Administrador):'}
                                 </span>
                                 <span className="legend-item badge-incompleta">1 Clic ➔ 🔴 <strong>I</strong> (Incompleta)</span>
                                 <span className="legend-item badge-enorden">2 Clics ➔ 🟡 <strong>O</strong> (En orden)</span>
@@ -477,10 +509,10 @@ const TablasMatematicas = ({ user }) => {
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => handleCellClick(id, cellKey)}
-                                                                            disabled={!isProfesorUser}
-                                                                            className={`status-btn ${matchedOpt.colorClass} ${!isProfesorUser ? 'readonly-btn' : ''}`}
+                                                                            disabled={!canEditCurrentGroup}
+                                                                            className={`status-btn ${matchedOpt.colorClass} ${!canEditCurrentGroup ? 'readonly-btn' : ''}`}
                                                                             title={
-                                                                                isProfesorUser
+                                                                                canEditCurrentGroup
                                                                                     ? `${matchedOpt.fullText} (Tabla ${tNum} - ${p.name}). Clic para cambiar.`
                                                                                     : `${matchedOpt.fullText} (Tabla ${tNum} - ${p.name}) - Solo Lectura`
                                                                             }
@@ -503,8 +535,8 @@ const TablasMatematicas = ({ user }) => {
                 </div>
             )}
 
-            {/* BOTÓN FLOTANTE CIRCULAR FIJO EN LA ESQUINA INFERIOR DERECHA (SOLO PARA DOCENTES QUE EVALÚAN) */}
-            {isProfesorUser && (
+            {/* BOTÓN FLOTANTE CIRCULAR FIJO EN LA ESQUINA INFERIOR DERECHA (DOCENTE ASIGNADO O ADMIN ASIGNADO) */}
+            {canEditCurrentGroup && (
                 <button
                     type="button"
                     className="btn-save-fab"
