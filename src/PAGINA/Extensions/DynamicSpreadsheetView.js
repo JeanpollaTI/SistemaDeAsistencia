@@ -8,6 +8,8 @@ import {
 import apiClient from '../../api/apiClient';
 import './Extensions.css';
 
+import ColumnHeaderCell from './ColumnHeaderCell';
+
 const DynamicSpreadsheetView = ({ user }) => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -24,10 +26,8 @@ const DynamicSpreadsheetView = ({ user }) => {
     const [filterStatus, setFilterStatus] = useState('ALL');
 
     // UI Interactive States (NO MORE window.prompt)
-    const [activeMenuColKey, setActiveMenuColKey] = useState(null);
     const [editingColKey, setEditingColKey] = useState(null);
     const [editingLabelValue, setEditingLabelValue] = useState('');
-    const [statusPopoverColKey, setStatusPopoverColKey] = useState(null);
     const [inAppToast, setInAppToast] = useState(null);
     const [confirmDeleteColKey, setConfirmDeleteColKey] = useState(null);
 
@@ -159,22 +159,22 @@ const DynamicSpreadsheetView = ({ user }) => {
         }
     };
 
-    // --- INLINE COLUMN LABEL RENAMING (No window.prompt) ---
+    // --- INLINE COLUMN LABEL RENAMING ---
     const startRenameColumn = (colKey, currentLabel) => {
         if (!canEdit) return;
         setEditingColKey(colKey);
         setEditingLabelValue(currentLabel);
-        setActiveMenuColKey(null);
     };
 
-    const saveRenameColumn = async () => {
-        if (!editingColKey || !editingLabelValue.trim()) {
+    const saveRenameColumn = async (colKeyParam = null, newLabelParam = null) => {
+        const colKey = colKeyParam || editingColKey;
+        const newLabel = (newLabelParam || editingLabelValue).trim();
+
+        if (!colKey || !newLabel) {
             setEditingColKey(null);
             return;
         }
 
-        const colKey = editingColKey;
-        const newLabel = editingLabelValue.trim();
         setEditingColKey(null);
 
         // Optimistic update template columns
@@ -196,7 +196,7 @@ const DynamicSpreadsheetView = ({ user }) => {
         }
     };
 
-    // --- ADD COLUMN (No window.prompt) ---
+    // --- ADD COLUMN ---
     const handleAddNewColumn = async (targetGroupHeader = 'Primer periodo') => {
         if (!canEdit) return;
 
@@ -221,7 +221,6 @@ const DynamicSpreadsheetView = ({ user }) => {
     // --- DUPLICATE COLUMN ---
     const handleDuplicateColumn = async (colKey) => {
         if (!canEdit) return;
-        setActiveMenuColKey(null);
         const colToDup = template.columns.find(c => c.key === colKey);
         if (!colToDup) return;
 
@@ -242,7 +241,6 @@ const DynamicSpreadsheetView = ({ user }) => {
     // --- CHANGE COLUMN TYPE ---
     const handleChangeColumnType = async (colKey, newType) => {
         if (!canEdit) return;
-        setActiveMenuColKey(null);
 
         const updatedCols = template.columns.map(c => {
             if (c.key === colKey) {
@@ -266,7 +264,27 @@ const DynamicSpreadsheetView = ({ user }) => {
         }
     };
 
-    // --- DELETE COLUMN (In-App confirm) ---
+    // --- UPDATE STATUS OPTIONS OF CYCLIC BUTTON ---
+    const handleUpdateColumnStatusOptions = async (colKey, newStatusOptions) => {
+        if (!canEdit) return;
+
+        const updatedCols = template.columns.map(c => c.key === colKey ? { ...c, statusOptions: newStatusOptions } : c);
+        setTemplate(prev => ({ ...prev, columns: updatedCols }));
+
+        try {
+            await apiClient.put(`/api/extensions/${id}`, {
+                ...template,
+                columns: updatedCols
+            });
+            showToast('Simbología de columna actualizada');
+        } catch (err) {
+            console.error('Error al actualizar simbología:', err);
+            showToast('Error al actualizar simbología', 'error');
+            fetchExtensionData(selectedGroup?._id, true);
+        }
+    };
+
+    // --- DELETE COLUMN ---
     const confirmDeleteColumn = async (colKey) => {
         if (!canEdit) return;
         setConfirmDeleteColKey(null);
@@ -394,7 +412,7 @@ const DynamicSpreadsheetView = ({ user }) => {
                 <div className="ext-sheet-header-right">
                     {canEdit ? (
                         <div className="ext-badge-status status-editable">
-                            <FaSync className="ext-pulse-icon" /> Modo Diseño & Edición Habilitado
+                            <FaSync className="ext-pulse-icon" /> Modo Edición
                         </div>
                     ) : (
                         <div className="ext-badge-status status-readonly">
@@ -417,13 +435,6 @@ const DynamicSpreadsheetView = ({ user }) => {
                         <FaThList /> <span>Seleccionar Grupo:</span>
                     </div>
                     <div className="ext-groups-tabs-scroll">
-                        <button
-                            type="button"
-                            className={`ext-group-tab-btn ext-all-groups-tab ${selectedGroup && selectedGroup._id === 'ALL' ? 'active' : ''}`}
-                            onClick={() => handleSelectGroupTab('ALL')}
-                        >
-                            👥 Todos los Grupos
-                        </button>
                         {groups.map(g => {
                             const isSelected = selectedGroup && selectedGroup._id === g._id;
                             return (
@@ -483,28 +494,6 @@ const DynamicSpreadsheetView = ({ user }) => {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                </div>
-
-                <div className="ext-bulk-selection-btns">
-                    <button
-                        type="button"
-                        className="ext-btn-bulk-action"
-                        onClick={() => handleSelectGroupTab('ALL')}
-                        title="Ver y seleccionar todos los grupos del plantel"
-                    >
-                        👥 Seleccionar Todos los Grupos
-                    </button>
-                    <button
-                        type="button"
-                        className="ext-btn-bulk-action primary"
-                        onClick={() => {
-                            setFilterStatus('ALL');
-                            setSearchTerm('');
-                        }}
-                        title="Mostrar todos los alumnos"
-                    >
-                        🎓 Seleccionar Todos los Alumnos
-                    </button>
                 </div>
 
                 {template.rowType === 'STUDENTS' && (
@@ -569,40 +558,16 @@ const DynamicSpreadsheetView = ({ user }) => {
                                 </tr>
                                 <tr>
                                     {template.columns.map((col) => (
-                                        <th key={col.key} className="ext-col-header pos-relative">
-                                            <div className="ext-col-header-inner">
-                                                {editingColKey === col.key ? (
-                                                    <input
-                                                        type="text"
-                                                        className="ext-inline-header-input"
-                                                        value={editingLabelValue}
-                                                        onChange={(e) => setEditingLabelValue(e.target.value)}
-                                                        onBlur={saveRenameColumn}
-                                                        onKeyDown={(e) => { if (e.key === 'Enter') saveRenameColumn(); }}
-                                                        autoFocus
-                                                    />
-                                                ) : (
-                                                    <span
-                                                        className="ext-col-title-clickable"
-                                                        onClick={() => canEdit && startRenameColumn(col.key, col.label)}
-                                                        title={canEdit ? 'Clic para renombrar' : ''}
-                                                    >
-                                                        {col.label}
-                                                    </span>
-                                                )}
-
-                                                {canEdit && (
-                                                    <button
-                                                        type="button"
-                                                        className="ext-col-menu-btn"
-                                                        onClick={() => setActiveMenuColKey(activeMenuColKey === col.key ? null : col.key)}
-                                                        title="Configurar Columna"
-                                                    >
-                                                        <FaEllipsisV />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </th>
+                                        <ColumnHeaderCell
+                                            key={col.key}
+                                            col={col}
+                                            canEdit={canEdit}
+                                            onRename={(colKey, newLabel) => saveRenameColumn(colKey, newLabel)}
+                                            onChangeType={handleChangeColumnType}
+                                            onDuplicate={handleDuplicateColumn}
+                                            onDelete={(colKey) => setConfirmDeleteColKey(colKey)}
+                                            onUpdateStatusOptions={handleUpdateColumnStatusOptions}
+                                        />
                                     ))}
                                 </tr>
                             </>
@@ -613,40 +578,16 @@ const DynamicSpreadsheetView = ({ user }) => {
                                     {template.rowType === 'STUDENTS' ? `NOMBRE DEL ALUMNO (${selectedGroup?.nombre || ''})` : 'GRUPO / PLANTEL'}
                                 </th>
                                 {template.columns.map((col) => (
-                                    <th key={col.key} className="ext-col-header pos-relative">
-                                        <div className="ext-col-header-inner">
-                                            {editingColKey === col.key ? (
-                                                <input
-                                                    type="text"
-                                                    className="ext-inline-header-input"
-                                                    value={editingLabelValue}
-                                                    onChange={(e) => setEditingLabelValue(e.target.value)}
-                                                    onBlur={saveRenameColumn}
-                                                    onKeyDown={(e) => { if (e.key === 'Enter') saveRenameColumn(); }}
-                                                    autoFocus
-                                                />
-                                            ) : (
-                                                <span
-                                                    className="ext-col-title-clickable"
-                                                    onClick={() => canEdit && startRenameColumn(col.key, col.label)}
-                                                    title={canEdit ? 'Clic para renombrar' : ''}
-                                                >
-                                                    {col.label}
-                                                </span>
-                                            )}
-
-                                            {canEdit && (
-                                                <button
-                                                    type="button"
-                                                    className="ext-col-menu-btn"
-                                                    onClick={() => setActiveMenuColKey(activeMenuColKey === col.key ? null : col.key)}
-                                                    title="Configurar Columna"
-                                                >
-                                                    <FaEllipsisV />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </th>
+                                    <ColumnHeaderCell
+                                        key={col.key}
+                                        col={col}
+                                        canEdit={canEdit}
+                                        onRename={(colKey, newLabel) => saveRenameColumn(colKey, newLabel)}
+                                        onChangeType={handleChangeColumnType}
+                                        onDuplicate={handleDuplicateColumn}
+                                        onDelete={(colKey) => setConfirmDeleteColKey(colKey)}
+                                        onUpdateStatusOptions={handleUpdateColumnStatusOptions}
+                                    />
                                 ))}
                                 {canEdit && (
                                     <th
@@ -708,7 +649,7 @@ const DynamicSpreadsheetView = ({ user }) => {
                                                         <button
                                                             type="button"
                                                             disabled={!canEdit}
-                                                            className="ext-status-pill-btn"
+                                                            className="ext-status-pill-btn active:scale-95 transition-transform duration-100 shadow-sm font-extrabold"
                                                             onClick={() => handleCycleStatus(row.entityId, col, cellVal, row.name)}
                                                             style={getStatusPillStyle(col, cellVal)}
                                                         >
