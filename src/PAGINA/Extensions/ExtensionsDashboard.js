@@ -82,7 +82,7 @@ const ExtensionsDashboard = ({ user }) => {
                 <div className="ext-hero-content">
                     <h1>🧩 Extensiones y Tablas de Seguimiento</h1>
                     <p>
-                        Módulos y actividades de seguimiento del plantel (Caligrafía, Reflexión Serena, Tablas Matemáticas, PMC, etc.).
+                        Módulos y actividades de seguimiento del plantel.
                     </p>
                 </div>
                 {isAdmin && (

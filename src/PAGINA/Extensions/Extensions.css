@@ -4,7 +4,7 @@
 .ext-spreadsheet-page {
     padding: 24px;
     max-width: 1400px;
-    margin: 0 auto;
+    margin: 80px auto 30px auto; /* 80px top margin prevents top fixed header overlap */
     font-family: inherit;
     color: var(--text-color, #1f2937);
 }
@@ -16,7 +16,7 @@
     justify-content: space-between;
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     color: #ffffff;
-    padding: 32px;
+    padding: 28px 32px;
     border-radius: 16px;
     margin-bottom: 28px;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
@@ -25,15 +25,16 @@
 .ext-hero-content h1 {
     font-size: 1.8rem;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
     gap: 12px;
+    color: #ffffff;
 }
 
 .ext-hero-content p {
-    color: #94a3b8;
-    font-size: 1rem;
+    color: #cbd5e1;
+    font-size: 1.05rem;
     margin: 0;
 }
 
@@ -126,7 +127,7 @@
     background: #dc2626;
 }
 
-/* Cards Grid */
+/* Cards Grid & Dark/Light Contrast */
 .ext-cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -134,20 +135,21 @@
 }
 
 .ext-card {
-    background: var(--card-bg, #ffffff);
-    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--dark-color-alt, #ffffff);
+    border: 1px solid var(--border-color, #cbd5e1);
     border-radius: 14px;
     padding: 20px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transition: transform 0.2s, box-shadow 0.2s;
+    color: var(--text-color, #0f172a);
 }
 
 .ext-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
 }
 
 .ext-card-header {
@@ -172,6 +174,7 @@
     font-size: 1.25rem;
     font-weight: 700;
     margin: 0;
+    color: var(--title-color, #0f172a);
 }
 
 .ext-type-badge {
@@ -180,8 +183,8 @@
     gap: 5px;
     padding: 4px 10px;
     border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.78rem;
+    font-weight: 700;
 }
 
 .badge-student {
@@ -190,13 +193,13 @@
 }
 
 .badge-group {
-    background: #f0fdf4;
+    background: #dcfce7;
     color: #15803d;
 }
 
 .ext-card-desc {
-    color: #64748b;
-    font-size: 0.9rem;
+    color: var(--text-color, #334155);
+    font-size: 0.92rem;
     margin-bottom: 16px;
     line-height: 1.4;
 }
@@ -204,38 +207,87 @@
 .ext-card-meta {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    font-size: 0.88rem;
+    gap: 10px;
+    font-size: 0.92rem;
     margin-bottom: 20px;
+    color: var(--text-color, #1e293b);
+}
+
+.ext-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    color: var(--text-color, #1e293b);
+}
+
+.ext-meta-item strong {
+    color: var(--title-color, #0f172a);
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+/* Explicit high-contrast text styling for meta labels in dark mode */
+[data-theme='dark'] .ext-meta-item,
+[data-theme='dark'] .ext-meta-item strong {
+    color: #f8fafc !important;
+}
+
+[data-theme='dark'] .ext-card-desc {
+    color: #cbd5e1 !important;
 }
 
 .ext-cols-preview {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 6px;
     margin-top: 4px;
 }
 
 .ext-col-chip {
-    background: #f1f5f9;
-    color: #475569;
-    padding: 2px 8px;
+    background: #e2e8f0;
+    color: #0f172a;
+    padding: 3px 10px;
     border-radius: 6px;
-    font-size: 0.78rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
 
+[data-theme='dark'] .ext-col-chip {
+    background: #334155;
+    color: #f8fafc;
 }
 
 .ext-col-chip.ext-more {
     background: #cbd5e1;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+[data-theme='dark'] .ext-col-chip.ext-more {
+    background: #475569;
+    color: #ffffff;
+}
+
+.ext-teachers-list {
+    color: var(--text-color, #0f172a);
     font-weight: 600;
+}
+
+[data-theme='dark'] .ext-teachers-list {
+    color: #f8fafc !important;
+}
+
+.ext-text-muted {
+    color: #94a3b8;
+    font-style: italic;
 }
 
 .ext-card-footer {
     display: flex;
     align-items: center;
     gap: 10px;
-    pt: 12px;
-    border-top: 1px solid var(--border-color, #f1f5f9);
+    padding-top: 14px;
+    border-top: 1px solid var(--border-color, #e2e8f0);
 }
 
 .ext-admin-card-actions {
@@ -247,23 +299,24 @@
 .ext-modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.65);
+    background: rgba(0, 0, 0, 0.7);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1100;
+    z-index: 2100;
     padding: 20px;
 }
 
 .ext-modal-content {
-    background: var(--card-bg, #ffffff);
+    background: var(--dark-color-alt, #ffffff);
+    color: var(--text-color, #0f172a);
     width: 100%;
     max-width: 760px;
     max-height: 90vh;
     border-radius: 16px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
     overflow: hidden;
 }
 
@@ -279,6 +332,7 @@
 .ext-modal-header h2 {
     font-size: 1.3rem;
     margin: 0;
+    color: #ffffff;
 }
 
 .ext-modal-close {
@@ -299,6 +353,7 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+    color: var(--text-color, #0f172a);
 }
 
 .ext-form-group {
@@ -308,8 +363,13 @@
 }
 
 .ext-form-group label {
-    font-weight: 600;
-    font-size: 0.9rem;
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--title-color, #0f172a);
+}
+
+[data-theme='dark'] .ext-form-group label {
+    color: #f8fafc !important;
 }
 
 .ext-form-group input[type="text"],
@@ -317,9 +377,19 @@
 .ext-form-group select {
     padding: 10px 14px;
     border-radius: 8px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--border-color, #cbd5e1);
+    background: var(--dark-color, #ffffff);
+    color: var(--text-color, #0f172a);
     font-size: 0.95rem;
     outline: none;
+}
+
+[data-theme='dark'] .ext-form-group input[type="text"],
+[data-theme='dark'] .ext-form-group textarea,
+[data-theme='dark'] .ext-form-group select {
+    background: #111827;
+    color: #ffffff;
+    border-color: #374151;
 }
 
 .ext-form-row {
@@ -332,8 +402,8 @@
 }
 
 .ext-help-text {
-    font-size: 0.82rem;
-    color: #64748b;
+    font-size: 0.85rem;
+    color: var(--text-color, #64748b);
     margin: 0;
 }
 
@@ -343,9 +413,10 @@
     gap: 8px;
     max-height: 140px;
     overflow-y: auto;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color, #e2e8f0);
     padding: 8px;
     border-radius: 8px;
+    background: var(--dark-color, #f8fafc);
 }
 
 .ext-teacher-chip {
@@ -354,60 +425,29 @@
     gap: 8px;
     padding: 6px 10px;
     border-radius: 6px;
-    background: #f8fafc;
+    background: var(--dark-color-alt, #ffffff);
+    color: var(--text-color, #0f172a);
     font-size: 0.85rem;
     cursor: pointer;
 }
 
 .ext-teacher-chip.selected {
-    background: #e0f2fe;
-    font-weight: 600;
+    background: #00cbcb;
+    color: #0f172a;
+    font-weight: 700;
 }
 
 .ext-column-card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: var(--dark-color, #f8fafc);
+    border: 1px solid var(--border-color, #e2e8f0);
     border-radius: 10px;
     padding: 14px;
     margin-bottom: 12px;
 }
 
-.ext-column-card-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-}
-
-.ext-status-options-block {
-    margin-top: 10px;
-    background: #ffffff;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px dashed #cbd5e1;
-}
-
-.ext-status-option-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 8px;
-}
-
-.ext-color-presets {
-    display: flex;
-    gap: 4px;
-}
-
-.ext-preset-dot {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid transparent;
-}
-
-.ext-preset-dot.active {
-    border-color: #0f172a;
+[data-theme='dark'] .ext-column-card {
+    background: #111827;
+    border-color: #374151;
 }
 
 .ext-modal-footer {
@@ -415,8 +455,8 @@
     justify-content: flex-end;
     gap: 12px;
     padding: 16px 24px;
-    background: #f1f5f9;
-    border-top: 1px solid #e2e8f0;
+    background: var(--dark-color, #f1f5f9);
+    border-top: 1px solid var(--border-color, #e2e8f0);
 }
 
 /* Dynamic Spreadsheet View */
@@ -452,12 +492,21 @@
     font-size: 1.6rem;
     font-weight: 700;
     margin: 0;
+    color: var(--title-color, #0f172a);
+}
+
+[data-theme='dark'] .ext-sheet-title {
+    color: #ffffff !important;
 }
 
 .ext-sheet-subtitle {
-    color: #64748b;
+    color: var(--text-color, #64748b);
     margin: 4px 0 0 0;
-    font-size: 0.92rem;
+    font-size: 0.95rem;
+}
+
+[data-theme='dark'] .ext-sheet-subtitle {
+    color: #cbd5e1 !important;
 }
 
 .ext-badge-status {
@@ -467,7 +516,7 @@
     padding: 6px 14px;
     border-radius: 20px;
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .status-editable {
@@ -518,8 +567,16 @@
     width: 100%;
     padding: 8px 12px 8px 36px;
     border-radius: 8px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--border-color, #cbd5e1);
+    background: var(--dark-color-alt, #ffffff);
+    color: var(--text-color, #0f172a);
     outline: none;
+}
+
+[data-theme='dark'] .ext-search-box input {
+    background: #111827;
+    color: #ffffff;
+    border-color: #374151;
 }
 
 .ext-filter-pills {
@@ -530,9 +587,11 @@
 .ext-filter-pill {
     padding: 6px 12px;
     border-radius: 20px;
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    font-size: 0.82rem;
+    border: 1px solid var(--border-color, #cbd5e1);
+    background: var(--dark-color-alt, #ffffff);
+    color: var(--text-color, #0f172a);
+    font-size: 0.85rem;
+    font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -540,45 +599,54 @@
 }
 
 .ext-filter-pill.active {
-    background: #1e293b;
-    color: #ffffff;
-    border-color: #1e293b;
+    background: #00cbcb;
+    color: #0f172a;
+    border-color: #00cbcb;
 }
 
 /* Table Matrix */
 .ext-table-container {
     overflow-x: auto;
     border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color, #cbd5e1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .ext-spreadsheet-table {
     width: 100%;
     border-collapse: collapse;
-    background: #ffffff;
-    font-size: 0.9rem;
+    background: var(--dark-color-alt, #ffffff);
+    color: var(--text-color, #0f172a);
+    font-size: 0.92rem;
 }
 
 .ext-spreadsheet-table th,
 .ext-spreadsheet-table td {
     padding: 10px 12px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color, #cbd5e1);
     text-align: center;
+    color: var(--text-color, #0f172a);
+}
+
+[data-theme='dark'] .ext-spreadsheet-table th,
+[data-theme='dark'] .ext-spreadsheet-table td {
+    border-color: #374151;
+    color: #f8fafc;
 }
 
 .ext-spreadsheet-table th {
     background: #1e293b;
     color: #ffffff;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .ext-col-title {
-    font-size: 0.92rem;
+    font-size: 0.95rem;
+    color: #ffffff;
 }
 
 .ext-col-type-tag {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     color: #94a3b8;
     font-weight: normal;
     text-transform: uppercase;
@@ -592,13 +660,18 @@
 }
 
 .ext-name-text {
-    font-weight: 600;
+    font-weight: 700;
     text-align: left;
+    color: var(--title-color, #0f172a);
+}
+
+[data-theme='dark'] .ext-name-text {
+    color: #ffffff !important;
 }
 
 .line-through {
     text-decoration: line-through;
-    color: #ef4444;
+    color: #ef4444 !important;
 }
 
 .ext-tag {
@@ -607,8 +680,8 @@
     gap: 4px;
     padding: 2px 6px;
     border-radius: 4px;
-    font-size: 0.72rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 700;
 }
 
 .tag-yellow {
@@ -625,7 +698,7 @@
     padding: 6px 14px;
     border-radius: 20px;
     cursor: pointer;
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     width: 100%;
     min-width: 80px;
     transition: transform 0.1s;
@@ -639,8 +712,17 @@
     width: 100%;
     padding: 6px 8px;
     border-radius: 6px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--border-color, #cbd5e1);
+    background: var(--dark-color, #ffffff);
+    color: var(--text-color, #0f172a);
     text-align: center;
+    font-weight: 600;
+}
+
+[data-theme='dark'] .ext-cell-input {
+    background: #111827;
+    color: #ffffff;
+    border-color: #374151;
 }
 
 .ext-color-tag-picker {
@@ -660,6 +742,10 @@
 .ext-color-dot.active {
     border-color: #0f172a;
     transform: scale(1.15);
+}
+
+[data-theme='dark'] .ext-color-dot.active {
+    border-color: #00cbcb;
 }
 
 .ext-spinner-sm {
