@@ -226,7 +226,6 @@
     font-size: 0.95rem;
 }
 
-/* Explicit high-contrast text styling for meta labels in dark mode */
 [data-theme='dark'] .ext-meta-item,
 [data-theme='dark'] .ext-meta-item strong {
     color: #f8fafc !important;
@@ -293,6 +292,181 @@
 .ext-admin-card-actions {
     display: flex;
     gap: 6px;
+}
+
+/* GROUP TABS NAVIGATION BAR (1A, 1B, 1C... 3E) */
+.ext-groups-tab-bar {
+    background: var(--dark-color-alt, #ffffff);
+    border: 1px solid var(--border-color, #cbd5e1);
+    border-radius: 12px;
+    padding: 12px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+}
+
+.ext-groups-tab-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--title-color, #0f172a);
+    white-space: nowrap;
+}
+
+[data-theme='dark'] .ext-groups-tab-header {
+    color: #f8fafc !important;
+}
+
+.ext-groups-tabs-scroll {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    width: 100%;
+}
+
+.ext-group-tab-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color, #cbd5e1);
+    background: var(--dark-color, #f8fafc);
+    color: var(--text-color, #0f172a);
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.ext-group-tab-btn:hover {
+    background: #00cbcb;
+    color: #0f172a;
+    border-color: #00cbcb;
+}
+
+.ext-group-tab-btn.active {
+    background: #00cbcb;
+    color: #0f172a;
+    border-color: #00cbcb;
+    box-shadow: 0 2px 8px rgba(0, 203, 203, 0.4);
+}
+
+/* SYMBOL LEGEND BAR */
+.ext-legend-bar {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 0.88rem;
+}
+
+[data-theme='dark'] .ext-legend-bar {
+    background: #111827;
+    border-color: #374151;
+}
+
+.ext-legend-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    color: var(--title-color, #0f172a);
+}
+
+[data-theme='dark'] .ext-legend-title {
+    color: #ffffff !important;
+}
+
+.ext-legend-items {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.ext-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ext-legend-pill {
+    padding: 2px 10px;
+    border-radius: 12px;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.8rem;
+}
+
+.ext-legend-desc {
+    font-weight: 600;
+    color: var(--text-color, #334155);
+}
+
+[data-theme='dark'] .ext-legend-desc {
+    color: #cbd5e1 !important;
+}
+
+/* Group Assignments List in Modal */
+.ext-group-assign-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color, #e2e8f0);
+    padding: 10px;
+    border-radius: 8px;
+    background: var(--dark-color, #f8fafc);
+}
+
+.ext-group-assign-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.ext-group-name-tag {
+    font-weight: 700;
+    min-width: 50px;
+}
+
+.ext-group-teachers-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ext-teacher-mini-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: var(--dark-color-alt, #ffffff);
+    font-size: 0.78rem;
+    cursor: pointer;
+    border: 1px solid var(--border-color, #cbd5e1);
+}
+
+.ext-teacher-mini-chip.active {
+    background: #00cbcb;
+    color: #0f172a;
+    font-weight: 700;
+    border-color: #00cbcb;
 }
 
 /* Modal Overlay & Form */
@@ -695,17 +869,22 @@
 }
 
 .ext-status-pill-btn {
-    padding: 6px 14px;
+    padding: 4px 10px;
     border-radius: 20px;
     cursor: pointer;
-    font-size: 0.85rem;
-    width: 100%;
-    min-width: 80px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    width: 44px;
+    height: 32px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: transform 0.1s;
 }
 
 .ext-status-pill-btn:hover:not(:disabled) {
-    transform: scale(1.05);
+    transform: scale(1.1);
 }
 
 .ext-cell-input {

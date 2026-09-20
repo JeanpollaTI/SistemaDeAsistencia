@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaTimes, FaPlus, FaTrash, FaPalette } from 'react-icons/fa';
+import { FaTimes, FaPlus, FaTrash, FaPalette, FaUserTie } from 'react-icons/fa';
 
 const COLOR_PRESETS = [
     { name: 'Verde', value: '#22c55e' },
@@ -14,8 +14,8 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [rowType, setRowType] = useState('STUDENTS');
-    const [assignedGroupId, setAssignedGroupId] = useState('');
     const [authorizedTeachers, setAuthorizedTeachers] = useState([]);
+    const [groupAssignments, setGroupAssignments] = useState([]);
     const [columns, setColumns] = useState([]);
 
     useEffect(() => {
@@ -23,30 +23,36 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
             setTitle(initialData.title || '');
             setDescription(initialData.description || '');
             setRowType(initialData.rowType || 'STUDENTS');
-            setAssignedGroupId(initialData.assignedGroupId?._id || initialData.assignedGroupId || '');
             setAuthorizedTeachers(
                 (initialData.authorizedTeachers || []).map(t => typeof t === 'object' ? t._id : t)
+            );
+            setGroupAssignments(
+                (initialData.groupAssignments || []).map(ga => ({
+                    groupId: typeof ga.groupId === 'object' ? ga.groupId._id : ga.groupId,
+                    teachers: (ga.teachers || []).map(t => typeof t === 'object' ? t._id : t)
+                }))
             );
             setColumns(initialData.columns ? JSON.parse(JSON.stringify(initialData.columns)) : []);
         } else {
             setTitle('');
             setDescription('');
             setRowType('STUDENTS');
-            setAssignedGroupId(grupos.length > 0 ? grupos[0]._id : '');
             setAuthorizedTeachers([]);
+            setGroupAssignments([]);
             setColumns([
                 {
-                    key: 'col_1',
-                    label: 'Criterio 1',
+                    key: 'p1',
+                    label: 'Tabla 1',
                     type: 'BOOLEAN_STATUS',
                     statusOptions: [
-                        { key: 'SI', label: 'SÍ', color: '#22c55e' },
-                        { key: 'NO', label: 'NO', color: '#ef4444' }
+                        { key: 'O', label: 'O', color: '#22c55e' },
+                        { key: 'I', label: 'I', color: '#ef4444' },
+                        { key: 'S', label: 'S', color: '#f59e0b' }
                     ]
                 }
             ]);
         }
-    }, [initialData, isOpen, grupos]);
+    }, [initialData, isOpen]);
 
     if (!isOpen) return null;
 
@@ -56,11 +62,12 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
             ...columns,
             {
                 key: newKey,
-                label: `Nueva Columna ${columns.length + 1}`,
+                label: `Columna ${columns.length + 1}`,
                 type: 'BOOLEAN_STATUS',
                 statusOptions: [
-                    { key: 'SI', label: 'SÍ', color: '#22c55e' },
-                    { key: 'NO', label: 'NO', color: '#ef4444' }
+                    { key: 'O', label: 'O', color: '#22c55e' },
+                    { key: 'I', label: 'I', color: '#ef4444' },
+                    { key: 'S', label: 'S', color: '#f59e0b' }
                 ]
             }
         ]);
@@ -75,8 +82,9 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
         updated[index][field] = value;
         if (field === 'type' && value === 'BOOLEAN_STATUS' && (!updated[index].statusOptions || updated[index].statusOptions.length === 0)) {
             updated[index].statusOptions = [
-                { key: 'SI', label: 'SÍ', color: '#22c55e' },
-                { key: 'NO', label: 'NO', color: '#ef4444' }
+                { key: 'O', label: 'O', color: '#22c55e' },
+                { key: 'I', label: 'I', color: '#ef4444' },
+                { key: 'S', label: 'S', color: '#f59e0b' }
             ];
         }
         setColumns(updated);
@@ -87,8 +95,8 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
         if (!updated[colIndex].statusOptions) updated[colIndex].statusOptions = [];
         const optNum = updated[colIndex].statusOptions.length + 1;
         updated[colIndex].statusOptions.push({
-            key: `opt_${optNum}`,
-            label: `Estado ${optNum}`,
+            key: `E${optNum}`,
+            label: `E${optNum}`,
             color: '#3b82f6'
         });
         setColumns(updated);
@@ -109,12 +117,31 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
         setColumns(updated);
     };
 
-    const toggleTeacher = (teacherId) => {
+    const toggleGlobalTeacher = (teacherId) => {
         if (authorizedTeachers.includes(teacherId)) {
             setAuthorizedTeachers(authorizedTeachers.filter(id => id !== teacherId));
         } else {
             setAuthorizedTeachers([...authorizedTeachers, teacherId]);
         }
+    };
+
+    const toggleGroupTeacher = (groupId, teacherId) => {
+        const existingAssign = groupAssignments.find(ga => ga.groupId === groupId);
+        let updatedGroupAssignments = [...groupAssignments];
+
+        if (!existingAssign) {
+            updatedGroupAssignments.push({ groupId, teachers: [teacherId] });
+        } else {
+            const hasTeacher = existingAssign.teachers.includes(teacherId);
+            const updatedTeachers = hasTeacher
+                ? existingAssign.teachers.filter(id => id !== teacherId)
+                : [...existingAssign.teachers, teacherId];
+
+            updatedGroupAssignments = updatedGroupAssignments.map(ga =>
+                ga.groupId === groupId ? { ...ga, teachers: updatedTeachers } : ga
+            );
+        }
+        setGroupAssignments(updatedGroupAssignments);
     };
 
     const handleSubmit = (e) => {
@@ -132,8 +159,8 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
             title: title.trim(),
             description: description.trim(),
             rowType,
-            assignedGroupId: rowType === 'STUDENTS' ? assignedGroupId : null,
             authorizedTeachers,
+            groupAssignments,
             columns
         });
     };
@@ -142,18 +169,18 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
         <div className="ext-modal-overlay">
             <div className="ext-modal-content">
                 <div className="ext-modal-header">
-                    <h2>{initialData ? '✏️ Editar Tabla / Extensión' : '✨ Crear Nueva Tabla / Extensión'}</h2>
+                    <h2>{initialData ? '✏️ Configuración de Tabla / Extensión' : '✨ Crear Nueva Tabla / Extensión'}</h2>
                     <button className="ext-modal-close" onClick={onClose}><FaTimes /></button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="ext-modal-body">
                     <div className="ext-form-group">
-                        <label>Título de la Tabla *</label>
+                        <label>Nombre de la Tabla / Extensión *</label>
                         <input
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Ej. Caligrafía, Reflexión Serena, PMC, Lectura..."
+                            placeholder="Ej. Tablas Matemáticas, Caligrafía, Lectura..."
                             required
                         />
                     </div>
@@ -164,48 +191,73 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
                             rows="2"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Breve descripción del propósito de esta tabla..."
+                            placeholder="Descripción opcional del objetivo de esta tabla..."
                         />
                     </div>
 
-                    <div className="ext-form-row">
-                        <div className="ext-form-group half">
-                            <label>Tipo de Filas *</label>
-                            <select value={rowType} onChange={(e) => setRowType(e.target.value)}>
-                                <option value="STUDENTS">Filas por Alumnos de un Grupo</option>
-                                <option value="GROUPS">Filas por Grupos del Plantel</option>
-                            </select>
-                        </div>
-
-                        {rowType === 'STUDENTS' && (
-                            <div className="ext-form-group half">
-                                <label>Grupo Asignado *</label>
-                                <select value={assignedGroupId} onChange={(e) => setAssignedGroupId(e.target.value)} required>
-                                    <option value="">-- Seleccionar Grupo --</option>
-                                    {grupos.map(g => (
-                                        <option key={g._id} value={g._id}>{g.nombre}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
+                    <div className="ext-form-group">
+                        <label>Modo de Evaluación</label>
+                        <select value={rowType} onChange={(e) => setRowType(e.target.value)}>
+                            <option value="STUDENTS">Evaluación por Alumnos (Aplica a todos los grupos del plantel)</option>
+                            <option value="GROUPS">Evaluación General por Grupos del Plantel</option>
+                        </select>
                     </div>
 
+                    {/* Teachers Authorization */}
                     <div className="ext-form-group">
-                        <label>Profesores Encargados de Editar (RBAC)</label>
-                        <p className="ext-help-text">Los administradores siempre tienen permiso. Selecciona qué profesores pueden capturar datos en esta tabla:</p>
+                        <label>Profesores Autorizados Globalmente (Evalúan Todos los Grupos)</label>
+                        <p className="ext-help-text">Los administradores siempre tienen permiso total. Marca aquí los profesores con permiso global:</p>
                         <div className="ext-teachers-grid">
                             {profesores.map(p => (
                                 <label key={p._id} className={`ext-teacher-chip ${authorizedTeachers.includes(p._id) ? 'selected' : ''}`}>
                                     <input
                                         type="checkbox"
                                         checked={authorizedTeachers.includes(p._id)}
-                                        onChange={() => toggleTeacher(p._id)}
+                                        onChange={() => toggleGlobalTeacher(p._id)}
                                     />
-                                    <span>{p.nombre} ({p.role})</span>
+                                    <span>{p.nombre}</span>
                                 </label>
                             ))}
                         </div>
                     </div>
+
+                    {/* Per-Group Teacher Assignments */}
+                    {rowType === 'STUDENTS' && grupos.length > 0 && (
+                        <div className="ext-form-group">
+                            <label><FaUserTie /> Asignación de Docente Evaluador por Grupo</label>
+                            <p className="ext-help-text">Selecciona qué profesor evaluará cada grupo específico:</p>
+                            <div className="ext-group-assign-list">
+                                {grupos.map(g => {
+                                    const assign = groupAssignments.find(ga => ga.groupId === g._id);
+                                    const selectedTeachers = assign ? assign.teachers : [];
+
+                                    return (
+                                        <div key={g._id} className="ext-group-assign-row">
+                                            <span className="ext-group-name-tag">{g.nombre}</span>
+                                            <div className="ext-group-teachers-chips">
+                                                {profesores.map(p => {
+                                                    const isChecked = selectedTeachers.includes(p._id);
+                                                    return (
+                                                        <label
+                                                            key={p._id}
+                                                            className={`ext-teacher-mini-chip ${isChecked ? 'active' : ''}`}
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isChecked}
+                                                                onChange={() => toggleGroupTeacher(g._id, p._id)}
+                                                            />
+                                                            {p.nombre.split(' ')[0]}
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
 
                     <hr className="ext-divider" />
 
@@ -235,16 +287,16 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
                                             type="text"
                                             value={col.label}
                                             onChange={(e) => handleColumnChange(idx, 'label', e.target.value)}
-                                            placeholder="Ej. Septiembre, Calificación, Dificultad..."
+                                            placeholder="Ej. Tabla 1, Septiembre, Calificación..."
                                             required
                                         />
                                     </div>
                                     <div className="ext-form-group half">
                                         <label>Tipo de Campo</label>
                                         <select value={col.type} onChange={(e) => handleColumnChange(idx, 'type', e.target.value)}>
-                                            <option value="BOOLEAN_STATUS">Botón Cíclico (Estados con Color)</option>
+                                            <option value="BOOLEAN_STATUS">Botón Cíclico (Códigos Cortos / Colores)</option>
                                             <option value="TEXT">Texto Libre</option>
-                                            <option value="NUMBER">Número</option>
+                                            <option value="NUMBER">Número (0-10)</option>
                                             <option value="PERCENTAGE">Porcentaje (%)</option>
                                         </select>
                                     </div>
@@ -253,9 +305,9 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
                                 {col.type === 'BOOLEAN_STATUS' && (
                                     <div className="ext-status-options-block">
                                         <div className="ext-options-header">
-                                            <span>Opciones del Clic Cíclico:</span>
+                                            <span>Simbología / Botones del Clic (Letras Cortas):</span>
                                             <button type="button" className="ext-btn-link" onClick={() => handleAddStatusOption(idx)}>
-                                                + Nueva Opción
+                                                + Nueva Letra/Código
                                             </button>
                                         </div>
                                         {(col.statusOptions || []).map((opt, optIdx) => (
@@ -264,7 +316,9 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
                                                     type="text"
                                                     value={opt.label}
                                                     onChange={(e) => handleStatusOptionChange(idx, optIdx, 'label', e.target.value)}
-                                                    placeholder="Etiqueta (ej. SÍ, NO, En orden)"
+                                                    placeholder="Letra o código (ej. O, I, S, SÍ, NO)"
+                                                    maxLength="4"
+                                                    style={{ width: '80px', textTransform: 'uppercase', textAlign: 'center', fontWeight: 'bold' }}
                                                     required
                                                 />
                                                 <div className="ext-color-picker-wrap">

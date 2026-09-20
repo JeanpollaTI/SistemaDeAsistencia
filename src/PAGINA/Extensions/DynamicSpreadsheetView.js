@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaSearch, FaLock, FaCheckCircle, FaSpinner, FaUserClock, FaUserTimes, FaSync, FaExclamationTriangle } from 'react-icons/fa';
+import { FaArrowLeft, FaSearch, FaLock, FaCheckCircle, FaSpinner, FaUserClock, FaUserTimes, FaSync, FaExclamationTriangle, FaInfoCircle, FaThList } from 'react-icons/fa';
 import apiClient from '../../api/apiClient';
 import './Extensions.css';
 
@@ -10,24 +10,34 @@ const DynamicSpreadsheetView = ({ user }) => {
 
     const [template, setTemplate] = useState(null);
     const [rows, setRows] = useState([]);
+    const [groups, setGroups] = useState([]);
+    const [selectedGroup, setSelectedGroup] = useState(null);
     const [canEdit, setCanEdit] = useState(false);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [savingCellKey, setSavingCellKey] = useState(null);
     const [lastSavedTime, setLastSavedTime] = useState(null);
-    const [filterStatus, setFilterStatus] = useState('ALL'); // ALL, NUEVO_INGRESO, BAJA, REZAGO
+    const [filterStatus, setFilterStatus] = useState('ALL');
 
-    const fetchExtensionData = useCallback(async () => {
+    const selectedGroupRef = useRef(selectedGroup);
+    selectedGroupRef.current = selectedGroup;
+
+    const fetchExtensionData = useCallback(async (targetGroupId = null, isSilent = false) => {
         try {
-            setLoading(true);
-            const res = await apiClient.get(`/api/extensions/${id}`);
+            if (!isSilent) setLoading(true);
+            const activeGroupId = targetGroupId || (selectedGroupRef.current ? selectedGroupRef.current._id : null);
+            const url = activeGroupId ? `/api/extensions/${id}?groupId=${activeGroupId}` : `/api/extensions/${id}`;
+
+            const res = await apiClient.get(url);
             setTemplate(res.data.template);
-            setRows(res.data.rows);
+            setRows(res.data.rows || []);
+            setGroups(res.data.groups || []);
+            setSelectedGroup(res.data.selectedGroup || null);
             setCanEdit(res.data.canEdit);
         } catch (err) {
             console.error('Error al cargar extensión:', err);
         } finally {
-            setLoading(false);
+            if (!isSilent) setLoading(false);
         }
     }, [id]);
 
@@ -35,10 +45,25 @@ const DynamicSpreadsheetView = ({ user }) => {
         fetchExtensionData();
     }, [fetchExtensionData]);
 
+    // Background auto-sync polling every 12 seconds for multi-user consistency
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (!savingCellKey) {
+                fetchExtensionData(null, true);
+            }
+        }, 12000);
+        return () => clearInterval(interval);
+    }, [fetchExtensionData, savingCellKey]);
+
+    const handleSelectGroupTab = (groupId) => {
+        if (selectedGroup && selectedGroup._id === groupId) return;
+        fetchExtensionData(groupId);
+    };
+
     const handleCellChange = async (rowEntityId, colKey, newValue, rowEntityName) => {
         if (!canEdit) return;
 
-        // Optimistic update local state
+        // Optimistic update
         setRows(prevRows => prevRows.map(row => {
             if (row.entityId === rowEntityId) {
                 return {
@@ -58,6 +83,7 @@ const DynamicSpreadsheetView = ({ user }) => {
         try {
             await apiClient.patch(`/api/extensions/${id}/cell`, {
                 rowEntityId,
+                groupId: selectedGroup?._id || null,
                 colKey,
                 value: newValue,
                 rowEntityName
@@ -65,8 +91,8 @@ const DynamicSpreadsheetView = ({ user }) => {
             setLastSavedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
         } catch (err) {
             console.error('Error al guardar celda:', err);
-            // Revert state on failure
-            fetchExtensionData();
+            // Revert state on error
+            fetchExtensionData(selectedGroup?._id, true);
         } finally {
             setSavingCellKey(null);
         }
@@ -83,7 +109,7 @@ const DynamicSpreadsheetView = ({ user }) => {
         if (currentIdx === -1) {
             nextValue = options[0].key;
         } else if (currentIdx === options.length - 1) {
-            nextValue = ''; // Clear value on cycle end
+            nextValue = ''; // Reset to empty
         } else {
             nextValue = options[currentIdx + 1].key;
         }
@@ -104,6 +130,7 @@ const DynamicSpreadsheetView = ({ user }) => {
         try {
             await apiClient.patch(`/api/extensions/${id}/cell`, {
                 rowEntityId,
+                groupId: selectedGroup?._id || null,
                 rowColorTag: colorTag,
                 rowEntityName
             });
@@ -117,7 +144,7 @@ const DynamicSpreadsheetView = ({ user }) => {
         return (
             <div className="ext-loading-container">
                 <FaSpinner className="ext-spinner" />
-                <p>Cargando matriz de extensión...</p>
+                <p>Cargando matriz de datos...</p>
             </div>
         );
     }
@@ -133,20 +160,18 @@ const DynamicSpreadsheetView = ({ user }) => {
         );
     }
 
+    // Filter rows based on search & status pill
     const filteredRows = rows.filter(row => {
         const matchesSearch = row.name.toLowerCase().includes(searchTerm.toLowerCase());
-
-        if (filterStatus === 'NUEVO_INGRESO') {
-            return matchesSearch && row.esNuevoIngreso;
-        }
-        if (filterStatus === 'BAJA') {
-            return matchesSearch && row.esBaja;
-        }
-        if (filterStatus === 'REZAGO') {
-            return matchesSearch && (row.rowColorTag === '#fca5a5' || row.rowColorTag === '#fef08a');
-        }
+        if (filterStatus === 'NUEVO_INGRESO') return matchesSearch && row.esNuevoIngreso;
+        if (filterStatus === 'BAJA') return matchesSearch && row.esBaja;
+        if (filterStatus === 'REZAGO') return matchesSearch && (row.rowColorTag === '#fca5a5' || row.rowColorTag === '#fef08a');
         return matchesSearch;
     });
+
+    // Extract status options for top legend bar
+    const booleanCols = template.columns.filter(c => c.type === 'BOOLEAN_STATUS');
+    const legendOptions = booleanCols.length > 0 ? booleanCols[0].statusOptions || [] : [];
 
     return (
         <div className="ext-spreadsheet-page">
@@ -160,7 +185,7 @@ const DynamicSpreadsheetView = ({ user }) => {
                         <h1 className="ext-sheet-title">{template.title}</h1>
                         <p className="ext-sheet-subtitle">
                             {template.rowType === 'STUDENTS' ? (
-                                <span>Grupo: <strong>{template.assignedGroupId?.nombre || 'General'}</strong></span>
+                                <span>Grupo Seleccionado: <strong>{selectedGroup ? selectedGroup.nombre : 'General'}</strong></span>
                             ) : (
                                 <span>Matriz General por Grupos del Plantel</span>
                             )}
@@ -172,7 +197,7 @@ const DynamicSpreadsheetView = ({ user }) => {
                 <div className="ext-sheet-header-right">
                     {canEdit ? (
                         <div className="ext-badge-status status-editable">
-                            <FaSync className="ext-pulse-icon" /> Modo Edición Activo
+                            <FaSync className="ext-pulse-icon" /> Modo Edición (Grupo {selectedGroup?.nombre || ''})
                         </div>
                     ) : (
                         <div className="ext-badge-status status-readonly">
@@ -188,11 +213,58 @@ const DynamicSpreadsheetView = ({ user }) => {
                 </div>
             </div>
 
+            {/* GROUP SELECTION TABS BAR (1A, 1B, 1C... 3E) */}
+            {template.rowType === 'STUDENTS' && groups.length > 0 && (
+                <div className="ext-groups-tab-bar">
+                    <div className="ext-groups-tab-header">
+                        <FaThList /> <span>Seleccionar Grupo:</span>
+                    </div>
+                    <div className="ext-groups-tabs-scroll">
+                        {groups.map(g => {
+                            const isSelected = selectedGroup && selectedGroup._id === g._id;
+                            return (
+                                <button
+                                    key={g._id}
+                                    type="button"
+                                    className={`ext-group-tab-btn ${isSelected ? 'active' : ''}`}
+                                    onClick={() => handleSelectGroupTab(g._id)}
+                                >
+                                    {g.nombre}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* SYMBOL LEGEND BAR (O: En orden, I: Incompleta, S: Salteadas) */}
+            {legendOptions.length > 0 && (
+                <div className="ext-legend-bar">
+                    <div className="ext-legend-title">
+                        <FaInfoCircle /> <span>Simbología de Evaluación:</span>
+                    </div>
+                    <div className="ext-legend-items">
+                        {legendOptions.map(opt => (
+                            <div key={opt.key} className="ext-legend-item">
+                                <span className="ext-legend-pill" style={{ backgroundColor: opt.color }}>
+                                    {opt.label}
+                                </span>
+                                <span className="ext-legend-desc">
+                                    {opt.key === 'O' || opt.label === 'O' ? 'En orden' :
+                                     opt.key === 'I' || opt.label === 'I' ? 'Incompleta' :
+                                     opt.key === 'S' || opt.label === 'S' ? 'Salteadas' : opt.key}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {!canEdit && (
                 <div className="ext-notice-banner">
                     <FaLock />
                     <span>
-                        <strong>Vista Previa en Solo Lectura:</strong> No estás asignado como profesor responsable de esta tabla/grupo. Puedes consultar los avances pero no modificar celdas.
+                        <strong>Vista Previa en Solo Lectura:</strong> No estás asignado como profesor evaluador de este grupo ({selectedGroup?.nombre || ''}). Puedes consultar los avances pero no modificar celdas.
                     </span>
                 </div>
             )}
@@ -203,7 +275,7 @@ const DynamicSpreadsheetView = ({ user }) => {
                     <FaSearch className="ext-search-icon" />
                     <input
                         type="text"
-                        placeholder={template.rowType === 'STUDENTS' ? 'Buscar alumno por nombre...' : 'Buscar grupo...'}
+                        placeholder={template.rowType === 'STUDENTS' ? `Buscar en ${selectedGroup?.nombre || 'grupo'}...` : 'Buscar grupo...'}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -221,7 +293,7 @@ const DynamicSpreadsheetView = ({ user }) => {
                             className={`ext-filter-pill yellow ${filterStatus === 'NUEVO_INGRESO' ? 'active' : ''}`}
                             onClick={() => setFilterStatus('NUEVO_INGRESO')}
                         >
-                            <FaUserClock /> Nuevos Ingresos ({rows.filter(r => r.esNuevoIngreso).length})
+                            <FaUserClock /> Nuevos ({rows.filter(r => r.esNuevoIngreso).length})
                         </button>
                         <button
                             className={`ext-filter-pill red ${filterStatus === 'BAJA' ? 'active' : ''}`}
@@ -233,7 +305,7 @@ const DynamicSpreadsheetView = ({ user }) => {
                             className={`ext-filter-pill warning ${filterStatus === 'REZAGO' ? 'active' : ''}`}
                             onClick={() => setFilterStatus('REZAGO')}
                         >
-                            <FaExclamationTriangle /> Con Rezago/Alerta ({rows.filter(r => r.rowColorTag === '#fca5a5' || r.rowColorTag === '#fef08a').length})
+                            <FaExclamationTriangle /> Con Rezago ({rows.filter(r => r.rowColorTag === '#fca5a5' || r.rowColorTag === '#fef08a').length})
                         </button>
                     </div>
                 )}
@@ -245,35 +317,27 @@ const DynamicSpreadsheetView = ({ user }) => {
                     <thead>
                         <tr>
                             <th style={{ width: '40px' }}>#</th>
-                            <th style={{ minWidth: '220px' }}>
-                                {template.rowType === 'STUDENTS' ? 'Alumno' : 'Grupo / Plantel'}
+                            <th style={{ minWidth: '240px' }}>
+                                {template.rowType === 'STUDENTS' ? `Alumno (${selectedGroup?.nombre || ''})` : 'Grupo / Plantel'}
                             </th>
                             {template.columns.map((col) => (
                                 <th key={col.key} className="ext-col-header">
                                     <div className="ext-col-title">{col.label}</div>
-                                    <div className="ext-col-type-tag">
-                                        {col.type === 'BOOLEAN_STATUS' && 'Botón Clic'}
-                                        {col.type === 'TEXT' && 'Texto'}
-                                        {col.type === 'NUMBER' && 'Número'}
-                                        {col.type === 'PERCENTAGE' && 'Porcentaje'}
-                                    </div>
                                 </th>
                             ))}
-                            {canEdit && <th style={{ width: '130px' }}>Marcador / Alerta</th>}
+                            {canEdit && <th style={{ width: '130px' }}>Marcador</th>}
                         </tr>
                     </thead>
                     <tbody>
                         {filteredRows.length === 0 ? (
                             <tr>
                                 <td colSpan={template.columns.length + (canEdit ? 3 : 2)} className="ext-empty-td">
-                                    No se encontraron registros que coincidan con la búsqueda.
+                                    No hay alumnos en el grupo {selectedGroup?.nombre || ''} que coincidan con la búsqueda.
                                 </td>
                             </tr>
                         ) : (
                             filteredRows.map((row, idx) => {
                                 const rowBg = row.rowColorTag || (row.esBaja ? '#fee2e2' : row.esNuevoIngreso ? '#fef9c3' : 'transparent');
-                                const isRowSaving = savingCellKey && savingCellKey.startsWith(row.entityId);
-
                                 return (
                                     <tr
                                         key={row.entityId}
@@ -416,7 +480,7 @@ const DynamicSpreadsheetView = ({ user }) => {
 
 // Helper for status pill style
 const getStatusPillStyle = (column, value) => {
-    if (!value) return { backgroundColor: 'transparent', color: '#9ca3af', border: '1px dashed #d1d5db' };
+    if (!value) return { backgroundColor: 'transparent', color: '#9ca3af', border: '1px dashed #cbd5e1' };
     const options = column.statusOptions || [];
     const opt = options.find(o => o.key === value || o.label === value);
     const color = opt ? opt.color : '#3b82f6';
@@ -424,7 +488,8 @@ const getStatusPillStyle = (column, value) => {
         backgroundColor: color,
         color: '#ffffff',
         border: `1px solid ${color}`,
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        fontSize: '0.9rem'
     };
 };
 
@@ -433,7 +498,11 @@ const getStatusLabel = (column, value) => {
     if (!value) return '—';
     const options = column.statusOptions || [];
     const opt = options.find(o => o.key === value || o.label === value);
-    return opt ? opt.label : value;
+    if (opt) return opt.label;
+    if (value === 'En orden') return 'O';
+    if (value === 'Incompleta') return 'I';
+    if (value === 'Salteadas') return 'S';
+    return value;
 };
 
 export default DynamicSpreadsheetView;

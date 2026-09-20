@@ -58,6 +58,15 @@ function App() {
     const [maintenanceActive, setMaintenanceActive] = useState(false);
     const [isSchoolConfigModalOpen, setIsSchoolConfigModalOpen] = useState(false);
     const [currentSchoolData, setCurrentSchoolData] = useState(null);
+    const [hasExtensions, setHasExtensions] = useState(true);
+
+    useEffect(() => {
+        if (user && user.school_id) {
+            apiClient.get('/api/extensions/active-status')
+                .then(res => setHasExtensions(res.data.hasExtensions))
+                .catch(() => setHasExtensions(true));
+        }
+    }, [user, location.pathname]);
 
     const handleOpenSchoolConfig = async () => {
         try {
@@ -216,7 +225,7 @@ function App() {
             roleSections = [
                 { id: "trabajos", label: "TRABAJOS", path: "/trabajos", icon: <FaTasks /> },
                 { id: "grupo", label: "ASISTENCIA", path: "/grupo", icon: <FaUsers /> },
-                { id: "tablas", label: "EXTENSIONES", path: "/extensiones", icon: <FaCalculator /> },
+                ...(hasExtensions ? [{ id: "tablas", label: "EXTENSIONES", path: "/extensiones", icon: <FaCalculator /> }] : []),
             ];
         } else if (user?.role === "admin") {
             roleSections = [

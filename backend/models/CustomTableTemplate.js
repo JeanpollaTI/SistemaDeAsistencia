@@ -17,6 +17,20 @@ const columnSchema = new mongoose.Schema({
   ]
 }, { _id: false });
 
+const groupAssignmentSchema = new mongoose.Schema({
+  groupId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Grupo",
+    required: true
+  },
+  teachers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }
+  ]
+}, { _id: false });
+
 const customTableTemplateSchema = new mongoose.Schema(
   {
     school_id: {
@@ -51,6 +65,7 @@ const customTableTemplateSchema = new mongoose.Schema(
         ref: "User"
       }
     ],
+    groupAssignments: [groupAssignmentSchema],
     columns: [columnSchema],
     isActive: {
       type: Boolean,

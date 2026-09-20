@@ -10,9 +10,9 @@ const router = express.Router();
 
 // Helper to seed default "Tablas Matemáticas" if no tables exist for school
 const ensureDefaultTemplates = async (schoolId) => {
-    const count = await CustomTableTemplate.countDocuments({ school_id: schoolId });
+    let count = await CustomTableTemplate.countDocuments({ school_id: schoolId });
     if (count === 0) {
-        // Seed default "Tablas Matemáticas" template
+        // Seed default "Tablas Matemáticas" template with sleek short status codes (O, I, S)
         const defaultCols = [];
         for (let i = 1; i <= 7; i++) {
             defaultCols.push({
@@ -20,9 +20,9 @@ const ensureDefaultTemplates = async (schoolId) => {
                 label: `Tabla ${i}`,
                 type: 'BOOLEAN_STATUS',
                 statusOptions: [
-                    { key: 'En orden', label: 'En orden', color: '#22c55e' },
-                    { key: 'Incompleta', label: 'Incompleta', color: '#ef4444' },
-                    { key: 'Salteadas', label: 'Salteadas', color: '#f59e0b' }
+                    { key: 'O', label: 'O', color: '#22c55e' }, // O = En orden
+                    { key: 'I', label: 'I', color: '#ef4444' }, // I = Incompleta
+                    { key: 'S', label: 'S', color: '#f59e0b' }  // S = Salteadas
                 ]
             });
         }
@@ -33,60 +33,69 @@ const ensureDefaultTemplates = async (schoolId) => {
             statusOptions: []
         });
 
-        // Get first group if available
-        const firstGroup = await Grupo.findOne({ school_id: schoolId });
-
         await CustomTableTemplate.create({
             school_id: schoolId,
             title: 'Tablas Matemáticas',
             description: 'Seguimiento continuo del dominio de tablas de multiplicar en los alumnos.',
             rowType: 'STUDENTS',
-            assignedGroupId: firstGroup ? firstGroup._id : null,
+            assignedGroupId: null,
             authorizedTeachers: [],
             columns: defaultCols,
             isBuiltIn: true
         });
+    }
 
-        // Migrate historical TablaMatematica if exists
-        try {
+    // Migrate old TablaMatematica if exists
+    try {
+        const builtIn = await CustomTableTemplate.findOne({ school_id: schoolId, title: 'Tablas Matemáticas' });
+        if (builtIn) {
             const oldRecords = await TablaMatematica.find({ school_id: schoolId });
-            if (oldRecords && oldRecords.length > 0) {
-                const builtIn = await CustomTableTemplate.findOne({ school_id: schoolId, title: 'Tablas Matemáticas' });
-                if (builtIn) {
-                    for (const oldRec of oldRecords) {
-                        if (oldRec.evaluaciones && oldRec.evaluaciones.length > 0) {
-                            for (const ev of oldRec.evaluaciones) {
-                                if (ev.alumno_id && ev.registros) {
-                                    const dataObj = {};
-                                    if (ev.registros instanceof Map) {
-                                        ev.registros.forEach((v, k) => { dataObj[k] = v; });
-                                    } else if (typeof ev.registros === 'object') {
-                                        Object.assign(dataObj, ev.registros);
-                                    }
-                                    await CustomTableRowData.updateOne(
-                                        { tableId: builtIn._id, rowEntityId: ev.alumno_id },
-                                        {
-                                            $set: {
-                                                tableId: builtIn._id,
-                                                school_id: schoolId,
-                                                rowEntityId: ev.alumno_id,
-                                                rowEntityName: ev.alumnoNombre || '',
-                                                data: dataObj
-                                            }
-                                        },
-                                        { upsert: true }
-                                    );
-                                }
+            for (const oldRec of oldRecords) {
+                if (oldRec.evaluaciones && oldRec.evaluaciones.length > 0) {
+                    for (const ev of oldRec.evaluaciones) {
+                        if (ev.alumno_id && ev.registros) {
+                            const dataObj = {};
+                            const rawMap = ev.registros instanceof Map ? Object.fromEntries(ev.registros) : ev.registros;
+                            for (const [k, val] of Object.entries(rawMap || {})) {
+                                if (val === 'En orden') dataObj[k] = 'O';
+                                else if (val === 'Incompleta') dataObj[k] = 'I';
+                                else if (val === 'Salteadas') dataObj[k] = 'S';
+                                else dataObj[k] = val;
                             }
+                            await CustomTableRowData.updateOne(
+                                { tableId: builtIn._id, rowEntityId: ev.alumno_id },
+                                {
+                                    $set: {
+                                        tableId: builtIn._id,
+                                        school_id: schoolId,
+                                        rowEntityId: ev.alumno_id,
+                                        rowEntityName: ev.alumnoNombre || '',
+                                        data: dataObj
+                                    }
+                                },
+                                { upsert: true }
+                            );
                         }
                     }
                 }
             }
-        } catch (err) {
-            console.error('Error migrando TablaMatematica antigua:', err);
         }
+    } catch (err) {
+        console.error('Error migrando TablaMatematica antigua:', err);
     }
 };
+
+// GET /api/extensions/active-status - Check if extensions are active for user's school
+router.get('/active-status', authMiddleware, async (req, res) => {
+    try {
+        const schoolId = req.user.school_id;
+        if (!schoolId) return res.json({ hasExtensions: false });
+        const count = await CustomTableTemplate.countDocuments({ school_id: schoolId, isActive: true });
+        res.json({ hasExtensions: count > 0, count });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // GET /api/extensions - List all extension templates & metadata
 router.get('/', authMiddleware, async (req, res) => {
@@ -99,6 +108,8 @@ router.get('/', authMiddleware, async (req, res) => {
         const extensions = await CustomTableTemplate.find({ school_id: schoolId, isActive: true })
             .populate('assignedGroupId', 'nombre')
             .populate('authorizedTeachers', 'nombre email role')
+            .populate('groupAssignments.groupId', 'nombre')
+            .populate('groupAssignments.teachers', 'nombre email role')
             .sort({ createdAt: -1 })
             .lean();
 
@@ -117,17 +128,41 @@ router.get('/', authMiddleware, async (req, res) => {
     }
 });
 
-// GET /api/extensions/:id - Get detailed view and spreadsheet data
+// GET /api/extensions/:id - Get detailed view and spreadsheet data (supports ?groupId=...)
 router.get('/:id', authMiddleware, async (req, res) => {
     try {
         const schoolId = req.user.school_id;
+        const requestedGroupId = req.query.groupId;
+
         const template = await CustomTableTemplate.findOne({ _id: req.params.id, school_id: schoolId })
             .populate('assignedGroupId')
             .populate('authorizedTeachers', 'nombre email role')
+            .populate('groupAssignments.groupId', 'nombre')
+            .populate('groupAssignments.teachers', 'nombre email role')
             .lean();
 
         if (!template) {
             return res.status(404).json({ msg: 'Tabla o extensión no encontrada' });
+        }
+
+        // Fetch all active groups for school
+        const allSchoolGroups = await Grupo.find({ school_id: schoolId }).sort({ nombre: 1 }).lean();
+
+        // Sort groups naturally (1A, 1B, 1C, 2A, 2B, 3A...)
+        allSchoolGroups.sort((a, b) => a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' }));
+
+        // Determine target group for STUDENTS mode
+        let selectedGroup = null;
+        if (template.rowType === 'STUDENTS') {
+            if (requestedGroupId) {
+                selectedGroup = allSchoolGroups.find(g => g._id.toString() === requestedGroupId.toString());
+            }
+            if (!selectedGroup && template.assignedGroupId) {
+                selectedGroup = allSchoolGroups.find(g => g._id.toString() === template.assignedGroupId._id.toString());
+            }
+            if (!selectedGroup && allSchoolGroups.length > 0) {
+                selectedGroup = allSchoolGroups[0];
+            }
         }
 
         // Fetch row data captured
@@ -136,7 +171,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
             school_id: schoolId
         }).lean();
 
-        // Build data map keyed by rowEntityId
+        // Map captured data by rowEntityId
         const dataMap = {};
         const colorMap = {};
         rowDataRecords.forEach(r => {
@@ -144,18 +179,23 @@ router.get('/:id', authMiddleware, async (req, res) => {
             if (r.data instanceof Map) {
                 r.data.forEach((val, key) => { dataObj[key] = val; });
             } else if (r.data && typeof r.data === 'object') {
-                Object.assign(dataObj, r.data);
+                for (const [k, v] of Object.entries(r.data)) {
+                    // Convert old long names to short letters if applicable
+                    if (v === 'En orden') dataObj[k] = 'O';
+                    else if (v === 'Incompleta') dataObj[k] = 'I';
+                    else if (v === 'Salteadas') dataObj[k] = 'S';
+                    else dataObj[k] = v;
+                }
             }
             dataMap[r.rowEntityId] = dataObj;
             if (r.rowColorTag) colorMap[r.rowEntityId] = r.rowColorTag;
         });
 
-        // Generate rows based on rowType
+        // Generate rows
         let rows = [];
         if (template.rowType === 'STUDENTS') {
-            let targetGroup = template.assignedGroupId;
-            if (targetGroup && targetGroup.alumnos) {
-                rows = targetGroup.alumnos.map(al => ({
+            if (selectedGroup && selectedGroup.alumnos) {
+                rows = selectedGroup.alumnos.map(al => ({
                     entityId: al._id.toString(),
                     name: `${al.nombre} ${al.apellidoPaterno} ${al.apellidoMaterno || ''}`.trim(),
                     nombre: al.nombre,
@@ -170,8 +210,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
                 }));
             }
         } else if (template.rowType === 'GROUPS') {
-            const allGroups = await Grupo.find({ school_id: schoolId }).sort({ nombre: 1 }).lean();
-            rows = allGroups.map(g => ({
+            rows = allSchoolGroups.map(g => ({
                 entityId: g._id.toString(),
                 name: g.nombre,
                 asesor: g.asesor || '',
@@ -183,14 +222,29 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
         // Determine edit authorization for current user
         const isUserAdmin = req.user.role === 'admin' || req.user.role === 'superadmin';
-        const isAuthorizedTeacher = template.authorizedTeachers.some(
-            t => t._id.toString() === req.user._id.toString()
+        let isAuthorizedTeacher = template.authorizedTeachers.some(
+            t => (typeof t === 'object' ? t._id : t).toString() === req.user._id.toString()
         );
+
+        // Check group specific assignments if defined
+        if (!isAuthorizedTeacher && selectedGroup && template.groupAssignments) {
+            const groupAssign = template.groupAssignments.find(
+                ga => (typeof ga.groupId === 'object' ? ga.groupId._id : ga.groupId).toString() === selectedGroup._id.toString()
+            );
+            if (groupAssign && groupAssign.teachers) {
+                isAuthorizedTeacher = groupAssign.teachers.some(
+                    t => (typeof t === 'object' ? t._id : t).toString() === req.user._id.toString()
+                );
+            }
+        }
+
         const canEdit = isUserAdmin || isAuthorizedTeacher;
 
         res.json({
             template,
             rows,
+            groups: allSchoolGroups,
+            selectedGroup: selectedGroup ? { _id: selectedGroup._id, nombre: selectedGroup.nombre, asesor: selectedGroup.asesor } : null,
             canEdit
         });
     } catch (err) {
@@ -202,7 +256,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 router.post('/', authMiddleware, isAdmin, async (req, res) => {
     try {
         const schoolId = req.user.school_id;
-        const { title, description, rowType, assignedGroupId, authorizedTeachers, columns } = req.body;
+        const { title, description, rowType, assignedGroupId, authorizedTeachers, groupAssignments, columns } = req.body;
 
         if (!title || !columns || !Array.isArray(columns) || columns.length === 0) {
             return res.status(400).json({ msg: 'El título y al menos una columna son obligatorios' });
@@ -215,6 +269,7 @@ router.post('/', authMiddleware, isAdmin, async (req, res) => {
             rowType: rowType || 'STUDENTS',
             assignedGroupId: assignedGroupId || null,
             authorizedTeachers: Array.isArray(authorizedTeachers) ? authorizedTeachers : [],
+            groupAssignments: Array.isArray(groupAssignments) ? groupAssignments : [],
             columns
         });
 
@@ -222,7 +277,9 @@ router.post('/', authMiddleware, isAdmin, async (req, res) => {
 
         const populated = await CustomTableTemplate.findById(template._id)
             .populate('assignedGroupId', 'nombre')
-            .populate('authorizedTeachers', 'nombre email role');
+            .populate('authorizedTeachers', 'nombre email role')
+            .populate('groupAssignments.groupId', 'nombre')
+            .populate('groupAssignments.teachers', 'nombre email role');
 
         res.status(201).json(populated);
     } catch (err) {
@@ -234,7 +291,7 @@ router.post('/', authMiddleware, isAdmin, async (req, res) => {
 router.put('/:id', authMiddleware, isAdmin, async (req, res) => {
     try {
         const schoolId = req.user.school_id;
-        const { title, description, rowType, assignedGroupId, authorizedTeachers, columns } = req.body;
+        const { title, description, rowType, assignedGroupId, authorizedTeachers, groupAssignments, columns } = req.body;
 
         const template = await CustomTableTemplate.findOne({ _id: req.params.id, school_id: schoolId });
         if (!template) {
@@ -246,13 +303,16 @@ router.put('/:id', authMiddleware, isAdmin, async (req, res) => {
         if (rowType) template.rowType = rowType;
         template.assignedGroupId = assignedGroupId || null;
         if (Array.isArray(authorizedTeachers)) template.authorizedTeachers = authorizedTeachers;
+        if (Array.isArray(groupAssignments)) template.groupAssignments = groupAssignments;
         if (Array.isArray(columns)) template.columns = columns;
 
         await template.save();
 
         const populated = await CustomTableTemplate.findById(template._id)
             .populate('assignedGroupId', 'nombre')
-            .populate('authorizedTeachers', 'nombre email role');
+            .populate('authorizedTeachers', 'nombre email role')
+            .populate('groupAssignments.groupId', 'nombre')
+            .populate('groupAssignments.teachers', 'nombre email role');
 
         res.json(populated);
     } catch (err) {
@@ -282,7 +342,7 @@ router.delete('/:id', authMiddleware, isAdmin, async (req, res) => {
 router.patch('/:id/cell', authMiddleware, async (req, res) => {
     try {
         const schoolId = req.user.school_id;
-        const { rowEntityId, colKey, value, rowColorTag, rowEntityName } = req.body;
+        const { rowEntityId, groupId, colKey, value, rowColorTag, rowEntityName } = req.body;
 
         if (!rowEntityId) {
             return res.status(400).json({ msg: 'Identificador de fila obligatorio' });
@@ -295,9 +355,20 @@ router.patch('/:id/cell', authMiddleware, async (req, res) => {
 
         // Authorization check
         const isUserAdmin = req.user.role === 'admin' || req.user.role === 'superadmin';
-        const isAuthorizedTeacher = template.authorizedTeachers.some(
+        let isAuthorizedTeacher = template.authorizedTeachers.some(
             t => t.toString() === req.user._id.toString()
         );
+
+        if (!isAuthorizedTeacher && groupId && template.groupAssignments) {
+            const groupAssign = template.groupAssignments.find(
+                ga => (typeof ga.groupId === 'object' ? ga.groupId._id : ga.groupId).toString() === groupId.toString()
+            );
+            if (groupAssign && groupAssign.teachers) {
+                isAuthorizedTeacher = groupAssign.teachers.some(
+                    t => (typeof t === 'object' ? t._id : t).toString() === req.user._id.toString()
+                );
+            }
+        }
 
         if (!isUserAdmin && !isAuthorizedTeacher) {
             return res.status(403).json({ msg: 'No tienes permiso para modificar esta tabla' });
@@ -312,6 +383,7 @@ router.patch('/:id/cell', authMiddleware, async (req, res) => {
             record = new CustomTableRowData({
                 tableId: template._id,
                 school_id: schoolId,
+                groupId: groupId || null,
                 rowEntityId,
                 rowEntityName: rowEntityName || '',
                 data: new Map(),

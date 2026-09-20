@@ -14,6 +14,12 @@ const customTableRowDataSchema = new mongoose.Schema(
       required: true,
       index: true
     },
+    groupId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Grupo",
+      default: null,
+      index: true
+    },
     rowEntityId: {
       type: String,
       required: true,
