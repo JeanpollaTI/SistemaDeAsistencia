@@ -227,15 +227,27 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
                     <div className="promover-students-section">
                         <div className="students-section-header">
                             <label className="promover-label">
-                                4. Selecciona los alumnos a transferir ({selectedAlumnoIds.length} seleccionados):
+                                4. Selecciona los alumnos a transferir ({selectedAlumnoIds.length} de {sourceAlumnos.length} seleccionados):
                             </label>
-                            <button
-                                type="button"
-                                className="btn-toggle-all"
-                                onClick={handleToggleAll}
-                            >
-                                Seleccionar / Desmarcar Todos
-                            </button>
+                            <div className="promover-bulk-actions">
+                                <button
+                                    type="button"
+                                    className="btn-toggle-all select-all"
+                                    onClick={() => {
+                                        const selectableStudents = sourceAlumnos.filter(a => !isAlreadyInTarget(a));
+                                        setSelectedAlumnoIds(selectableStudents.map(a => String(a._id || a.id)));
+                                    }}
+                                >
+                                    <FaUserCheck /> Seleccionar Todos los Alumnos
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn-toggle-all deselect-all"
+                                    onClick={() => setSelectedAlumnoIds([])}
+                                >
+                                    <FaUserMinus /> Desmarcar Todos
+                                </button>
+                            </div>
                         </div>
 
                         {sourceAlumnos.length === 0 ? (

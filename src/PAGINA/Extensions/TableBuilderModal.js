@@ -110,6 +110,27 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
         });
     };
 
+    const selectAllGlobalTeachers = () => {
+        setAuthorizedTeachers(profesores.map(p => p._id));
+    };
+
+    const deselectAllGlobalTeachers = () => {
+        setAuthorizedTeachers([]);
+    };
+
+    const selectAllGroupsAllTeachers = () => {
+        const allProfIds = profesores.map(p => p._id);
+        const newGroupAssignments = grupos.map(g => ({
+            groupId: g._id,
+            teachers: allProfIds
+        }));
+        setGroupAssignments(newGroupAssignments);
+    };
+
+    const deselectAllGroupsTeachers = () => {
+        setGroupAssignments([]);
+    };
+
     return (
         <div className="ext-modal-overlay">
             <div className="ext-modal-content ext-modal-compact">
@@ -172,7 +193,17 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
 
                     {/* Teachers RBAC */}
                     <div className="ext-form-group">
-                        <label>Profesores Autorizados (Permiso Global)</label>
+                        <div className="ext-section-header-flex">
+                            <label>Profesores Autorizados (Permiso Global)</label>
+                            <div className="ext-quick-select-btns">
+                                <button type="button" className="ext-btn-link-sm" onClick={selectAllGlobalTeachers}>
+                                    ✓ Seleccionar Todos
+                                </button>
+                                <button type="button" className="ext-btn-link-sm text-red" onClick={deselectAllGlobalTeachers}>
+                                    ✕ Desmarcar Todos
+                                </button>
+                            </div>
+                        </div>
                         <p className="ext-help-text">Los administradores siempre tienen acceso completo. Marca los profesores con permiso:</p>
                         <div className="ext-teachers-grid">
                             {profesores.map(p => (
@@ -191,7 +222,17 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
                     {/* Per-group teacher assignments if students mode */}
                     {rowType === 'STUDENTS' && grupos.length > 0 && (
                         <div className="ext-form-group">
-                            <label>Docentes Evaluadores por Grupo</label>
+                            <div className="ext-section-header-flex">
+                                <label>Docentes Evaluadores por Grupo</label>
+                                <div className="ext-quick-select-btns">
+                                    <button type="button" className="ext-btn-link-sm" onClick={selectAllGroupsAllTeachers}>
+                                        👥 Seleccionar Todos los Grupos
+                                    </button>
+                                    <button type="button" className="ext-btn-link-sm text-red" onClick={deselectAllGroupsTeachers}>
+                                        ✕ Desmarcar Grupos
+                                    </button>
+                                </div>
+                            </div>
                             <div className="ext-group-assign-list">
                                 {grupos.map(g => {
                                     const assign = groupAssignments.find(ga => ga.groupId === g._id);

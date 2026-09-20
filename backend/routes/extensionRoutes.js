@@ -198,7 +198,9 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
         let selectedGroup = null;
         if (template.rowType === 'STUDENTS') {
-            if (requestedGroupId) {
+            if (requestedGroupId === 'ALL') {
+                selectedGroup = { _id: 'ALL', nombre: 'Todos los Grupos' };
+            } else if (requestedGroupId) {
                 selectedGroup = allSchoolGroups.find(g => g._id.toString() === requestedGroupId.toString());
             }
             if (!selectedGroup && template.assignedGroupId) {
@@ -235,7 +237,27 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
         let rows = [];
         if (template.rowType === 'STUDENTS') {
-            if (selectedGroup && selectedGroup.alumnos) {
+            if (selectedGroup && selectedGroup._id === 'ALL') {
+                allSchoolGroups.forEach(g => {
+                    (g.alumnos || []).forEach(al => {
+                        rows.push({
+                            entityId: al._id.toString(),
+                            name: `${al.nombre} ${al.apellidoPaterno} ${al.apellidoMaterno || ''}`.trim() + ` (${g.nombre})`,
+                            nombre: al.nombre,
+                            apellidoPaterno: al.apellidoPaterno,
+                            apellidoMaterno: al.apellidoMaterno || '',
+                            groupName: g.nombre,
+                            groupId: g._id.toString(),
+                            esNuevoIngreso: !!al.esNuevoIngreso,
+                            fechaIngreso: al.fechaIngreso || '',
+                            esBaja: !!al.esBaja,
+                            fechaBaja: al.fechaBaja || '',
+                            data: dataMap[al._id.toString()] || {},
+                            rowColorTag: colorMap[al._id.toString()] || ''
+                        });
+                    });
+                });
+            } else if (selectedGroup && selectedGroup.alumnos) {
                 rows = selectedGroup.alumnos.map(al => ({
                     entityId: al._id.toString(),
                     name: `${al.nombre} ${al.apellidoPaterno} ${al.apellidoMaterno || ''}`.trim(),

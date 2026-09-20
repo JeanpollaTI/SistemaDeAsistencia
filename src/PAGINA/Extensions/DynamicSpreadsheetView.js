@@ -417,6 +417,13 @@ const DynamicSpreadsheetView = ({ user }) => {
                         <FaThList /> <span>Seleccionar Grupo:</span>
                     </div>
                     <div className="ext-groups-tabs-scroll">
+                        <button
+                            type="button"
+                            className={`ext-group-tab-btn ext-all-groups-tab ${selectedGroup && selectedGroup._id === 'ALL' ? 'active' : ''}`}
+                            onClick={() => handleSelectGroupTab('ALL')}
+                        >
+                            👥 Todos los Grupos
+                        </button>
                         {groups.map(g => {
                             const isSelected = selectedGroup && selectedGroup._id === g._id;
                             return (
@@ -476,6 +483,28 @@ const DynamicSpreadsheetView = ({ user }) => {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
+                </div>
+
+                <div className="ext-bulk-selection-btns">
+                    <button
+                        type="button"
+                        className="ext-btn-bulk-action"
+                        onClick={() => handleSelectGroupTab('ALL')}
+                        title="Ver y seleccionar todos los grupos del plantel"
+                    >
+                        👥 Seleccionar Todos los Grupos
+                    </button>
+                    <button
+                        type="button"
+                        className="ext-btn-bulk-action primary"
+                        onClick={() => {
+                            setFilterStatus('ALL');
+                            setSearchTerm('');
+                        }}
+                        title="Mostrar todos los alumnos"
+                    >
+                        🎓 Seleccionar Todos los Alumnos
+                    </button>
                 </div>
 
                 {template.rowType === 'STUDENTS' && (
@@ -567,60 +596,12 @@ const DynamicSpreadsheetView = ({ user }) => {
                                                         type="button"
                                                         className="ext-col-menu-btn"
                                                         onClick={() => setActiveMenuColKey(activeMenuColKey === col.key ? null : col.key)}
+                                                        title="Configurar Columna"
                                                     >
                                                         <FaEllipsisV />
                                                     </button>
                                                 )}
                                             </div>
-
-                                            {/* CONTEXT MENU POPOVER (NOTION / AIRTABLE STYLE) */}
-                                            {activeMenuColKey === col.key && canEdit && (
-                                                <div className="ext-context-popover">
-                                                    <div className="ext-popover-header">
-                                                        <span>Configurar Columna</span>
-                                                        <button onClick={() => setActiveMenuColKey(null)}><FaTimes /></button>
-                                                    </div>
-                                                    <div className="ext-popover-menu">
-                                                        <button onClick={() => startRenameColumn(col.key, col.label)}>
-                                                            <FaEdit /> Renombrar Etiqueta
-                                                        </button>
-
-                                                        <div className="ext-popover-subtitle">Tipo de Dato:</div>
-                                                        <button
-                                                            className={col.type === 'BOOLEAN_STATUS' ? 'active' : ''}
-                                                            onClick={() => handleChangeColumnType(col.key, 'BOOLEAN_STATUS')}
-                                                        >
-                                                            <FaToggleOn /> Botón Cíclico (Códigos Cortos)
-                                                        </button>
-                                                        <button
-                                                            className={col.type === 'TEXT' ? 'active' : ''}
-                                                            onClick={() => handleChangeColumnType(col.key, 'TEXT')}
-                                                        >
-                                                            <FaFont /> Texto / Nota
-                                                        </button>
-                                                        <button
-                                                            className={col.type === 'NUMBER' ? 'active' : ''}
-                                                            onClick={() => handleChangeColumnType(col.key, 'NUMBER')}
-                                                        >
-                                                            <FaHashtag /> Numérico / Calificación
-                                                        </button>
-                                                        <button
-                                                            className={col.type === 'PERCENTAGE' ? 'active' : ''}
-                                                            onClick={() => handleChangeColumnType(col.key, 'PERCENTAGE')}
-                                                        >
-                                                            <FaPercent /> Porcentaje (%)
-                                                        </button>
-
-                                                        <hr />
-                                                        <button onClick={() => handleDuplicateColumn(col.key)}>
-                                                            <FaCopy /> Duplicar Columna
-                                                        </button>
-                                                        <button className="text-red" onClick={() => { setActiveMenuColKey(null); setConfirmDeleteColKey(col.key); }}>
-                                                            <FaTrash /> Eliminar Columna
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
                                         </th>
                                     ))}
                                 </tr>
@@ -659,58 +640,12 @@ const DynamicSpreadsheetView = ({ user }) => {
                                                     type="button"
                                                     className="ext-col-menu-btn"
                                                     onClick={() => setActiveMenuColKey(activeMenuColKey === col.key ? null : col.key)}
+                                                    title="Configurar Columna"
                                                 >
                                                     <FaEllipsisV />
                                                 </button>
                                             )}
                                         </div>
-
-                                        {/* CONTEXT MENU POPOVER */}
-                                        {activeMenuColKey === col.key && canEdit && (
-                                            <div className="ext-context-popover">
-                                                <div className="ext-popover-header">
-                                                    <span>Configurar Columna</span>
-                                                    <button onClick={() => setActiveMenuColKey(null)}><FaTimes /></button>
-                                                </div>
-                                                <div className="ext-popover-menu">
-                                                    <button onClick={() => startRenameColumn(col.key, col.label)}>
-                                                        <FaEdit /> Renombrar Etiqueta
-                                                    </button>
-                                                    <div className="ext-popover-subtitle">Tipo de Dato:</div>
-                                                    <button
-                                                        className={col.type === 'BOOLEAN_STATUS' ? 'active' : ''}
-                                                        onClick={() => handleChangeColumnType(col.key, 'BOOLEAN_STATUS')}
-                                                    >
-                                                        <FaToggleOn /> Botón Cíclico
-                                                    </button>
-                                                    <button
-                                                        className={col.type === 'TEXT' ? 'active' : ''}
-                                                        onClick={() => handleChangeColumnType(col.key, 'TEXT')}
-                                                    >
-                                                        <FaFont /> Texto / Nota
-                                                    </button>
-                                                    <button
-                                                        className={col.type === 'NUMBER' ? 'active' : ''}
-                                                        onClick={() => handleChangeColumnType(col.key, 'NUMBER')}
-                                                    >
-                                                        <FaHashtag /> Numérico
-                                                    </button>
-                                                    <button
-                                                        className={col.type === 'PERCENTAGE' ? 'active' : ''}
-                                                        onClick={() => handleChangeColumnType(col.key, 'PERCENTAGE')}
-                                                    >
-                                                        <FaPercent /> Porcentaje (%)
-                                                    </button>
-                                                    <hr />
-                                                    <button onClick={() => handleDuplicateColumn(col.key)}>
-                                                        <FaCopy /> Duplicar Columna
-                                                    </button>
-                                                    <button className="text-red" onClick={() => { setActiveMenuColKey(null); setConfirmDeleteColKey(col.key); }}>
-                                                        <FaTrash /> Eliminar Columna
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
                                     </th>
                                 ))}
                                 {canEdit && (
