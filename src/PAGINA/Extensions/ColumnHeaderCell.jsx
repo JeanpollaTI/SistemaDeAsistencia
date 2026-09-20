@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
     FaEllipsisV, FaEdit, FaFont, FaHashtag, FaPercent,
-    FaToggleOn, FaCopy, FaTrash, FaPlus, FaCheck
+    FaToggleOn, FaCopy, FaTrash, FaPlus, FaCheck, FaTimes
 } from 'react-icons/fa';
 
 const ColumnHeaderCell = ({
@@ -21,14 +21,14 @@ const ColumnHeaderCell = ({
 
     const menuRef = useRef(null);
 
-    // Sync label input when col changes
+    // Sync state when col props update
     useEffect(() => {
         setLabelInput(col.label || '');
         setStatusOptions(col.statusOptions || []);
         setShowCyclicPanel(col.type === 'BOOLEAN_STATUS');
     }, [col]);
 
-    // Close menu when clicking outside
+    // Close popover on outside click
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -90,8 +90,8 @@ const ColumnHeaderCell = ({
     };
 
     return (
-        <th className="ext-col-header relative border-r border-b border-slate-800 bg-slate-900/90 text-slate-200 p-2 select-none group">
-            <div className="flex items-center justify-between gap-1">
+        <th className="ext-col-header" style={{ position: 'relative' }}>
+            <div className="ext-col-header-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '4px' }}>
                 {isEditingLabel ? (
                     <input
                         type="text"
@@ -99,13 +99,15 @@ const ColumnHeaderCell = ({
                         onChange={(e) => setLabelInput(e.target.value)}
                         onBlur={handleSaveLabel}
                         onKeyDown={handleKeyDownLabel}
-                        className="bg-slate-950 text-cyan-300 font-bold px-1.5 py-0.5 rounded border border-cyan-500/80 outline-none text-xs w-full text-center shadow-inner"
+                        className="ext-inline-header-input"
+                        style={{ width: '100%', textAlign: 'center', fontWeight: 'bold' }}
                         autoFocus
                     />
                 ) : (
                     <span
                         onClick={() => canEdit && setIsEditingLabel(true)}
-                        className={`font-semibold text-xs text-slate-200 text-center flex-1 truncate ${canEdit ? 'cursor-pointer hover:text-cyan-400 transition-colors' : ''}`}
+                        className="ext-col-title-clickable"
+                        style={{ cursor: canEdit ? 'pointer' : 'default', flex: 1, textAlign: 'center' }}
                         title={canEdit ? 'Clic para renombrar' : col.label}
                     >
                         {col.label}
@@ -113,113 +115,129 @@ const ColumnHeaderCell = ({
                 )}
 
                 {canEdit && (
-                    <div ref={menuRef} className="relative">
+                    <div ref={menuRef} style={{ position: 'relative' }}>
                         <button
                             type="button"
                             onClick={() => setIsOpen(!isOpen)}
-                            className="p-1 text-slate-400 hover:text-cyan-400 hover:bg-slate-800/60 rounded transition-colors outline-none"
+                            className="ext-col-menu-btn-icon"
+                            style={{
+                                background: isOpen ? 'rgba(0, 203, 203, 0.2)' : 'transparent',
+                                border: 'none',
+                                color: isOpen ? '#00cbcb' : '#94a3b8',
+                                padding: '4px 6px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
                             title="Opciones de columna"
                         >
-                            <FaEllipsisV className="w-3 h-3" />
+                            <FaEllipsisV style={{ fontSize: '0.85rem' }} />
                         </button>
 
-                        {/* POPOVER DROPDOWN MENU (Tailwind Clean Dark Theme) */}
+                        {/* FLOATING CARD DROPDOWN MENU */}
                         {isOpen && (
-                            <div className="absolute right-0 top-full mt-1 z-50 bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl p-2.5 min-w-[230px] text-xs backdrop-blur-md text-slate-200 text-left animate-in fade-in zoom-in-95 duration-150">
-                                <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase px-2 py-1 mb-1 border-b border-slate-800 flex justify-between items-center">
-                                    <span>Configuración</span>
-                                    <span className="text-cyan-400 font-normal truncate max-w-[90px]">{col.label}</span>
+                            <div className="ext-col-dropdown-floating">
+                                <div className="ext-dropdown-title-bar">
+                                    <span>⚙️ Configurar Columna</span>
+                                    <span style={{ color: '#00cbcb', fontWeight: 'bold' }}>{col.label}</span>
                                 </div>
 
                                 {/* Option: Rename */}
                                 <button
+                                    type="button"
                                     onClick={() => {
                                         setIsEditingLabel(true);
                                         setIsOpen(false);
                                     }}
-                                    className="flex items-center gap-2 w-full px-2 py-1.5 text-left rounded-lg text-slate-300 hover:bg-slate-800 hover:text-cyan-300 transition-colors"
+                                    className="ext-dropdown-item-btn"
                                 >
-                                    <FaEdit className="text-cyan-400" />
+                                    <FaEdit style={{ color: '#00cbcb' }} />
                                     <span>Renombrar Etiqueta</span>
                                 </button>
 
-                                <div className="my-1.5 border-t border-slate-800/80" />
+                                <div className="ext-dropdown-divider" />
 
-                                <div className="px-2 py-1 text-[10px] font-semibold text-slate-400 uppercase">
+                                <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', margin: '4px 0 2px 4px' }}>
                                     Tipo de Campo:
                                 </div>
 
                                 <button
+                                    type="button"
                                     onClick={() => handleSelectType('TEXT')}
-                                    className={`flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-left transition-colors ${col.type === 'TEXT' ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30' : 'text-slate-300 hover:bg-slate-800'}`}
+                                    className={`ext-dropdown-item-btn ${col.type === 'TEXT' ? 'active' : ''}`}
                                 >
-                                    <FaFont className="text-blue-400" />
+                                    <FaFont style={{ color: '#60a5fa' }} />
                                     <span>Texto / Nota</span>
                                 </button>
 
                                 <button
+                                    type="button"
                                     onClick={() => handleSelectType('NUMBER')}
-                                    className={`flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-left transition-colors ${col.type === 'NUMBER' ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30' : 'text-slate-300 hover:bg-slate-800'}`}
+                                    className={`ext-dropdown-item-btn ${col.type === 'NUMBER' ? 'active' : ''}`}
                                 >
-                                    <FaHashtag className="text-amber-400" />
+                                    <FaHashtag style={{ color: '#fbbf24' }} />
                                     <span>Numérico / Calificación</span>
                                 </button>
 
                                 <button
+                                    type="button"
                                     onClick={() => handleSelectType('PERCENTAGE')}
-                                    className={`flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-left transition-colors ${col.type === 'PERCENTAGE' ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30' : 'text-slate-300 hover:bg-slate-800'}`}
+                                    className={`ext-dropdown-item-btn ${col.type === 'PERCENTAGE' ? 'active' : ''}`}
                                 >
-                                    <FaPercent className="text-purple-400" />
+                                    <FaPercent style={{ color: '#c084fc' }} />
                                     <span>Porcentaje (%)</span>
                                 </button>
 
                                 <button
+                                    type="button"
                                     onClick={() => handleSelectType('BOOLEAN_STATUS')}
-                                    className={`flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-left transition-colors ${col.type === 'BOOLEAN_STATUS' ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30' : 'text-slate-300 hover:bg-slate-800'}`}
+                                    className={`ext-dropdown-item-btn ${col.type === 'BOOLEAN_STATUS' ? 'active' : ''}`}
                                 >
-                                    <FaToggleOn className="text-emerald-400" />
+                                    <FaToggleOn style={{ color: '#34d399' }} />
                                     <span>Botón Cíclico (Códigos Cortos)</span>
                                 </button>
 
                                 {/* Mini Subpanel for Cyclic Button Symbology */}
                                 {showCyclicPanel && (
-                                    <div className="mt-2 p-2 bg-slate-950/80 rounded-lg border border-slate-800 flex flex-col gap-2">
-                                        <div className="text-[10px] font-bold text-cyan-400 flex items-center justify-between">
+                                    <div className="ext-cyclic-subbox">
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', fontWeight: 'bold', color: '#00cbcb' }}>
                                             <span>Simbología / Colores:</span>
                                             <button
                                                 type="button"
                                                 onClick={handleAddOption}
-                                                className="text-[10px] text-cyan-300 hover:underline flex items-center gap-1"
+                                                style={{ background: 'transparent', border: 'none', color: '#00cbcb', fontSize: '0.72rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px' }}
                                             >
-                                                <FaPlus className="w-2 h-2" /> Agregar
+                                                <FaPlus style={{ fontSize: '0.65rem' }} /> Agregar
                                             </button>
                                         </div>
 
-                                        <div className="max-h-[140px] overflow-y-auto space-y-1.5 pr-1">
+                                        <div style={{ maxHeight: '130px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                             {statusOptions.map((opt, idx) => (
-                                                <div key={idx} className="flex items-center gap-1.5 bg-slate-900 p-1 rounded border border-slate-800">
+                                                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#1e293b', padding: '4px 6px', borderRadius: '6px', border: '1px solid #334155' }}>
                                                     <input
                                                         type="text"
                                                         maxLength="3"
                                                         value={opt.label || opt.key}
                                                         onChange={(e) => handleOptionChange(idx, 'label', e.target.value.toUpperCase())}
-                                                        className="w-9 bg-slate-950 text-center font-bold text-white px-1 py-0.5 rounded border border-slate-700 text-xs uppercase"
+                                                        style={{ width: '36px', background: '#0f172a', color: '#ffffff', textAlign: 'center', fontWeight: 'bold', borderRadius: '4px', border: '1px solid #475569', fontSize: '0.8rem', textTransform: 'uppercase' }}
                                                         placeholder="S"
                                                     />
                                                     <input
                                                         type="color"
                                                         value={opt.color || '#22c55e'}
                                                         onChange={(e) => handleOptionChange(idx, 'color', e.target.value)}
-                                                        className="w-6 h-6 rounded cursor-pointer border-0 bg-transparent"
+                                                        style={{ width: '26px', height: '24px', border: 'none', background: 'transparent', cursor: 'pointer' }}
                                                     />
                                                     {statusOptions.length > 1 && (
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRemoveOption(idx)}
-                                                            className="text-rose-400 hover:text-rose-300 ml-auto p-1"
+                                                            style={{ background: 'transparent', border: 'none', color: '#f87171', fontSize: '1rem', cursor: 'pointer', marginLeft: 'auto' }}
                                                             title="Eliminar opción"
                                                         >
-                                                            &times;
+                                                            <FaTimes />
                                                         </button>
                                                     )}
                                                 </div>
@@ -229,36 +247,38 @@ const ColumnHeaderCell = ({
                                         <button
                                             type="button"
                                             onClick={handleSaveStatusOptions}
-                                            className="w-full mt-1 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold py-1 px-2 rounded text-[11px] flex items-center justify-center gap-1 transition-colors"
+                                            style={{ width: '100%', background: '#00cbcb', color: '#0f172a', fontWeight: 'bold', padding: '6px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.78rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginTop: '4px' }}
                                         >
-                                            <FaCheck className="w-3 h-3" /> Aplicar Simbología
+                                            <FaCheck /> Aplicar Simbología
                                         </button>
                                     </div>
                                 )}
 
-                                <div className="my-1.5 border-t border-slate-800/80" />
+                                <div className="ext-dropdown-divider" />
 
                                 {/* Option: Duplicate */}
                                 <button
+                                    type="button"
                                     onClick={() => {
                                         onDuplicate(col.key);
                                         setIsOpen(false);
                                     }}
-                                    className="flex items-center gap-2 w-full px-2 py-1.5 text-left rounded-lg text-slate-300 hover:bg-slate-800 hover:text-cyan-300 transition-colors"
+                                    className="ext-dropdown-item-btn"
                                 >
-                                    <FaCopy className="text-slate-400" />
+                                    <FaCopy style={{ color: '#94a3b8' }} />
                                     <span>Duplicar Columna</span>
                                 </button>
 
                                 {/* Option: Delete */}
                                 <button
+                                    type="button"
                                     onClick={() => {
                                         onDelete(col.key);
                                         setIsOpen(false);
                                     }}
-                                    className="flex items-center gap-2 w-full px-2 py-1.5 text-left rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors mt-0.5 font-medium"
+                                    className="ext-dropdown-item-btn danger"
                                 >
-                                    <FaTrash className="text-rose-400" />
+                                    <FaTrash style={{ color: '#ef4444' }} />
                                     <span>Eliminar Columna</span>
                                 </button>
                             </div>
