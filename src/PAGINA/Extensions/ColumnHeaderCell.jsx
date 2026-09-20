@@ -192,7 +192,13 @@ const ColumnHeaderCell = ({
 
                                 <button
                                     type="button"
-                                    onClick={() => handleSelectType('BOOLEAN_STATUS')}
+                                    onClick={() => {
+                                        if (col.type === 'BOOLEAN_STATUS') {
+                                            setShowCyclicPanel(!showCyclicPanel);
+                                        } else {
+                                            handleSelectType('BOOLEAN_STATUS');
+                                        }
+                                    }}
                                     className={`ext-dropdown-item-btn ${col.type === 'BOOLEAN_STATUS' ? 'active' : ''}`}
                                 >
                                     <FaToggleOn style={{ color: '#34d399' }} />

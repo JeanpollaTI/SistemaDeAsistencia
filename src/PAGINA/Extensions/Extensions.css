@@ -1247,9 +1247,11 @@
 .ext-col-dropdown-floating {
     position: absolute !important;
     top: 100% !important;
-    right: 0 !important;
+    left: 0 !important;
     margin-top: 6px !important;
-    width: 240px !important;
+    width: 250px !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
     background: #0f172a !important;
     border: 1px solid #334155 !important;
     border-radius: 12px !important;
@@ -1259,6 +1261,27 @@
     color: #f8fafc !important;
     text-align: left !important;
     font-size: 0.85rem !important;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 #0f172a;
+}
+
+/* Custom Scrollbar for Floating Dropdown Card */
+.ext-col-dropdown-floating::-webkit-scrollbar {
+    width: 5px;
+}
+
+.ext-col-dropdown-floating::-webkit-scrollbar-track {
+    background: #0f172a;
+    border-radius: 4px;
+}
+
+.ext-col-dropdown-floating::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+}
+
+.ext-col-dropdown-floating::-webkit-scrollbar-thumb:hover {
+    background: #00cbcb;
 }
 
 .ext-dropdown-title-bar {
