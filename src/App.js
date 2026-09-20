@@ -29,6 +29,8 @@ import SuperAdminDashboard from "./PAGINA/SuperAdminDashboard";
 import FichaAlumno from "./PAGINA/FichaAlumno";
 import MaintenanceScreen from "./PAGINA/MaintenanceScreen";
 import TablasMatematicas from "./PAGINA/TablasMatematicas";
+import ExtensionsDashboard from "./PAGINA/Extensions/ExtensionsDashboard";
+import DynamicSpreadsheetView from "./PAGINA/Extensions/DynamicSpreadsheetView";
 import SchoolConfigModal from "./COMPONENTE/SchoolConfigModal";
 
 import SearchBar from "./COMPONENTE/SearchBar";
@@ -214,14 +216,14 @@ function App() {
             roleSections = [
                 { id: "trabajos", label: "TRABAJOS", path: "/trabajos", icon: <FaTasks /> },
                 { id: "grupo", label: "ASISTENCIA", path: "/grupo", icon: <FaUsers /> },
-                { id: "tablas", label: "TABLAS MATEMÁTICAS", path: "/tablas-matematicas", icon: <FaCalculator /> },
+                { id: "tablas", label: "EXTENSIONES", path: "/extensiones", icon: <FaCalculator /> },
             ];
         } else if (user?.role === "admin") {
             roleSections = [
                 { id: "grupo", label: "GRUPOS", path: "/grupo", icon: <FaUsers /> },
                 { id: "horario", label: "HORARIO GENERAL", path: "/horario", icon: <FaCalendarAlt /> },
                 { id: "calificaciones", label: "CALIFICACIONES", path: "/calificaciones", icon: <FaChartBar /> },
-                { id: "tablas", label: "TABLAS MATEMÁTICAS", path: "/tablas-matematicas", icon: <FaCalculator /> },
+                { id: "tablas", label: "EXTENSIONES", path: "/extensiones", icon: <FaCalculator /> },
             ];
         } else if (user?.role === "superadmin") {
             roleSections = [
@@ -371,7 +373,9 @@ function App() {
                     <Route path="/trabajos" element={<PrivateRoute requiredRole="profesor"><Trabajos user={user} /></PrivateRoute>} />
                     <Route path="/register-profesor" element={<PrivateRoute requiredRole="admin"><RegisterProfesor user={user} /></PrivateRoute>} />
                     <Route path="/calificaciones" element={<PrivateRoute requiredRole="admin"><Calificaciones user={user} /></PrivateRoute>} />
-                    <Route path="/tablas-matematicas" element={<PrivateRoute requiredRole={["admin", "profesor"]}><TablasMatematicas user={user} /></PrivateRoute>} />
+                    <Route path="/extensiones" element={<PrivateRoute requiredRole={["admin", "profesor"]}><ExtensionsDashboard user={user} /></PrivateRoute>} />
+                    <Route path="/extensiones/:id" element={<PrivateRoute requiredRole={["admin", "profesor"]}><DynamicSpreadsheetView user={user} /></PrivateRoute>} />
+                    <Route path="/tablas-matematicas" element={<Navigate to="/extensiones" replace />} />
                     {/* Nueva Ruta SuperAdmin */}
                     <Route path="/manager-dashboard" element={<PrivateRoute requiredRole="superadmin"><SuperAdminDashboard user={user} /></PrivateRoute>} />
                     <Route path="/alumno/:id" element={<PrivateRoute requiredRole={["admin", "profesor"]}><FichaAlumno /></PrivateRoute>} />

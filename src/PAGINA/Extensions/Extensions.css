@@ -1,0 +1,671 @@
+/* Extensions Module Stylesheet */
+
+.ext-dashboard-container,
+.ext-spreadsheet-page {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+    font-family: inherit;
+    color: var(--text-color, #1f2937);
+}
+
+/* Hero Banner */
+.ext-hero-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ffffff;
+    padding: 32px;
+    border-radius: 16px;
+    margin-bottom: 28px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.ext-hero-content h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ext-hero-content p {
+    color: #94a3b8;
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* Buttons */
+.ext-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    outline: none;
+}
+
+.ext-btn-primary {
+    background: #00cbcb;
+    color: #0f172a;
+}
+
+.ext-btn-primary:hover {
+    background: #00b3b3;
+    transform: translateY(-1px);
+}
+
+.ext-btn-secondary {
+    background: #475569;
+    color: #ffffff;
+}
+
+.ext-btn-secondary:hover {
+    background: #334155;
+}
+
+.ext-btn-outline {
+    background: transparent;
+    border: 1px solid #00cbcb;
+    color: #00cbcb;
+}
+
+.ext-btn-outline:hover {
+    background: rgba(0, 203, 203, 0.1);
+}
+
+.ext-btn-lg {
+    padding: 14px 24px;
+    font-size: 1.05rem;
+}
+
+.ext-btn-sm {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+.ext-flex-1 {
+    flex: 1;
+}
+
+.ext-btn-icon-bg {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.ext-btn-icon-bg.edit {
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+.ext-btn-icon-bg.edit:hover {
+    background: #2563eb;
+}
+
+.ext-btn-icon-bg.delete {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.ext-btn-icon-bg.delete:hover {
+    background: #dc2626;
+}
+
+/* Cards Grid */
+.ext-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 24px;
+}
+
+.ext-card {
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ext-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.ext-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.ext-card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ext-card-icon {
+    font-size: 1.3rem;
+    color: #00cbcb;
+}
+
+.ext-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.ext-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-student {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.badge-group {
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.ext-card-desc {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    line-height: 1.4;
+}
+
+.ext-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.88rem;
+    margin-bottom: 20px;
+}
+
+.ext-cols-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.ext-col-chip {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+
+}
+
+.ext-col-chip.ext-more {
+    background: #cbd5e1;
+    font-weight: 600;
+}
+
+.ext-card-footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    pt: 12px;
+    border-top: 1px solid var(--border-color, #f1f5f9);
+}
+
+.ext-admin-card-actions {
+    display: flex;
+    gap: 6px;
+}
+
+/* Modal Overlay & Form */
+.ext-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    padding: 20px;
+}
+
+.ext-modal-content {
+    background: var(--card-bg, #ffffff);
+    width: 100%;
+    max-width: 760px;
+    max-height: 90vh;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.ext-modal-header {
+    padding: 20px 24px;
+    background: #1e293b;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ext-modal-header h2 {
+    font-size: 1.3rem;
+    margin: 0;
+}
+
+.ext-modal-close {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.ext-modal-close:hover {
+    color: #ffffff;
+}
+
+.ext-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ext-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ext-form-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.ext-form-group input[type="text"],
+.ext-form-group textarea,
+.ext-form-group select {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.95rem;
+    outline: none;
+}
+
+.ext-form-row {
+    display: flex;
+    gap: 16px;
+}
+
+.ext-form-group.half {
+    flex: 1;
+}
+
+.ext-help-text {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin: 0;
+}
+
+.ext-teachers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+    max-height: 140px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.ext-teacher-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: #f8fafc;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.ext-teacher-chip.selected {
+    background: #e0f2fe;
+    font-weight: 600;
+}
+
+.ext-column-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+}
+
+.ext-column-card-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.ext-status-options-block {
+    margin-top: 10px;
+    background: #ffffff;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px dashed #cbd5e1;
+}
+
+.ext-status-option-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.ext-color-presets {
+    display: flex;
+    gap: 4px;
+}
+
+.ext-preset-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.ext-preset-dot.active {
+    border-color: #0f172a;
+}
+
+.ext-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    background: #f1f5f9;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Dynamic Spreadsheet View */
+.ext-sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.ext-sheet-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.ext-btn-back {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #334155;
+    color: #ffffff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.ext-sheet-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.ext-sheet-subtitle {
+    color: #64748b;
+    margin: 4px 0 0 0;
+    font-size: 0.92rem;
+}
+
+.ext-badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-editable {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.status-readonly {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.ext-notice-banner {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+    padding: 12px 18px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.ext-controls-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.ext-search-box {
+    position: relative;
+    width: 320px;
+}
+
+.ext-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.ext-search-box input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    outline: none;
+}
+
+.ext-filter-pills {
+    display: flex;
+    gap: 8px;
+}
+
+.ext-filter-pill {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    font-size: 0.82rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ext-filter-pill.active {
+    background: #1e293b;
+    color: #ffffff;
+    border-color: #1e293b;
+}
+
+/* Table Matrix */
+.ext-table-container {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.ext-spreadsheet-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+    font-size: 0.9rem;
+}
+
+.ext-spreadsheet-table th,
+.ext-spreadsheet-table td {
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.ext-spreadsheet-table th {
+    background: #1e293b;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.ext-col-title {
+    font-size: 0.92rem;
+}
+
+.ext-col-type-tag {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    font-weight: normal;
+    text-transform: uppercase;
+}
+
+.ext-student-name-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.ext-name-text {
+    font-weight: 600;
+    text-align: left;
+}
+
+.line-through {
+    text-decoration: line-through;
+    color: #ef4444;
+}
+
+.ext-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.tag-yellow {
+    background: #fef08a;
+    color: #854d0e;
+}
+
+.tag-red {
+    background: #fca5a5;
+    color: #991b1b;
+}
+
+.ext-status-pill-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    width: 100%;
+    min-width: 80px;
+    transition: transform 0.1s;
+}
+
+.ext-status-pill-btn:hover:not(:disabled) {
+    transform: scale(1.05);
+}
+
+.ext-cell-input {
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    text-align: center;
+}
+
+.ext-color-tag-picker {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+}
+
+.ext-color-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    cursor: pointer;
+}
+
+.ext-color-dot.active {
+    border-color: #0f172a;
+    transform: scale(1.15);
+}
+
+.ext-spinner-sm {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
