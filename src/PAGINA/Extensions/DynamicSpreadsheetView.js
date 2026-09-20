@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaSearch, FaLock, FaCheckCircle, FaSpinner, FaUserClock, FaUserTimes, FaSync, FaExclamationTriangle, FaInfoCircle, FaThList } from 'react-icons/fa';
+import { FaArrowLeft, FaSearch, FaLock, FaCheckCircle, FaSpinner, FaUserClock, FaUserTimes, FaSync, FaExclamationTriangle, FaInfoCircle, FaThList, FaPlus, FaPencilAlt } from 'react-icons/fa';
 import apiClient from '../../api/apiClient';
 import './Extensions.css';
 
@@ -91,7 +91,6 @@ const DynamicSpreadsheetView = ({ user }) => {
             setLastSavedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
         } catch (err) {
             console.error('Error al guardar celda:', err);
-            // Revert state on error
             fetchExtensionData(selectedGroup?._id, true);
         } finally {
             setSavingCellKey(null);
@@ -137,6 +136,41 @@ const DynamicSpreadsheetView = ({ user }) => {
             setLastSavedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
         } catch (err) {
             console.error('Error al actualizar color de fila:', err);
+        }
+    };
+
+    const handleRenameColumn = async (colKey, currentLabel) => {
+        if (!canEdit) return;
+        const newLabel = window.prompt(`Cambiar etiqueta de la columna (${currentLabel}):`, currentLabel);
+        if (!newLabel || newLabel.trim() === '' || newLabel.trim() === currentLabel) return;
+
+        try {
+            await apiClient.patch(`/api/extensions/${id}/column-label`, {
+                colKey,
+                newLabel: newLabel.trim()
+            });
+            fetchExtensionData(selectedGroup?._id, true);
+        } catch (err) {
+            console.error('Error al renombrar columna:', err);
+            alert('Error al renombrar columna');
+        }
+    };
+
+    const handleAddNewColumn = async (targetGroupHeader = 'Primer periodo') => {
+        if (!canEdit) return;
+        const label = window.prompt('Etiqueta para la nueva columna (ej. 6, Tabla 6, Extra):', '');
+        if (label === null) return;
+
+        try {
+            await apiClient.post(`/api/extensions/${id}/add-column`, {
+                label: label.trim() || 'Nueva Columna',
+                groupHeader: targetGroupHeader,
+                type: 'BOOLEAN_STATUS'
+            });
+            fetchExtensionData(selectedGroup?._id, true);
+        } catch (err) {
+            console.error('Error al agregar columna:', err);
+            alert('Error al agregar columna');
         }
     };
 
@@ -350,12 +384,29 @@ const DynamicSpreadsheetView = ({ user }) => {
                                             {gh.title || 'General'}
                                         </th>
                                     ))}
+                                    {canEdit && (
+                                        <th
+                                            rowSpan={2}
+                                            className="ext-add-col-header-btn"
+                                            onClick={() => handleAddNewColumn(groupedHeaders[groupedHeaders.length - 1]?.title || 'Primer periodo')}
+                                            title="Agregar nueva columna / tabla"
+                                        >
+                                            <FaPlus />
+                                        </th>
+                                    )}
                                     {canEdit && <th rowSpan={2} style={{ width: '130px' }}>MARCADOR</th>}
                                 </tr>
                                 <tr>
                                     {template.columns.map((col) => (
-                                        <th key={col.key} className="ext-col-header">
-                                            <div className="ext-col-title">{col.label}</div>
+                                        <th
+                                            key={col.key}
+                                            className={`ext-col-header ${canEdit ? 'editable-col-header' : ''}`}
+                                            onClick={() => handleRenameColumn(col.key, col.label)}
+                                            title={canEdit ? 'Haz clic para cambiar el nombre de esta columna' : ''}
+                                        >
+                                            <div className="ext-col-title">
+                                                {col.label} {canEdit && <FaPencilAlt className="ext-edit-icon-sm" />}
+                                            </div>
                                         </th>
                                     ))}
                                 </tr>
@@ -367,10 +418,26 @@ const DynamicSpreadsheetView = ({ user }) => {
                                     {template.rowType === 'STUDENTS' ? `NOMBRE DEL ALUMNO (${selectedGroup?.nombre || ''})` : 'GRUPO / PLANTEL'}
                                 </th>
                                 {template.columns.map((col) => (
-                                    <th key={col.key} className="ext-col-header">
-                                        <div className="ext-col-title">{col.label}</div>
+                                    <th
+                                        key={col.key}
+                                        className={`ext-col-header ${canEdit ? 'editable-col-header' : ''}`}
+                                        onClick={() => handleRenameColumn(col.key, col.label)}
+                                        title={canEdit ? 'Haz clic para cambiar el nombre de esta columna' : ''}
+                                    >
+                                        <div className="ext-col-title">
+                                            {col.label} {canEdit && <FaPencilAlt className="ext-edit-icon-sm" />}
+                                        </div>
                                     </th>
                                 ))}
+                                {canEdit && (
+                                    <th
+                                        className="ext-add-col-header-btn"
+                                        onClick={() => handleAddNewColumn('General')}
+                                        title="Agregar nueva columna"
+                                    >
+                                        <FaPlus />
+                                    </th>
+                                )}
                                 {canEdit && <th style={{ width: '130px' }}>MARCADOR</th>}
                             </tr>
                         )}
@@ -378,7 +445,7 @@ const DynamicSpreadsheetView = ({ user }) => {
                     <tbody>
                         {filteredRows.length === 0 ? (
                             <tr>
-                                <td colSpan={template.columns.length + (canEdit ? 3 : 2)} className="ext-empty-td">
+                                <td colSpan={template.columns.length + (canEdit ? 4 : 2)} className="ext-empty-td">
                                     No hay alumnos en el grupo {selectedGroup?.nombre || ''} que coincidan con la búsqueda.
                                 </td>
                             </tr>
@@ -486,6 +553,8 @@ const DynamicSpreadsheetView = ({ user }) => {
                                                 </td>
                                             );
                                         })}
+
+                                        {canEdit && <td className="ext-cell-empty-placeholder"></td>}
 
                                         {canEdit && (
                                             <td className="ext-cell-actions">

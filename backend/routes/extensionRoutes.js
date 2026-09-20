@@ -16,36 +16,29 @@ const standardStatusOptions = [
 
 const buildDefaultTablasMatematicasColumns = () => {
     const cols = [];
-    // Primer periodo (1..5)
-    for (let i = 1; i <= 5; i++) {
-        cols.push({
-            key: `p1_t${i}`,
-            label: `${i}`,
-            groupHeader: 'Primer periodo',
-            type: 'BOOLEAN_STATUS',
-            statusOptions: standardStatusOptions
-        });
-    }
-    // Segundo Periodo (1..5)
-    for (let i = 1; i <= 5; i++) {
-        cols.push({
-            key: `p2_t${i}`,
-            label: `${i}`,
-            groupHeader: 'Segundo Periodo',
-            type: 'BOOLEAN_STATUS',
-            statusOptions: standardStatusOptions
-        });
-    }
-    // Tercer Periodo (6..10)
-    for (let i = 6; i <= 10; i++) {
-        cols.push({
-            key: `p3_t${i}`,
-            label: `${i}`,
-            groupHeader: 'Tercer Periodo',
-            type: 'BOOLEAN_STATUS',
-            statusOptions: standardStatusOptions
-        });
-    }
+    const periodNames = [
+        'Primer periodo',
+        'Segundo Periodo',
+        'Tercer Periodo',
+        'Cuarto Periodo',
+        'Quinto Periodo',
+        'Sexto Periodo',
+        'Séptimo Periodo'
+    ];
+
+    periodNames.forEach((pName, pIdx) => {
+        const periodNum = pIdx + 1;
+        for (let i = 1; i <= 5; i++) {
+            cols.push({
+                key: `p${periodNum}_t${i}`,
+                label: `${i}`,
+                groupHeader: pName,
+                type: 'BOOLEAN_STATUS',
+                statusOptions: standardStatusOptions
+            });
+        }
+    });
+
     // Observaciones
     cols.push({
         key: 'observaciones',
@@ -66,7 +59,7 @@ const ensureDefaultTemplates = async (schoolId) => {
         builtIn = await CustomTableTemplate.create({
             school_id: schoolId,
             title: 'Tablas Matemáticas',
-            description: 'Seguimiento continuo por periodos del dominio de tablas de multiplicar.',
+            description: 'Seguimiento continuo por periodos (1° al 7°) del dominio de tablas de multiplicar.',
             rowType: 'STUDENTS',
             assignedGroupId: null,
             authorizedTeachers: [],
@@ -74,9 +67,9 @@ const ensureDefaultTemplates = async (schoolId) => {
             isBuiltIn: true
         });
     } else {
-        // Upgrade builtIn columns to include groupHeader period structure if missing
-        const hasPeriods = builtIn.columns.some(c => c.groupHeader && c.groupHeader.includes('periodo'));
-        if (!hasPeriods) {
+        // Upgrade builtIn columns to include 7 period structure if missing
+        const has7Periods = builtIn.columns.some(c => c.groupHeader && c.groupHeader.includes('Séptimo'));
+        if (!has7Periods) {
             builtIn.columns = defaultCols;
             await builtIn.save();
         }
@@ -354,6 +347,64 @@ router.put('/:id', authMiddleware, isAdmin, async (req, res) => {
             .populate('groupAssignments.teachers', 'nombre email role');
 
         res.json(populated);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PATCH /api/extensions/:id/column-label - Rename a column label dynamically
+router.patch('/:id/column-label', authMiddleware, async (req, res) => {
+    try {
+        const schoolId = req.user.school_id;
+        const { colKey, newLabel } = req.body;
+
+        if (!colKey || !newLabel) {
+            return res.status(400).json({ msg: 'Clave y nuevo nombre de columna son obligatorios' });
+        }
+
+        const template = await CustomTableTemplate.findOne({ _id: req.params.id, school_id: schoolId });
+        if (!template) {
+            return res.status(404).json({ msg: 'Tabla no encontrada' });
+        }
+
+        const colIndex = template.columns.findIndex(c => c.key === colKey);
+        if (colIndex === -1) {
+            return res.status(404).json({ msg: 'Columna no encontrada' });
+        }
+
+        template.columns[colIndex].label = newLabel.trim();
+        await template.save();
+
+        res.json({ msg: 'Nombre de columna actualizado', columns: template.columns });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/extensions/:id/add-column - Dynamically add a column to a table/period
+router.post('/:id/add-column', authMiddleware, async (req, res) => {
+    try {
+        const schoolId = req.user.school_id;
+        const { label, groupHeader, type } = req.body;
+
+        const template = await CustomTableTemplate.findOne({ _id: req.params.id, school_id: schoolId });
+        if (!template) {
+            return res.status(404).json({ msg: 'Tabla no encontrada' });
+        }
+
+        const newKey = `col_${Date.now()}`;
+        const newCol = {
+            key: newKey,
+            label: label ? label.trim() : `${template.columns.length + 1}`,
+            groupHeader: groupHeader ? groupHeader.trim() : 'Primer periodo',
+            type: type || 'BOOLEAN_STATUS',
+            statusOptions: standardStatusOptions
+        };
+
+        template.columns.push(newCol);
+        await template.save();
+
+        res.status(201).json({ msg: 'Columna agregada', columns: template.columns });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

@@ -814,7 +814,7 @@
     color: #f8fafc;
 }
 
-/* Two-Tier Period Header Cells (Primer periodo, Segundo Periodo, Tercer Periodo) */
+/* Two-Tier Period Header Cells (Primer periodo .. Séptimo Periodo) */
 .ext-period-header-cell {
     background: #0f172a !important;
     color: #00cbcb !important;
@@ -853,6 +853,36 @@
     font-weight: 700;
     font-size: 0.9rem;
     min-width: 55px;
+}
+
+.editable-col-header {
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.editable-col-header:hover {
+    background: #334155;
+}
+
+.ext-edit-icon-sm {
+    font-size: 0.72rem;
+    opacity: 0.7;
+    margin-left: 3px;
+}
+
+.ext-add-col-header-btn {
+    background: #00cbcb !important;
+    color: #0f172a !important;
+    font-size: 1.1rem !important;
+    font-weight: 800 !important;
+    cursor: pointer;
+    width: 40px;
+    transition: transform 0.15s, background 0.2s;
+}
+
+.ext-add-col-header-btn:hover {
+    background: #00b3b3 !important;
+    transform: scale(1.05);
 }
 
 .ext-student-name-box {
