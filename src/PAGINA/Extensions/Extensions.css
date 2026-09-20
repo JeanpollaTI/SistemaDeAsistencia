@@ -826,6 +826,35 @@
     padding: 10px 14px !important;
 }
 
+.ext-period-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.ext-btn-add-period-col {
+    background: #00cbcb;
+    color: #0f172a;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s;
+    line-height: 1;
+}
+
+.ext-btn-add-period-col:hover {
+    background: #00b3b3;
+    transform: scale(1.15);
+}
+
 /* Sticky Student Name Column */
 .ext-sticky-name-header,
 .ext-sticky-name-cell {
@@ -862,12 +891,6 @@
 
 .editable-col-header:hover {
     background: #334155;
-}
-
-.ext-edit-icon-sm {
-    font-size: 0.72rem;
-    opacity: 0.7;
-    margin-left: 3px;
 }
 
 .ext-add-col-header-btn {

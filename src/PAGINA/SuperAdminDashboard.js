@@ -314,9 +314,9 @@ const SuperAdminDashboard = ({ user }) => {
                                                         textAlign: 'left'
                                                     }}
                                                     onClick={() => handleToggleFeature(school._id, 'tablasMatematicas', featTablas)}
-                                                    title="Alternar módulo Tablas Matemáticas"
+                                                    title="Alternar módulo Extensiones"
                                                 >
-                                                    {featTablas ? '✓' : '✗'} Tablas Matemáticas
+                                                    {featTablas ? '✓' : '✗'} Extensiones
                                                 </button>
                                                 <button
                                                     type="button"

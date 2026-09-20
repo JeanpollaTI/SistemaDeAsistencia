@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaSearch, FaLock, FaCheckCircle, FaSpinner, FaUserClock, FaUserTimes, FaSync, FaExclamationTriangle, FaInfoCircle, FaThList, FaPlus, FaPencilAlt } from 'react-icons/fa';
+import { FaArrowLeft, FaSearch, FaLock, FaCheckCircle, FaSpinner, FaUserClock, FaUserTimes, FaSync, FaExclamationTriangle, FaInfoCircle, FaThList, FaPlus } from 'react-icons/fa';
 import apiClient from '../../api/apiClient';
 import './Extensions.css';
 
@@ -158,12 +158,12 @@ const DynamicSpreadsheetView = ({ user }) => {
 
     const handleAddNewColumn = async (targetGroupHeader = 'Primer periodo') => {
         if (!canEdit) return;
-        const label = window.prompt('Etiqueta para la nueva columna (ej. 6, Tabla 6, Extra):', '');
+        const label = window.prompt(`Etiqueta para la nueva columna en "${targetGroupHeader}" (ej. 6, 7, Extra):`, '');
         if (label === null) return;
 
         try {
             await apiClient.post(`/api/extensions/${id}/add-column`, {
-                label: label.trim() || 'Nueva Columna',
+                label: label.trim(),
                 groupHeader: targetGroupHeader,
                 type: 'BOOLEAN_STATUS'
             });
@@ -381,19 +381,21 @@ const DynamicSpreadsheetView = ({ user }) => {
                                     </th>
                                     {groupedHeaders.map((gh, gIdx) => (
                                         <th key={gIdx} colSpan={gh.colSpan} className="ext-period-header-cell">
-                                            {gh.title || 'General'}
+                                            <div className="ext-period-header-inner">
+                                                <span>{gh.title || 'General'}</span>
+                                                {canEdit && (
+                                                    <button
+                                                        type="button"
+                                                        className="ext-btn-add-period-col"
+                                                        onClick={() => handleAddNewColumn(gh.title)}
+                                                        title={`Agregar nueva columna a ${gh.title}`}
+                                                    >
+                                                        <FaPlus /> +
+                                                    </button>
+                                                )}
+                                            </div>
                                         </th>
                                     ))}
-                                    {canEdit && (
-                                        <th
-                                            rowSpan={2}
-                                            className="ext-add-col-header-btn"
-                                            onClick={() => handleAddNewColumn(groupedHeaders[groupedHeaders.length - 1]?.title || 'Primer periodo')}
-                                            title="Agregar nueva columna / tabla"
-                                        >
-                                            <FaPlus />
-                                        </th>
-                                    )}
                                     {canEdit && <th rowSpan={2} style={{ width: '130px' }}>MARCADOR</th>}
                                 </tr>
                                 <tr>
@@ -402,10 +404,10 @@ const DynamicSpreadsheetView = ({ user }) => {
                                             key={col.key}
                                             className={`ext-col-header ${canEdit ? 'editable-col-header' : ''}`}
                                             onClick={() => handleRenameColumn(col.key, col.label)}
-                                            title={canEdit ? 'Haz clic para cambiar el nombre de esta columna' : ''}
+                                            title={canEdit ? 'Haz clic para cambiar la etiqueta de esta columna' : ''}
                                         >
                                             <div className="ext-col-title">
-                                                {col.label} {canEdit && <FaPencilAlt className="ext-edit-icon-sm" />}
+                                                {col.label}
                                             </div>
                                         </th>
                                     ))}
@@ -422,10 +424,10 @@ const DynamicSpreadsheetView = ({ user }) => {
                                         key={col.key}
                                         className={`ext-col-header ${canEdit ? 'editable-col-header' : ''}`}
                                         onClick={() => handleRenameColumn(col.key, col.label)}
-                                        title={canEdit ? 'Haz clic para cambiar el nombre de esta columna' : ''}
+                                        title={canEdit ? 'Haz clic para cambiar la etiqueta de esta columna' : ''}
                                     >
                                         <div className="ext-col-title">
-                                            {col.label} {canEdit && <FaPencilAlt className="ext-edit-icon-sm" />}
+                                            {col.label}
                                         </div>
                                     </th>
                                 ))}
@@ -445,7 +447,7 @@ const DynamicSpreadsheetView = ({ user }) => {
                     <tbody>
                         {filteredRows.length === 0 ? (
                             <tr>
-                                <td colSpan={template.columns.length + (canEdit ? 4 : 2)} className="ext-empty-td">
+                                <td colSpan={template.columns.length + (canEdit ? 3 : 2)} className="ext-empty-td">
                                     No hay alumnos en el grupo {selectedGroup?.nombre || ''} que coincidan con la búsqueda.
                                 </td>
                             </tr>
@@ -553,8 +555,6 @@ const DynamicSpreadsheetView = ({ user }) => {
                                                 </td>
                                             );
                                         })}
-
-                                        {canEdit && <td className="ext-cell-empty-placeholder"></td>}
 
                                         {canEdit && (
                                             <td className="ext-cell-actions">

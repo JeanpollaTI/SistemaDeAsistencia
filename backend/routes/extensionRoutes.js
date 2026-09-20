@@ -3,6 +3,7 @@ import CustomTableTemplate from '../models/CustomTableTemplate.js';
 import CustomTableRowData from '../models/CustomTableRowData.js';
 import Grupo from '../models/Grupo.js';
 import User from '../models/User.js';
+import School from '../models/School.js';
 import TablaMatematica from '../models/TablaMatematica.js';
 import { authMiddleware, isAdmin } from '../middlewares/authMiddleware.js';
 
@@ -130,6 +131,12 @@ router.get('/active-status', authMiddleware, async (req, res) => {
     try {
         const schoolId = req.user.school_id;
         if (!schoolId) return res.json({ hasExtensions: false });
+
+        const school = await School.findById(schoolId);
+        if (school && school.features && school.features.tablasMatematicas === false) {
+            return res.json({ hasExtensions: false, count: 0 });
+        }
+
         const count = await CustomTableTemplate.countDocuments({ school_id: schoolId, isActive: true });
         res.json({ hasExtensions: count > 0, count });
     } catch (err) {
@@ -381,7 +388,7 @@ router.patch('/:id/column-label', authMiddleware, async (req, res) => {
     }
 });
 
-// POST /api/extensions/:id/add-column - Dynamically add a column to a table/period
+// POST /api/extensions/:id/add-column - Dynamically add a column to a specific period or end
 router.post('/:id/add-column', authMiddleware, async (req, res) => {
     try {
         const schoolId = req.user.school_id;
@@ -392,16 +399,37 @@ router.post('/:id/add-column', authMiddleware, async (req, res) => {
             return res.status(404).json({ msg: 'Tabla no encontrada' });
         }
 
+        const targetGroupHeader = groupHeader ? groupHeader.trim() : 'Primer periodo';
+
+        // Count existing columns in this groupHeader
+        const colsInPeriod = template.columns.filter(c => c.groupHeader === targetGroupHeader);
+        const defaultNum = colsInPeriod.length + 1;
+        const colLabel = label && label.trim() !== '' ? label.trim() : `${defaultNum}`;
+
         const newKey = `col_${Date.now()}`;
         const newCol = {
             key: newKey,
-            label: label ? label.trim() : `${template.columns.length + 1}`,
-            groupHeader: groupHeader ? groupHeader.trim() : 'Primer periodo',
+            label: colLabel,
+            groupHeader: targetGroupHeader,
             type: type || 'BOOLEAN_STATUS',
             statusOptions: standardStatusOptions
         };
 
-        template.columns.push(newCol);
+        // Find last index of this groupHeader in template.columns
+        let lastIdx = -1;
+        for (let i = template.columns.length - 1; i >= 0; i--) {
+            if (template.columns[i].groupHeader === targetGroupHeader) {
+                lastIdx = i;
+                break;
+            }
+        }
+
+        if (lastIdx !== -1) {
+            template.columns.splice(lastIdx + 1, 0, newCol);
+        } else {
+            template.columns.push(newCol);
+        }
+
         await template.save();
 
         res.status(201).json({ msg: 'Columna agregada', columns: template.columns });
