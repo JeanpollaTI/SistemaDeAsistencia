@@ -575,6 +575,10 @@
     flex: 1;
 }
 
+.ext-form-group.third {
+    flex: 1;
+}
+
 .ext-help-text {
     font-size: 0.85rem;
     color: var(--text-color, #64748b);
@@ -778,7 +782,7 @@
     border-color: #00cbcb;
 }
 
-/* Table Matrix */
+/* Table Matrix & Period Header Styling */
 .ext-table-container {
     overflow-x: auto;
     border-radius: 12px;
@@ -788,7 +792,8 @@
 
 .ext-spreadsheet-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     background: var(--dark-color-alt, #ffffff);
     color: var(--text-color, #0f172a);
     font-size: 0.92rem;
@@ -797,7 +802,8 @@
 .ext-spreadsheet-table th,
 .ext-spreadsheet-table td {
     padding: 10px 12px;
-    border: 1px solid var(--border-color, #cbd5e1);
+    border-right: 1px solid var(--border-color, #cbd5e1);
+    border-bottom: 1px solid var(--border-color, #cbd5e1);
     text-align: center;
     color: var(--text-color, #0f172a);
 }
@@ -808,22 +814,45 @@
     color: #f8fafc;
 }
 
-.ext-spreadsheet-table th {
+/* Two-Tier Period Header Cells (Primer periodo, Segundo Periodo, Tercer Periodo) */
+.ext-period-header-cell {
+    background: #0f172a !important;
+    color: #00cbcb !important;
+    font-size: 0.98rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #00cbcb !important;
+    text-transform: uppercase;
+    padding: 10px 14px !important;
+}
+
+/* Sticky Student Name Column */
+.ext-sticky-name-header,
+.ext-sticky-name-cell {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background: var(--dark-color-alt, #ffffff);
+    box-shadow: 3px 0 6px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='dark'] .ext-sticky-name-header,
+[data-theme='dark'] .ext-sticky-name-cell {
+    background: #111827 !important;
+}
+
+.ext-sticky-name-header {
+    z-index: 20;
+    background: #1e293b !important;
+    color: #ffffff !important;
+}
+
+.ext-col-header {
     background: #1e293b;
     color: #ffffff;
     font-weight: 700;
-}
-
-.ext-col-title {
-    font-size: 0.95rem;
-    color: #ffffff;
-}
-
-.ext-col-type-tag {
-    font-size: 0.72rem;
-    color: #94a3b8;
-    font-weight: normal;
-    text-transform: uppercase;
+    font-size: 0.9rem;
+    min-width: 55px;
 }
 
 .ext-student-name-box {

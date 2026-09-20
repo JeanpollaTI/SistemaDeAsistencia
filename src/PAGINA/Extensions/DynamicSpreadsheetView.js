@@ -173,6 +173,29 @@ const DynamicSpreadsheetView = ({ user }) => {
     const booleanCols = template.columns.filter(c => c.type === 'BOOLEAN_STATUS');
     const legendOptions = booleanCols.length > 0 ? booleanCols[0].statusOptions || [] : [];
 
+    // Calculate grouped headers for two-tier header row (Periodos)
+    const hasGroupHeaders = template.columns.some(c => c.groupHeader && c.groupHeader.trim() !== '');
+    const groupedHeaders = [];
+    if (hasGroupHeaders) {
+        let currentHeader = null;
+        let currentSpan = 0;
+        template.columns.forEach(col => {
+            const gh = col.groupHeader || '';
+            if (gh === currentHeader) {
+                currentSpan++;
+            } else {
+                if (currentHeader !== null) {
+                    groupedHeaders.push({ title: currentHeader, colSpan: currentSpan });
+                }
+                currentHeader = gh;
+                currentSpan = 1;
+            }
+        });
+        if (currentHeader !== null) {
+            groupedHeaders.push({ title: currentHeader, colSpan: currentSpan });
+        }
+    }
+
     return (
         <div className="ext-spreadsheet-page">
             {/* Top Toolbar Header */}
@@ -237,7 +260,7 @@ const DynamicSpreadsheetView = ({ user }) => {
                 </div>
             )}
 
-            {/* SYMBOL LEGEND BAR (O: En orden, I: Incompleta, S: Salteadas) */}
+            {/* SYMBOL LEGEND BAR (I: Incompleta, O: En orden, S: Salteadas) */}
             {legendOptions.length > 0 && (
                 <div className="ext-legend-bar">
                     <div className="ext-legend-title">
@@ -250,9 +273,9 @@ const DynamicSpreadsheetView = ({ user }) => {
                                     {opt.label}
                                 </span>
                                 <span className="ext-legend-desc">
-                                    {opt.key === 'O' || opt.label === 'O' ? 'En orden' :
-                                     opt.key === 'I' || opt.label === 'I' ? 'Incompleta' :
-                                     opt.key === 'S' || opt.label === 'S' ? 'Salteadas' : opt.key}
+                                    {opt.key === 'I' || opt.label === 'I' ? 'Incompleta 🔴' :
+                                     opt.key === 'O' || opt.label === 'O' ? 'En orden 🟢' :
+                                     opt.key === 'S' || opt.label === 'S' ? 'Salteadas 🟡' : opt.key}
                                 </span>
                             </div>
                         ))}
@@ -315,18 +338,42 @@ const DynamicSpreadsheetView = ({ user }) => {
             <div className="ext-table-container">
                 <table className="ext-spreadsheet-table">
                     <thead>
-                        <tr>
-                            <th style={{ width: '40px' }}>#</th>
-                            <th style={{ minWidth: '240px' }}>
-                                {template.rowType === 'STUDENTS' ? `Alumno (${selectedGroup?.nombre || ''})` : 'Grupo / Plantel'}
-                            </th>
-                            {template.columns.map((col) => (
-                                <th key={col.key} className="ext-col-header">
-                                    <div className="ext-col-title">{col.label}</div>
+                        {hasGroupHeaders ? (
+                            <>
+                                <tr>
+                                    <th rowSpan={2} style={{ width: '45px' }}>#</th>
+                                    <th rowSpan={2} className="ext-sticky-name-header" style={{ minWidth: '240px' }}>
+                                        {template.rowType === 'STUDENTS' ? `NOMBRE DEL ALUMNO (${selectedGroup?.nombre || ''})` : 'GRUPO / PLANTEL'}
+                                    </th>
+                                    {groupedHeaders.map((gh, gIdx) => (
+                                        <th key={gIdx} colSpan={gh.colSpan} className="ext-period-header-cell">
+                                            {gh.title || 'General'}
+                                        </th>
+                                    ))}
+                                    {canEdit && <th rowSpan={2} style={{ width: '130px' }}>MARCADOR</th>}
+                                </tr>
+                                <tr>
+                                    {template.columns.map((col) => (
+                                        <th key={col.key} className="ext-col-header">
+                                            <div className="ext-col-title">{col.label}</div>
+                                        </th>
+                                    ))}
+                                </tr>
+                            </>
+                        ) : (
+                            <tr>
+                                <th style={{ width: '45px' }}>#</th>
+                                <th className="ext-sticky-name-header" style={{ minWidth: '240px' }}>
+                                    {template.rowType === 'STUDENTS' ? `NOMBRE DEL ALUMNO (${selectedGroup?.nombre || ''})` : 'GRUPO / PLANTEL'}
                                 </th>
-                            ))}
-                            {canEdit && <th style={{ width: '130px' }}>Marcador</th>}
-                        </tr>
+                                {template.columns.map((col) => (
+                                    <th key={col.key} className="ext-col-header">
+                                        <div className="ext-col-title">{col.label}</div>
+                                    </th>
+                                ))}
+                                {canEdit && <th style={{ width: '130px' }}>MARCADOR</th>}
+                            </tr>
+                        )}
                     </thead>
                     <tbody>
                         {filteredRows.length === 0 ? (
@@ -345,7 +392,7 @@ const DynamicSpreadsheetView = ({ user }) => {
                                         className={`${row.esBaja ? 'row-baja' : ''} ${row.esNuevoIngreso ? 'row-nuevo-ingreso' : ''}`}
                                     >
                                         <td className="ext-cell-idx">{idx + 1}</td>
-                                        <td className="ext-cell-name">
+                                        <td className="ext-cell-name ext-sticky-name-cell">
                                             <div className="ext-student-name-box">
                                                 <span className={`ext-name-text ${row.esBaja ? 'line-through' : ''}`}>
                                                     {row.name}
@@ -483,7 +530,7 @@ const getStatusPillStyle = (column, value) => {
     if (!value) return { backgroundColor: 'transparent', color: '#9ca3af', border: '1px dashed #cbd5e1' };
     const options = column.statusOptions || [];
     const opt = options.find(o => o.key === value || o.label === value);
-    const color = opt ? opt.color : '#3b82f6';
+    const color = opt ? opt.color : (value === 'I' ? '#ef4444' : value === 'O' ? '#22c55e' : value === 'S' ? '#f59e0b' : '#3b82f6');
     return {
         backgroundColor: color,
         color: '#ffffff',

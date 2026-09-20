@@ -8,74 +8,121 @@ import { authMiddleware, isAdmin } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// Helper to seed default "Tablas Matemáticas" if no tables exist for school
-const ensureDefaultTemplates = async (schoolId) => {
-    let count = await CustomTableTemplate.countDocuments({ school_id: schoolId });
-    if (count === 0) {
-        // Seed default "Tablas Matemáticas" template with sleek short status codes (O, I, S)
-        const defaultCols = [];
-        for (let i = 1; i <= 7; i++) {
-            defaultCols.push({
-                key: `p${i}`,
-                label: `Tabla ${i}`,
-                type: 'BOOLEAN_STATUS',
-                statusOptions: [
-                    { key: 'O', label: 'O', color: '#22c55e' }, // O = En orden
-                    { key: 'I', label: 'I', color: '#ef4444' }, // I = Incompleta
-                    { key: 'S', label: 'S', color: '#f59e0b' }  // S = Salteadas
-                ]
-            });
-        }
-        defaultCols.push({
-            key: 'observaciones',
-            label: 'Observaciones',
-            type: 'TEXT',
-            statusOptions: []
-        });
+const standardStatusOptions = [
+    { key: 'I', label: 'I', color: '#ef4444' }, // I = Incompleta
+    { key: 'O', label: 'O', color: '#22c55e' }, // O = En orden
+    { key: 'S', label: 'S', color: '#f59e0b' }  // S = Salteadas
+];
 
-        await CustomTableTemplate.create({
+const buildDefaultTablasMatematicasColumns = () => {
+    const cols = [];
+    // Primer periodo (1..5)
+    for (let i = 1; i <= 5; i++) {
+        cols.push({
+            key: `p1_t${i}`,
+            label: `${i}`,
+            groupHeader: 'Primer periodo',
+            type: 'BOOLEAN_STATUS',
+            statusOptions: standardStatusOptions
+        });
+    }
+    // Segundo Periodo (1..5)
+    for (let i = 1; i <= 5; i++) {
+        cols.push({
+            key: `p2_t${i}`,
+            label: `${i}`,
+            groupHeader: 'Segundo Periodo',
+            type: 'BOOLEAN_STATUS',
+            statusOptions: standardStatusOptions
+        });
+    }
+    // Tercer Periodo (6..10)
+    for (let i = 6; i <= 10; i++) {
+        cols.push({
+            key: `p3_t${i}`,
+            label: `${i}`,
+            groupHeader: 'Tercer Periodo',
+            type: 'BOOLEAN_STATUS',
+            statusOptions: standardStatusOptions
+        });
+    }
+    // Observaciones
+    cols.push({
+        key: 'observaciones',
+        label: 'Observaciones',
+        groupHeader: 'Notas',
+        type: 'TEXT',
+        statusOptions: []
+    });
+    return cols;
+};
+
+// Helper to seed or upgrade default "Tablas Matemáticas"
+const ensureDefaultTemplates = async (schoolId) => {
+    let builtIn = await CustomTableTemplate.findOne({ school_id: schoolId, title: 'Tablas Matemáticas' });
+    const defaultCols = buildDefaultTablasMatematicasColumns();
+
+    if (!builtIn) {
+        builtIn = await CustomTableTemplate.create({
             school_id: schoolId,
             title: 'Tablas Matemáticas',
-            description: 'Seguimiento continuo del dominio de tablas de multiplicar en los alumnos.',
+            description: 'Seguimiento continuo por periodos del dominio de tablas de multiplicar.',
             rowType: 'STUDENTS',
             assignedGroupId: null,
             authorizedTeachers: [],
             columns: defaultCols,
             isBuiltIn: true
         });
+    } else {
+        // Upgrade builtIn columns to include groupHeader period structure if missing
+        const hasPeriods = builtIn.columns.some(c => c.groupHeader && c.groupHeader.includes('periodo'));
+        if (!hasPeriods) {
+            builtIn.columns = defaultCols;
+            await builtIn.save();
+        }
     }
 
     // Migrate old TablaMatematica if exists
     try {
-        const builtIn = await CustomTableTemplate.findOne({ school_id: schoolId, title: 'Tablas Matemáticas' });
-        if (builtIn) {
-            const oldRecords = await TablaMatematica.find({ school_id: schoolId });
-            for (const oldRec of oldRecords) {
-                if (oldRec.evaluaciones && oldRec.evaluaciones.length > 0) {
-                    for (const ev of oldRec.evaluaciones) {
-                        if (ev.alumno_id && ev.registros) {
-                            const dataObj = {};
-                            const rawMap = ev.registros instanceof Map ? Object.fromEntries(ev.registros) : ev.registros;
-                            for (const [k, val] of Object.entries(rawMap || {})) {
-                                if (val === 'En orden') dataObj[k] = 'O';
-                                else if (val === 'Incompleta') dataObj[k] = 'I';
-                                else if (val === 'Salteadas') dataObj[k] = 'S';
-                                else dataObj[k] = val;
+        const oldRecords = await TablaMatematica.find({ school_id: schoolId });
+        for (const oldRec of oldRecords) {
+            if (oldRec.evaluaciones && oldRec.evaluaciones.length > 0) {
+                for (const ev of oldRec.evaluaciones) {
+                    if (ev.alumno_id && ev.registros) {
+                        const dataObj = {};
+                        const rawMap = ev.registros instanceof Map ? Object.fromEntries(ev.registros) : ev.registros;
+                        for (const [k, val] of Object.entries(rawMap || {})) {
+                            let mappedVal = val;
+                            if (val === 'En orden') mappedVal = 'O';
+                            else if (val === 'Incompleta') mappedVal = 'I';
+                            else if (val === 'Salteadas') mappedVal = 'S';
+
+                            // Map legacy p1..p5 to p1_t1..p1_t5, p6..p7 to p2_t1..p2_t2
+                            if (k.startsWith('p')) {
+                                const num = parseInt(k.replace('p', ''), 10);
+                                if (!isNaN(num)) {
+                                    if (num <= 5) dataObj[`p1_t${num}`] = mappedVal;
+                                    else dataObj[`p2_t${num - 5}`] = mappedVal;
+                                } else {
+                                    dataObj[k] = mappedVal;
+                                }
+                            } else {
+                                dataObj[k] = mappedVal;
                             }
-                            await CustomTableRowData.updateOne(
-                                { tableId: builtIn._id, rowEntityId: ev.alumno_id },
-                                {
-                                    $set: {
-                                        tableId: builtIn._id,
-                                        school_id: schoolId,
-                                        rowEntityId: ev.alumno_id,
-                                        rowEntityName: ev.alumnoNombre || '',
-                                        data: dataObj
-                                    }
-                                },
-                                { upsert: true }
-                            );
                         }
+                        await CustomTableRowData.updateOne(
+                            { tableId: builtIn._id, rowEntityId: ev.alumno_id },
+                            {
+                                $set: {
+                                    tableId: builtIn._id,
+                                    school_id: schoolId,
+                                    rowEntityId: ev.alumno_id,
+                                    rowEntityName: ev.alumnoNombre || '',
+                                    data: dataObj
+                                }
+                            },
+                            { upsert: true }
+                        );
                     }
                 }
             }
@@ -147,11 +194,8 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
         // Fetch all active groups for school
         const allSchoolGroups = await Grupo.find({ school_id: schoolId }).sort({ nombre: 1 }).lean();
-
-        // Sort groups naturally (1A, 1B, 1C, 2A, 2B, 3A...)
         allSchoolGroups.sort((a, b) => a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' }));
 
-        // Determine target group for STUDENTS mode
         let selectedGroup = null;
         if (template.rowType === 'STUDENTS') {
             if (requestedGroupId) {
@@ -171,7 +215,6 @@ router.get('/:id', authMiddleware, async (req, res) => {
             school_id: schoolId
         }).lean();
 
-        // Map captured data by rowEntityId
         const dataMap = {};
         const colorMap = {};
         rowDataRecords.forEach(r => {
@@ -180,7 +223,6 @@ router.get('/:id', authMiddleware, async (req, res) => {
                 r.data.forEach((val, key) => { dataObj[key] = val; });
             } else if (r.data && typeof r.data === 'object') {
                 for (const [k, v] of Object.entries(r.data)) {
-                    // Convert old long names to short letters if applicable
                     if (v === 'En orden') dataObj[k] = 'O';
                     else if (v === 'Incompleta') dataObj[k] = 'I';
                     else if (v === 'Salteadas') dataObj[k] = 'S';
@@ -191,7 +233,6 @@ router.get('/:id', authMiddleware, async (req, res) => {
             if (r.rowColorTag) colorMap[r.rowEntityId] = r.rowColorTag;
         });
 
-        // Generate rows
         let rows = [];
         if (template.rowType === 'STUDENTS') {
             if (selectedGroup && selectedGroup.alumnos) {
@@ -220,13 +261,11 @@ router.get('/:id', authMiddleware, async (req, res) => {
             }));
         }
 
-        // Determine edit authorization for current user
         const isUserAdmin = req.user.role === 'admin' || req.user.role === 'superadmin';
         let isAuthorizedTeacher = template.authorizedTeachers.some(
             t => (typeof t === 'object' ? t._id : t).toString() === req.user._id.toString()
         );
 
-        // Check group specific assignments if defined
         if (!isAuthorizedTeacher && selectedGroup && template.groupAssignments) {
             const groupAssign = template.groupAssignments.find(
                 ga => (typeof ga.groupId === 'object' ? ga.groupId._id : ga.groupId).toString() === selectedGroup._id.toString()

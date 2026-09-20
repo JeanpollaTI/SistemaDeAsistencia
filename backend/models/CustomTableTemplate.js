@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const columnSchema = new mongoose.Schema({
   key: { type: String, required: true },
   label: { type: String, required: true },
+  groupHeader: { type: String, default: "" },
   type: {
     type: String,
     enum: ["BOOLEAN_STATUS", "TEXT", "NUMBER", "PERCENTAGE"],

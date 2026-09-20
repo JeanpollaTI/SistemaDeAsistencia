@@ -281,20 +281,29 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
                                 </div>
 
                                 <div className="ext-form-row">
-                                    <div className="ext-form-group half">
+                                    <div className="ext-form-group third">
+                                        <label>Encabezado / Periodo</label>
+                                        <input
+                                            type="text"
+                                            value={col.groupHeader || ''}
+                                            onChange={(e) => handleColumnChange(idx, 'groupHeader', e.target.value)}
+                                            placeholder="Ej. Primer periodo, 1er Trimestre..."
+                                        />
+                                    </div>
+                                    <div className="ext-form-group third">
                                         <label>Nombre de Columna *</label>
                                         <input
                                             type="text"
                                             value={col.label}
                                             onChange={(e) => handleColumnChange(idx, 'label', e.target.value)}
-                                            placeholder="Ej. Tabla 1, Septiembre, Calificación..."
+                                            placeholder="Ej. 1, 2, Tabla 1..."
                                             required
                                         />
                                     </div>
-                                    <div className="ext-form-group half">
+                                    <div className="ext-form-group third">
                                         <label>Tipo de Campo</label>
                                         <select value={col.type} onChange={(e) => handleColumnChange(idx, 'type', e.target.value)}>
-                                            <option value="BOOLEAN_STATUS">Botón Cíclico (Códigos Cortos / Colores)</option>
+                                            <option value="BOOLEAN_STATUS">Botón Cíclico (Códigos Cortos)</option>
                                             <option value="TEXT">Texto Libre</option>
                                             <option value="NUMBER">Número (0-10)</option>
                                             <option value="PERCENTAGE">Porcentaje (%)</option>
