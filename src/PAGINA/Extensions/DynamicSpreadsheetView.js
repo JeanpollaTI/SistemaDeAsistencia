@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaSearch, FaLock, FaCheckCircle, FaSpinner, FaUserClock, FaUserTimes, FaSync, FaExclamationTriangle, FaInfoCircle, FaThList, FaPlus } from 'react-icons/fa';
+import {
+    FaArrowLeft, FaSearch, FaLock, FaCheckCircle, FaSpinner, FaUserClock,
+    FaUserTimes, FaSync, FaExclamationTriangle, FaInfoCircle, FaThList,
+    FaPlus, FaEllipsisV, FaCopy, FaTrash, FaPalette, FaEdit, FaTimes, FaFont, FaHashtag, FaPercent, FaToggleOn
+} from 'react-icons/fa';
 import apiClient from '../../api/apiClient';
 import './Extensions.css';
 
@@ -19,8 +23,21 @@ const DynamicSpreadsheetView = ({ user }) => {
     const [lastSavedTime, setLastSavedTime] = useState(null);
     const [filterStatus, setFilterStatus] = useState('ALL');
 
+    // UI Interactive States (NO MORE window.prompt)
+    const [activeMenuColKey, setActiveMenuColKey] = useState(null);
+    const [editingColKey, setEditingColKey] = useState(null);
+    const [editingLabelValue, setEditingLabelValue] = useState('');
+    const [statusPopoverColKey, setStatusPopoverColKey] = useState(null);
+    const [inAppToast, setInAppToast] = useState(null);
+    const [confirmDeleteColKey, setConfirmDeleteColKey] = useState(null);
+
     const selectedGroupRef = useRef(selectedGroup);
     selectedGroupRef.current = selectedGroup;
+
+    const showToast = (message, type = 'success') => {
+        setInAppToast({ message, type });
+        setTimeout(() => setInAppToast(null), 3000);
+    };
 
     const fetchExtensionData = useCallback(async (targetGroupId = null, isSilent = false) => {
         try {
@@ -63,7 +80,7 @@ const DynamicSpreadsheetView = ({ user }) => {
     const handleCellChange = async (rowEntityId, colKey, newValue, rowEntityName) => {
         if (!canEdit) return;
 
-        // Optimistic update
+        // Fast optimistic update
         setRows(prevRows => prevRows.map(row => {
             if (row.entityId === rowEntityId) {
                 return {
@@ -88,9 +105,11 @@ const DynamicSpreadsheetView = ({ user }) => {
                 value: newValue,
                 rowEntityName
             });
-            setLastSavedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+            const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            setLastSavedTime(now);
         } catch (err) {
             console.error('Error al guardar celda:', err);
+            showToast('Error al guardar celda', 'error');
             fetchExtensionData(selectedGroup?._id, true);
         } finally {
             setSavingCellKey(null);
@@ -133,44 +152,138 @@ const DynamicSpreadsheetView = ({ user }) => {
                 rowColorTag: colorTag,
                 rowEntityName
             });
-            setLastSavedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+            const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            setLastSavedTime(now);
         } catch (err) {
             console.error('Error al actualizar color de fila:', err);
         }
     };
 
-    const handleRenameColumn = async (colKey, currentLabel) => {
+    // --- INLINE COLUMN LABEL RENAMING (No window.prompt) ---
+    const startRenameColumn = (colKey, currentLabel) => {
         if (!canEdit) return;
-        const newLabel = window.prompt(`Cambiar etiqueta de la columna (${currentLabel}):`, currentLabel);
-        if (!newLabel || newLabel.trim() === '' || newLabel.trim() === currentLabel) return;
+        setEditingColKey(colKey);
+        setEditingLabelValue(currentLabel);
+        setActiveMenuColKey(null);
+    };
+
+    const saveRenameColumn = async () => {
+        if (!editingColKey || !editingLabelValue.trim()) {
+            setEditingColKey(null);
+            return;
+        }
+
+        const colKey = editingColKey;
+        const newLabel = editingLabelValue.trim();
+        setEditingColKey(null);
+
+        // Optimistic update template columns
+        setTemplate(prev => ({
+            ...prev,
+            columns: prev.columns.map(c => c.key === colKey ? { ...c, label: newLabel } : c)
+        }));
 
         try {
             await apiClient.patch(`/api/extensions/${id}/column-label`, {
                 colKey,
-                newLabel: newLabel.trim()
+                newLabel
             });
-            fetchExtensionData(selectedGroup?._id, true);
+            showToast(`Columna renombrada a "${newLabel}"`);
         } catch (err) {
             console.error('Error al renombrar columna:', err);
-            alert('Error al renombrar columna');
+            showToast('Error al renombrar columna', 'error');
+            fetchExtensionData(selectedGroup?._id, true);
         }
     };
 
+    // --- ADD COLUMN (No window.prompt) ---
     const handleAddNewColumn = async (targetGroupHeader = 'Primer periodo') => {
         if (!canEdit) return;
-        const label = window.prompt(`Etiqueta para la nueva columna en "${targetGroupHeader}" (ej. 6, 7, Extra):`, '');
-        if (label === null) return;
+
+        const colsInPeriod = template.columns.filter(c => c.groupHeader === targetGroupHeader);
+        const newNum = colsInPeriod.length + 1;
+        const defaultLabel = `${newNum}`;
 
         try {
-            await apiClient.post(`/api/extensions/${id}/add-column`, {
-                label: label.trim(),
+            const res = await apiClient.post(`/api/extensions/${id}/add-column`, {
+                label: defaultLabel,
                 groupHeader: targetGroupHeader,
                 type: 'BOOLEAN_STATUS'
             });
-            fetchExtensionData(selectedGroup?._id, true);
+            setTemplate(prev => ({ ...prev, columns: res.data.columns }));
+            showToast(`Columna "${defaultLabel}" agregada a ${targetGroupHeader}`);
         } catch (err) {
             console.error('Error al agregar columna:', err);
-            alert('Error al agregar columna');
+            showToast('Error al agregar columna', 'error');
+        }
+    };
+
+    // --- DUPLICATE COLUMN ---
+    const handleDuplicateColumn = async (colKey) => {
+        if (!canEdit) return;
+        setActiveMenuColKey(null);
+        const colToDup = template.columns.find(c => c.key === colKey);
+        if (!colToDup) return;
+
+        try {
+            const res = await apiClient.post(`/api/extensions/${id}/add-column`, {
+                label: `${colToDup.label} (Copia)`,
+                groupHeader: colToDup.groupHeader || 'Primer periodo',
+                type: colToDup.type || 'BOOLEAN_STATUS'
+            });
+            setTemplate(prev => ({ ...prev, columns: res.data.columns }));
+            showToast(`Columna "${colToDup.label}" duplicada`);
+        } catch (err) {
+            console.error('Error al duplicar columna:', err);
+            showToast('Error al duplicar columna', 'error');
+        }
+    };
+
+    // --- CHANGE COLUMN TYPE ---
+    const handleChangeColumnType = async (colKey, newType) => {
+        if (!canEdit) return;
+        setActiveMenuColKey(null);
+
+        const updatedCols = template.columns.map(c => {
+            if (c.key === colKey) {
+                return { ...c, type: newType };
+            }
+            return c;
+        });
+
+        setTemplate(prev => ({ ...prev, columns: updatedCols }));
+
+        try {
+            await apiClient.put(`/api/extensions/${id}`, {
+                ...template,
+                columns: updatedCols
+            });
+            showToast('Tipo de columna actualizado');
+        } catch (err) {
+            console.error('Error al cambiar tipo de columna:', err);
+            showToast('Error al actualizar tipo de columna', 'error');
+            fetchExtensionData(selectedGroup?._id, true);
+        }
+    };
+
+    // --- DELETE COLUMN (In-App confirm) ---
+    const confirmDeleteColumn = async (colKey) => {
+        if (!canEdit) return;
+        setConfirmDeleteColKey(null);
+
+        const updatedCols = template.columns.filter(c => c.key !== colKey);
+        setTemplate(prev => ({ ...prev, columns: updatedCols }));
+
+        try {
+            await apiClient.put(`/api/extensions/${id}`, {
+                ...template,
+                columns: updatedCols
+            });
+            showToast('Columna eliminada');
+        } catch (err) {
+            console.error('Error al eliminar columna:', err);
+            showToast('Error al eliminar columna', 'error');
+            fetchExtensionData(selectedGroup?._id, true);
         }
     };
 
@@ -203,7 +316,6 @@ const DynamicSpreadsheetView = ({ user }) => {
         return matchesSearch;
     });
 
-    // Extract status options for top legend bar
     const booleanCols = template.columns.filter(c => c.type === 'BOOLEAN_STATUS');
     const legendOptions = booleanCols.length > 0 ? booleanCols[0].statusOptions || [] : [];
 
@@ -232,6 +344,34 @@ const DynamicSpreadsheetView = ({ user }) => {
 
     return (
         <div className="ext-spreadsheet-page">
+            {/* IN-APP TOAST NOTIFICATION SYSTEM */}
+            {inAppToast && (
+                <div className={`ext-inapp-toast toast-${inAppToast.type}`}>
+                    <FaCheckCircle /> <span>{inAppToast.message}</span>
+                </div>
+            )}
+
+            {/* IN-APP DELETE CONFIRM MODAL */}
+            {confirmDeleteColKey && (
+                <div className="ext-modal-overlay">
+                    <div className="ext-modal-content ext-modal-compact">
+                        <div className="ext-modal-header">
+                            <h2>⚠️ Confirmar Eliminación</h2>
+                            <button className="ext-modal-close" onClick={() => setConfirmDeleteColKey(null)}><FaTimes /></button>
+                        </div>
+                        <div className="ext-modal-body text-center">
+                            <p>¿Estás seguro de eliminar esta columna y todos sus datos capturados?</p>
+                            <div className="ext-modal-footer">
+                                <button className="ext-btn ext-btn-secondary" onClick={() => setConfirmDeleteColKey(null)}>Cancelar</button>
+                                <button className="ext-btn ext-btn-danger" onClick={() => confirmDeleteColumn(confirmDeleteColKey)}>
+                                    <FaTrash /> Eliminar Columna
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Top Toolbar Header */}
             <div className="ext-sheet-header">
                 <div className="ext-sheet-header-left">
@@ -254,7 +394,7 @@ const DynamicSpreadsheetView = ({ user }) => {
                 <div className="ext-sheet-header-right">
                     {canEdit ? (
                         <div className="ext-badge-status status-editable">
-                            <FaSync className="ext-pulse-icon" /> Modo Edición (Grupo {selectedGroup?.nombre || ''})
+                            <FaSync className="ext-pulse-icon" /> Modo Diseño & Edición Habilitado
                         </div>
                     ) : (
                         <div className="ext-badge-status status-readonly">
@@ -368,7 +508,7 @@ const DynamicSpreadsheetView = ({ user }) => {
                 )}
             </div>
 
-            {/* Spreadsheet Matrix Table */}
+            {/* Spreadsheet Matrix Table (WYSIWYG Interactive Notion/Excel Style) */}
             <div className="ext-table-container">
                 <table className="ext-spreadsheet-table">
                     <thead>
@@ -400,15 +540,87 @@ const DynamicSpreadsheetView = ({ user }) => {
                                 </tr>
                                 <tr>
                                     {template.columns.map((col) => (
-                                        <th
-                                            key={col.key}
-                                            className={`ext-col-header ${canEdit ? 'editable-col-header' : ''}`}
-                                            onClick={() => handleRenameColumn(col.key, col.label)}
-                                            title={canEdit ? 'Haz clic para cambiar la etiqueta de esta columna' : ''}
-                                        >
-                                            <div className="ext-col-title">
-                                                {col.label}
+                                        <th key={col.key} className="ext-col-header pos-relative">
+                                            <div className="ext-col-header-inner">
+                                                {editingColKey === col.key ? (
+                                                    <input
+                                                        type="text"
+                                                        className="ext-inline-header-input"
+                                                        value={editingLabelValue}
+                                                        onChange={(e) => setEditingLabelValue(e.target.value)}
+                                                        onBlur={saveRenameColumn}
+                                                        onKeyDown={(e) => { if (e.key === 'Enter') saveRenameColumn(); }}
+                                                        autoFocus
+                                                    />
+                                                ) : (
+                                                    <span
+                                                        className="ext-col-title-clickable"
+                                                        onClick={() => canEdit && startRenameColumn(col.key, col.label)}
+                                                        title={canEdit ? 'Clic para renombrar' : ''}
+                                                    >
+                                                        {col.label}
+                                                    </span>
+                                                )}
+
+                                                {canEdit && (
+                                                    <button
+                                                        type="button"
+                                                        className="ext-col-menu-btn"
+                                                        onClick={() => setActiveMenuColKey(activeMenuColKey === col.key ? null : col.key)}
+                                                    >
+                                                        <FaEllipsisV />
+                                                    </button>
+                                                )}
                                             </div>
+
+                                            {/* CONTEXT MENU POPOVER (NOTION / AIRTABLE STYLE) */}
+                                            {activeMenuColKey === col.key && canEdit && (
+                                                <div className="ext-context-popover">
+                                                    <div className="ext-popover-header">
+                                                        <span>Configurar Columna</span>
+                                                        <button onClick={() => setActiveMenuColKey(null)}><FaTimes /></button>
+                                                    </div>
+                                                    <div className="ext-popover-menu">
+                                                        <button onClick={() => startRenameColumn(col.key, col.label)}>
+                                                            <FaEdit /> Renombrar Etiqueta
+                                                        </button>
+
+                                                        <div className="ext-popover-subtitle">Tipo de Dato:</div>
+                                                        <button
+                                                            className={col.type === 'BOOLEAN_STATUS' ? 'active' : ''}
+                                                            onClick={() => handleChangeColumnType(col.key, 'BOOLEAN_STATUS')}
+                                                        >
+                                                            <FaToggleOn /> Botón Cíclico (Códigos Cortos)
+                                                        </button>
+                                                        <button
+                                                            className={col.type === 'TEXT' ? 'active' : ''}
+                                                            onClick={() => handleChangeColumnType(col.key, 'TEXT')}
+                                                        >
+                                                            <FaFont /> Texto / Nota
+                                                        </button>
+                                                        <button
+                                                            className={col.type === 'NUMBER' ? 'active' : ''}
+                                                            onClick={() => handleChangeColumnType(col.key, 'NUMBER')}
+                                                        >
+                                                            <FaHashtag /> Numérico / Calificación
+                                                        </button>
+                                                        <button
+                                                            className={col.type === 'PERCENTAGE' ? 'active' : ''}
+                                                            onClick={() => handleChangeColumnType(col.key, 'PERCENTAGE')}
+                                                        >
+                                                            <FaPercent /> Porcentaje (%)
+                                                        </button>
+
+                                                        <hr />
+                                                        <button onClick={() => handleDuplicateColumn(col.key)}>
+                                                            <FaCopy /> Duplicar Columna
+                                                        </button>
+                                                        <button className="text-red" onClick={() => { setActiveMenuColKey(null); setConfirmDeleteColKey(col.key); }}>
+                                                            <FaTrash /> Eliminar Columna
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </th>
                                     ))}
                                 </tr>
@@ -420,15 +632,85 @@ const DynamicSpreadsheetView = ({ user }) => {
                                     {template.rowType === 'STUDENTS' ? `NOMBRE DEL ALUMNO (${selectedGroup?.nombre || ''})` : 'GRUPO / PLANTEL'}
                                 </th>
                                 {template.columns.map((col) => (
-                                    <th
-                                        key={col.key}
-                                        className={`ext-col-header ${canEdit ? 'editable-col-header' : ''}`}
-                                        onClick={() => handleRenameColumn(col.key, col.label)}
-                                        title={canEdit ? 'Haz clic para cambiar la etiqueta de esta columna' : ''}
-                                    >
-                                        <div className="ext-col-title">
-                                            {col.label}
+                                    <th key={col.key} className="ext-col-header pos-relative">
+                                        <div className="ext-col-header-inner">
+                                            {editingColKey === col.key ? (
+                                                <input
+                                                    type="text"
+                                                    className="ext-inline-header-input"
+                                                    value={editingLabelValue}
+                                                    onChange={(e) => setEditingLabelValue(e.target.value)}
+                                                    onBlur={saveRenameColumn}
+                                                    onKeyDown={(e) => { if (e.key === 'Enter') saveRenameColumn(); }}
+                                                    autoFocus
+                                                />
+                                            ) : (
+                                                <span
+                                                    className="ext-col-title-clickable"
+                                                    onClick={() => canEdit && startRenameColumn(col.key, col.label)}
+                                                    title={canEdit ? 'Clic para renombrar' : ''}
+                                                >
+                                                    {col.label}
+                                                </span>
+                                            )}
+
+                                            {canEdit && (
+                                                <button
+                                                    type="button"
+                                                    className="ext-col-menu-btn"
+                                                    onClick={() => setActiveMenuColKey(activeMenuColKey === col.key ? null : col.key)}
+                                                >
+                                                    <FaEllipsisV />
+                                                </button>
+                                            )}
                                         </div>
+
+                                        {/* CONTEXT MENU POPOVER */}
+                                        {activeMenuColKey === col.key && canEdit && (
+                                            <div className="ext-context-popover">
+                                                <div className="ext-popover-header">
+                                                    <span>Configurar Columna</span>
+                                                    <button onClick={() => setActiveMenuColKey(null)}><FaTimes /></button>
+                                                </div>
+                                                <div className="ext-popover-menu">
+                                                    <button onClick={() => startRenameColumn(col.key, col.label)}>
+                                                        <FaEdit /> Renombrar Etiqueta
+                                                    </button>
+                                                    <div className="ext-popover-subtitle">Tipo de Dato:</div>
+                                                    <button
+                                                        className={col.type === 'BOOLEAN_STATUS' ? 'active' : ''}
+                                                        onClick={() => handleChangeColumnType(col.key, 'BOOLEAN_STATUS')}
+                                                    >
+                                                        <FaToggleOn /> Botón Cíclico
+                                                    </button>
+                                                    <button
+                                                        className={col.type === 'TEXT' ? 'active' : ''}
+                                                        onClick={() => handleChangeColumnType(col.key, 'TEXT')}
+                                                    >
+                                                        <FaFont /> Texto / Nota
+                                                    </button>
+                                                    <button
+                                                        className={col.type === 'NUMBER' ? 'active' : ''}
+                                                        onClick={() => handleChangeColumnType(col.key, 'NUMBER')}
+                                                    >
+                                                        <FaHashtag /> Numérico
+                                                    </button>
+                                                    <button
+                                                        className={col.type === 'PERCENTAGE' ? 'active' : ''}
+                                                        onClick={() => handleChangeColumnType(col.key, 'PERCENTAGE')}
+                                                    >
+                                                        <FaPercent /> Porcentaje (%)
+                                                    </button>
+                                                    <hr />
+                                                    <button onClick={() => handleDuplicateColumn(col.key)}>
+                                                        <FaCopy /> Duplicar Columna
+                                                    </button>
+                                                    <button className="text-red" onClick={() => { setActiveMenuColKey(null); setConfirmDeleteColKey(col.key); }}>
+                                                        <FaTrash /> Eliminar Columna
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </th>
                                 ))}
                                 {canEdit && (
