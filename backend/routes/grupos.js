@@ -208,22 +208,73 @@ router.delete("/:id", authMiddleware, isAdmin, schoolMiddleware, async (req, res
 // [POST] /grupos/promover-alumnos - Promover/Copiar lista de alumnos entre grupos (Admin)
 router.post("/promover-alumnos", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
     try {
-        const { sourceGrupoId, targetGrupoId, alumnoIds, action, markUnselectedAsBaja, fechaBaja } = req.body;
+        const {
+            sourceGrupoId,
+            targetGrupoId,
+            createNewTargetGroup,
+            newTargetGrupoNombre,
+            isGraduation,
+            alumnoIds,
+            action,
+            markUnselectedAsBaja,
+            fechaBaja
+        } = req.body;
         const school_id = req.user.school_id;
 
-        if (!sourceGrupoId || !targetGrupoId || !Array.isArray(alumnoIds) || alumnoIds.length === 0) {
-            return res.status(400).json({ error: "Debe seleccionar un grupo origen, grupo destino y al menos un alumno." });
-        }
-
-        if (sourceGrupoId === targetGrupoId) {
-            return res.status(400).json({ error: "El grupo origen y el grupo destino no pueden ser el mismo." });
+        if (!sourceGrupoId || (!targetGrupoId && !createNewTargetGroup && !isGraduation) || !Array.isArray(alumnoIds) || alumnoIds.length === 0) {
+            return res.status(400).json({ error: "Debe seleccionar un grupo origen, un destino (o crear nuevo) y al menos un alumno." });
         }
 
         const sourceGrupo = await Grupo.findOne({ _id: sourceGrupoId, school_id });
-        const targetGrupo = await Grupo.findOne({ _id: targetGrupoId, school_id });
+        if (!sourceGrupo) {
+            return res.status(404).json({ error: "No se encontró el grupo origen especificado." });
+        }
 
-        if (!sourceGrupo || !targetGrupo) {
-            return res.status(404).json({ error: "No se encontró el grupo origen o destino especificado." });
+        const todayStr = fechaBaja || new Date().toISOString().split('T')[0];
+
+        // MODO GRADUACIÓN / EGRESADOS (Fin de Secundaria para 3er Grado)
+        if (isGraduation) {
+            sourceGrupo.alumnos.forEach(a => {
+                const idStr = String(a._id || a.id);
+                if (alumnoIds.includes(idStr)) {
+                    a.esBaja = true;
+                    if (!a.fechaBaja) a.fechaBaja = todayStr;
+                }
+            });
+            await sourceGrupo.save();
+
+            return res.json({
+                msg: `Se graduaron y egresaron ${alumnoIds.length} alumnos del grupo ${sourceGrupo.nombre} con fecha ${todayStr}.`,
+                addedCount: alumnoIds.length,
+                skippedCount: 0
+            });
+        }
+
+        // MODO CREACIÓN AUTOMÁTICA DE NUEVO GRUPO DESTINO (Evita colisiones entre grupos)
+        let targetGrupo = null;
+        if (createNewTargetGroup && newTargetGrupoNombre) {
+            const cleanName = newTargetGrupoNombre.trim();
+            targetGrupo = await Grupo.findOne({ nombre: cleanName, school_id });
+            if (!targetGrupo) {
+                targetGrupo = new Grupo({
+                    nombre: cleanName,
+                    asesor: sourceGrupo.asesor || '',
+                    aula: sourceGrupo.aula || '',
+                    alumnos: [],
+                    school_id
+                });
+                await targetGrupo.save();
+            }
+        } else {
+            targetGrupo = await Grupo.findOne({ _id: targetGrupoId, school_id });
+        }
+
+        if (!targetGrupo) {
+            return res.status(404).json({ error: "No se pudo encontrar o crear el grupo destino especificado." });
+        }
+
+        if (sourceGrupo._id.toString() === targetGrupo._id.toString()) {
+            return res.status(400).json({ error: "El grupo origen y el grupo destino no pueden ser el mismo." });
         }
 
         const selectedAlumnos = sourceGrupo.alumnos.filter(a => {
@@ -236,8 +287,7 @@ router.post("/promover-alumnos", authMiddleware, isAdmin, schoolMiddleware, asyn
 
         for (const alumno of selectedAlumnos) {
             const rawObj = alumno.toObject ? alumno.toObject() : { ...alumno };
-            
-            // Comprobación anti-conflicto: verificar si el alumno ya existe en el grupo destino
+
             const alreadyExists = targetGrupo.alumnos.some(targetA => {
                 const sameMatricula = targetA.matricula && rawObj.matricula && String(targetA.matricula) === String(rawObj.matricula);
                 const sameFullName = targetA.nombre?.trim().toLowerCase() === rawObj.nombre?.trim().toLowerCase() &&
@@ -250,10 +300,9 @@ router.post("/promover-alumnos", authMiddleware, isAdmin, schoolMiddleware, asyn
                 const newStudentData = { ...rawObj };
                 delete newStudentData._id;
                 delete newStudentData.id;
-                // Al promoverse a un nuevo grupo, se limpia su estado de baja si lo tenía
                 newStudentData.esBaja = false;
                 newStudentData.fechaBaja = "";
-                
+
                 if (!newStudentData.matricula) {
                     newStudentData.matricula = await getNextMatricula();
                 }
@@ -266,8 +315,6 @@ router.post("/promover-alumnos", authMiddleware, isAdmin, schoolMiddleware, asyn
         }
 
         await targetGrupo.save();
-
-        const todayStr = fechaBaja || new Date().toISOString().split('T')[0];
 
         if (markUnselectedAsBaja) {
             sourceGrupo.alumnos.forEach(a => {
@@ -291,7 +338,7 @@ router.post("/promover-alumnos", authMiddleware, isAdmin, schoolMiddleware, asyn
         }
 
         res.json({
-            msg: `Se ${action === 'move' ? 'movieron' : 'copiaron'} ${addedCount} alumnos a ${targetGrupo.nombre}.${skippedCount > 0 ? ` (${skippedCount} ya estaban registrados previamente)` : ''}`,
+            msg: `Se ${action === 'move' ? 'movieron' : 'copiaron'} ${addedCount} alumnos al grupo ${targetGrupo.nombre}.${skippedCount > 0 ? ` (${skippedCount} ya estaban registrados previamente)` : ''}`,
             addedCount,
             skippedCount
         });

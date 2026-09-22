@@ -17,12 +17,31 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
     const [loading, setLoading] = useState(false);
 
     // Initial selections when modal opens or groups change
+    const [targetOption, setTargetOption] = useState('NEW'); // 'NEW' | 'EXISTING' | 'GRADUATE'
+    const [newTargetGrupoNombre, setNewTargetGrupoNombre] = useState('');
+
+    // Auto-calculate suggested target group name when source group changes
     useEffect(() => {
-        if (isOpen && grupos.length > 0) {
-            if (!sourceGrupoId) setSourceGrupoId(grupos[0]._id || grupos[0].id);
-            if (!targetGrupoId && grupos.length > 1) setTargetGrupoId(grupos[1]._id || grupos[1].id);
+        const sg = grupos.find(g => String(g._id || g.id) === String(sourceGrupoId));
+        if (sg) {
+            const name = sg.nombre || '';
+            let suggested = '';
+            if (name.includes('1')) {
+                suggested = name.replace('1', '2');
+                setTargetOption('NEW');
+            } else if (name.includes('2')) {
+                suggested = name.replace('2', '3');
+                setTargetOption('NEW');
+            } else if (name.includes('3')) {
+                suggested = `Egresados ${name}`;
+                setTargetOption('GRADUATE');
+            } else {
+                suggested = `${name} (Nuevo)`;
+                setTargetOption('NEW');
+            }
+            setNewTargetGrupoNombre(suggested);
         }
-    }, [isOpen, grupos, sourceGrupoId, targetGrupoId]);
+    }, [sourceGrupoId, grupos]);
 
     const sourceGrupo = grupos.find(g => String(g._id || g.id) === String(sourceGrupoId));
     const targetGrupo = grupos.find(g => String(g._id || g.id) === String(targetGrupoId));
@@ -42,7 +61,7 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
     if (!isOpen) return null;
 
     const isAlreadyInTarget = (alumno) => {
-        if (!targetGrupo) return false;
+        if (targetOption !== 'EXISTING' || !targetGrupo) return false;
         return targetAlumnos.some(targetA => {
             const sameMatricula = targetA.matricula && alumno.matricula && String(targetA.matricula) === String(alumno.matricula);
             const sameName = targetA.nombre?.trim().toLowerCase() === alumno.nombre?.trim().toLowerCase() &&
@@ -58,52 +77,49 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
         );
     };
 
-    const handleToggleAll = () => {
-        const selectableStudents = sourceAlumnos.filter(a => !isAlreadyInTarget(a));
-        const selectableIds = selectableStudents.map(a => String(a._id || a.id));
-
-        const allSelected = selectableIds.every(id => selectedAlumnoIds.includes(id));
-
-        if (allSelected) {
-            setSelectedAlumnoIds([]);
-        } else {
-            setSelectedAlumnoIds(selectableIds);
-        }
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!sourceGrupoId || !targetGrupoId) {
-            if (addNotification) addNotification('Selecciona el grupo origen y el grupo destino', 'warning');
+        if (!sourceGrupoId) {
+            if (addNotification) addNotification('Selecciona el grupo origen', 'warning');
             return;
         }
 
-        if (sourceGrupoId === targetGrupoId) {
-            if (addNotification) addNotification('El grupo origen y el grupo destino deben ser diferentes', 'warning');
+        if (targetOption === 'NEW' && !newTargetGrupoNombre.trim()) {
+            if (addNotification) addNotification('Escribe el nombre del nuevo grupo destino (ej. 2°A)', 'warning');
+            return;
+        }
+
+        if (targetOption === 'EXISTING' && (!targetGrupoId || sourceGrupoId === targetGrupoId)) {
+            if (addNotification) addNotification('Selecciona un grupo destino diferente', 'warning');
             return;
         }
 
         if (selectedAlumnoIds.length === 0) {
-            if (addNotification) addNotification('Selecciona al menos un alumno para transferir', 'warning');
+            if (addNotification) addNotification('Selecciona al menos un alumno para transferir/graduar', 'warning');
             return;
         }
 
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post(`${API_URL}/grupos/promover-alumnos`, {
+            const payload = {
                 sourceGrupoId,
-                targetGrupoId,
                 alumnoIds: selectedAlumnoIds,
                 action,
                 markUnselectedAsBaja,
-                fechaBaja
-            }, {
+                fechaBaja,
+                createNewTargetGroup: targetOption === 'NEW',
+                newTargetGrupoNombre: targetOption === 'NEW' ? newTargetGrupoNombre.trim() : undefined,
+                targetGrupoId: targetOption === 'EXISTING' ? targetGrupoId : undefined,
+                isGraduation: targetOption === 'GRADUATE'
+            };
+
+            const res = await axios.post(`${API_URL}/grupos/promover-alumnos`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            if (addNotification) addNotification(res.data.msg || 'Alumnos transferidos correctamente', 'success');
+            if (addNotification) addNotification(res.data.msg || 'Alumnos promovidos correctamente', 'success');
             if (onSuccess) onSuccess();
             onClose();
         } catch (err) {
@@ -119,19 +135,19 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
         <div className="promover-modal-overlay" onClick={onClose}>
             <div className="promover-modal-content" onClick={(e) => e.stopPropagation()}>
                 <header className="promover-modal-header">
-                    <h2><FaExchangeAlt className="header-icon" /> Promoción y Copia de Alumnos entre Grupos</h2>
+                    <h2><FaExchangeAlt className="header-icon" /> Promoción y Paso de Grado de Alumnos</h2>
                     <button type="button" className="close-btn" onClick={onClose}>&times;</button>
                 </header>
 
                 <form onSubmit={handleSubmit} className="promover-modal-body">
                     <p className="promover-subtitle">
-                        Transfiere o copia alumnos de un grado/grupo a otro (ej. 1°A ➔ 2°A). Desmarca a los alumnos que se hayan dado de baja para excluirlos.
+                        Paso de grado para el nuevo ciclo escolar. Crea automáticamente el nuevo grupo destino (ej. 1°A ➔ 2°A) para no mezclar nombres con grupos actuales.
                     </p>
 
-                    {/* GRUPO ORIGEN -> GRUPO DESTINO */}
+                    {/* SELECCIÓN DE ORIGEN Y TIPO DE DESTINO */}
                     <div className="promover-select-grid">
                         <div className="form-group">
-                            <label className="promover-label">1. Grupo Origen (De donde salen):</label>
+                            <label className="promover-label">1. Grupo Actual Origen:</label>
                             <select
                                 className="promover-select"
                                 value={sourceGrupoId}
@@ -150,18 +166,66 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
                         </div>
 
                         <div className="form-group">
-                            <label className="promover-label">2. Grupo Destino (A donde entran):</label>
-                            <select
-                                className="promover-select"
-                                value={targetGrupoId}
-                                onChange={(e) => setTargetGrupoId(e.target.value)}
-                            >
-                                {grupos.map(g => (
-                                    <option key={g._id || g.id} value={g._id || g.id}>
-                                        {g.nombre} ({g.alumnos?.length || 0} alumnos)
-                                    </option>
-                                ))}
-                            </select>
+                            <label className="promover-label">2. Modo de Destino para el Nuevo Grado:</label>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.88rem', color: targetOption === 'NEW' ? '#00cbcb' : '#fff' }}>
+                                    <input
+                                        type="radio"
+                                        name="targetOption"
+                                        value="NEW"
+                                        checked={targetOption === 'NEW'}
+                                        onChange={() => setTargetOption('NEW')}
+                                    />
+                                    <span>✨ Crear Nuevo Grupo (Sugerido para nuevo ciclo)</span>
+                                </label>
+
+                                {targetOption === 'NEW' && (
+                                    <input
+                                        type="text"
+                                        className="promover-select"
+                                        value={newTargetGrupoNombre}
+                                        onChange={(e) => setNewTargetGrupoNombre(e.target.value)}
+                                        placeholder="Nombre del nuevo grupo (ej. 2°A, 3°A)"
+                                        style={{ borderColor: '#00cbcb', background: '#111827', color: '#00cbcb', fontWeight: 'bold' }}
+                                    />
+                                )}
+
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.88rem', color: targetOption === 'GRADUATE' ? '#f59e0b' : '#fff' }}>
+                                    <input
+                                        type="radio"
+                                        name="targetOption"
+                                        value="GRADUATE"
+                                        checked={targetOption === 'GRADUATE'}
+                                        onChange={() => setTargetOption('GRADUATE')}
+                                    />
+                                    <span>🎓 Graduar / Egresar Grupo (Para 3° Grado - Fin de Secundaria)</span>
+                                </label>
+
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.88rem', color: targetOption === 'EXISTING' ? '#3b82f6' : '#fff' }}>
+                                    <input
+                                        type="radio"
+                                        name="targetOption"
+                                        value="EXISTING"
+                                        checked={targetOption === 'EXISTING'}
+                                        onChange={() => setTargetOption('EXISTING')}
+                                    />
+                                    <span>👥 Seleccionar de Lista de Grupos Existentes</span>
+                                </label>
+
+                                {targetOption === 'EXISTING' && (
+                                    <select
+                                        className="promover-select"
+                                        value={targetGrupoId}
+                                        onChange={(e) => setTargetGrupoId(e.target.value)}
+                                    >
+                                        {grupos.map(g => (
+                                            <option key={g._id || g.id} value={g._id || g.id}>
+                                                {g.nombre} ({g.alumnos?.length || 0} alumnos)
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
                         </div>
                     </div>
 
