@@ -11,31 +11,82 @@ const router = express.Router();
 // [POST] /portal-padres/login
 router.post("/login", async (req, res) => {
     try {
-        const { email, identifier, matricula } = req.body;
+        const { email, identifier, matricula, confirmLink } = req.body;
         const loginId = (identifier || email || "").toLowerCase().trim();
+        const cleanMatricula = (matricula || "").trim();
 
-        if (!loginId || !matricula) {
+        if (!loginId || !cleanMatricula) {
             return res.status(400).json({ msg: "Correo/Teléfono y Matrícula son obligatorios." });
         }
 
-        // Buscar el grupo que contenga al alumno con ese email/teléfono y matrícula
-        const grupo = await Grupo.findOne({
+        // 1. Buscar coincidencia exacta (Padre ya vinculado previamente)
+        let grupo = await Grupo.findOne({
             $or: [
                 { "alumnos.emailPadre": loginId },
                 { "alumnos.telefonoPadre": loginId }
             ],
-            "alumnos.matricula": matricula
+            "alumnos.matricula": cleanMatricula
         });
 
-        if (!grupo) {
-            return res.status(404).json({ msg: "No se encontró ningún alumno con esos datos." });
+        let alumno = null;
+        if (grupo) {
+            alumno = grupo.alumnos.find(a =>
+                (a.emailPadre === loginId || a.telefonoPadre === loginId) && a.matricula === cleanMatricula
+            );
         }
 
-        const alumno = grupo.alumnos.find(a =>
-            (a.emailPadre === loginId || a.telefonoPadre === loginId) && a.matricula === matricula
-        );
+        // 2. Si no hay coincidencia exacta con el correo/teléfono, buscar únicamente por Matrícula
+        if (!grupo || !alumno) {
+            grupo = await Grupo.findOne({ "alumnos.matricula": cleanMatricula });
+            if (!grupo) {
+                return res.status(404).json({ msg: "No se encontró ningún alumno registrado con la matrícula ingresada." });
+            }
 
-        // Obtener nombre de la escuela y suscripción
+            alumno = grupo.alumnos.find(a => a.matricula === cleanMatricula);
+            if (!alumno) {
+                return res.status(404).json({ msg: "No se encontró ningún alumno registrado con la matrícula ingresada." });
+            }
+
+            // Verificar si el alumno ya tiene un correo o teléfono diferente registrado
+            const existingEmail = (alumno.emailPadre || "").trim().toLowerCase();
+            const existingPhone = (alumno.telefonoPadre || "").trim().toLowerCase();
+
+            // Si ya tiene algún dato de contacto vinculado diferente al ingresado
+            if ((existingEmail && existingEmail !== loginId) || (existingPhone && existingPhone !== loginId)) {
+                return res.status(400).json({
+                    msg: `La matrícula ${cleanMatricula} ya se encuentra vinculada a otra cuenta (${existingEmail || existingPhone}). Si necesitas actualizar tus datos, por favor contacta a la administración de la escuela.`
+                });
+            }
+
+            // Si es la primera vez y el cliente NO ha confirmado vincular aún
+            if (!confirmLink) {
+                const school = await School.findById(grupo.school_id).select('name');
+                return res.json({
+                    requiresLinking: true,
+                    identifier: loginId,
+                    identifierType: loginId.includes('@') ? 'correo electrónico' : 'número de teléfono',
+                    alumno: {
+                        id: alumno._id,
+                        nombre: `${alumno.nombre} ${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''}`.trim(),
+                        matricula: alumno.matricula,
+                        grupo: grupo.nombre,
+                        escuela: school?.name || "Institución Educativa"
+                    }
+                });
+            }
+
+            // Si el cliente presiona "Sí, vincular" (confirmLink === true)
+            const isEmail = loginId.includes('@');
+            if (isEmail) {
+                alumno.emailPadre = loginId;
+            } else {
+                alumno.telefonoPadre = loginId;
+            }
+
+            await grupo.save();
+        }
+
+        // 3. Obtener escuela y verificar estado de suscripción
         const school = await School.findById(grupo.school_id).select('name subscription');
 
         if (school?.subscription?.status === 'suspended') {
@@ -44,7 +95,7 @@ router.post("/login", async (req, res) => {
             });
         }
 
-        // Generar un token especial para el padre
+        // 4. Generar token de sesión para el padre
         const token = jwt.sign(
             {
                 id: alumno._id,
@@ -59,11 +110,10 @@ router.post("/login", async (req, res) => {
 
         res.json({
             token,
+            msg: confirmLink ? "¡Cuenta vinculada exitosamente!" : undefined,
             alumno: {
                 id: alumno._id,
-                nombre: alumno.nombre,
-                apellidoPaterno: alumno.apellidoPaterno,
-                apellidoMaterno: alumno.apellidoMaterno,
+                nombre: `${alumno.nombre} ${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''}`.trim(),
                 matricula: alumno.matricula,
                 grupo: grupo.nombre,
                 escuela: school?.name || "Institución no encontrada"

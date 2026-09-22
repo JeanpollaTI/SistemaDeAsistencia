@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaGraduationCap, FaUser, FaIdCard, FaCalendarAlt, FaStar, FaSchool, FaSignOutAlt } from 'react-icons/fa';
+import { FaGraduationCap, FaUser, FaIdCard, FaCalendarAlt, FaStar, FaSchool, FaSignOutAlt, FaLink } from 'react-icons/fa';
 import { useNotification } from '../COMPONENTE/NotificationContext';
 import DynamicBackground from '../COMPONENTE/DynamicBackground';
 import LoadingOverlay from '../COMPONENTE/LoadingOverlay';
@@ -15,6 +15,7 @@ function ParentPortal() {
     const [alumno, setAlumno] = useState(null);
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [linkingInfo, setLinkingInfo] = useState(null);
 
     useEffect(() => {
         if (token) {
@@ -49,12 +50,38 @@ function ParentPortal() {
         setLoading(true);
         try {
             const res = await axios.post(`${API_URL}/api/portal-padres/login`, loginData);
+
+            if (res.data.requiresLinking) {
+                setLinkingInfo(res.data);
+                return;
+            }
+
             setToken(res.data.token);
             setAlumno(res.data.alumno);
-            showAlert(`Bienvenido, padre/tutor de ${res.data.alumno.nombre}`, "success");
+            showAlert(res.data.msg || `Bienvenido, padre/tutor de ${res.data.alumno.nombre}`, "success");
             fetchData(res.data.token);
         } catch (err) {
             showAlert(err.response?.data?.msg || "Error al iniciar sesión.", "danger");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleConfirmLink = async () => {
+        setLoading(true);
+        try {
+            const res = await axios.post(`${API_URL}/api/portal-padres/login`, {
+                ...loginData,
+                confirmLink: true
+            });
+
+            setToken(res.data.token);
+            setAlumno(res.data.alumno);
+            setLinkingInfo(null);
+            showAlert("¡Cuenta vinculada exitosamente! Bienvenido.", "success");
+            fetchData(res.data.token);
+        } catch (err) {
+            showAlert(err.response?.data?.msg || "Error al vincular la cuenta.", "danger");
         } finally {
             setLoading(false);
         }
@@ -64,25 +91,26 @@ function ParentPortal() {
         setToken(null);
         setAlumno(null);
         setData(null);
+        setLinkingInfo(null);
         showAlert("Sesión de consulta cerrada.", "info");
     };
 
     if (!token) {
         return (
             <div className="portal-login-container dark-theme">
-                {loading && <LoadingOverlay message="Ingresando al Portal..." />}
+                {loading && <LoadingOverlay message="Procesando datos..." />}
                 <DynamicBackground />
                 <div className="portal-login-card glass">
                     <FaGraduationCap className="portal-logo-icon" />
                     <h2>Portal de Padres y Alumnos</h2>
-                    <p>Ingresa los datos para consultar el progreso académico.</p>
+                    <p>Ingresa tus datos para consultar el progreso académico.</p>
 
                     <form onSubmit={handleLogin}>
                         <div className="input-group">
                             <FaUser className="input-icon" />
                             <input
                                 type="text"
-                                placeholder="Correo o Teléfono registrado"
+                                placeholder="Correo o Teléfono"
                                 value={loginData.email}
                                 onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                                 required
@@ -92,7 +120,7 @@ function ParentPortal() {
                             <FaIdCard className="input-icon" />
                             <input
                                 type="text"
-                                placeholder="Matrícula (Ej: 0001)"
+                                placeholder="Matrícula dada por la escuela"
                                 value={loginData.matricula}
                                 onChange={(e) => setLoginData({ ...loginData, matricula: e.target.value })}
                                 required
@@ -103,6 +131,63 @@ function ParentPortal() {
                         </button>
                     </form>
                 </div>
+
+                {/* MODAL DE CONFIRMACIÓN DE VINCULACIÓN EN PRIMERA VEZ */}
+                {linkingInfo && (
+                    <div className="linking-modal-overlay">
+                        <div className="linking-modal-card glass">
+                            <div className="linking-icon-wrapper">
+                                <FaLink className="linking-icon" />
+                            </div>
+                            <h3>🔗 Vincular Cuenta de Tutor</h3>
+                            <p className="linking-subtitle">
+                                Es la primera vez que ingresas con esta matrícula. ¿Deseas vincular tu <strong>{linkingInfo.identifierType}</strong> para tus próximos accesos?
+                            </p>
+
+                            <div className="linking-details-box">
+                                <div className="detail-item">
+                                    <span className="detail-label">Alumno:</span>
+                                    <span className="detail-value highlight">{linkingInfo.alumno.nombre}</span>
+                                </div>
+                                <div className="detail-item">
+                                    <span className="detail-label">Matrícula:</span>
+                                    <span className="detail-value">{linkingInfo.alumno.matricula}</span>
+                                </div>
+                                <div className="detail-item">
+                                    <span className="detail-label">Grupo:</span>
+                                    <span className="detail-value">{linkingInfo.alumno.grupo}</span>
+                                </div>
+                                <div className="detail-item">
+                                    <span className="detail-label">Escuela:</span>
+                                    <span className="detail-value">{linkingInfo.alumno.escuela}</span>
+                                </div>
+                                <div className="detail-item">
+                                    <span className="detail-label">{linkingInfo.identifierType === 'correo electrónico' ? 'Correo a vincular:' : 'Teléfono a vincular:'}</span>
+                                    <span className="detail-value link-target">{linkingInfo.identifier}</span>
+                                </div>
+                            </div>
+
+                            <div className="linking-actions">
+                                <button
+                                    type="button"
+                                    className="portal-btn btn-confirm-link"
+                                    onClick={handleConfirmLink}
+                                    disabled={loading}
+                                >
+                                    {loading ? "Vinculando..." : "✅ Sí, vincular y entrar"}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn-cancel-link"
+                                    onClick={() => setLinkingInfo(null)}
+                                    disabled={loading}
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
@@ -134,7 +219,7 @@ function ParentPortal() {
                     <div className="portal-student-name-display">
                         <FaUser className="student-icon" />
                         <div className="student-details">
-                            <span className="student-name">{alumno?.apellidoPaterno} {alumno?.apellidoMaterno || ''} {alumno?.nombre}</span>
+                            <span className="student-name">{alumno?.nombre}</span>
                             <span className="student-group">{alumno?.grupo} | Matrícula: {alumno?.matricula}</span>
                         </div>
                     </div>
