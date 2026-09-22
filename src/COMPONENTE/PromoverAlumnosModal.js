@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNotification } from './NotificationContext';
-import { FaExchangeAlt, FaTimes, FaUserCheck, FaUserMinus, FaCopy, FaArrowRight, FaCheckSquare, FaSquare } from 'react-icons/fa';
+import { FaExchangeAlt, FaTimes, FaUserCheck, FaUserMinus, FaCopy, FaArrowRight } from 'react-icons/fa';
 import './PromoverAlumnosModal.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -11,7 +11,7 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
     const [sourceGrupoId, setSourceGrupoId] = useState('');
     const [targetGrupoId, setTargetGrupoId] = useState('');
     const [selectedAlumnoIds, setSelectedAlumnoIds] = useState([]);
-    const [action, setAction] = useState('copy'); // 'copy' | 'move'
+    const [action, setAction] = useState('move'); // 'copy' | 'move'
     const [markUnselectedAsBaja, setMarkUnselectedAsBaja] = useState(true);
     const [fechaBaja, setFechaBaja] = useState(new Date().toISOString().split('T')[0]);
     const [loading, setLoading] = useState(false);
@@ -19,6 +19,17 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
     // Initial selections when modal opens or groups change
     const [targetOption, setTargetOption] = useState('NEW'); // 'NEW' | 'EXISTING' | 'GRADUATE'
     const [newTargetGrupoNombre, setNewTargetGrupoNombre] = useState('');
+
+    // Ensure a valid sourceGrupoId is selected as soon as modal opens or groups list loads
+    useEffect(() => {
+        if (isOpen && Array.isArray(grupos) && grupos.length > 0) {
+            const exists = grupos.some(g => String(g._id || g.id) === String(sourceGrupoId));
+            if (!sourceGrupoId || !exists) {
+                const firstId = String(grupos[0]._id || grupos[0].id);
+                setSourceGrupoId(firstId);
+            }
+        }
+    }, [isOpen, grupos, sourceGrupoId]);
 
     // Auto-calculate suggested target group name when source group changes
     useEffect(() => {
@@ -48,15 +59,17 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
     const sourceAlumnos = sourceGrupo?.alumnos || [];
     const targetAlumnos = targetGrupo?.alumnos || [];
 
-    // Auto-select active students when source group changes
+    // Auto-select active (non-baja) students when source group changes or sourceAlumnos updates
     useEffect(() => {
         if (sourceAlumnos.length > 0) {
-            const allIds = sourceAlumnos.map(a => String(a._id || a.id));
+            const activeAlumnos = sourceAlumnos.filter(a => !a.esBaja);
+            const toSelect = activeAlumnos.length > 0 ? activeAlumnos : sourceAlumnos;
+            const allIds = toSelect.map(a => String(a._id || a.id));
             setSelectedAlumnoIds(allIds);
         } else {
             setSelectedAlumnoIds([]);
         }
-    }, [sourceGrupoId]);
+    }, [sourceGrupoId, sourceAlumnos.length]);
 
     if (!isOpen) return null;
 
@@ -153,11 +166,15 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
                                 value={sourceGrupoId}
                                 onChange={(e) => setSourceGrupoId(e.target.value)}
                             >
-                                {grupos.map(g => (
-                                    <option key={g._id || g.id} value={g._id || g.id}>
-                                        {g.nombre} ({g.alumnos?.length || 0} alumnos)
-                                    </option>
-                                ))}
+                                {grupos.length === 0 ? (
+                                    <option value="">No hay grupos disponibles</option>
+                                ) : (
+                                    grupos.map(g => (
+                                        <option key={g._id || g.id} value={String(g._id || g.id)}>
+                                            {g.nombre} ({g.alumnos?.length || 0} alumnos)
+                                        </option>
+                                    ))
+                                )}
                             </select>
                         </div>
 
@@ -219,7 +236,7 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
                                         onChange={(e) => setTargetGrupoId(e.target.value)}
                                     >
                                         {grupos.map(g => (
-                                            <option key={g._id || g.id} value={g._id || g.id}>
+                                            <option key={g._id || g.id} value={String(g._id || g.id)}>
                                                 {g.nombre} ({g.alumnos?.length || 0} alumnos)
                                             </option>
                                         ))}
@@ -233,20 +250,6 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
                     <div className="promover-action-selector">
                         <label className="promover-label">3. Selecciona la acción a realizar:</label>
                         <div className="action-options-row">
-                            <label className={`action-card ${action === 'copy' ? 'selected' : ''}`}>
-                                <input
-                                    type="radio"
-                                    name="promoverAction"
-                                    value="copy"
-                                    checked={action === 'copy'}
-                                    onChange={(e) => setAction(e.target.value)}
-                                />
-                                <div className="action-card-content">
-                                    <strong><FaCopy /> Copiar Alumnos</strong>
-                                    <span>Conserva a los alumnos en {sourceGrupo?.nombre || 'Origen'} y agrega una copia a {targetGrupo?.nombre || 'Destino'}.</span>
-                                </div>
-                            </label>
-
                             <label className={`action-card ${action === 'move' ? 'selected' : ''}`}>
                                 <input
                                     type="radio"
@@ -257,7 +260,21 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
                                 />
                                 <div className="action-card-content">
                                     <strong><FaExchangeAlt /> Mover / Promover (Paso de Grado)</strong>
-                                    <span>Transfiere los alumnos a {targetGrupo?.nombre || 'Destino'} y los quita de {sourceGrupo?.nombre || 'Origen'}.</span>
+                                    <span>Transfiere los alumnos a {targetGrupo?.nombre || newTargetGrupoNombre || 'Destino'} y los retira de {sourceGrupo?.nombre || 'Origen'}.</span>
+                                </div>
+                            </label>
+
+                            <label className={`action-card ${action === 'copy' ? 'selected' : ''}`}>
+                                <input
+                                    type="radio"
+                                    name="promoverAction"
+                                    value="copy"
+                                    checked={action === 'copy'}
+                                    onChange={(e) => setAction(e.target.value)}
+                                />
+                                <div className="action-card-content">
+                                    <strong><FaCopy /> Copiar Alumnos</strong>
+                                    <span>Conserva a los alumnos en {sourceGrupo?.nombre || 'Origen'} y agrega una copia a {targetGrupo?.nombre || newTargetGrupoNombre || 'Destino'}.</span>
                                 </div>
                             </label>
                         </div>
@@ -302,7 +319,7 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
                                         setSelectedAlumnoIds(selectableStudents.map(a => String(a._id || a.id)));
                                     }}
                                 >
-                                    <FaUserCheck /> Seleccionar Todos los Alumnos
+                                    <FaUserCheck /> Seleccionar Todos
                                 </button>
                                 <button
                                     type="button"
@@ -315,8 +332,8 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
                         </div>
 
                         {sourceAlumnos.length === 0 ? (
-                            <div className="empty-students-msg">
-                                El grupo {sourceGrupo?.nombre} no tiene alumnos registrados.
+                            <div className="empty-students-msg" style={{ padding: '20px', textAlign: 'center', color: '#aaa', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+                                El grupo <strong>{sourceGrupo?.nombre || 'seleccionado'}</strong> no tiene alumnos registrados en el sistema.
                             </div>
                         ) : (
                             <div className="students-checkbox-list">
@@ -328,7 +345,7 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
 
                                     return (
                                         <div
-                                            key={idStr}
+                                            key={idStr || index}
                                             className={`student-item-row ${inTarget ? 'already-exists' : ''} ${isSelected ? 'is-selected' : ''}`}
                                             onClick={() => !inTarget && handleToggleStudent(idStr)}
                                         >
@@ -345,6 +362,12 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
                                             <span className="student-name">{fullName}</span>
                                             {alumno.matricula && (
                                                 <span className="student-mat">Matrícula: {alumno.matricula}</span>
+                                            )}
+
+                                            {alumno.esBaja && (
+                                                <span className="badge-already-target" style={{ background: '#ef4444', color: '#fff' }}>
+                                                    BAJA {alumno.fechaBaja ? `(${alumno.fechaBaja})` : ''}
+                                                </span>
                                             )}
 
                                             {inTarget && (
