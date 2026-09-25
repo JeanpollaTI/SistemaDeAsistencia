@@ -967,24 +967,41 @@ function Grupo({ user }) {
 
           let parsedStudent = null;
 
-          // 2. Comprobar si viene en múltiples columnas (Nombre, Paterno, Materno)
-          if (cells.length >= 4 && cells[1] && cells[2] && cells[3]) {
-            parsedStudent = {
-              nombre: cells[1],
-              apellidoPaterno: cells[2],
-              apellidoMaterno: cells[3]
-            };
-          } else {
-            // 3. Formato de celda única / 2 celdas: Extraer la celda que contiene el nombre completo del alumno
-            const textCells = nonNullCells.filter(c => isNaN(c) && c.length > 2);
-            const fullNameCell = textCells.length > 0 ? textCells[0] : null;
+          // Extraer celdas de texto que correspondan a partes del nombre (omitiendo números de lista/calificaciones y palabras clave)
+          const nameCols = nonNullCells.filter(c => {
+            if (!c) return false;
+            const cleanedNum = c.replace(',', '.');
+            if (!isNaN(Number(cleanedNum))) return false;
+            const lower = c.toLowerCase();
+            if (['aprobado', 'reprobado', 'promedio', 'baja', 'ordinario', 'status', 'estatus', 'asistencia'].includes(lower)) return false;
+            return true;
+          });
 
-            if (fullNameCell) {
-              const lowerCell = fullNameCell.toLowerCase();
-              if (!HEADER_KEYWORDS.some(kw => lowerCell.includes(kw))) {
-                parsedStudent = parseFullName(fullNameCell);
-              }
+          if (nameCols.length >= 3) {
+            // Si el Excel viene dividido en casillas: Columna 1 = Apellido Paterno, Columna 2 = Apellido Materno, Columna 3+ = Nombre(s)
+            parsedStudent = {
+              apellidoPaterno: nameCols[0],
+              apellidoMaterno: nameCols[1],
+              nombre: nameCols.slice(2).join(' ')
+            };
+          } else if (nameCols.length === 2) {
+            const parsedFirst = parseFullName(nameCols[0]);
+            if (parsedFirst.apellidoMaterno) {
+              parsedStudent = {
+                apellidoPaterno: parsedFirst.apellidoPaterno,
+                apellidoMaterno: parsedFirst.apellidoMaterno,
+                nombre: nameCols[1]
+              };
+            } else {
+              parsedStudent = {
+                apellidoPaterno: nameCols[0],
+                apellidoMaterno: '',
+                nombre: nameCols[1]
+              };
             }
+          } else if (nameCols.length === 1) {
+            // Si viene todo junto en una sola casilla
+            parsedStudent = parseFullName(nameCols[0]);
           }
 
           if (parsedStudent && (parsedStudent.nombre || parsedStudent.apellidoPaterno)) {
