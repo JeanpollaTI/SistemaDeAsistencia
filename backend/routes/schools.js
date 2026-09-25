@@ -30,6 +30,8 @@ router.get('/:id', authMiddleware, async (req, res) => {
     }
 });
 
+import cloudinary from '../config/cloudinary.js';
+
 // UPDATE school
 router.put('/:id', authMiddleware, isAdmin, async (req, res) => {
     try {
@@ -48,6 +50,60 @@ router.put('/:id', authMiddleware, isAdmin, async (req, res) => {
 
         res.json(school);
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /schools/:id/logo - Upload school logo to Cloudinary
+router.post('/:id/logo', authMiddleware, isAdmin, async (req, res) => {
+    try {
+        const { logoBase64 } = req.body;
+
+        if (req.user.school_id.toString() !== req.params.id) {
+            return res.status(403).json({ msg: 'Solo puedes modificar el logo de tu propia escuela' });
+        }
+
+        if (!logoBase64) {
+            return res.status(400).json({ msg: 'No se proporcionó imagen de logo' });
+        }
+
+        // Subir a Cloudinary en carpeta 'school_logos'
+        const result = await cloudinary.uploader.upload(logoBase64, {
+            folder: 'school_logos',
+            transformation: [{ width: 500, height: 500, crop: 'limit' }]
+        });
+
+        const school = await School.findById(req.params.id);
+        if (!school) return res.status(404).json({ msg: 'Escuela no encontrada' });
+
+        if (!school.config) school.config = {};
+        school.config.logoUrl = result.secure_url;
+        await school.save();
+
+        res.json(school);
+    } catch (err) {
+        console.error("Error al subir logo a Cloudinary:", err);
+        res.status(500).json({ error: 'Error al subir el logo a Cloudinary.', details: err.message });
+    }
+});
+
+// DELETE /schools/:id/logo - Remove school logo (leaves it blank)
+router.delete('/:id/logo', authMiddleware, isAdmin, async (req, res) => {
+    try {
+        if (req.user.school_id.toString() !== req.params.id) {
+            return res.status(403).json({ msg: 'Solo puedes modificar tu propia escuela' });
+        }
+
+        const school = await School.findById(req.params.id);
+        if (!school) return res.status(404).json({ msg: 'Escuela no encontrada' });
+
+        if (!school.config) school.config = {};
+        school.config.logoUrl = '';
+        await school.save();
+
+        res.json(school);
+    } catch (err) {
+        console.error("Error al eliminar logo de escuela:", err);
         res.status(500).json({ error: err.message });
     }
 });
