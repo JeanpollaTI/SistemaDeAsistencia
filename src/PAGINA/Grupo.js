@@ -927,6 +927,17 @@ function Grupo({ user }) {
     if (!archivoXLS) {
       return showAlert('Por favor, selecciona un archivo XLS.', 'error');
     }
+
+    const HEADER_KEYWORDS = [
+      'escuela', 'secundaria', 'general', 'evaluación', 'evaluacion', 'trimestre',
+      'ciclo', 'escolar', 'promedio', 'clases', 'programadas', 'impartidas',
+      'asistencia', 'aprobados', 'reprobados', 'rasgos', 'conducta', 'inasistencias',
+      'calificación', 'calificacion', 'apoyos', 'requeridos', 'nombre', 'n°', 'no.',
+      'primer', 'segundo', 'tercer', 'periodo', 'bimestre', 'materia', 'profesor',
+      'grupo', 'grado', 'docente', 'firma', 'observaciones', 'amado', 'nervo', 'total',
+      'director', 'directora', 'subdirector', 'subdirectora', 'coordinador'
+    ];
+
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
@@ -948,49 +959,46 @@ function Grupo({ user }) {
 
           const combinedRowStr = nonNullCells.join(' ').toLowerCase();
 
-          // Skip header row if present
-          if (r === 0 && (combinedRowStr.includes('nombre') || combinedRowStr.includes('paterno') || combinedRowStr.includes('materno') || combinedRowStr.includes('matrícula') || combinedRowStr.includes('n°') || combinedRowStr.includes('no.'))) {
+          // 1. OMITIR cualquier fila de encabezado escolar, títulos o estadísticas de la escuela
+          const isHeaderOrMetadata = HEADER_KEYWORDS.some(kw => combinedRowStr.includes(kw));
+          if (isHeaderOrMetadata) {
             continue;
           }
 
           let parsedStudent = null;
 
-          // Check if multi-column format (separate Paterno, Materno, Nombre columns)
+          // 2. Comprobar si viene en múltiples columnas (Nombre, Paterno, Materno)
           if (cells.length >= 4 && cells[1] && cells[2] && cells[3]) {
-            if (combinedRowStr.includes('paterno')) {
-              parsedStudent = {
-                apellidoPaterno: cells[1],
-                apellidoMaterno: cells[2],
-                nombre: cells[3]
-              };
-            } else {
-              parsedStudent = {
-                nombre: cells[1],
-                apellidoPaterno: cells[2],
-                apellidoMaterno: cells[3]
-              };
-            }
+            parsedStudent = {
+              nombre: cells[1],
+              apellidoPaterno: cells[2],
+              apellidoMaterno: cells[3]
+            };
           } else {
-            // Single cell or 2-cell format: Extract text containing student full name
-            const textCells = nonNullCells.filter(c => isNaN(c) && c.length > 1);
-            const fullNameCell = textCells.length > 0 ? textCells[0] : nonNullCells[0];
+            // 3. Formato de celda única / 2 celdas: Extraer la celda que contiene el nombre completo del alumno
+            const textCells = nonNullCells.filter(c => isNaN(c) && c.length > 2);
+            const fullNameCell = textCells.length > 0 ? textCells[0] : null;
 
-            if (fullNameCell && isNaN(fullNameCell)) {
-              parsedStudent = parseFullName(fullNameCell);
+            if (fullNameCell) {
+              const lowerCell = fullNameCell.toLowerCase();
+              if (!HEADER_KEYWORDS.some(kw => lowerCell.includes(kw))) {
+                parsedStudent = parseFullName(fullNameCell);
+              }
             }
           }
 
           if (parsedStudent && (parsedStudent.nombre || parsedStudent.apellidoPaterno)) {
-            if (!parsedStudent.apellidoPaterno) {
-              parsedStudent.apellidoPaterno = parsedStudent.nombre;
-              parsedStudent.nombre = 'Sin nombre';
+            if (parsedStudent.apellidoPaterno && parsedStudent.apellidoPaterno.length > 1) {
+              if (!parsedStudent.nombre) {
+                parsedStudent.nombre = 'Sin nombre';
+              }
+              alumnosImportados.push(parsedStudent);
             }
-            alumnosImportados.push(parsedStudent);
           }
         }
 
         if (alumnosImportados.length === 0) {
-          return showAlert('No se encontraron alumnos válidos en el archivo. Puedes incluir los nombres en una sola celda (Paterno Materno Nombre) o en columnas separadas.', 'error');
+          return showAlert('No se encontraron alumnos válidos en el archivo. Verifica que la lista contenga los nombres de los alumnos.', 'error');
         }
 
         const grupoParaGuardar = { nombre: nombreGrupoImport, alumnos: alumnosImportados };
@@ -1009,7 +1017,7 @@ function Grupo({ user }) {
         setGrupos(prev => [...prev, nuevoGrupoData].sort((a, b) =>
           a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
         ));
-        showAlert(`Grupo "${nombreGrupoImport}" importado con ${alumnosImportados.length} alumnos.`);
+        showAlert(`Grupo "${nombreGrupoImport}" importado exitosamente con ${alumnosImportados.length} alumnos.`);
         cerrarModal();
       } catch (error) {
         console.error("Error al importar archivo:", error);
