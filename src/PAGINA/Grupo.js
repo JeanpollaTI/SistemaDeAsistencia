@@ -864,6 +864,62 @@ function Grupo({ user }) {
     setArchivoXLS(e.target.files[0]);
   };
 
+  const parseFullName = (fullNameStr) => {
+    if (!fullNameStr || typeof fullNameStr !== 'string') {
+      return { apellidoPaterno: '', apellidoMaterno: '', nombre: '' };
+    }
+
+    const cleanStr = fullNameStr.trim().replace(/\s+/g, ' ');
+    if (!cleanStr) {
+      return { apellidoPaterno: '', apellidoMaterno: '', nombre: '' };
+    }
+
+    const rawTokens = cleanStr.split(' ');
+    const tokens = [];
+    let i = 0;
+
+    while (i < rawTokens.length) {
+      const currentToken = rawTokens[i];
+      const upperToken = currentToken.toUpperCase();
+
+      if (i + 2 < rawTokens.length) {
+        const next1 = rawTokens[i + 1].toUpperCase();
+        if (upperToken === 'DE' && (next1 === 'LA' || next1 === 'LOS' || next1 === 'LAS')) {
+          tokens.push(`${currentToken} ${rawTokens[i + 1]} ${rawTokens[i + 2]}`);
+          i += 3;
+          continue;
+        }
+      }
+
+      if (i + 1 < rawTokens.length) {
+        if (upperToken === 'DE' || upperToken === 'DEL' || upperToken === 'SAN' || upperToken === 'SANTA') {
+          tokens.push(`${currentToken} ${rawTokens[i + 1]}`);
+          i += 2;
+          continue;
+        }
+      }
+
+      tokens.push(currentToken);
+      i++;
+    }
+
+    if (tokens.length === 1) {
+      return { apellidoPaterno: tokens[0], apellidoMaterno: '', nombre: 'Sin nombre' };
+    }
+    if (tokens.length === 2) {
+      return { apellidoPaterno: tokens[0], apellidoMaterno: '', nombre: tokens[1] };
+    }
+    if (tokens.length === 3) {
+      return { apellidoPaterno: tokens[0], apellidoMaterno: tokens[1], nombre: tokens[2] };
+    }
+
+    const apellidoPaterno = tokens[0];
+    const apellidoMaterno = tokens[1];
+    const nombre = tokens.slice(2).join(' ');
+
+    return { apellidoPaterno, apellidoMaterno, nombre };
+  };
+
   const handleImportarAlumnos = () => {
     if (!nombreGrupoImport.trim()) {
       return showAlert('Por favor, ingresa un nombre para el grupo.', 'error');
@@ -880,15 +936,63 @@ function Grupo({ user }) {
         const worksheet = workbook.Sheets[sheetName];
         const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-        const alumnosImportados = json.slice(1).map(row => ({
-          nombre: row[1] || '',
-          apellidoPaterno: row[2] || '',
-          apellidoMaterno: row[3] || '',
-        })).filter(a => a.nombre && a.apellidoPaterno);
+        const alumnosImportados = [];
+
+        for (let r = 0; r < json.length; r++) {
+          const row = json[r];
+          if (!Array.isArray(row) || row.length === 0) continue;
+
+          const cells = row.map(c => (c !== undefined && c !== null ? String(c).trim() : ''));
+          const nonNullCells = cells.filter(c => c !== '');
+          if (nonNullCells.length === 0) continue;
+
+          const combinedRowStr = nonNullCells.join(' ').toLowerCase();
+
+          // Skip header row if present
+          if (r === 0 && (combinedRowStr.includes('nombre') || combinedRowStr.includes('paterno') || combinedRowStr.includes('materno') || combinedRowStr.includes('matrícula') || combinedRowStr.includes('n°') || combinedRowStr.includes('no.'))) {
+            continue;
+          }
+
+          let parsedStudent = null;
+
+          // Check if multi-column format (separate Paterno, Materno, Nombre columns)
+          if (cells.length >= 4 && cells[1] && cells[2] && cells[3]) {
+            if (combinedRowStr.includes('paterno')) {
+              parsedStudent = {
+                apellidoPaterno: cells[1],
+                apellidoMaterno: cells[2],
+                nombre: cells[3]
+              };
+            } else {
+              parsedStudent = {
+                nombre: cells[1],
+                apellidoPaterno: cells[2],
+                apellidoMaterno: cells[3]
+              };
+            }
+          } else {
+            // Single cell or 2-cell format: Extract text containing student full name
+            const textCells = nonNullCells.filter(c => isNaN(c) && c.length > 1);
+            const fullNameCell = textCells.length > 0 ? textCells[0] : nonNullCells[0];
+
+            if (fullNameCell && isNaN(fullNameCell)) {
+              parsedStudent = parseFullName(fullNameCell);
+            }
+          }
+
+          if (parsedStudent && (parsedStudent.nombre || parsedStudent.apellidoPaterno)) {
+            if (!parsedStudent.apellidoPaterno) {
+              parsedStudent.apellidoPaterno = parsedStudent.nombre;
+              parsedStudent.nombre = 'Sin nombre';
+            }
+            alumnosImportados.push(parsedStudent);
+          }
+        }
 
         if (alumnosImportados.length === 0) {
-          return showAlert('No se encontraron alumnos válidos en el archivo. Asegúrate de que las columnas son: N°, Nombre(s), Apellido Paterno, Apellido Materno.', 'error');
+          return showAlert('No se encontraron alumnos válidos en el archivo. Puedes incluir los nombres en una sola celda (Paterno Materno Nombre) o en columnas separadas.', 'error');
         }
+
         const grupoParaGuardar = { nombre: nombreGrupoImport, alumnos: alumnosImportados };
 
         const response = await axios.post(`${API_URL}/grupos`, grupoParaGuardar, getAxiosConfig());

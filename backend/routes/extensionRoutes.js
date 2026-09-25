@@ -193,8 +193,61 @@ router.get('/:id', authMiddleware, async (req, res) => {
         }
 
         // Fetch all active groups for school
-        const allSchoolGroups = await Grupo.find({ school_id: schoolId }).sort({ nombre: 1 }).lean();
+        const allSchoolGroups = await Grupo.find({ school_id: schoolId })
+            .populate({ path: 'profesoresAsignados.profesor', select: '_id nombre email role' })
+            .sort({ nombre: 1 })
+            .lean();
         allSchoolGroups.sort((a, b) => a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' }));
+
+        const userIdStr = req.user._id.toString();
+        const isUserAdmin = req.user.role === 'admin' || req.user.role === 'superadmin';
+
+        // Determine all group IDs authorized for this user
+        const isGloballyAuthorized = (template.authorizedTeachers || []).some(
+            t => (typeof t === 'object' ? t._id : t).toString() === userIdStr
+        );
+
+        const authorizedGroupIds = new Set();
+
+        if (isUserAdmin || isGloballyAuthorized) {
+            allSchoolGroups.forEach(g => authorizedGroupIds.add(g._id.toString()));
+        } else {
+            // A. Check template groupAssignments
+            if (Array.isArray(template.groupAssignments)) {
+                template.groupAssignments.forEach(ga => {
+                    const gId = (typeof ga.groupId === 'object' ? ga.groupId._id : ga.groupId)?.toString();
+                    const teachers = ga.teachers || [];
+                    const isAssigned = teachers.some(
+                        t => (typeof t === 'object' ? t._id : t).toString() === userIdStr
+                    );
+                    if (gId && isAssigned) {
+                        authorizedGroupIds.add(gId);
+                    }
+                });
+            }
+
+            // B. Check template.assignedGroupId
+            if (template.assignedGroupId) {
+                const assignedId = (typeof template.assignedGroupId === 'object' ? template.assignedGroupId._id : template.assignedGroupId)?.toString();
+                const groupObj = allSchoolGroups.find(g => g._id.toString() === assignedId);
+                if (groupObj && Array.isArray(groupObj.profesoresAsignados)) {
+                    const isProf = groupObj.profesoresAsignados.some(pa =>
+                        pa.profesor && (typeof pa.profesor === 'object' ? pa.profesor._id : pa.profesor).toString() === userIdStr
+                    );
+                    if (isProf) authorizedGroupIds.add(assignedId);
+                }
+            }
+
+            // C. Check groups where teacher is assigned in school structure (Grupo.profesoresAsignados)
+            allSchoolGroups.forEach(g => {
+                const isProfOfGroup = Array.isArray(g.profesoresAsignados) && g.profesoresAsignados.some(pa =>
+                    pa.profesor && (typeof pa.profesor === 'object' ? pa.profesor._id : pa.profesor).toString() === userIdStr
+                );
+                if (isProfOfGroup) {
+                    authorizedGroupIds.add(g._id.toString());
+                }
+            });
+        }
 
         let selectedGroup = null;
         if (template.rowType === 'STUDENTS') {
@@ -203,8 +256,18 @@ router.get('/:id', authMiddleware, async (req, res) => {
             } else if (requestedGroupId) {
                 selectedGroup = allSchoolGroups.find(g => g._id.toString() === requestedGroupId.toString());
             }
+
+            // If requested group is missing or not authorized for professor, pick first authorized group
+            if (!selectedGroup || (!isUserAdmin && selectedGroup._id !== 'ALL' && !authorizedGroupIds.has(selectedGroup._id.toString()))) {
+                const firstAuthId = Array.from(authorizedGroupIds)[0];
+                if (firstAuthId) {
+                    selectedGroup = allSchoolGroups.find(g => g._id.toString() === firstAuthId);
+                }
+            }
+
             if (!selectedGroup && template.assignedGroupId) {
-                selectedGroup = allSchoolGroups.find(g => g._id.toString() === template.assignedGroupId._id.toString());
+                const assignedId = (typeof template.assignedGroupId === 'object' ? template.assignedGroupId._id : template.assignedGroupId)?.toString();
+                selectedGroup = allSchoolGroups.find(g => g._id.toString() === assignedId);
             }
             if (!selectedGroup && allSchoolGroups.length > 0) {
                 selectedGroup = allSchoolGroups[0];
@@ -242,7 +305,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
                     (g.alumnos || []).forEach(al => {
                         rows.push({
                             entityId: al._id.toString(),
-                            name: `${al.nombre} ${al.apellidoPaterno} ${al.apellidoMaterno || ''}`.trim() + ` (${g.nombre})`,
+                            name: `${al.apellidoPaterno} ${al.apellidoMaterno || ''} ${al.nombre}`.replace(/\s+/g, ' ').trim() + ` (${g.nombre})`,
                             nombre: al.nombre,
                             apellidoPaterno: al.apellidoPaterno,
                             apellidoMaterno: al.apellidoMaterno || '',
@@ -260,7 +323,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
             } else if (selectedGroup && selectedGroup.alumnos) {
                 rows = selectedGroup.alumnos.map(al => ({
                     entityId: al._id.toString(),
-                    name: `${al.nombre} ${al.apellidoPaterno} ${al.apellidoMaterno || ''}`.trim(),
+                    name: `${al.apellidoPaterno} ${al.apellidoMaterno || ''} ${al.nombre}`.replace(/\s+/g, ' ').trim(),
                     nombre: al.nombre,
                     apellidoPaterno: al.apellidoPaterno,
                     apellidoMaterno: al.apellidoMaterno || '',
@@ -283,23 +346,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
             }));
         }
 
-        const isUserAdmin = req.user.role === 'admin' || req.user.role === 'superadmin';
-        let isAuthorizedTeacher = template.authorizedTeachers.some(
-            t => (typeof t === 'object' ? t._id : t).toString() === req.user._id.toString()
-        );
-
-        if (!isAuthorizedTeacher && selectedGroup && template.groupAssignments) {
-            const groupAssign = template.groupAssignments.find(
-                ga => (typeof ga.groupId === 'object' ? ga.groupId._id : ga.groupId).toString() === selectedGroup._id.toString()
-            );
-            if (groupAssign && groupAssign.teachers) {
-                isAuthorizedTeacher = groupAssign.teachers.some(
-                    t => (typeof t === 'object' ? t._id : t).toString() === req.user._id.toString()
-                );
-            }
-        }
-
-        const canEdit = isUserAdmin || isAuthorizedTeacher;
+        const canEdit = isUserAdmin || isGloballyAuthorized || (selectedGroup && authorizedGroupIds.has(selectedGroup._id.toString()));
 
         res.json({
             template,

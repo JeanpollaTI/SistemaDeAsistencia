@@ -235,7 +235,7 @@ const TablasMatematicas = ({ user }) => {
                 const regMap = matrix[id] || {};
                 return {
                     alumno_id: id,
-                    alumnoNombre: `${alumno.nombre} ${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''}`.trim(),
+                    alumnoNombre: `${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''} ${alumno.nombre || ''}`.replace(/\s+/g, ' ').trim(),
                     registros: regMap
                 };
             });
@@ -521,7 +521,7 @@ const TablasMatematicas = ({ user }) => {
                                              {alumnosGrupo.map((alumno, index) => {
                                                  const id = String(alumno._id || alumno.id);
                                                  const alumnoMatrix = matrix[id] || {};
-                                                 const fullStudentName = `${alumno.nombre} ${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''}`.trim();
+                                                 const fullStudentName = `${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''} ${alumno.nombre || ''}`.replace(/\s+/g, ' ').trim();
                                                  const isFirstNuevo = alumno.esNuevoIngreso && !alumno.esBaja && (index === 0 || (!alumnosGrupo[index - 1]?.esNuevoIngreso || alumnosGrupo[index - 1]?.esBaja));
                                                  const isFirstBaja = alumno.esBaja && (index === 0 || !alumnosGrupo[index - 1]?.esBaja);
 

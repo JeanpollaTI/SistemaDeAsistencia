@@ -341,7 +341,7 @@ const PromoverAlumnosModal = ({ isOpen, onClose, grupos = [], onSuccess }) => {
                                     const idStr = String(alumno._id || alumno.id);
                                     const inTarget = isAlreadyInTarget(alumno);
                                     const isSelected = selectedAlumnoIds.includes(idStr);
-                                    const fullName = `${alumno.nombre} ${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''}`.trim();
+                                    const fullName = `${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''} ${alumno.nombre || ''}`.replace(/\s+/g, ' ').trim();
 
                                     return (
                                         <div
