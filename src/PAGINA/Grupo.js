@@ -664,9 +664,9 @@ function Grupo({ user }) {
 
     const datosParaExportar = alumnosOrdenados.map((a, i) => ({
       'N°': i + 1,
-      'Nombre(s)': a.nombre,
       'Apellido Paterno': a.apellidoPaterno,
-      'Apellido Materno': a.apellidoMaterno || ''
+      'Apellido Materno': a.apellidoMaterno || '',
+      'Nombre(s)': a.nombre
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(datosParaExportar);
@@ -1404,25 +1404,25 @@ function Grupo({ user }) {
                 <div className="modal-column-center">
                   <div className={`alumno-form ${editingAlumno ? 'edit-mode' : ''}`}>
                     <h4 className="form-subtitle">
-                      {editingAlumno ? `Editando: ${editingAlumno.nombre}` : 'Agregar Nuevo Alumno'}
+                      {editingAlumno ? `Editando: ${editingAlumno.apellidoPaterno} ${editingAlumno.apellidoMaterno || ''} ${editingAlumno.nombre}`.replace(/\s+/g, ' ').trim() : 'Agregar Nuevo Alumno'}
                     </h4>
                     <div className="alumno-form-inputs">
                       <input 
                         ref={el => alumnoInputRefs.current[0] = el}
-                        type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} 
-                        onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} 
-                        onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
-                      />
-                      <input 
-                        ref={el => alumnoInputRefs.current[1] = el}
                         type="text" placeholder="Apellido Paterno" value={alumnoInput.apellidoPaterno} 
                         onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoPaterno: e.target.value })} 
                         onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
                       />
                       <input 
-                        ref={el => alumnoInputRefs.current[2] = el}
+                        ref={el => alumnoInputRefs.current[1] = el}
                         type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} 
                         onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} 
+                        onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
+                      />
+                      <input 
+                        ref={el => alumnoInputRefs.current[2] = el}
+                        type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} 
+                        onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} 
                         onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
                       />
                       <input 
@@ -2036,9 +2036,9 @@ function Grupo({ user }) {
                 <FaTimes style={{ cursor: 'pointer', fontSize: '1.5rem' }} onClick={() => setShowFormatGuide(false)} />
               </div>
               <p style={{ color: '#666', marginBottom: '20px' }}>
-                Asegúrate de que tu archivo Excel tenga las siguientes columnas en este orden exacto:
+                Asegúrate de que tu archivo Excel contenga los nombres comenzando por Apellidos o en este orden:
                 <br />
-                <strong>N°, Nombre(s), Apellido Paterno, Apellido Materno</strong>
+                <strong>N°, Apellido Paterno, Apellido Materno, Nombre(s)</strong> (o el nombre completo en una sola celda)
               </p>
               <img
                 src={importFormatImg}
