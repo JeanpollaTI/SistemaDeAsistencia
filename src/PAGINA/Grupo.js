@@ -1304,12 +1304,17 @@ function Grupo({ user }) {
                             <ul className="asignacion-lista animated-fade">
                               {[...grupo.profesoresAsignados]
                                 .sort((a, b) => a.asignatura.localeCompare(b.asignatura))
-                                .map((asig, index) => (
-                                  <li key={index}>
-                                    {asig.profesor?.nombre || 'Profesor Eliminado'}
-                                    <span className="asignatura-text"> - {asig.asignatura}</span>
-                                  </li>
-                                ))}
+                                .map((asig, index) => {
+                                  const profName = asig.profesor
+                                    ? `${asig.profesor.nombre || ''} ${asig.profesor.apellidoPaterno || ''} ${asig.profesor.apellidoMaterno || ''}`.replace(/\s+/g, ' ').trim()
+                                    : 'Profesor Eliminado';
+                                  return (
+                                    <li key={index}>
+                                      {profName}
+                                      <span className="asignatura-text"> - {asig.asignatura}</span>
+                                    </li>
+                                  );
+                                })}
                             </ul>
                           )}
                         </div>
@@ -1784,15 +1789,28 @@ function Grupo({ user }) {
                           value=""
                         >
                           <option value="" disabled>Agregar asignatura...</option>
-                          {/* REVERTIDO: Solo mostrar las materias asignadas al perfil del profesor seleccionado */}
-                          {profesor.asignaturas && profesor.asignaturas.length > 0 ? (
-                            profesor.asignaturas
-                              .map(asig => (
-                                <option key={asig} value={asig}>{asig}</option>
-                              ))
-                          ) : (
-                            <option disabled>Este profesor no tiene materias asignadas</option>
-                          )}
+                          {(() => {
+                            const profAsigs = profesor.asignaturas || [];
+                            const dbAsigs = (materiasDb || []).map(m => (typeof m === 'object' ? m.nombre : m)).filter(Boolean);
+                            const defaultAsigs = [
+                              'Español', 'Matemáticas', 'Inglés', 'Ciencias', 'Historia', 'Geografía',
+                              'Formación Cívica y Ética', 'Educación Física', 'Artes', 'Tecnología', 'Tutoría'
+                            ];
+                            
+                            const allUnique = Array.from(new Set([...profAsigs, ...dbAsigs, ...defaultAsigs]))
+                              .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+
+                            const currentAssigned = asignaciones[profId] || [];
+                            const available = allUnique.filter(asig => !currentAssigned.includes(asig));
+
+                            if (available.length === 0) {
+                              return <option disabled>Todas las asignaturas ya están agregadas</option>;
+                            }
+
+                            return available.map(asig => (
+                              <option key={asig} value={asig}>{asig}</option>
+                            ));
+                          })()}
                         </select>
                       </div>
                     </div>
