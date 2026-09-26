@@ -58,7 +58,7 @@ router.post("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => 
 
         const grupoParaEnviar = await Grupo.findById(nuevoGrupo._id).populate({
             path: 'profesoresAsignados.profesor',
-            select: 'nombre email foto'
+            select: 'nombre apellidoPaterno apellidoMaterno email foto role'
         });
 
         res.status(201).json(grupoParaEnviar);
@@ -74,7 +74,7 @@ router.get("/", authMiddleware, schoolMiddleware, async (req, res) => {
         const school_id = req.user.school_id;
         const grupos = await Grupo.find({ school_id }).populate({
             path: 'profesoresAsignados.profesor',
-            select: 'nombre email foto'
+            select: 'nombre apellidoPaterno apellidoMaterno email foto role'
         });
         res.json(grupos);
     } catch (err) {
@@ -127,7 +127,7 @@ router.put("/:id/asignar-profesores", authMiddleware, isAdmin, schoolMiddleware,
 
         const grupoActualizado = await Grupo.findById(id).populate({
             path: 'profesoresAsignados.profesor',
-            select: 'nombre email foto'
+            select: 'nombre apellidoPaterno apellidoMaterno email foto role'
         });
 
         res.json(grupoActualizado);

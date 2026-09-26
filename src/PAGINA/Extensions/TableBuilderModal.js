@@ -131,6 +131,16 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
         setGroupAssignments([]);
     };
 
+    const formatProfesorName = (p) => {
+        if (!p) return '';
+        if (typeof p === 'string') return p;
+        const pat = p.apellidoPaterno ? p.apellidoPaterno.trim() : '';
+        const mat = p.apellidoMaterno ? p.apellidoMaterno.trim() : '';
+        const nom = p.nombre ? p.nombre.trim() : '';
+        if (pat || mat) return `${nom} ${pat} ${mat}`.replace(/\s+/g, ' ').trim();
+        return nom || p.email || '';
+    };
+
     return (
         <div className="ext-modal-overlay">
             <div className="ext-modal-content ext-modal-compact">
@@ -213,7 +223,7 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
                                         checked={authorizedTeachers.includes(p._id)}
                                         onChange={() => toggleGlobalTeacher(p._id)}
                                     />
-                                    <span>{p.nombre}</span>
+                                    <span>{formatProfesorName(p)}</span>
                                 </label>
                             ))}
                         </div>
@@ -254,7 +264,7 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
                                                                 checked={isChecked}
                                                                 onChange={() => toggleGroupTeacher(g._id, p._id)}
                                                             />
-                                                            {p.nombre}
+                                                            {formatProfesorName(p)}
                                                         </label>
                                                     );
                                                 })}

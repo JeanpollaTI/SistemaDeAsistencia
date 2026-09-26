@@ -154,16 +154,16 @@ router.get('/', authMiddleware, async (req, res) => {
 
         const extensions = await CustomTableTemplate.find({ school_id: schoolId, isActive: true })
             .populate('assignedGroupId', 'nombre')
-            .populate('authorizedTeachers', 'nombre email role')
+            .populate('authorizedTeachers', 'nombre apellidoPaterno apellidoMaterno email role')
             .populate('groupAssignments.groupId', 'nombre')
-            .populate('groupAssignments.teachers', 'nombre email role')
+            .populate('groupAssignments.teachers', 'nombre apellidoPaterno apellidoMaterno email role')
             .sort({ createdAt: -1 })
             .lean();
 
         const profesores = await User.find({
             school_id: schoolId,
             role: { $in: ['profesor', 'admin'] }
-        }).select('_id nombre email role').sort({ nombre: 1 }).lean();
+        }).select('_id nombre apellidoPaterno apellidoMaterno email role').sort({ nombre: 1 }).lean();
 
         const grupos = await Grupo.find({ school_id: schoolId })
             .select('_id nombre asesor')
@@ -183,9 +183,9 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
         const template = await CustomTableTemplate.findOne({ _id: req.params.id, school_id: schoolId })
             .populate('assignedGroupId')
-            .populate('authorizedTeachers', 'nombre email role')
+            .populate('authorizedTeachers', 'nombre apellidoPaterno apellidoMaterno email role')
             .populate('groupAssignments.groupId', 'nombre')
-            .populate('groupAssignments.teachers', 'nombre email role')
+            .populate('groupAssignments.teachers', 'nombre apellidoPaterno apellidoMaterno email role')
             .lean();
 
         if (!template) {
@@ -194,7 +194,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
         // Fetch all active groups for school
         const allSchoolGroups = await Grupo.find({ school_id: schoolId })
-            .populate({ path: 'profesoresAsignados.profesor', select: '_id nombre email role' })
+            .populate({ path: 'profesoresAsignados.profesor', select: '_id nombre apellidoPaterno apellidoMaterno email role' })
             .sort({ nombre: 1 })
             .lean();
         allSchoolGroups.sort((a, b) => a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' }));
@@ -385,9 +385,9 @@ router.post('/', authMiddleware, isAdmin, async (req, res) => {
 
         const populated = await CustomTableTemplate.findById(template._id)
             .populate('assignedGroupId', 'nombre')
-            .populate('authorizedTeachers', 'nombre email role')
+            .populate('authorizedTeachers', 'nombre apellidoPaterno apellidoMaterno email role')
             .populate('groupAssignments.groupId', 'nombre')
-            .populate('groupAssignments.teachers', 'nombre email role');
+            .populate('groupAssignments.teachers', 'nombre apellidoPaterno apellidoMaterno email role');
 
         res.status(201).json(populated);
     } catch (err) {
@@ -418,9 +418,9 @@ router.put('/:id', authMiddleware, isAdmin, async (req, res) => {
 
         const populated = await CustomTableTemplate.findById(template._id)
             .populate('assignedGroupId', 'nombre')
-            .populate('authorizedTeachers', 'nombre email role')
+            .populate('authorizedTeachers', 'nombre apellidoPaterno apellidoMaterno email role')
             .populate('groupAssignments.groupId', 'nombre')
-            .populate('groupAssignments.teachers', 'nombre email role');
+            .populate('groupAssignments.teachers', 'nombre apellidoPaterno apellidoMaterno email role');
 
         res.json(populated);
     } catch (err) {
@@ -541,19 +541,62 @@ router.patch('/:id/cell', authMiddleware, async (req, res) => {
         }
 
         // Authorization check
+        const userIdStr = req.user._id.toString();
         const isUserAdmin = req.user.role === 'admin' || req.user.role === 'superadmin';
-        let isAuthorizedTeacher = template.authorizedTeachers.some(
-            t => t.toString() === req.user._id.toString()
+        let isAuthorizedTeacher = (template.authorizedTeachers || []).some(
+            t => (typeof t === 'object' ? t._id : t).toString() === userIdStr
         );
 
-        if (!isAuthorizedTeacher && groupId && template.groupAssignments) {
+        if (!isAuthorizedTeacher && groupId && groupId !== 'ALL' && template.groupAssignments) {
             const groupAssign = template.groupAssignments.find(
                 ga => (typeof ga.groupId === 'object' ? ga.groupId._id : ga.groupId).toString() === groupId.toString()
             );
             if (groupAssign && groupAssign.teachers) {
                 isAuthorizedTeacher = groupAssign.teachers.some(
-                    t => (typeof t === 'object' ? t._id : t).toString() === req.user._id.toString()
+                    t => (typeof t === 'object' ? t._id : t).toString() === userIdStr
                 );
+            }
+        }
+
+        if (!isAuthorizedTeacher && (groupId === 'ALL' || !groupId) && template.groupAssignments) {
+            isAuthorizedTeacher = template.groupAssignments.some(ga => 
+                (ga.teachers || []).some(t => (typeof t === 'object' ? t._id : t).toString() === userIdStr)
+            );
+        }
+
+        // Check assignedGroupId if set on template
+        if (!isAuthorizedTeacher && template.assignedGroupId) {
+            const assignedId = (typeof template.assignedGroupId === 'object' ? template.assignedGroupId._id : template.assignedGroupId)?.toString();
+            const groupObj = await Grupo.findOne({ _id: assignedId, school_id: schoolId }).select('profesoresAsignados').lean();
+            if (groupObj && Array.isArray(groupObj.profesoresAsignados)) {
+                isAuthorizedTeacher = groupObj.profesoresAsignados.some(
+                    pa => pa.profesor && (typeof pa.profesor === 'object' ? pa.profesor._id : pa.profesor).toString() === userIdStr
+                );
+            }
+        }
+
+        // Check if teacher is assigned to the specific group or student row in Grupo.profesoresAsignados
+        if (!isAuthorizedTeacher) {
+            let targetGroup = null;
+            if (groupId && groupId !== 'ALL') {
+                targetGroup = await Grupo.findOne({ _id: groupId, school_id: schoolId }).select('profesoresAsignados').lean();
+            } else if (rowEntityId && rowEntityId !== 'ALL') {
+                targetGroup = await Grupo.findOne({ school_id: schoolId, 'alumnos._id': rowEntityId }).select('profesoresAsignados').lean();
+            }
+
+            if (targetGroup && Array.isArray(targetGroup.profesoresAsignados)) {
+                isAuthorizedTeacher = targetGroup.profesoresAsignados.some(
+                    pa => pa.profesor && (typeof pa.profesor === 'object' ? pa.profesor._id : pa.profesor).toString() === userIdStr
+                );
+            } else {
+                // If groupId is 'ALL', check if teacher is assigned to ANY group in the school
+                const anyAssignedGroup = await Grupo.findOne({
+                    school_id: schoolId,
+                    'profesoresAsignados.profesor': req.user._id
+                }).select('_id').lean();
+                if (anyAssignedGroup) {
+                    isAuthorizedTeacher = true;
+                }
             }
         }
 

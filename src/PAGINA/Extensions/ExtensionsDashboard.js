@@ -153,7 +153,12 @@ const ExtensionsDashboard = ({ user }) => {
                                             <strong>Encargados:</strong>
                                             {ext.authorizedTeachers && ext.authorizedTeachers.length > 0 ? (
                                                 <span className="ext-teachers-list">
-                                                    {ext.authorizedTeachers.map(t => t.nombre || t).join(', ')}
+                                                    {ext.authorizedTeachers.map(t => {
+                                                        if (!t) return '';
+                                                        if (typeof t === 'string') return t;
+                                                        const full = `${t.nombre || ''} ${t.apellidoPaterno || ''} ${t.apellidoMaterno || ''}`.replace(/\s+/g, ' ').trim();
+                                                        return full || t.email || 'Profesor';
+                                                    }).join(', ')}
                                                 </span>
                                             ) : (
                                                 <span className="ext-text-muted">Solo Administradores</span>

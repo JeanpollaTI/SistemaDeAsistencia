@@ -12,15 +12,15 @@ router.get('/', authMiddleware, async (req, res) => {
         if (!schoolId) return res.status(400).json({ msg: 'Usuario no tiene escuela asignada' });
 
         const tablas = await TablaMatematica.find({ school_id: schoolId })
-            .populate('evaluador_id', 'nombre email role')
-            .populate('evaluadores', 'nombre email role')
+            .populate('evaluador_id', 'nombre apellidoPaterno apellidoMaterno email role')
+            .populate('evaluadores', 'nombre apellidoPaterno apellidoMaterno email role')
             .lean();
 
         // Also fetch teachers list for school to populate dropdown options
         const profesores = await User.find({ 
             school_id: schoolId, 
             role: { $in: ['profesor', 'admin'] } 
-        }).select('_id nombre email role').lean();
+        }).select('_id nombre apellidoPaterno apellidoMaterno email role').lean();
 
         res.json({ tablas, profesores });
     } catch (err) {
@@ -63,8 +63,8 @@ router.post('/evaluador', authMiddleware, isAdmin, async (req, res) => {
 
         await record.save();
         const populated = await TablaMatematica.findById(record._id)
-            .populate('evaluador_id', 'nombre email role')
-            .populate('evaluadores', 'nombre email role');
+            .populate('evaluador_id', 'nombre apellidoPaterno apellidoMaterno email role')
+            .populate('evaluadores', 'nombre apellidoPaterno apellidoMaterno email role');
         res.json(populated);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -96,8 +96,8 @@ router.post('/evaluar', authMiddleware, async (req, res) => {
         await record.save();
 
         const populated = await TablaMatematica.findById(record._id)
-            .populate('evaluador_id', 'nombre email role')
-            .populate('evaluadores', 'nombre email role');
+            .populate('evaluador_id', 'nombre apellidoPaterno apellidoMaterno email role')
+            .populate('evaluadores', 'nombre apellidoPaterno apellidoMaterno email role');
         res.json(populated);
     } catch (err) {
         res.status(500).json({ error: err.message });

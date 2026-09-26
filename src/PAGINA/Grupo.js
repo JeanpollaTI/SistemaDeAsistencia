@@ -1751,16 +1751,19 @@ function Grupo({ user }) {
                   .filter(p => {
                     if (!searchTermProfesor) return true;
                     const term = searchTermProfesor.toLowerCase();
-                    return p.nombre?.toLowerCase().includes(term) || p.email?.toLowerCase().includes(term);
+                    const fullP = `${p.nombre || ''} ${p.apellidoPaterno || ''} ${p.apellidoMaterno || ''}`.toLowerCase();
+                    return fullP.includes(term) || p.email?.toLowerCase().includes(term);
                   })
                   .map((profesor, index) => {
                   const profId = getSafeId(profesor);
                   if (!profId) return null;
 
+                  const nombreProfCompleto = `${profesor.nombre || ''} ${profesor.apellidoPaterno || ''} ${profesor.apellidoMaterno || ''}`.replace(/\s+/g, ' ').trim() || profesor.email || 'Sin Nombre';
+
                   return (
                     <div key={profId} className="asignacion-row-container">
                       <div className="profesor-header">
-                        <strong>{profesor.nombre || 'Sin Nombre'}</strong>
+                        <strong>{nombreProfCompleto}</strong>
                       </div>
                       <div className="asignaturas-asignadas">
                         {asignaciones[profId] && asignaciones[profId]

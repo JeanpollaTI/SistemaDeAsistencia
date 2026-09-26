@@ -94,13 +94,16 @@ const DynamicSpreadsheetView = ({ user }) => {
             return row;
         }));
 
+        const targetRow = rows.find(r => r.entityId === rowEntityId);
+        const resolvedGroupId = targetRow?.groupId || (selectedGroup?._id !== 'ALL' ? selectedGroup?._id : null);
+
         const cellKey = `${rowEntityId}_${colKey}`;
         setSavingCellKey(cellKey);
 
         try {
             await apiClient.patch(`/api/extensions/${id}/cell`, {
                 rowEntityId,
-                groupId: selectedGroup?._id || null,
+                groupId: resolvedGroupId,
                 colKey,
                 value: newValue,
                 rowEntityName
@@ -138,6 +141,9 @@ const DynamicSpreadsheetView = ({ user }) => {
     const handleRowColorTagChange = async (rowEntityId, colorTag, rowEntityName) => {
         if (!canEdit) return;
 
+        const targetRow = rows.find(r => r.entityId === rowEntityId);
+        const resolvedGroupId = targetRow?.groupId || (selectedGroup?._id !== 'ALL' ? selectedGroup?._id : null);
+
         setRows(prevRows => prevRows.map(row => {
             if (row.entityId === rowEntityId) {
                 return { ...row, rowColorTag: colorTag };
@@ -148,7 +154,7 @@ const DynamicSpreadsheetView = ({ user }) => {
         try {
             await apiClient.patch(`/api/extensions/${id}/cell`, {
                 rowEntityId,
-                groupId: selectedGroup?._id || null,
+                groupId: resolvedGroupId,
                 rowColorTag: colorTag,
                 rowEntityName
             });
@@ -364,6 +370,13 @@ const DynamicSpreadsheetView = ({ user }) => {
         if (!template) return [];
         const teacherNames = new Set();
 
+        const formatName = (t) => {
+            if (!t) return null;
+            if (typeof t === 'string') return t;
+            const full = `${t.nombre || ''} ${t.apellidoPaterno || ''} ${t.apellidoMaterno || ''}`.replace(/\s+/g, ' ').trim();
+            return full || t.email || null;
+        };
+
         if (template.rowType === 'STUDENTS' && selectedGroup) {
             if (Array.isArray(template.groupAssignments)) {
                 const groupAssign = template.groupAssignments.find(ga => {
@@ -372,8 +385,8 @@ const DynamicSpreadsheetView = ({ user }) => {
                 });
                 if (groupAssign && Array.isArray(groupAssign.teachers)) {
                     groupAssign.teachers.forEach(t => {
-                        const name = typeof t === 'object' ? t.nombre : null;
-                        if (name) teacherNames.add(name);
+                        const formatted = formatName(t);
+                        if (formatted) teacherNames.add(formatted);
                     });
                 }
             }
@@ -381,17 +394,16 @@ const DynamicSpreadsheetView = ({ user }) => {
 
         if (teacherNames.size === 0 && Array.isArray(template.authorizedTeachers)) {
             template.authorizedTeachers.forEach(t => {
-                const name = typeof t === 'object' ? t.nombre : null;
-                if (name) teacherNames.add(name);
+                const formatted = formatName(t);
+                if (formatted) teacherNames.add(formatted);
             });
         }
 
         if (teacherNames.size === 0 && selectedGroup && Array.isArray(selectedGroup.profesoresAsignados)) {
             selectedGroup.profesoresAsignados.forEach(pa => {
                 const pObj = pa.profesor;
-                if (pObj && typeof pObj === 'object' && pObj.nombre) {
-                    teacherNames.add(pObj.nombre);
-                }
+                const formatted = formatName(pObj);
+                if (formatted) teacherNames.add(formatted);
             });
         }
 
