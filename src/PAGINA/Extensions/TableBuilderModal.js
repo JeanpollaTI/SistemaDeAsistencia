@@ -254,7 +254,7 @@ const TableBuilderModal = ({ isOpen, onClose, onSave, initialData, profesores = 
                                                                 checked={isChecked}
                                                                 onChange={() => toggleGroupTeacher(g._id, p._id)}
                                                             />
-                                                            {p.nombre.split(' ')[0]}
+                                                            {p.nombre}
                                                         </label>
                                                     );
                                                 })}

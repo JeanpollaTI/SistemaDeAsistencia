@@ -360,6 +360,50 @@ const DynamicSpreadsheetView = ({ user }) => {
         }
     }
 
+    const getAssignedTeachersList = () => {
+        if (!template) return [];
+        const teacherNames = new Set();
+
+        if (template.rowType === 'STUDENTS' && selectedGroup) {
+            if (Array.isArray(template.groupAssignments)) {
+                const groupAssign = template.groupAssignments.find(ga => {
+                    const gId = typeof ga.groupId === 'object' ? (ga.groupId?._id || ga.groupId?.id) : ga.groupId;
+                    return gId && selectedGroup._id && gId.toString() === selectedGroup._id.toString();
+                });
+                if (groupAssign && Array.isArray(groupAssign.teachers)) {
+                    groupAssign.teachers.forEach(t => {
+                        const name = typeof t === 'object' ? t.nombre : null;
+                        if (name) teacherNames.add(name);
+                    });
+                }
+            }
+        }
+
+        if (teacherNames.size === 0 && Array.isArray(template.authorizedTeachers)) {
+            template.authorizedTeachers.forEach(t => {
+                const name = typeof t === 'object' ? t.nombre : null;
+                if (name) teacherNames.add(name);
+            });
+        }
+
+        if (teacherNames.size === 0 && selectedGroup && Array.isArray(selectedGroup.profesoresAsignados)) {
+            selectedGroup.profesoresAsignados.forEach(pa => {
+                const pObj = pa.profesor;
+                if (pObj && typeof pObj === 'object' && pObj.nombre) {
+                    teacherNames.add(pObj.nombre);
+                }
+            });
+        }
+
+        if (teacherNames.size === 0 && selectedGroup?.asesor) {
+            teacherNames.add(selectedGroup.asesor);
+        }
+
+        return Array.from(teacherNames);
+    };
+
+    const assignedTeachersList = getAssignedTeachersList();
+
     return (
         <div className="ext-spreadsheet-page">
             {/* IN-APP TOAST NOTIFICATION SYSTEM */}
@@ -403,6 +447,12 @@ const DynamicSpreadsheetView = ({ user }) => {
                                 <span>Grupo Seleccionado: <strong>{selectedGroup ? selectedGroup.nombre : 'General'}</strong></span>
                             ) : (
                                 <span>Matriz General por Grupos del Plantel</span>
+                            )}
+                            {assignedTeachersList.length > 0 && (
+                                <span> • Docente(s) Asignado(s): <strong>{assignedTeachersList.join(', ')}</strong></span>
+                            )}
+                            {selectedGroup?.asesor && !assignedTeachersList.includes(selectedGroup.asesor) && (
+                                <span> • Asesor: <strong>{selectedGroup.asesor}</strong></span>
                             )}
                             {template.description && <span> • {template.description}</span>}
                         </p>

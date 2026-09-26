@@ -352,7 +352,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
             template,
             rows,
             groups: allSchoolGroups,
-            selectedGroup: selectedGroup ? { _id: selectedGroup._id, nombre: selectedGroup.nombre, asesor: selectedGroup.asesor } : null,
+            selectedGroup: selectedGroup ? { _id: selectedGroup._id, nombre: selectedGroup.nombre, asesor: selectedGroup.asesor, profesoresAsignados: selectedGroup.profesoresAsignados || [] } : null,
             canEdit
         });
     } catch (err) {
