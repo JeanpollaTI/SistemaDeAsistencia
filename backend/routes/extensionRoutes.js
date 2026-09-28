@@ -53,64 +53,67 @@ const buildDefaultTablasMatematicasColumns = () => {
 
 // Helper to seed or upgrade default "Tablas Matemáticas"
 const ensureDefaultTemplates = async (schoolId) => {
-    let builtIn = await CustomTableTemplate.findOne({ school_id: schoolId, title: 'Tablas Matemáticas' });
-    const defaultCols = buildDefaultTablasMatematicasColumns();
+    try {
+        const school = await School.findById(schoolId);
+        if (!school) return;
 
-    if (!builtIn) {
-        builtIn = await CustomTableTemplate.create({
-            school_id: schoolId,
-            title: 'Tablas Matemáticas',
-            description: 'Seguimiento continuo por periodos (1° al 7°) del dominio de tablas de multiplicar.',
-            rowType: 'STUDENTS',
-            assignedGroupId: null,
-            authorizedTeachers: [],
-            columns: defaultCols,
-            isBuiltIn: true
-        });
-    } else {
-        // Upgrade builtIn columns to include 7 period structure if missing
-        const has7Periods = builtIn.columns.some(c => c.groupHeader && c.groupHeader.includes('Séptimo'));
-        if (!has7Periods) {
-            builtIn.columns = defaultCols;
-            await builtIn.save();
+        // Si la escuela ya fue inicializada con plantillas por defecto, no volver a crearlas si fueron eliminadas
+        if (school.features && school.features.defaultExtensionsSeeded) {
+            return;
         }
-    }
 
-    // Seed default "Reflexión Serena" if missing
-    let reflexionBuiltIn = await CustomTableTemplate.findOne({ school_id: schoolId, title: 'Reflexión Serena' });
-    if (!reflexionBuiltIn) {
-        const reflexionCols = [];
-        const periodos = ['Primer Periodo', 'Segundo Periodo', 'Tercer Periodo'];
-        periodos.forEach((pName, idx) => {
-            const pNum = idx + 1;
-            for (let w = 1; w <= 5; w++) {
-                reflexionCols.push({
-                    key: `p${pNum}_s${w}`,
-                    label: `Sem. ${w}`,
-                    groupHeader: pName,
-                    type: 'BOOLEAN_STATUS',
-                    statusOptions: standardStatusOptions
-                });
-            }
-        });
-        reflexionCols.push({
-            key: 'observaciones',
-            label: 'Observaciones',
-            groupHeader: 'Notas',
-            type: 'TEXT',
-            statusOptions: []
-        });
+        const totalTemplatesCount = await CustomTableTemplate.countDocuments({ school_id: schoolId });
+        if (totalTemplatesCount === 0) {
+            const defaultCols = buildDefaultTablasMatematicasColumns();
+            await CustomTableTemplate.create({
+                school_id: schoolId,
+                title: 'Tablas Matemáticas',
+                description: 'Seguimiento continuo por periodos (1° al 7°) del dominio de tablas de multiplicar.',
+                rowType: 'STUDENTS',
+                assignedGroupId: null,
+                authorizedTeachers: [],
+                columns: defaultCols,
+                isBuiltIn: true
+            });
 
-        await CustomTableTemplate.create({
-            school_id: schoolId,
-            title: 'Reflexión Serena',
-            description: 'Evaluación general por grupo (a nivel de aula por periodos y semanas).',
-            rowType: 'GROUPS',
-            assignedGroupId: null,
-            authorizedTeachers: [],
-            columns: reflexionCols,
-            isBuiltIn: true
-        });
+            const reflexionCols = [];
+            const periodos = ['Primer Periodo', 'Segundo Periodo', 'Tercer Periodo'];
+            periodos.forEach((pName, idx) => {
+                const pNum = idx + 1;
+                for (let w = 1; w <= 5; w++) {
+                    reflexionCols.push({
+                        key: `p${pNum}_s${w}`,
+                        label: `Sem. ${w}`,
+                        groupHeader: pName,
+                        type: 'BOOLEAN_STATUS',
+                        statusOptions: standardStatusOptions
+                    });
+                }
+            });
+            reflexionCols.push({
+                key: 'observaciones',
+                label: 'Observaciones',
+                groupHeader: 'Notas',
+                type: 'TEXT',
+                statusOptions: []
+            });
+
+            await CustomTableTemplate.create({
+                school_id: schoolId,
+                title: 'Reflexión Serena',
+                description: 'Evaluación general por grupo (a nivel de aula por periodos y semanas).',
+                rowType: 'GROUPS',
+                assignedGroupId: null,
+                authorizedTeachers: [],
+                columns: reflexionCols,
+                isBuiltIn: true
+            });
+        }
+
+        // Marcar como inicializado para evitar recreación automática al eliminar
+        await School.findByIdAndUpdate(schoolId, { $set: { 'features.defaultExtensionsSeeded': true } });
+    } catch (err) {
+        console.error('Error en ensureDefaultTemplates:', err);
     }
 
     // Migrate old TablaMatematica if exists

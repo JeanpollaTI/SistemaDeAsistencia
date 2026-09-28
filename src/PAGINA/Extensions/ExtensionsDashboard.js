@@ -219,15 +219,13 @@ const ExtensionsDashboard = ({ user }) => {
                                             >
                                                 <FaEdit />
                                             </button>
-                                             {!ext.isBuiltIn && (
-                                                <button
-                                                    className="ext-btn-icon-bg delete"
-                                                    onClick={() => handleDeleteClick(ext._id, ext.title)}
-                                                    title="Eliminar Extensión"
-                                                >
-                                                    <FaTrash />
-                                                </button>
-                                            )}
+                                            <button
+                                                className="ext-btn-icon-bg delete"
+                                                onClick={() => handleDeleteClick(ext._id, ext.title)}
+                                                title="Eliminar Extensión"
+                                            >
+                                                <FaTrash />
+                                            </button>
                                         </div>
                                     )}
                                 </div>
