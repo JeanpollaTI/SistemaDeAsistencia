@@ -215,16 +215,6 @@ function Home({ user }) {
       .catch((err) => mostrarAlerta(err.response?.data?.error || "Error al actualizar materia.", "error"));
   };
 
-  const handleDeleteMateria = (id) => {
-    if (!window.confirm("¿Seguro que deseas eliminar esta materia?")) return;
-    const token = localStorage.getItem("token");
-    axios.delete(`${API_URL}/api/materias/${id}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(() => {
-        mostrarAlerta("Materia eliminada.", "success");
-        fetchMaterias();
-      })
-      .catch((err) => mostrarAlerta("Error al eliminar materia.", "error"));
-  };
   // --- Novedades Carousel ---
   const novedadesList = [
     { icon: "🚀", text: "Mejoras en Trabajos: Visualización Full HD, modales más grandes y correcciones visuales." },

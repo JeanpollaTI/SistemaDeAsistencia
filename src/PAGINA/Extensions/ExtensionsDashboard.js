@@ -4,6 +4,8 @@ import { FaPlus, FaTable, FaUsers, FaUserGraduate, FaEdit, FaTrash, FaSpinner, F
 import apiClient from '../../api/apiClient';
 import TableBuilderModal from './TableBuilderModal';
 import ExcelImportModal from './ExcelImportModal';
+import ConfirmacionModal from '../ConfirmacionModal';
+import Notificacion from '../Notificacion';
 import './Extensions.css';
 
 const ExtensionsDashboard = ({ user }) => {
@@ -17,6 +19,14 @@ const ExtensionsDashboard = ({ user }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState(null);
+
+    // Modal & Toast States
+    const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, extId: null, extTitle: '' });
+    const [notificacion, setNotificacion] = useState({ mensaje: '', tipo: '' });
+
+    const mostrarNotificacion = (mensaje, tipo = 'success') => {
+        setNotificacion({ mensaje, tipo });
+    };
 
     const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
@@ -48,18 +58,23 @@ const ExtensionsDashboard = ({ user }) => {
         setIsModalOpen(true);
     };
 
-    const handleDelete = async (extId, extTitle) => {
-        if (!window.confirm(`¿Estás seguro de eliminar la extensión "${extTitle}"? Esta acción no se puede deshacer y se borrarán todos los datos capturados.`)) {
-            return;
-        }
+    const handleDeleteClick = (extId, extTitle) => {
+        setDeleteConfirm({ isOpen: true, extId, extTitle });
+    };
+
+    const confirmarEliminacion = async () => {
+        const { extId, extTitle } = deleteConfirm;
+        setDeleteConfirm({ isOpen: false, extId: null, extTitle: '' });
+        if (!extId) return;
 
         try {
             setExtensions(prev => prev.filter(e => e._id !== extId));
             await apiClient.delete(`/api/extensions/${extId}`);
+            mostrarNotificacion(`La extensión "${extTitle}" ha sido eliminada exitosamente.`, 'success');
             fetchExtensions();
         } catch (err) {
             console.error('Error al eliminar extensión:', err);
-            alert('Error al eliminar la extensión: ' + (err.response?.data?.msg || err.message));
+            mostrarNotificacion('Error al eliminar la extensión: ' + (err.response?.data?.msg || err.message), 'error');
             fetchExtensions();
         }
     };
@@ -70,15 +85,17 @@ const ExtensionsDashboard = ({ user }) => {
             if (templateData._id) {
                 res = await apiClient.put(`/api/extensions/${templateData._id}`, templateData);
                 setExtensions(prev => prev.map(item => item._id === templateData._id ? res.data : item));
+                mostrarNotificacion(`Extensión "${templateData.title}" actualizada correctamente.`, 'success');
             } else {
                 res = await apiClient.post('/api/extensions', templateData);
                 setExtensions(prev => [res.data, ...prev]);
+                mostrarNotificacion(`Extensión "${templateData.title}" creada exitosamente.`, 'success');
             }
             setIsModalOpen(false);
             fetchExtensions();
         } catch (err) {
             console.error('Error al guardar plantilla:', err);
-            alert('Error al guardar la extensión: ' + (err.response?.data?.msg || err.message));
+            mostrarNotificacion('Error al guardar la extensión: ' + (err.response?.data?.msg || err.message), 'error');
             fetchExtensions();
         }
     };
@@ -202,10 +219,10 @@ const ExtensionsDashboard = ({ user }) => {
                                             >
                                                 <FaEdit />
                                             </button>
-                                            {!ext.isBuiltIn && (
+                                             {!ext.isBuiltIn && (
                                                 <button
                                                     className="ext-btn-icon-bg delete"
-                                                    onClick={() => handleDelete(ext._id, ext.title)}
+                                                    onClick={() => handleDeleteClick(ext._id, ext.title)}
                                                     title="Eliminar Extensión"
                                                 >
                                                     <FaTrash />
@@ -235,12 +252,30 @@ const ExtensionsDashboard = ({ user }) => {
                 onImportSuccess={(newTemplate) => {
                     setIsImportModalOpen(false);
                     fetchExtensions();
+                    mostrarNotificacion(`Tabla "${newTemplate.title}" creada e importada exitosamente.`, 'success');
                     if (newTemplate && newTemplate._id) {
                         navigate(`/extensions/${newTemplate._id}`);
                     }
                 }}
                 profesores={profesores}
                 grupos={grupos}
+            />
+
+            <ConfirmacionModal
+                isOpen={deleteConfirm.isOpen}
+                onClose={() => setDeleteConfirm({ isOpen: false, extId: null, extTitle: '' })}
+                onConfirm={confirmarEliminacion}
+                title="⚠️ Eliminar Tabla / Extensión"
+                mensaje={`¿Estás seguro de eliminar la extensión "${deleteConfirm.extTitle}"? Esta acción borrará permanentemente todos los datos de seguimiento y celdas capturadas.`}
+                confirmText="Sí, Eliminar"
+                cancelText="Cancelar"
+                tipo="danger"
+            />
+
+            <Notificacion
+                mensaje={notificacion.mensaje}
+                tipo={notificacion.tipo}
+                onClose={() => setNotificacion({ mensaje: '', tipo: '' })}
             />
         </div>
     );
