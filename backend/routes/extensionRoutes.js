@@ -687,6 +687,48 @@ router.patch('/:id/cell', authMiddleware, async (req, res) => {
     }
 });
 
+// POST /api/extensions/:id/batch-cells - Bulk import cell data from Excel
+router.post('/:id/batch-cells', authMiddleware, isAdmin, async (req, res) => {
+    try {
+        const schoolId = req.user.school_id;
+        const { rows } = req.body;
+
+        if (!Array.isArray(rows) || rows.length === 0) {
+            return res.json({ msg: 'No se enviaron datos para guardar', count: 0 });
+        }
+
+        const template = await CustomTableTemplate.findOne({ _id: req.params.id, school_id: schoolId });
+        if (!template) {
+            return res.status(404).json({ msg: 'Tabla no encontrada' });
+        }
+
+        let savedCount = 0;
+        for (const r of rows) {
+            if (!r.rowEntityId) continue;
+            await CustomTableRowData.updateOne(
+                { tableId: template._id, school_id: schoolId, rowEntityId: r.rowEntityId },
+                {
+                    $set: {
+                        tableId: template._id,
+                        school_id: schoolId,
+                        rowEntityId: r.rowEntityId,
+                        rowEntityName: r.rowEntityName || '',
+                        data: r.data || {},
+                        updatedBy: req.user._id
+                    }
+                },
+                { upsert: true }
+            );
+            savedCount++;
+        }
+
+        res.json({ msg: 'Datos de celdas importados exitosamente', count: savedCount });
+    } catch (err) {
+        console.error('Error en batch-cells:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // POST /api/extensions/:id/attach-file - Attach a reference file (Excel, Word, PDF)
 router.post('/:id/attach-file', authMiddleware, async (req, res) => {
     try {

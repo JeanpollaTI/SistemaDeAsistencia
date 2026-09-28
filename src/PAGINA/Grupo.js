@@ -109,9 +109,10 @@ function Grupo({ user }) {
   // --- UTILERÍAS ---
   const getSafeId = (obj) => {
     if (!obj) return null;
-    if (typeof obj === 'string') return obj;
-    const id = obj.id || obj._id;
-    return id ? String(id) : String(obj);
+    if (typeof obj === 'string') return obj.trim();
+    const rawId = obj._id || obj.id;
+    if (rawId) return String(rawId).trim();
+    return String(obj).trim();
   };
 
   // --- LÓGICA DE CARGA DE DATOS ---
@@ -629,6 +630,7 @@ function Grupo({ user }) {
       const response = await axios.put(`${API_URL}/grupos/${grupoSeleccionado._id}/asignar-profesores`, { asignaciones: asignacionesParaEnviar }, getAxiosConfig());
       setGrupos(prev => prev.map(g => g._id === grupoSeleccionado._id ? response.data : g));
       setGrupoSeleccionado(response.data);
+      setHasChanges(false);
       showAlert("Asignación guardada exitosamente.");
       cerrarModal(true);
     } catch (error) {
@@ -834,19 +836,16 @@ function Grupo({ user }) {
   }, [asistencia, diasPorBimestre]);
 
   const handleAddAsignatura = (profesorId, nuevaAsignatura) => {
-    console.log("Adding asignatura:", { profesorId, nuevaAsignatura }); // DEBUG LOG
     if (!nuevaAsignatura) return;
 
     setAsignaciones(prev => {
       const current = prev[profesorId] || [];
       if (current.includes(nuevaAsignatura)) {
-        console.warn("Materia ya asignada:", nuevaAsignatura);
         return prev;
       }
-      const newState = { ...prev, [profesorId]: [...current, nuevaAsignatura] };
-      console.log("New asignaciones state:", newState);
-      return newState;
+      return { ...prev, [profesorId]: [...current, nuevaAsignatura] };
     });
+    setHasChanges(true);
   };
 
   const handleRemoveAsignatura = (profesorId, asignaturaToRemove) => {
@@ -860,6 +859,7 @@ function Grupo({ user }) {
       }
       return { ...prev, [profesorId]: updated };
     });
+    setHasChanges(true);
   };
 
   const handleFileChange = (e) => {
@@ -1765,7 +1765,7 @@ function Grupo({ user }) {
                   const profId = getSafeId(profesor);
                   if (!profId) return null;
 
-                  const nombreProfCompleto = `${profesor.nombre || ''} ${profesor.apellidoPaterno || ''} ${profesor.apellidoMaterno || ''}`.replace(/\s+/g, ' ').trim() || profesor.email || 'Sin Nombre';
+                  const nombreProfCompleto = `${profesor.apellidoPaterno || ''} ${profesor.apellidoMaterno || ''} ${profesor.nombre || ''}`.replace(/\s+/g, ' ').trim() || profesor.email || 'Sin Nombre';
 
                   return (
                     <div key={profId} className="asignacion-row-container">

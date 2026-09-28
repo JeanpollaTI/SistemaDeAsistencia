@@ -7,6 +7,8 @@ import {
     FaPaperclip, FaDownload, FaFileUpload, FaFileWord, FaFileExcel, FaFilePdf
 } from 'react-icons/fa';
 import apiClient from '../../api/apiClient';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import './Extensions.css';
 
 import ColumnHeaderCell from './ColumnHeaderCell';
@@ -36,9 +38,74 @@ const DynamicSpreadsheetView = ({ user }) => {
     const selectedGroupRef = useRef(selectedGroup);
     selectedGroupRef.current = selectedGroup;
 
+    const [isExporting, setIsExporting] = useState(false);
+
     const showToast = (message, type = 'success') => {
         setInAppToast({ message, type });
         setTimeout(() => setInAppToast(null), 3000);
+    };
+
+    const handleExportPNG = async () => {
+        try {
+            setIsExporting(true);
+            const container = document.querySelector('.ext-table-container');
+            if (!container) return;
+            const canvas = await html2canvas(container, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#191d28'
+            });
+            const image = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            const filename = `${template?.title || 'Tabla'}_${selectedGroup?.nombre || 'General'}.png`.replace(/\s+/g, '_');
+            link.download = filename;
+            link.href = image;
+            link.click();
+            showToast('Exportado a PNG exitosamente');
+        } catch (err) {
+            console.error('Error al exportar PNG:', err);
+            showToast('Error al exportar a PNG', 'error');
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    const handleExportPDF = async () => {
+        try {
+            setIsExporting(true);
+            const container = document.querySelector('.ext-table-container');
+            if (!container) return;
+            const canvas = await html2canvas(container, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+            const imgData = canvas.toDataURL('image/png');
+            
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            const imgWidth = 277;
+            const pageHeight = 190;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            doc.setFontSize(14);
+            doc.text(`${template?.title || 'Tabla de Seguimiento'} - ${selectedGroup?.nombre || ''}`, 10, 10);
+            
+            doc.addImage(imgData, 'PNG', 10, 15, imgWidth, Math.min(imgHeight, pageHeight));
+
+            const filename = `${template?.title || 'Tabla'}_${selectedGroup?.nombre || 'General'}.pdf`.replace(/\s+/g, '_');
+            doc.save(filename);
+            showToast('Exportado a PDF exitosamente');
+        } catch (err) {
+            console.error('Error al exportar PDF:', err);
+            showToast('Error al exportar a PDF', 'error');
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     const handleFileUpload = async (e) => {
@@ -506,7 +573,28 @@ const DynamicSpreadsheetView = ({ user }) => {
                     </div>
                 </div>
 
-                <div className="ext-sheet-header-right">
+                <div className="ext-sheet-header-right" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                        type="button"
+                        className="ext-btn ext-btn-sm ext-btn-secondary"
+                        onClick={handleExportPNG}
+                        disabled={isExporting}
+                        title="Exportar como Imagen PNG"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+                    >
+                        📸 Exportar PNG
+                    </button>
+                    <button
+                        type="button"
+                        className="ext-btn ext-btn-sm ext-btn-secondary"
+                        onClick={handleExportPDF}
+                        disabled={isExporting}
+                        title="Exportar como Documento PDF"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+                    >
+                        <FaFilePdf className="text-red" /> Exportar PDF
+                    </button>
+
                     {canEdit ? (
                         <div className="ext-badge-status status-editable">
                             <FaSync className="ext-pulse-icon" /> Modo Edición

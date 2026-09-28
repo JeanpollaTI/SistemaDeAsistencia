@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaTable, FaUsers, FaUserGraduate, FaEdit, FaTrash, FaSpinner, FaEye, FaLock, FaCheck } from 'react-icons/fa';
+import { FaPlus, FaTable, FaUsers, FaUserGraduate, FaEdit, FaTrash, FaSpinner, FaEye, FaLock, FaCheck, FaFileExcel } from 'react-icons/fa';
 import apiClient from '../../api/apiClient';
 import TableBuilderModal from './TableBuilderModal';
+import ExcelImportModal from './ExcelImportModal';
 import './Extensions.css';
 
 const ExtensionsDashboard = ({ user }) => {
@@ -14,6 +15,7 @@ const ExtensionsDashboard = ({ user }) => {
     const [loading, setLoading] = useState(true);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState(null);
 
     const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
@@ -92,9 +94,14 @@ const ExtensionsDashboard = ({ user }) => {
                     </p>
                 </div>
                 {isAdmin && (
-                    <button className="ext-btn ext-btn-primary ext-btn-lg" onClick={handleCreateNew}>
-                        <FaPlus /> + Nueva Tabla / Extensión
-                    </button>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <button className="ext-btn ext-btn-secondary ext-btn-lg" onClick={() => setIsImportModalOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                            <FaFileExcel style={{ color: '#22c55e' }} /> Importar Excel / Nueva Tabla
+                        </button>
+                        <button className="ext-btn ext-btn-primary ext-btn-lg" onClick={handleCreateNew}>
+                            <FaPlus /> + Nueva Tabla / Extensión
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -109,9 +116,14 @@ const ExtensionsDashboard = ({ user }) => {
                     <h3>No hay extensiones o tablas personalizadas registradas</h3>
                     <p>Crea la primera tabla de seguimiento para evaluar alumnos o grupos del plantel.</p>
                     {isAdmin && (
-                        <button className="ext-btn ext-btn-primary" onClick={handleCreateNew}>
-                            <FaPlus /> Crear Tabla
-                        </button>
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
+                            <button className="ext-btn ext-btn-secondary" onClick={() => setIsImportModalOpen(true)}>
+                                <FaFileExcel style={{ color: '#22c55e' }} /> Importar Excel / Nueva Tabla
+                            </button>
+                            <button className="ext-btn ext-btn-primary" onClick={handleCreateNew}>
+                                <FaPlus /> Crear Tabla
+                            </button>
+                        </div>
                     )}
                 </div>
             ) : (
@@ -213,6 +225,20 @@ const ExtensionsDashboard = ({ user }) => {
                 onClose={() => setIsModalOpen(false)}
                 onSave={handleSaveTemplate}
                 initialData={editingTemplate}
+                profesores={profesores}
+                grupos={grupos}
+            />
+
+            <ExcelImportModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                onImportSuccess={(newTemplate) => {
+                    setIsImportModalOpen(false);
+                    fetchExtensions();
+                    if (newTemplate && newTemplate._id) {
+                        navigate(`/extensions/${newTemplate._id}`);
+                    }
+                }}
                 profesores={profesores}
                 grupos={grupos}
             />

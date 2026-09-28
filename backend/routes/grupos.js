@@ -95,31 +95,38 @@ router.put("/:id/asignar-profesores", authMiddleware, isAdmin, schoolMiddleware,
             return res.status(404).json({ error: "Grupo no encontrado o no pertenece a su institución." });
         }
 
-        // Filtrar asignaciones nulas o incompletas y validar ObjectIds
-        const asignacionesValidas = (asignaciones || []).filter((a, index) => {
-            if (!a.profesor || !a.asignatura) {
-                console.warn(`[WARN] Asignación ${index} incompleta en grupo ${id}`);
-                return false;
-            }
-            
-            // Extraer ID de forma robusta por si viene como objeto o string
-            let profId = a.profesor?._id || a.profesor?.id || a.profesor;
-            const isValidProf = profId && mongoose.Types.ObjectId.isValid(profId) && String(profId) !== 'null';
-            
-            if (!isValidProf) {
-                console.warn(`[WARN] Profesor ID inválido (${profId}) en asignación ${index} del grupo ${id}`);
-                return false;
-            }
+        // Obtener todos los IDs de profesores únicos recibidos
+        const rawProfIds = [...new Set((asignaciones || [])
+            .map(a => {
+                const p = a.profesor;
+                if (!p) return null;
+                const raw = p._id || p.id || p;
+                return raw ? String(raw).trim() : null;
+            })
+            .filter(profId => profId && mongoose.Types.ObjectId.isValid(profId) && profId !== 'null')
+        )];
 
-            // Normalizar el formato para guardar (asegurarse de que sea un ObjectId de Mongoose)
-            // Esto es CRUCIAL para que las queries posteriores funcionen correctamente.
-            try {
-                a.profesor = new mongoose.Types.ObjectId(String(profId));
-            } catch (err) {
-                console.error(`[ERROR] Falló el cast a ObjectId para ${profId}:`, err.message);
-                return false;
+        // Consultar los profesores válidos en la base de datos pertenecientes a esta escuela
+        const profesoresValidosBD = await User.find({
+            _id: { $in: rawProfIds },
+            school_id
+        }).select('_id');
+
+        const validTeacherIdsSet = new Set(profesoresValidosBD.map(u => u._id.toString()));
+
+        // Mapear cada asignación enviada (preservando múltiples materias por profesor)
+        const asignacionesValidas = [];
+        (asignaciones || []).forEach(a => {
+            if (!a.profesor || !a.asignatura) return;
+            const profIdStr = String(a.profesor?._id || a.profesor?.id || a.profesor || '').trim();
+            const materiaStr = String(a.asignatura || '').trim();
+
+            if (validTeacherIdsSet.has(profIdStr) && materiaStr.length > 0) {
+                asignacionesValidas.push({
+                    profesor: new mongoose.Types.ObjectId(profIdStr),
+                    asignatura: materiaStr
+                });
             }
-            return true;
         });
 
         grupo.profesoresAsignados = asignacionesValidas;
