@@ -68,6 +68,14 @@ const customTableTemplateSchema = new mongoose.Schema(
     ],
     groupAssignments: [groupAssignmentSchema],
     columns: [columnSchema],
+    attachedFiles: [
+      {
+        name: { type: String, required: true },
+        url: { type: String, required: true },
+        fileType: { type: String, default: "FILE" },
+        uploadedAt: { type: Date, default: Date.now }
+      }
+    ],
     isActive: {
       type: Boolean,
       default: true

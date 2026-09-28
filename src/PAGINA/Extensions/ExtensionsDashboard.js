@@ -52,26 +52,32 @@ const ExtensionsDashboard = ({ user }) => {
         }
 
         try {
+            setExtensions(prev => prev.filter(e => e._id !== extId));
             await apiClient.delete(`/api/extensions/${extId}`);
             fetchExtensions();
         } catch (err) {
             console.error('Error al eliminar extensión:', err);
             alert('Error al eliminar la extensión: ' + (err.response?.data?.msg || err.message));
+            fetchExtensions();
         }
     };
 
     const handleSaveTemplate = async (templateData) => {
         try {
+            let res;
             if (templateData._id) {
-                await apiClient.put(`/api/extensions/${templateData._id}`, templateData);
+                res = await apiClient.put(`/api/extensions/${templateData._id}`, templateData);
+                setExtensions(prev => prev.map(item => item._id === templateData._id ? res.data : item));
             } else {
-                await apiClient.post('/api/extensions', templateData);
+                res = await apiClient.post('/api/extensions', templateData);
+                setExtensions(prev => [res.data, ...prev]);
             }
             setIsModalOpen(false);
             fetchExtensions();
         } catch (err) {
             console.error('Error al guardar plantilla:', err);
             alert('Error al guardar la extensión: ' + (err.response?.data?.msg || err.message));
+            fetchExtensions();
         }
     };
 

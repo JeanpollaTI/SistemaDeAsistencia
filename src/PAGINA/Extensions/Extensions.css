@@ -1353,4 +1353,80 @@
     gap: 6px;
 }
 
+/* Attachments Bar Styling */
+.ext-attachments-bar {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    color: #e2e8f0;
+}
+
+.ext-attachments-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.ext-attachments-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #38bdf8;
+}
+
+.ext-attachments-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.ext-attachment-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.88rem;
+    color: #f1f5f9;
+}
+
+.ext-attachment-name {
+    color: #38bdf8;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ext-attachment-name:hover {
+    text-decoration: underline;
+    color: #7dd3fc;
+}
+
+.ext-btn-remove-att {
+    background: transparent;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.ext-btn-remove-att:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+
 

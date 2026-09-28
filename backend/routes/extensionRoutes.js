@@ -76,6 +76,43 @@ const ensureDefaultTemplates = async (schoolId) => {
         }
     }
 
+    // Seed default "Reflexión Serena" if missing
+    let reflexionBuiltIn = await CustomTableTemplate.findOne({ school_id: schoolId, title: 'Reflexión Serena' });
+    if (!reflexionBuiltIn) {
+        const reflexionCols = [];
+        const periodos = ['Primer Periodo', 'Segundo Periodo', 'Tercer Periodo'];
+        periodos.forEach((pName, idx) => {
+            const pNum = idx + 1;
+            for (let w = 1; w <= 5; w++) {
+                reflexionCols.push({
+                    key: `p${pNum}_s${w}`,
+                    label: `Sem. ${w}`,
+                    groupHeader: pName,
+                    type: 'BOOLEAN_STATUS',
+                    statusOptions: standardStatusOptions
+                });
+            }
+        });
+        reflexionCols.push({
+            key: 'observaciones',
+            label: 'Observaciones',
+            groupHeader: 'Notas',
+            type: 'TEXT',
+            statusOptions: []
+        });
+
+        await CustomTableTemplate.create({
+            school_id: schoolId,
+            title: 'Reflexión Serena',
+            description: 'Evaluación general por grupo (a nivel de aula por periodos y semanas).',
+            rowType: 'GROUPS',
+            assignedGroupId: null,
+            authorizedTeachers: [],
+            columns: reflexionCols,
+            isBuiltIn: true
+        });
+    }
+
     // Migrate old TablaMatematica if exists
     try {
         const oldRecords = await TablaMatematica.find({ school_id: schoolId });
@@ -298,10 +335,15 @@ router.get('/:id', authMiddleware, async (req, res) => {
             if (r.rowColorTag) colorMap[r.rowEntityId] = r.rowColorTag;
         });
 
+        // Filter groups for non-admin non-globally-authorized teachers
+        const visibleGroups = (isUserAdmin || isGloballyAuthorized)
+            ? allSchoolGroups
+            : allSchoolGroups.filter(g => authorizedGroupIds.has(g._id.toString()));
+
         let rows = [];
         if (template.rowType === 'STUDENTS') {
             if (selectedGroup && selectedGroup._id === 'ALL') {
-                allSchoolGroups.forEach(g => {
+                visibleGroups.forEach(g => {
                     (g.alumnos || []).forEach(al => {
                         rows.push({
                             entityId: al._id.toString(),
@@ -336,7 +378,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
                 }));
             }
         } else if (template.rowType === 'GROUPS') {
-            rows = allSchoolGroups.map(g => ({
+            rows = visibleGroups.map(g => ({
                 entityId: g._id.toString(),
                 name: g.nombre,
                 asesor: g.asesor || '',
@@ -351,7 +393,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
         res.json({
             template,
             rows,
-            groups: allSchoolGroups,
+            groups: visibleGroups,
             selectedGroup: selectedGroup ? { _id: selectedGroup._id, nombre: selectedGroup.nombre, asesor: selectedGroup.asesor, profesoresAsignados: selectedGroup.profesoresAsignados || [] } : null,
             canEdit
         });
@@ -640,6 +682,75 @@ router.patch('/:id/cell', authMiddleware, async (req, res) => {
         await record.save();
 
         res.json({ msg: 'Celda actualizada', record });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/extensions/:id/attach-file - Attach a reference file (Excel, Word, PDF)
+router.post('/:id/attach-file', authMiddleware, async (req, res) => {
+    try {
+        const schoolId = req.user.school_id;
+        const { name, url, fileType, base64 } = req.body;
+
+        const template = await CustomTableTemplate.findOne({ _id: req.params.id, school_id: schoolId });
+        if (!template) {
+            return res.status(404).json({ msg: 'Tabla no encontrada' });
+        }
+
+        let finalUrl = url;
+
+        if (base64) {
+            try {
+                const cloudinaryModule = await import('../config/cloudinary.js');
+                const cloudinary = cloudinaryModule.default;
+                const uploadRes = await cloudinary.uploader.upload(base64, {
+                    folder: 'secn9/extensions_attachments',
+                    resource_type: 'auto'
+                });
+                finalUrl = uploadRes.secure_url;
+            } catch (cErr) {
+                console.warn('Cloudinary upload failed, falling back to base64 Data URI:', cErr.message);
+                finalUrl = base64;
+            }
+        }
+
+        if (!finalUrl) {
+            return res.status(400).json({ msg: 'URL o contenido de archivo es requerido' });
+        }
+
+        if (!template.attachedFiles) template.attachedFiles = [];
+        template.attachedFiles.push({
+            name: name || 'Archivo_Adjunto',
+            url: finalUrl,
+            fileType: fileType || 'FILE',
+            uploadedAt: new Date()
+        });
+
+        await template.save();
+        res.json({ msg: 'Archivo adjuntado con éxito', attachedFiles: template.attachedFiles });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// DELETE /api/extensions/:id/attach-file/:fileIndex - Delete an attached reference file
+router.delete('/:id/attach-file/:fileIndex', authMiddleware, async (req, res) => {
+    try {
+        const schoolId = req.user.school_id;
+        const fileIndex = parseInt(req.params.fileIndex, 10);
+
+        const template = await CustomTableTemplate.findOne({ _id: req.params.id, school_id: schoolId });
+        if (!template) {
+            return res.status(404).json({ msg: 'Tabla no encontrada' });
+        }
+
+        if (Array.isArray(template.attachedFiles) && fileIndex >= 0 && fileIndex < template.attachedFiles.length) {
+            template.attachedFiles.splice(fileIndex, 1);
+            await template.save();
+        }
+
+        res.json({ msg: 'Archivo eliminado', attachedFiles: template.attachedFiles });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

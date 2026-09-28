@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     FaArrowLeft, FaSearch, FaLock, FaCheckCircle, FaSpinner, FaUserClock,
     FaUserTimes, FaSync, FaExclamationTriangle, FaInfoCircle, FaThList,
-    FaPlus, FaEllipsisV, FaCopy, FaTrash, FaPalette, FaEdit, FaTimes, FaFont, FaHashtag, FaPercent, FaToggleOn
+    FaPlus, FaEllipsisV, FaCopy, FaTrash, FaPalette, FaEdit, FaTimes, FaFont, FaHashtag, FaPercent, FaToggleOn,
+    FaPaperclip, FaDownload, FaFileUpload, FaFileWord, FaFileExcel, FaFilePdf
 } from 'react-icons/fa';
 import apiClient from '../../api/apiClient';
 import './Extensions.css';
@@ -25,18 +26,52 @@ const DynamicSpreadsheetView = ({ user }) => {
     const [lastSavedTime, setLastSavedTime] = useState(null);
     const [filterStatus, setFilterStatus] = useState('ALL');
 
-    // UI Interactive States (NO MORE window.prompt)
+    // UI Interactive States
     const [editingColKey, setEditingColKey] = useState(null);
     const [editingLabelValue, setEditingLabelValue] = useState('');
     const [inAppToast, setInAppToast] = useState(null);
     const [confirmDeleteColKey, setConfirmDeleteColKey] = useState(null);
 
+    const fileInputRef = useRef(null);
     const selectedGroupRef = useRef(selectedGroup);
     selectedGroupRef.current = selectedGroup;
 
     const showToast = (message, type = 'success') => {
         setInAppToast({ message, type });
         setTimeout(() => setInAppToast(null), 3000);
+    };
+
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const base64 = event.target.result;
+            try {
+                const res = await apiClient.post(`/api/extensions/${id}/attach-file`, {
+                    name: file.name,
+                    base64,
+                    fileType: file.name.split('.').pop().toUpperCase()
+                });
+                setTemplate(prev => ({ ...prev, attachedFiles: res.data.attachedFiles }));
+                showToast(`Archivo "${file.name}" adjuntado con éxito`);
+            } catch (err) {
+                console.error('Error al adjuntar archivo:', err);
+                showToast('Error al adjuntar archivo', 'error');
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleRemoveAttachment = async (fileIndex) => {
+        try {
+            const res = await apiClient.delete(`/api/extensions/${id}/attach-file/${fileIndex}`);
+            setTemplate(prev => ({ ...prev, attachedFiles: res.data.attachedFiles }));
+            showToast('Archivo adjunto eliminado');
+        } catch (err) {
+            console.error('Error al eliminar archivo adjunto:', err);
+            showToast('Error al eliminar archivo adjunto', 'error');
+        }
     };
 
     const fetchExtensionData = useCallback(async (targetGroupId = null, isSilent = false) => {
@@ -537,6 +572,75 @@ const DynamicSpreadsheetView = ({ user }) => {
                 </div>
             )}
 
+            {/* ATTACHED REFERENCE FILES BAR (PDF, Word, Excel) */}
+            <div className="ext-attachments-bar">
+                <div className="ext-attachments-header">
+                    <div className="ext-attachments-title">
+                        <FaPaperclip /> <span>Formatos y Diseños Adjuntos (PDF, Word, Excel):</span>
+                    </div>
+                    {canEdit && (
+                        <div>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                style={{ display: 'none' }}
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,image/*"
+                                onChange={handleFileUpload}
+                            />
+                            <button
+                                type="button"
+                                className="ext-btn ext-btn-sm ext-btn-secondary"
+                                onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                            >
+                                <FaFileUpload /> + Adjuntar Archivo/Diseño
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {Array.isArray(template?.attachedFiles) && template.attachedFiles.length > 0 ? (
+                    <div className="ext-attachments-list">
+                        {template.attachedFiles.map((att, attIdx) => {
+                            const ext = (att.fileType || '').toLowerCase();
+                            const isExcel = ext.includes('xls') || ext.includes('csv');
+                            const isWord = ext.includes('doc');
+                            const isPdf = ext.includes('pdf');
+
+                            return (
+                                <div key={attIdx} className="ext-attachment-chip">
+                                    {isExcel ? <FaFileExcel className="text-green" /> :
+                                     isWord ? <FaFileWord className="text-blue" /> :
+                                     isPdf ? <FaFilePdf className="text-red" /> : <FaPaperclip />}
+                                    <a
+                                        href={att.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="ext-attachment-name"
+                                        download={att.name}
+                                    >
+                                        {att.name} <FaDownload className="ext-icon-xs" />
+                                    </a>
+                                    {canEdit && (
+                                        <button
+                                            type="button"
+                                            className="ext-btn-remove-att"
+                                            onClick={() => handleRemoveAttachment(attIdx)}
+                                            title="Eliminar archivo adjunto"
+                                        >
+                                            <FaTimes />
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <p className="ext-text-muted text-xs margin-top-xs" style={{ margin: '8px 0 0 0', fontSize: '0.82rem', color: '#94a3b8' }}>
+                        No hay archivos de diseño o formatos adjuntos. Puedes subir plantillas de Excel, Word o PDF para consulta directa.
+                    </p>
+                )}
+            </div>
+
             {!canEdit && (
                 <div className="ext-notice-banner">
                     <FaLock />
@@ -668,7 +772,9 @@ const DynamicSpreadsheetView = ({ user }) => {
                         {filteredRows.length === 0 ? (
                             <tr>
                                 <td colSpan={template.columns.length + (canEdit ? 3 : 2)} className="ext-empty-td">
-                                    No hay alumnos en el grupo {selectedGroup?.nombre || ''} que coincidan con la búsqueda.
+                                    {template.rowType === 'STUDENTS' 
+                                        ? `No hay alumnos en el grupo ${selectedGroup?.nombre || ''} que coincidan con la búsqueda.` 
+                                        : 'No hay grupos registrados o asignados que coincidan con la búsqueda.'}
                                 </td>
                             </tr>
                         ) : (

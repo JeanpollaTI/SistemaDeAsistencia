@@ -596,6 +596,7 @@ function Grupo({ user }) {
         });
       }
       setGrupos(prev => prev.map(g => g._id === grupoSeleccionado._id ? updatedGrupoData : g));
+      setGrupoSeleccionado(updatedGrupoData);
       showAlert(`Grupo "${nuevoGrupo.nombre}" actualizado.`);
       setHasChanges(false);
       cerrarModal(true);
@@ -626,9 +627,10 @@ function Grupo({ user }) {
 
     try {
       const response = await axios.put(`${API_URL}/grupos/${grupoSeleccionado._id}/asignar-profesores`, { asignaciones: asignacionesParaEnviar }, getAxiosConfig());
-      setGrupos(grupos.map(g => g._id === grupoSeleccionado._id ? response.data : g));
-      showAlert("Asignación guardada.");
-      cerrarModal();
+      setGrupos(prev => prev.map(g => g._id === grupoSeleccionado._id ? response.data : g));
+      setGrupoSeleccionado(response.data);
+      showAlert("Asignación guardada exitosamente.");
+      cerrarModal(true);
     } catch (error) {
       console.error("Error al guardar asignación:", error);
       const errorMsg = error.response?.data?.error || error.response?.data?.details || error.message;
