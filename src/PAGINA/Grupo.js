@@ -109,10 +109,22 @@ function Grupo({ user }) {
   // --- UTILERÍAS ---
   const getSafeId = (obj) => {
     if (!obj) return null;
-    if (typeof obj === 'string') return obj.trim();
-    const rawId = obj._id || obj.id;
-    if (rawId) return String(rawId).trim();
-    return String(obj).trim();
+    if (typeof obj === 'string') {
+      const trimmed = obj.trim();
+      return (trimmed && trimmed !== 'null' && trimmed !== 'undefined' && !trimmed.includes('[object')) ? trimmed : null;
+    }
+    
+    let rawId = obj._id || obj.id;
+    if (rawId && typeof rawId === 'object') {
+      rawId = rawId._id || rawId.id;
+    }
+    
+    if (rawId) {
+      const str = String(rawId).trim();
+      return (str && str !== 'null' && str !== 'undefined' && !str.includes('[object')) ? str : null;
+    }
+    
+    return null;
   };
 
   // --- LÓGICA DE CARGA DE DATOS ---
@@ -270,13 +282,16 @@ function Grupo({ user }) {
       setGrupoSeleccionado(data);
       const asignacionesIniciales = {};
       // Agrupar asignaturas por profesor
-      data.profesoresAsignados.forEach(asig => {
+      (data.profesoresAsignados || []).forEach(asig => {
+        if (!asig || !asig.asignatura) return;
         const profId = getSafeId(asig.profesor);
-        if (profId && profId !== 'null' && profId !== 'undefined') {
+        if (profId && profId !== 'null' && profId !== 'undefined' && !profId.includes('[object')) {
           if (!asignacionesIniciales[profId]) {
             asignacionesIniciales[profId] = [];
           }
-          asignacionesIniciales[profId].push(asig.asignatura);
+          if (!asignacionesIniciales[profId].includes(asig.asignatura)) {
+            asignacionesIniciales[profId].push(asig.asignatura);
+          }
         }
       });
       setAsignaciones(asignacionesIniciales);
@@ -1830,13 +1845,13 @@ function Grupo({ user }) {
                 })}
 
                 {/* NUEVO: SECCIÓN DE ASIGNACIONES HUÉRFANAS */}
-                {Object.keys(asignaciones).some(id => !profesores.some(p => getSafeId(p) === id)) && (
+                {Object.keys(asignaciones).some(id => id && id !== '[object Object]' && !id.includes('[object') && !profesores.some(p => getSafeId(p) === id)) && (
                   <div className="orphaned-section" style={{ marginTop: '20px', borderTop: '1px dashed #666', paddingTop: '15px' }}>
                     <h4 style={{ color: '#e67e22', marginBottom: '10px', fontSize: '0.9rem' }}>
                       ⚠️ Asignaciones detectadas para IDs no listados (profesores externos o desactualizados):
                     </h4>
                     {Object.keys(asignaciones)
-                      .filter(id => !profesores.some(p => getSafeId(p) === id))
+                      .filter(id => id && id !== '[object Object]' && !id.includes('[object') && !profesores.some(p => getSafeId(p) === id))
                       .map(id => (
                         <div key={id} className="asignacion-row-container orphaned" style={{ opacity: 0.8, backgroundColor: 'rgba(230, 126, 34, 0.05)' }}>
                            <div className="profesor-header">
