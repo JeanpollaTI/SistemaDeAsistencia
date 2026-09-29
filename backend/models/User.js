@@ -77,9 +77,8 @@ const userSchema = new mongoose.Schema(
     timestamps: true, // Añade createdAt y updatedAt
     toJSON: {
       transform(doc, ret) {
-        // Renombramos _id a id para el frontend
+        // Preservar _id e id para compatibilidad completa en el frontend
         ret.id = ret._id;
-        delete ret._id;
         delete ret.__v;
         delete ret.password; // nunca mostrar password
         // Asegura la foto por defecto si el campo es nulo

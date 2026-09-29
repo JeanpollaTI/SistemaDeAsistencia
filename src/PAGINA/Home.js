@@ -272,7 +272,8 @@ function Home({ user }) {
   const guardarAsignaturas = () => {
     if (!selectedProfesor) return;
     const token = localStorage.getItem("token");
-    axios.put(`${API_URL}/profesores/${selectedProfesor._id}/asignaturas`, { asignaturas: asignaturasSelect }, { headers: { Authorization: `Bearer ${token}` } })
+    const profId = selectedProfesor._id || selectedProfesor.id;
+    axios.put(`${API_URL}/profesores/${profId}/asignaturas`, { asignaturas: asignaturasSelect }, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         mostrarAlerta("Asignaturas actualizadas.", "success");
         fetchProfesores();
@@ -289,7 +290,8 @@ function Home({ user }) {
   const confirmDelete = () => {
     if (!selectedProfesor) return;
     const token = localStorage.getItem("token");
-    axios.delete(`${API_URL}/profesores/${selectedProfesor._id}`, { headers: { Authorization: `Bearer ${token}` } })
+    const profId = selectedProfesor._id || selectedProfesor.id;
+    axios.delete(`${API_URL}/profesores/${profId}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
         mostrarAlerta("Profesor eliminado correctamente.", "success");
         fetchProfesores();
@@ -311,8 +313,9 @@ function Home({ user }) {
     }
     const token = localStorage.getItem("token");
     try {
+      const profId = selectedProfesor._id || selectedProfesor.id;
       await axios.put(`${API_URL}/auth/admin/change-user-password`, {
-        targetUserId: selectedProfesor._id,
+        targetUserId: profId,
         newPassword: adminPassData.newPassword,
         adminPassword: adminPassData.adminPassword
       }, { headers: { Authorization: `Bearer ${token}` } });
