@@ -613,13 +613,14 @@ function Grupo({ user }) {
     // Aplanar el objeto de asignaciones a un array de objetos { profesor, asignatura }
     const asignacionesParaEnviar = [];
     Object.keys(asignaciones).forEach(profesorId => {
+      if (!profesorId || profesorId === 'null' || profesorId === 'undefined' || profesorId.includes('[object')) return;
       const materias = asignaciones[profesorId];
       if (Array.isArray(materias)) {
         materias.forEach(materia => {
-          if (materia) {
+          if (materia && String(materia).trim().length > 0) {
             asignacionesParaEnviar.push({
-              profesor: profesorId,
-              asignatura: materia
+              profesor: profesorId.trim(),
+              asignatura: String(materia).trim()
             });
           }
         });
@@ -1795,8 +1796,17 @@ function Grupo({ user }) {
                             const profAsigs = profesor.asignaturas || [];
                             const dbAsigs = (materiasDb || []).map(m => (typeof m === 'object' ? m.nombre : m)).filter(Boolean);
                             const defaultAsigs = [
-                              'Español', 'Matemáticas', 'Inglés', 'Ciencias', 'Historia', 'Geografía',
-                              'Formación Cívica y Ética', 'Educación Física', 'Artes', 'Tecnología', 'Tutoría'
+                              'Español', 'Español I', 'Español II', 'Español III',
+                              'Matemáticas', 'Matemáticas I', 'Matemáticas II', 'Matemáticas III',
+                              'Inglés', 'Inglés I', 'Inglés II', 'Inglés III',
+                              'Ciencias', 'Ciencias I', 'Ciencias II', 'Ciencias III',
+                              'Historia', 'Historia I', 'Historia II', 'Historia III',
+                              'Geografía', 'Geografía I',
+                              'Formación Cívica y Ética', 'Formación Cívica y Ética I', 'Formación Cívica y Ética II', 'Formación Cívica y Ética III',
+                              'Educación Física', 'Artes', 'Tecnología', 'Tecnología I', 'Tecnología II', 'Tecnología III',
+                              'Tutoría', 'Tutoría I', 'Tutoría II', 'Tutoría III',
+                              'Integración Curricular', 'Integración Curricular I', 'Integración Curricular II', 'Integración Curricular III',
+                              'Vida Saludable'
                             ];
                             
                             const allUnique = Array.from(new Set([...profAsigs, ...dbAsigs, ...defaultAsigs]))

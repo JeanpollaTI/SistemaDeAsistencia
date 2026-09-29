@@ -88,28 +88,41 @@ router.put("/:id/asignar-profesores", authMiddleware, isAdmin, schoolMiddleware,
     try {
         const { id } = req.params;
         const { asignaciones } = req.body;
-        const school_id = req.user.school_id;
+        const school_id = req.user?.school_id;
 
-        const grupo = await Grupo.findOne({ _id: id, school_id });
-        if (!grupo) {
-            return res.status(404).json({ error: "Grupo no encontrado o no pertenece a su institución." });
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ error: "ID de grupo inválido." });
         }
 
-        // Obtener todos los IDs de profesores únicos recibidos
+        const grupo = await Grupo.findById(id);
+        if (!grupo) {
+            return res.status(404).json({ error: "Grupo no encontrado." });
+        }
+
+        // Verificar autorización por escuela si aplica
+        if (req.user?.role !== 'superadmin' && school_id && grupo.school_id) {
+            if (grupo.school_id.toString() !== school_id.toString()) {
+                return res.status(403).json({ error: "No tienes permiso para modificar este grupo." });
+            }
+        }
+
+        // Obtener todos los IDs de profesores válidos recibidos
         const rawProfIds = [...new Set((asignaciones || [])
             .map(a => {
-                const p = a.profesor;
-                if (!p) return null;
-                const raw = p._id || p.id || p;
-                return raw ? String(raw).trim() : null;
+                if (!a || !a.profesor) return null;
+                let p = a.profesor;
+                if (typeof p === 'object' && p !== null) {
+                    p = p._id || p.id || String(p);
+                }
+                const str = String(p || '').trim();
+                return mongoose.Types.ObjectId.isValid(str) && str !== 'null' && str !== 'undefined' ? str : null;
             })
-            .filter(profId => profId && mongoose.Types.ObjectId.isValid(profId) && profId !== 'null')
+            .filter(Boolean)
         )];
 
-        // Consultar los profesores válidos en la base de datos pertenecientes a esta escuela
+        // Consultar los profesores existentes en la colección User
         const profesoresValidosBD = await User.find({
-            _id: { $in: rawProfIds },
-            school_id
+            _id: { $in: rawProfIds }
         }).select('_id');
 
         const validTeacherIdsSet = new Set(profesoresValidosBD.map(u => u._id.toString()));
@@ -117,11 +130,15 @@ router.put("/:id/asignar-profesores", authMiddleware, isAdmin, schoolMiddleware,
         // Mapear cada asignación enviada (preservando múltiples materias por profesor)
         const asignacionesValidas = [];
         (asignaciones || []).forEach(a => {
-            if (!a.profesor || !a.asignatura) return;
-            const profIdStr = String(a.profesor?._id || a.profesor?.id || a.profesor || '').trim();
+            if (!a || !a.profesor || !a.asignatura) return;
+            let p = a.profesor;
+            if (typeof p === 'object' && p !== null) {
+                p = p._id || p.id || String(p);
+            }
+            const profIdStr = String(p || '').trim();
             const materiaStr = String(a.asignatura || '').trim();
 
-            if (validTeacherIdsSet.has(profIdStr) && materiaStr.length > 0) {
+            if (mongoose.Types.ObjectId.isValid(profIdStr) && validTeacherIdsSet.has(profIdStr) && materiaStr.length > 0) {
                 asignacionesValidas.push({
                     profesor: new mongoose.Types.ObjectId(profIdStr),
                     asignatura: materiaStr
