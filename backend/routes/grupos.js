@@ -114,7 +114,7 @@ router.put("/:id/asignar-profesores", authMiddleware, isAdmin, async (req, res) 
 
                 if (profIdStr && mongoose.Types.ObjectId.isValid(profIdStr) && materiaStr.length > 0) {
                     asignacionesValidas.push({
-                        profesor: profIdStr,
+                        profesor: new mongoose.Types.ObjectId(profIdStr),
                         asignatura: materiaStr
                     });
                 }

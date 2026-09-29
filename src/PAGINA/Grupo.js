@@ -114,14 +114,19 @@ function Grupo({ user }) {
       return (trimmed && trimmed !== 'null' && trimmed !== 'undefined' && !trimmed.includes('[object')) ? trimmed : null;
     }
     
-    let rawId = obj._id || obj.id;
-    if (rawId && typeof rawId === 'object') {
-      rawId = rawId._id || rawId.id;
-    }
-    
-    if (rawId) {
-      const str = String(rawId).trim();
-      return (str && str !== 'null' && str !== 'undefined' && !str.includes('[object')) ? str : null;
+    if (typeof obj === 'object') {
+      let rawId = obj._id || obj.id;
+      if (rawId && typeof rawId === 'object') {
+        rawId = rawId._id || rawId.id || (typeof rawId.toString === 'function' ? rawId.toString() : null);
+      }
+      if (rawId) {
+        const str = String(rawId).trim();
+        if (str && str !== 'null' && str !== 'undefined' && !str.includes('[object')) return str;
+      }
+      if (typeof obj.toString === 'function') {
+        const str = obj.toString().trim();
+        if (str && str !== 'null' && str !== 'undefined' && !str.includes('[object') && str !== '[object Object]') return str;
+      }
     }
     
     return null;
@@ -1324,7 +1329,7 @@ function Grupo({ user }) {
                                 .sort((a, b) => a.asignatura.localeCompare(b.asignatura))
                                 .map((asig, index) => {
                                   const profName = asig.profesor
-                                    ? `${asig.profesor.nombre || ''} ${asig.profesor.apellidoPaterno || ''} ${asig.profesor.apellidoMaterno || ''}`.replace(/\s+/g, ' ').trim()
+                                    ? `${asig.profesor.apellidoPaterno || ''} ${asig.profesor.apellidoMaterno || ''} ${asig.profesor.nombre || ''}`.replace(/\s+/g, ' ').trim()
                                     : 'Profesor Eliminado';
                                   return (
                                     <li key={index}>
@@ -1801,8 +1806,11 @@ function Grupo({ user }) {
                         <select
                           className="asignatura-select-add"
                           onChange={(e) => {
-                            handleAddAsignatura(profId, e.target.value);
-                            // e.target.value = ""; // No need with controlled comp
+                            const val = e.target.value;
+                            if (val) {
+                              handleAddAsignatura(profId, val);
+                              e.target.value = "";
+                            }
                           }}
                           value=""
                         >

@@ -25,7 +25,7 @@ const getCloudinaryPublicId = (url) => {
 profesoresRouter.get("/", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
   try {
     const school_id = req.user.school_id;
-    const profesores = await User.find({ role: "profesor", school_id }).select("-password");
+    const profesores = await User.find({ role: { $in: ["profesor", "admin"] }, school_id }).select("-password");
 
     // Alias createdAt as fechaRegistro for the frontend
     const formatted = profesores.map(p => {
