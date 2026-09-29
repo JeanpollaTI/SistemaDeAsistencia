@@ -84,11 +84,10 @@ router.get("/", authMiddleware, schoolMiddleware, async (req, res) => {
 });
 
 // [PUT] /grupos/:id/asignar-profesores - Asignar profesores y asignaturas (Admin)
-router.put("/:id/asignar-profesores", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
+router.put("/:id/asignar-profesores", authMiddleware, isAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { asignaciones } = req.body;
-        const school_id = req.user?.school_id;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ error: "ID de grupo inválido." });
@@ -99,52 +98,28 @@ router.put("/:id/asignar-profesores", authMiddleware, isAdmin, schoolMiddleware,
             return res.status(404).json({ error: "Grupo no encontrado." });
         }
 
-        // Verificar autorización por escuela si aplica
-        if (req.user?.role !== 'superadmin' && school_id && grupo.school_id) {
-            if (grupo.school_id.toString() !== school_id.toString()) {
-                return res.status(403).json({ error: "No tienes permiso para modificar este grupo." });
+        // Mapear cada asignación enviada limpiando profesor ID y asignatura
+        const asignacionesValidas = [];
+
+        if (Array.isArray(asignaciones)) {
+            for (const a of asignaciones) {
+                if (!a || !a.profesor || !a.asignatura) continue;
+                
+                let profId = a.profesor;
+                if (typeof profId === 'object' && profId !== null) {
+                    profId = profId._id || profId.id || String(profId);
+                }
+                const profIdStr = String(profId || '').trim();
+                const materiaStr = String(a.asignatura || '').trim();
+
+                if (profIdStr && mongoose.Types.ObjectId.isValid(profIdStr) && materiaStr.length > 0) {
+                    asignacionesValidas.push({
+                        profesor: profIdStr,
+                        asignatura: materiaStr
+                    });
+                }
             }
         }
-
-        // Obtener todos los IDs de profesores válidos recibidos
-        const rawProfIds = [...new Set((asignaciones || [])
-            .map(a => {
-                if (!a || !a.profesor) return null;
-                let p = a.profesor;
-                if (typeof p === 'object' && p !== null) {
-                    p = p._id || p.id || String(p);
-                }
-                const str = String(p || '').trim();
-                return mongoose.Types.ObjectId.isValid(str) && str !== 'null' && str !== 'undefined' ? str : null;
-            })
-            .filter(Boolean)
-        )];
-
-        // Consultar los profesores existentes en la colección User
-        const profesoresValidosBD = await User.find({
-            _id: { $in: rawProfIds }
-        }).select('_id');
-
-        const validTeacherIdsSet = new Set(profesoresValidosBD.map(u => u._id.toString()));
-
-        // Mapear cada asignación enviada (preservando múltiples materias por profesor)
-        const asignacionesValidas = [];
-        (asignaciones || []).forEach(a => {
-            if (!a || !a.profesor || !a.asignatura) return;
-            let p = a.profesor;
-            if (typeof p === 'object' && p !== null) {
-                p = p._id || p.id || String(p);
-            }
-            const profIdStr = String(p || '').trim();
-            const materiaStr = String(a.asignatura || '').trim();
-
-            if (mongoose.Types.ObjectId.isValid(profIdStr) && validTeacherIdsSet.has(profIdStr) && materiaStr.length > 0) {
-                asignacionesValidas.push({
-                    profesor: new mongoose.Types.ObjectId(profIdStr),
-                    asignatura: materiaStr
-                });
-            }
-        });
 
         grupo.profesoresAsignados = asignacionesValidas;
         await grupo.save();
@@ -154,7 +129,7 @@ router.put("/:id/asignar-profesores", authMiddleware, isAdmin, schoolMiddleware,
             select: 'nombre apellidoPaterno apellidoMaterno email foto role'
         });
 
-        res.json(grupoActualizado);
+        res.json(grupoActualizado || grupo);
     } catch (err) {
         console.error("Error en [PUT /grupos/:id/asignar-profesores]:", err);
         res.status(500).json({ error: "Error al asignar profesores.", details: err.message });
