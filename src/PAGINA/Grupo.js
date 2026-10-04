@@ -132,6 +132,8 @@ function Grupo({ user }) {
   const [isTotalesExpanded, setIsTotalesExpanded] = useState(false);
   const [editingStatusConfig, setEditingStatusConfig] = useState(null);
   const [newStatusInput, setNewStatusInput] = useState({ code: '', label: '', color: '#9c27b0', equivalent: 'P' });
+  const [autoSavingStatus, setAutoSavingStatus] = useState('');
+  const autoSaveTimerRef = useRef(null);
 
   const getStatusConfig = (code) => {
     if (!code) return null;
@@ -741,6 +743,29 @@ function Grupo({ user }) {
     XLSX.writeFile(workbook, `Lista_${grupo.nombre.replace(/ /g, '_')}.xlsx`);
   };
 
+  const triggerAutoSave = (newAsistenciaState) => {
+    if (!grupoSeleccionado || !asignaturaActual) return;
+    setAutoSavingStatus('Guardando...');
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        await axios.put(`${API_URL}/asistencia`, {
+          grupoId: grupoSeleccionado._id,
+          asignatura: asignaturaActual,
+          registros: newAsistenciaState,
+          diasPorBimestre
+        }, getAxiosConfig());
+        setAutoSavingStatus('Autoguardado ✅');
+        setHasChanges(false);
+        setTimeout(() => setAutoSavingStatus(''), 3000);
+      } catch (err) {
+        console.error("Auto-save error:", err);
+        setAutoSavingStatus('Error al autoguardar ⚠️');
+      }
+    }, 700);
+  };
+
   const handleMarcarAsistencia = (alumnoId, bimestre, diaIndex) => {
     const key = `${alumnoId}-b${bimestre}-d${diaIndex}`;
     const availableCodes = ['', ...attendanceStatuses.map(s => s.code)];
@@ -761,6 +786,7 @@ function Grupo({ user }) {
       } else {
         delete newState[key];
       }
+      triggerAutoSave(newState);
       return newState;
     });
   };
@@ -2044,10 +2070,10 @@ function Grupo({ user }) {
         )}
         {modalVisible === 'asistencia' && (
           <div className="modal-backdrop">
-            <div className="modal-content asistencia-modal-content">
+            <div className="modal-content asistencia-modal-content grupo-componente">
               <h2>Toma de Asistencia: {grupoSeleccionado?.nombre} - {asignaturaActual}</h2>
 
-              {/* Selector de Trimestre Global y Botón Pincel 🖌️ */}
+              {/* Selector de Trimestre Global, Botón de Guardar y Botón Pincel 🖌️ */}
               <div className="bimestre-selector" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '15px' }}>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   {[1, 2, 3].map(bim => (
@@ -2061,24 +2087,45 @@ function Grupo({ user }) {
                   ))}
                 </div>
 
-                {/* BOTÓN PINCEL 🖌️ PARA PERSONALIZAR ESTADOS DE ASISTENCIA */}
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  style={{
-                    background: 'linear-gradient(135deg, #8e44ad, #9c27b0)',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    boxShadow: '0 4px 10px rgba(156, 39, 176, 0.3)'
-                  }}
-                  onClick={() => setIsPincelModalOpen(true)}
-                  title="Personalizar botones de asistencia (Agregar O de Orquesta, Obs, etc.)"
-                >
-                  🖌️ Personalizar Estados
-                </button>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* BOTÓN GUARDAR ASISTENCIA (VISIBILIDAD Y AUTOGUARDADO SUPERIOR) */}
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{
+                      background: 'linear-gradient(135deg, #00cbcb, #008080)',
+                      color: '#111',
+                      fontWeight: 'bold',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 10px rgba(0, 203, 203, 0.4)'
+                    }}
+                    onClick={guardarAsistencia}
+                    title="Guardar asistencia manualmente"
+                  >
+                    💾 Guardar Asistencia {autoSavingStatus && <span style={{ fontSize: '0.75rem', backgroundColor: 'rgba(255,255,255,0.25)', color: '#000', padding: '2px 6px', borderRadius: '4px', marginLeft: '4px' }}>{autoSavingStatus}</span>}
+                  </button>
+
+                  {/* BOTÓN PINCEL 🖌️ PARA PERSONALIZAR ESTADOS DE ASISTENCIA */}
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{
+                      background: 'linear-gradient(135deg, #8e44ad, #9c27b0)',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 10px rgba(156, 39, 176, 0.3)'
+                    }}
+                    onClick={() => setIsPincelModalOpen(true)}
+                    title="Personalizar botones de asistencia (Agregar O de Orquesta, Obs, etc.)"
+                  >
+                    🖌️ Personalizar Estados
+                  </button>
+                </div>
               </div>
 
               {/* LEYENDA DE ESTADOS ACTIVOS Y TIP DE TOTALES */}

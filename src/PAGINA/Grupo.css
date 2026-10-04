@@ -1147,26 +1147,28 @@
 }
 
 /* Higher z-index for ALL headers to stay on top of body cells */
-.grupo-componente .tabla-global thead th {
+.grupo-componente .tabla-global thead th,
+.asistencia-modal-content .tabla-global thead th,
+.tabla-global thead th {
   position: sticky;
   top: 0;
   z-index: 200;
-  /* Higher than sticky body columns (100) */
-  background-color: var(--main-color);
-  color: #1a1a1a;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  border-bottom: 2px solid #b39028;
-  /* Definition line */
+  background-color: #1e293b !important;
+  color: #00cbcb;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+  border-bottom: 2px solid var(--border-color);
 }
 
 /* HIGHEST Z-INDEX: The "Corner" (Sticky Header + Sticky Column) */
-/* This ensures the top-left headers don't scroll under other headers or columns */
 .grupo-componente .tabla-global thead th.num-col,
-.grupo-componente .tabla-global thead th.alumno-col {
+.grupo-componente .tabla-global thead th.alumno-col,
+.asistencia-modal-content .tabla-global thead th.num-col,
+.asistencia-modal-content .tabla-global thead th.alumno-col,
+.tabla-global thead th.num-col,
+.tabla-global thead th.alumno-col {
   z-index: 300;
-  /* Top of the stack, absolute highest */
-  background-color: var(--main-color);
-  color: #1a1a1a;
+  background-color: #1e293b !important;
+  color: #00cbcb;
 }
 
 .grupo-componente .task-name {
