@@ -129,7 +129,8 @@ function Grupo({ user }) {
     return DEFAULT_ATTENDANCE_STATUSES;
   });
   const [isPincelModalOpen, setIsPincelModalOpen] = useState(false);
-  const [newStatusInput, setNewStatusInput] = useState({ code: '', label: '', color: '#9c27b0' });
+  const [isTotalesExpanded, setIsTotalesExpanded] = useState(false);
+  const [newStatusInput, setNewStatusInput] = useState({ code: '', label: '', color: '#9c27b0', equivalent: 'P' });
 
   const getStatusConfig = (code) => {
     if (!code) return null;
@@ -746,12 +747,14 @@ function Grupo({ user }) {
     const currentIndex = availableCodes.indexOf(estadoActual);
     const siguienteIndex = (currentIndex + 1) % availableCodes.length;
     const nuevoEstado = availableCodes[siguienteIndex];
+    const stConf = attendanceStatuses.find(s => s.code === nuevoEstado);
     setHasChanges(true);
     setAsistencia(prev => {
       const newState = { ...prev };
       if (nuevoEstado) {
         newState[key] = {
           estado: nuevoEstado,
+          equivalent: stConf?.equivalent || (nuevoEstado === 'F' ? 'F' : 'P'),
           fecha: new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
         };
       } else {
@@ -898,14 +901,33 @@ function Grupo({ user }) {
       const est = registro?.estado;
       if (!est) continue;
 
-      if (est === 'P' || est === 'J') presentes++;
-      if (est === 'R') { presentes++; retardos++; }
-      if (est === 'F') faltas++;
-      if (est === 'J') justificados++;
-
-      if (customCounts[est] !== undefined) {
-        customCounts[est]++;
-        presentes++; // Los botones personalizados (ej. O para Orquesta) cuentan como asistencia cumplida
+      if (est === 'P') {
+        presentes++;
+      } else if (est === 'F') {
+        faltas++;
+      } else if (est === 'J') {
+        justificados++;
+        presentes++;
+      } else if (est === 'R') {
+        retardos++;
+        presentes++;
+      } else {
+        if (customCounts[est] !== undefined) {
+          customCounts[est]++;
+        }
+        const stConf = attendanceStatuses.find(s => s.code === est);
+        const eq = stConf?.equivalent || 'P';
+        if (eq === 'F') {
+          faltas++;
+        } else if (eq === 'J') {
+          justificados++;
+          presentes++;
+        } else if (eq === 'R') {
+          retardos++;
+          presentes++;
+        } else {
+          presentes++;
+        }
       }
     }
     return { presentes, faltas, justificados, retardos, customCounts };
@@ -914,6 +936,7 @@ function Grupo({ user }) {
   const handleAddCustomStatus = () => {
     const codeClean = (newStatusInput.code || '').trim().toUpperCase();
     const labelClean = (newStatusInput.label || '').trim();
+    const equivalentClean = newStatusInput.equivalent || 'P';
     if (!codeClean) return showAlert('Ingresa una letra o código para el botón (ejemplo: O, Obs).', 'error');
     if (!labelClean) return showAlert('Ingresa una descripción o significado (ejemplo: Orquesta).', 'error');
 
@@ -923,13 +946,13 @@ function Grupo({ user }) {
 
     const updated = [
       ...attendanceStatuses,
-      { code: codeClean, label: labelClean, color: newStatusInput.color || '#9c27b0', icon: '🎨' }
+      { code: codeClean, label: labelClean, color: newStatusInput.color || '#9c27b0', icon: '🎨', equivalent: equivalentClean }
     ];
     setAttendanceStatuses(updated);
     try {
       localStorage.setItem('scholaris_custom_attendance_statuses', JSON.stringify(updated));
     } catch (e) {}
-    setNewStatusInput({ code: '', label: '', color: '#9c27b0' });
+    setNewStatusInput({ code: '', label: '', color: '#9c27b0', equivalent: 'P' });
     showAlert(`Botón "${codeClean}" (${labelClean}) agregado exitosamente.`);
   };
 
@@ -2053,90 +2076,116 @@ function Grupo({ user }) {
                         <th className="num-col" style={{ width: '40px', minWidth: '40px', textAlign: 'center' }}>#</th>
                         <th className="matricula-col" style={{ width: '80px', minWidth: '80px', textAlign: 'center' }}>ID</th>
                         <th className="alumno-col" style={{ width: '250px', minWidth: '250px' }}>Alumno</th>
-                        <th style={{ width: '120px', minWidth: '120px', textAlign: 'center' }}>Totales</th>
-                        {Array.from({ length: diasPorBimestre[bimestreActivo] || DIAS_INICIALES }).map((_, i) => (
-                          <th key={i} style={{ width: '30px', minWidth: '30px', textAlign: 'center', fontSize: '0.8rem' }}>{i + 1}</th>
-                        ))}
-                        <th style={{ width: '40px', minWidth: '40px' }}>
-                          <button className="btn-agregar-dias" onClick={() => agregarDias(bimestreActivo)} title="Agregar días">+5</button>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(() => {
-                        const sortedAlumnos = sortAlumnosWithStatus(grupoSeleccionado?.alumnos || []);
-                        const totalDias = diasPorBimestre[bimestreActivo] || DIAS_INICIALES;
-                        return sortedAlumnos.map((alumno, index) => {
-                          const isFirstNuevo = alumno.esNuevoIngreso && !alumno.esBaja && (index === 0 || (!sortedAlumnos[index - 1]?.esNuevoIngreso || sortedAlumnos[index - 1]?.esBaja));
-                          const isFirstBaja = alumno.esBaja && (index === 0 || !sortedAlumnos[index - 1]?.esBaja);
-                          const totales = calcularTotales(alumno._id, bimestreActivo, asistencia, diasPorBimestre);
-                          const isHighlighted = highlightedAlumnoId === alumno._id;
-                          return (
-                            <React.Fragment key={alumno._id}>
-                              {isFirstNuevo && (
-                                <tr className="divider-nuevo-ingreso-row" style={{ backgroundColor: 'rgba(255, 216, 102, 0.18)', color: '#ffd866', fontWeight: 'bold' }}>
-                                  <td colSpan={5 + totalDias} style={{ padding: '6px 12px', fontSize: '0.78rem', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                                    🌟 ALUMNOS DE NUEVO INGRESO (INGRESARON A MITAD DE CURSO)
-                                  </td>
-                                </tr>
-                              )}
-                              {isFirstBaja && (
-                                <tr className="divider-baja-row" style={{ backgroundColor: 'rgba(255, 77, 77, 0.18)', color: '#ff4d4d', fontWeight: 'bold' }}>
-                                  <td colSpan={5 + totalDias} style={{ padding: '6px 12px', fontSize: '0.78rem', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                                    🚫 ALUMNOS DADOS DE BAJA
-                                  </td>
-                                </tr>
-                              )}
-                              <tr className={`${isHighlighted ? 'highlight-row' : ''} ${alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')}`} style={{ backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.08)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined) }}>
-                                <td className="num-col" style={{ textAlign: 'center' }}>{index + 1}</td>
-                                <td className="matricula-col" style={{ textAlign: 'center', fontWeight: 'bold' }}>{alumno.matricula || '---'}</td>
-                                <td className="alumno-col notranslate" translate="no">
-                                  {alumno.apellidoPaterno} {alumno.apellidoMaterno || ''} {alumno.nombre}
-                                  {alumno.esBaja ? (
-                                    <span style={{
-                                      backgroundColor: '#570000',
-                                      color: '#ff4d4d',
-                                      padding: '1px 5px',
-                                      borderRadius: '4px',
-                                      fontSize: '0.7rem',
-                                      fontWeight: 'bold',
-                                      marginLeft: '6px',
-                                      border: '1px solid #850404'
-                                    }}>
-                                      🚫 Baja {alumno.fechaBaja ? `(${alumno.fechaBaja})` : ''}
-                                    </span>
-                                  ) : (alumno.esNuevoIngreso && (
-                                    <span style={{
-                                      backgroundColor: '#574100',
-                                      color: '#ffd866',
-                                      padding: '1px 5px',
-                                      borderRadius: '4px',
-                                      fontSize: '0.7rem',
-                                      fontWeight: 'bold',
-                                      marginLeft: '6px',
-                                      border: '1px solid #856404'
-                                    }}>
-                                      🌟 Nuevo {alumno.fechaIngreso ? `(${alumno.fechaIngreso})` : ''}
-                                    </span>
-                                  ))}
-                                </td>
-                                <td style={{ textAlign: 'center', fontSize: '0.85rem' }}>
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
-                                    <span style={{ color: 'var(--success-color)' }}>✅ {totales.presentes}</span>
-                                    <span style={{ color: 'var(--danger-color)' }}>❌ {totales.faltas}</span>
-                                    <span style={{ color: 'var(--warning-color)' }}>⚠️ {totales.justificados}</span>
-                                    <span style={{ color: '#ff9800' }}>🕒 {totales.retardos}</span>
-                                    {Object.entries(totales.customCounts || {}).map(([cCode, count]) => {
-                                      const stConf = getStatusConfig(cCode);
-                                      if (count === 0 && !stConf) return null;
-                                      return (
-                                        <span key={cCode} style={{ color: stConf?.color || '#9c27b0', fontWeight: 'bold' }}>
-                                          {stConf?.icon || '🎨'} {cCode}: {count}
-                                        </span>
-                                      );
-                                    })}
-                                  </div>
-                                </td>
+                         <th style={{ width: isTotalesExpanded ? '140px' : '90px', minWidth: isTotalesExpanded ? '140px' : '90px', textAlign: 'center' }}>
+                           <button
+                             type="button"
+                             onClick={() => setIsTotalesExpanded(!isTotalesExpanded)}
+                             style={{
+                               background: 'none',
+                               border: 'none',
+                               color: '#00cbcb',
+                               fontWeight: 'bold',
+                               cursor: 'pointer',
+                               fontSize: '0.85rem',
+                               display: 'inline-flex',
+                               alignItems: 'center',
+                               gap: '4px'
+                             }}
+                             title={isTotalesExpanded ? "Contraer desglose de totales" : "Expandir desglose completo de totales"}
+                           >
+                             Totales {isTotalesExpanded ? '▼' : '▶'}
+                           </button>
+                         </th>
+                         {Array.from({ length: diasPorBimestre[bimestreActivo] || DIAS_INICIALES }).map((_, i) => (
+                           <th key={i} style={{ width: '30px', minWidth: '30px', textAlign: 'center', fontSize: '0.8rem' }}>{i + 1}</th>
+                         ))}
+                         <th style={{ width: '40px', minWidth: '40px' }}>
+                           <button className="btn-agregar-dias" onClick={() => agregarDias(bimestreActivo)} title="Agregar días">+5</button>
+                         </th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {(() => {
+                         const sortedAlumnos = sortAlumnosWithStatus(grupoSeleccionado?.alumnos || []);
+                         const totalDias = diasPorBimestre[bimestreActivo] || DIAS_INICIALES;
+                         return sortedAlumnos.map((alumno, index) => {
+                           const isFirstNuevo = alumno.esNuevoIngreso && !alumno.esBaja && (index === 0 || (!sortedAlumnos[index - 1]?.esNuevoIngreso || sortedAlumnos[index - 1]?.esBaja));
+                           const isFirstBaja = alumno.esBaja && (index === 0 || !sortedAlumnos[index - 1]?.esBaja);
+                           const totales = calcularTotales(alumno._id, bimestreActivo, asistencia, diasPorBimestre);
+                           const isHighlighted = highlightedAlumnoId === alumno._id;
+                           return (
+                             <React.Fragment key={alumno._id}>
+                               {isFirstNuevo && (
+                                 <tr className="divider-nuevo-ingreso-row" style={{ backgroundColor: 'rgba(255, 216, 102, 0.18)', color: '#ffd866', fontWeight: 'bold' }}>
+                                   <td colSpan={5 + totalDias} style={{ padding: '6px 12px', fontSize: '0.78rem', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                                     🌟 ALUMNOS DE NUEVO INGRESO (INGRESARON A MITAD DE CURSO)
+                                   </td>
+                                 </tr>
+                               )}
+                               {isFirstBaja && (
+                                 <tr className="divider-baja-row" style={{ backgroundColor: 'rgba(255, 77, 77, 0.18)', color: '#ff4d4d', fontWeight: 'bold' }}>
+                                   <td colSpan={5 + totalDias} style={{ padding: '6px 12px', fontSize: '0.78rem', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                                     🚫 ALUMNOS DADOS DE BAJA
+                                   </td>
+                                 </tr>
+                               )}
+                               <tr className={`${isHighlighted ? 'highlight-row' : ''} ${alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')}`} style={{ backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.08)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined) }}>
+                                 <td className="num-col" style={{ textAlign: 'center' }}>{index + 1}</td>
+                                 <td className="matricula-col" style={{ textAlign: 'center', fontWeight: 'bold' }}>{alumno.matricula || '---'}</td>
+                                 <td className="alumno-col notranslate" translate="no">
+                                   {alumno.apellidoPaterno} {alumno.apellidoMaterno || ''} {alumno.nombre}
+                                   {alumno.esBaja ? (
+                                     <span style={{
+                                       backgroundColor: '#570000',
+                                       color: '#ff4d4d',
+                                       padding: '1px 5px',
+                                       borderRadius: '4px',
+                                       fontSize: '0.7rem',
+                                       fontWeight: 'bold',
+                                       marginLeft: '6px',
+                                       border: '1px solid #850404'
+                                     }}>
+                                       🚫 Baja {alumno.fechaBaja ? `(${alumno.fechaBaja})` : ''}
+                                     </span>
+                                   ) : (alumno.esNuevoIngreso && (
+                                     <span style={{
+                                       backgroundColor: '#574100',
+                                       color: '#ffd866',
+                                       padding: '1px 5px',
+                                       borderRadius: '4px',
+                                       fontSize: '0.7rem',
+                                       fontWeight: 'bold',
+                                       marginLeft: '6px',
+                                       border: '1px solid #856404'
+                                     }}>
+                                       🌟 Nuevo {alumno.fechaIngreso ? `(${alumno.fechaIngreso})` : ''}
+                                     </span>
+                                   ))}
+                                 </td>
+                                 <td style={{ textAlign: 'center', fontSize: '0.85rem', padding: '4px 6px' }}>
+                                   {!isTotalesExpanded ? (
+                                     <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap', fontWeight: 'bold' }}>
+                                       <span style={{ color: 'var(--success-color)' }} title={`Presentes / Asistencias: ${totales.presentes}`}>✅{totales.presentes}</span>
+                                       <span style={{ color: 'var(--danger-color)' }} title={`Faltas / Inasistencias: ${totales.faltas}`}>❌{totales.faltas}</span>
+                                     </div>
+                                   ) : (
+                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                                       <span style={{ color: 'var(--success-color)' }}>✅ {totales.presentes}</span>
+                                       <span style={{ color: 'var(--danger-color)' }}>❌ {totales.faltas}</span>
+                                       <span style={{ color: 'var(--warning-color)' }}>⚠️ {totales.justificados}</span>
+                                       <span style={{ color: '#ff9800' }}>🕒 {totales.retardos}</span>
+                                       {Object.entries(totales.customCounts || {}).map(([cCode, count]) => {
+                                         const stConf = getStatusConfig(cCode);
+                                         if (count === 0 && !stConf) return null;
+                                         return (
+                                           <span key={cCode} style={{ color: stConf?.color || '#9c27b0', fontWeight: 'bold' }}>
+                                             {stConf?.icon || '🎨'} {cCode}: {count}
+                                           </span>
+                                         );
+                                       })}
+                                     </div>
+                                   )}
+                                 </td>
                                 {Array.from({ length: totalDias }).map((_, diaIndex) => {
                                   const key = `${alumno._id}-b${bimestreActivo}-d${diaIndex + 1}`;
                                   const registro = asistencia[key];
@@ -2233,50 +2282,58 @@ function Grupo({ user }) {
               <div style={{ marginBottom: '20px' }}>
                 <h4 style={{ fontSize: '0.95rem', color: '#00cbcb', marginBottom: '8px' }}>Botones Configurados:</h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {attendanceStatuses.map(st => (
-                    <div
-                      key={st.code}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '6px 12px',
-                        borderRadius: '8px',
-                        backgroundColor: 'rgba(255,255,255,0.08)',
-                        border: `1px solid ${st.color}`
-                      }}
-                    >
-                      <span style={{
-                        backgroundColor: st.color,
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        fontSize: '0.85rem'
-                      }}>
-                        {st.code}
-                      </span>
-                      <span style={{ fontSize: '0.9rem' }}>{st.label}</span>
-                      {!['P', 'F', 'J', 'R'].includes(st.code) && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveCustomStatus(st.code)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#ff4d4d',
-                            cursor: 'pointer',
-                            fontSize: '1.1rem',
-                            padding: '0 2px',
-                            lineHeight: 1
-                          }}
-                          title="Eliminar botón personalizado"
-                        >
-                          &times;
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                  {attendanceStatuses.map(st => {
+                    const eqMap = { P: 'Presente', F: 'Falta', J: 'Justificante', R: 'Retardo' };
+                    return (
+                      <div
+                        key={st.code}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: 'rgba(255,255,255,0.08)',
+                          border: `1px solid ${st.color}`
+                        }}
+                      >
+                        <span style={{
+                          backgroundColor: st.color,
+                          color: '#fff',
+                          fontWeight: 'bold',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.85rem'
+                        }}>
+                          {st.code}
+                        </span>
+                        <span style={{ fontSize: '0.9rem' }}>{st.label}</span>
+                        {!['P', 'F', 'J', 'R'].includes(st.code) && (
+                          <span style={{ fontSize: '0.73rem', color: '#ffd866', backgroundColor: 'rgba(255, 216, 102, 0.15)', padding: '2px 6px', borderRadius: '4px' }}>
+                            (Gráfica: {eqMap[st.equivalent || 'P']})
+                          </span>
+                        )}
+                        {!['P', 'F', 'J', 'R'].includes(st.code) && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveCustomStatus(st.code)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#ff4d4d',
+                              cursor: 'pointer',
+                              fontSize: '1.1rem',
+                              padding: '0 2px',
+                              lineHeight: 1
+                            }}
+                            title="Eliminar botón personalizado"
+                          >
+                            &times;
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -2305,6 +2362,23 @@ function Grupo({ user }) {
                       style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #555', backgroundColor: '#222', color: '#fff' }}
                     />
                   </div>
+                </div>
+
+                {/* SELECTOR DE EQUIVALENCIA EN REPORTES Y GRÁFICAS */}
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ fontSize: '0.8rem', color: '#aaa', display: 'block', marginBottom: '4px' }}>
+                    Equivalencia para Gráficas / Reportes (¿Cómo se contabiliza?):
+                  </label>
+                  <select
+                    value={newStatusInput.equivalent || 'P'}
+                    onChange={(e) => setNewStatusInput({ ...newStatusInput, equivalent: e.target.value })}
+                    style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #555', backgroundColor: '#222', color: '#fff' }}
+                  >
+                    <option value="P">✅ Sumar como Presente (Asistencia cumplida)</option>
+                    <option value="F">❌ Sumar como Falta (Inasistencia)</option>
+                    <option value="J">⚠️ Sumar como Justificante</option>
+                    <option value="R">🕒 Sumar como Retardo</option>
+                  </select>
                 </div>
 
                 {/* SELECTOR DE COLOR PRESET */}

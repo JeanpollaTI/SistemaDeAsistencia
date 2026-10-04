@@ -755,8 +755,11 @@ router.get("/:id/analytics", authMiddleware, isAdmin, schoolMiddleware, async (r
             if (reg.registros) {
                 const entries = (reg.registros instanceof Map) ? Array.from(reg.registros.values()) : Object.values(reg.registros);
                 for (const item of entries) {
-                    if (['P', 'R', 'J'].includes(item.estado)) totalPresentes++;
-                    else if (item.estado === 'F') totalFaltas++;
+                    const est = item?.estado;
+                    if (!est) continue;
+                    const eq = item?.equivalent || (est === 'F' ? 'F' : 'P');
+                    if (eq === 'F') totalFaltas++;
+                    else totalPresentes++;
                 }
             }
         });
