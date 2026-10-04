@@ -2738,34 +2738,24 @@ const PanelCalificaciones = ({
                         );
                     })()}
 
-                    {/* 🌟 SELECTOR DE CRITERIOS (TABS) CON BOTÓN GUARDAR AL LADO DERECHO */}
+                    {/* 🌟 SELECTOR DE CRITERIOS (TABS) */}
                     {criteriosActivos.length > 0 && (
-                        <div className="tabs-criterios" style={{ marginBottom: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                <div
-                                    className={`tab-criterio ${criterioSeleccionadoGlobal === null ? 'activo' : ''}`}
-                                    onClick={() => setCriterioSeleccionadoGlobal(null)}
-                                >
-                                    📋 Vista General
-                                </div>
-                                {criteriosActivos.map(crit => (
-                                    <div
-                                        key={crit.nombre}
-                                        className={`tab-criterio ${criterioSeleccionadoGlobal === crit.nombre ? 'activo' : ''}`}
-                                        onClick={() => setCriterioSeleccionadoGlobal(crit.nombre)}
-                                    >
-                                        {crit.nombre} ({crit.porcentaje}%)
-                                    </div>
-                                ))}
-                            </div>
-                            <button
-                                className="btn btn-primary"
-                                onClick={guardarCalificaciones}
-                                disabled={isSaving}
-                                style={{ backgroundColor: '#00cbcb', borderColor: '#00cbcb', color: '#10172a', fontWeight: 'bold', padding: '6px 16px', borderRadius: '6px', fontSize: '0.9rem', flexShrink: 0 }}
+                        <div className="tabs-criterios" style={{ marginBottom: 0 }}>
+                            <div
+                                className={`tab-criterio ${criterioSeleccionadoGlobal === null ? 'activo' : ''}`}
+                                onClick={() => setCriterioSeleccionadoGlobal(null)}
                             >
-                                {isSaving ? 'Guardando...' : '💾 Guardar Calificaciones'}
-                            </button>
+                                📋 Vista General
+                            </div>
+                            {criteriosActivos.map(crit => (
+                                <div
+                                    key={crit.nombre}
+                                    className={`tab-criterio ${criterioSeleccionadoGlobal === crit.nombre ? 'activo' : ''}`}
+                                    onClick={() => setCriterioSeleccionadoGlobal(crit.nombre)}
+                                >
+                                    {crit.nombre} ({crit.porcentaje}%)
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -3069,9 +3059,7 @@ const PanelCalificaciones = ({
                 ) : (
                     <div className="aviso-criterios"><p>⚠️ Por favor, define los criterios de evaluación para el **Trimestre {bimestreActivo}**.</p></div>
                 )}
-                <div className="modal-actions" style={{ padding: '0 20px' }}>
-                    <button className="btn btn-primary" onClick={guardarCalificaciones} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar Calificaciones'}</button>
-                </div>
+
 
                 {modalCriterios && (
                     <ModalCriterios
