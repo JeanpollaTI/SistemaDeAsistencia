@@ -23,6 +23,26 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const NUM_BIMESTRES = 3;
 const DIAS_INICIALES = 30;
 
+const DEFAULT_ATTENDANCE_STATUSES = [
+  { code: 'P', label: 'Presente', color: '#27ae60', icon: '✅' },
+  { code: 'F', label: 'Falta', color: '#d32f2f', icon: '❌' },
+  { code: 'J', label: 'Justificante', color: '#00CBCB', icon: '⚠️' },
+  { code: 'R', label: 'Retardo', color: '#ff9800', icon: '🕒' }
+];
+
+const PRESET_STATUS_COLORS = [
+  '#9c27b0', // Púrpura (ej: Orquesta)
+  '#e91e63', // Rosa (ej: Enfermería / Salud)
+  '#2196f3', // Azul (ej: Taller / Comisiones)
+  '#00cbcb', // Turquesa
+  '#8bc34a', // Lima
+  '#ff5722', // Coral
+  '#795548', // Marrón
+  '#607d8b', // Gris azulado
+  '#e67e22', // Naranja oscuro
+  '#16a085'  // Verde mar
+];
+
 const sortAlumnosWithStatus = (alumnosList = []) => {
   const reg = [];
   const nuevos = [];
@@ -98,6 +118,23 @@ function Grupo({ user }) {
   const [currentGroupToAnalyze, setCurrentGroupToAnalyze] = useState(null);
   const [searchTermProfesor, setSearchTermProfesor] = useState('');
   const [expandedTeachersGroups, setExpandedTeachersGroups] = useState({});
+  const [attendanceStatuses, setAttendanceStatuses] = useState(() => {
+    try {
+      const saved = localStorage.getItem('scholaris_custom_attendance_statuses');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return DEFAULT_ATTENDANCE_STATUSES;
+  });
+  const [isPincelModalOpen, setIsPincelModalOpen] = useState(false);
+  const [newStatusInput, setNewStatusInput] = useState({ code: '', label: '', color: '#9c27b0' });
+
+  const getStatusConfig = (code) => {
+    if (!code) return null;
+    return attendanceStatuses.find(s => s.code === code) || { code, label: code, color: '#9c27b0' };
+  };
 
   const toggleTeachersExpand = (grupoId) => {
     setExpandedTeachersGroups(prev => ({
@@ -703,10 +740,11 @@ function Grupo({ user }) {
 
   const handleMarcarAsistencia = (alumnoId, bimestre, diaIndex) => {
     const key = `${alumnoId}-b${bimestre}-d${diaIndex}`;
-    const estados = ['', 'P', 'F', 'J', 'R']; // NUEVO: Incluye 'R' (Retardo)
+    const availableCodes = ['', ...attendanceStatuses.map(s => s.code)];
     const estadoActual = asistencia[key]?.estado || '';
-    const siguienteEstadoIndex = (estados.indexOf(estadoActual) + 1) % estados.length;
-    const nuevoEstado = estados[siguienteEstadoIndex];
+    const currentIndex = availableCodes.indexOf(estadoActual);
+    const siguienteIndex = (currentIndex + 1) % availableCodes.length;
+    const nuevoEstado = availableCodes[siguienteIndex];
     setHasChanges(true);
     setAsistencia(prev => {
       const newState = { ...prev };
@@ -843,18 +881,76 @@ function Grupo({ user }) {
     let presentes = 0;
     let faltas = 0;
     let justificados = 0;
-    let retardos = 0; // NUEVO
+    let retardos = 0;
+    const customCounts = {};
+
+    attendanceStatuses.forEach(st => {
+      if (!['P', 'F', 'J', 'R'].includes(st.code)) {
+        customCounts[st.code] = 0;
+      }
+    });
+
     const diasDelBimestre = (diasData || diasPorBimestre)[bimestre] || DIAS_INICIALES;
     for (let i = 1; i <= diasDelBimestre; i++) {
       const key = `${alumnoId}-b${bimestre}-d${i}`;
       const registro = (asistenciaData || asistencia)[key];
-      if (registro?.estado === 'P' || registro?.estado === 'J') presentes++; // P y J cuentan como asistencia
-      if (registro?.estado === 'R') { presentes++; retardos++; } // Ajuste: Retardo 'R' cuenta como asistencia (Presente) y se suma a Retardos.
-      if (registro?.estado === 'F') faltas++;
-      if (registro?.estado === 'J') justificados++;
+      const est = registro?.estado;
+      if (!est) continue;
+
+      if (est === 'P' || est === 'J') presentes++;
+      if (est === 'R') { presentes++; retardos++; }
+      if (est === 'F') faltas++;
+      if (est === 'J') justificados++;
+
+      if (customCounts[est] !== undefined) {
+        customCounts[est]++;
+        presentes++; // Los botones personalizados (ej. O para Orquesta) cuentan como asistencia cumplida
+      }
     }
-    return { presentes, faltas, justificados, retardos };
-  }, [asistencia, diasPorBimestre]);
+    return { presentes, faltas, justificados, retardos, customCounts };
+  }, [asistencia, diasPorBimestre, attendanceStatuses]);
+
+  const handleAddCustomStatus = () => {
+    const codeClean = (newStatusInput.code || '').trim().toUpperCase();
+    const labelClean = (newStatusInput.label || '').trim();
+    if (!codeClean) return showAlert('Ingresa una letra o código para el botón (ejemplo: O, Obs).', 'error');
+    if (!labelClean) return showAlert('Ingresa una descripción o significado (ejemplo: Orquesta).', 'error');
+
+    if (attendanceStatuses.some(s => s.code === codeClean)) {
+      return showAlert(`El botón "${codeClean}" ya existe en la lista.`, 'error');
+    }
+
+    const updated = [
+      ...attendanceStatuses,
+      { code: codeClean, label: labelClean, color: newStatusInput.color || '#9c27b0', icon: '🎨' }
+    ];
+    setAttendanceStatuses(updated);
+    try {
+      localStorage.setItem('scholaris_custom_attendance_statuses', JSON.stringify(updated));
+    } catch (e) {}
+    setNewStatusInput({ code: '', label: '', color: '#9c27b0' });
+    showAlert(`Botón "${codeClean}" (${labelClean}) agregado exitosamente.`);
+  };
+
+  const handleRemoveCustomStatus = (codeToRemove) => {
+    if (['P', 'F', 'J', 'R'].includes(codeToRemove)) {
+      return showAlert('Los botones base (P, F, J, R) no se pueden eliminar.', 'error');
+    }
+    const updated = attendanceStatuses.filter(s => s.code !== codeToRemove);
+    setAttendanceStatuses(updated);
+    try {
+      localStorage.setItem('scholaris_custom_attendance_statuses', JSON.stringify(updated));
+    } catch (e) {}
+    showAlert(`Botón "${codeToRemove}" eliminado.`);
+  };
+
+  const handleResetStatuses = () => {
+    setAttendanceStatuses(DEFAULT_ATTENDANCE_STATUSES);
+    try {
+      localStorage.removeItem('scholaris_custom_attendance_statuses');
+    } catch (e) {}
+    showAlert('Botones de asistencia restablecidos por defecto (P, F, J, R).');
+  };
 
   const handleAddAsignatura = (profesorId, nuevaAsignatura) => {
     if (!nuevaAsignatura) return;
@@ -1891,16 +1987,61 @@ function Grupo({ user }) {
             <div className="modal-content asistencia-modal-content">
               <h2>Toma de Asistencia: {grupoSeleccionado?.nombre} - {asignaturaActual}</h2>
 
-              {/* NUEVO: Selector de Trimestre Global */}
-              <div className="bimestre-selector">
-                {[1, 2, 3].map(bim => (
-                  <button
-                    key={bim}
-                    className={`btn ${bimestreActivo === bim ? 'btn-primary' : 'btn-cancel'}`}
-                    onClick={() => setBimestreActivo(bim)}
-                  >
-                    Trimestre {bim}
-                  </button>
+              {/* Selector de Trimestre Global y Botón Pincel 🖌️ */}
+              <div className="bimestre-selector" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '15px' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {[1, 2, 3].map(bim => (
+                    <button
+                      key={bim}
+                      className={`btn ${bimestreActivo === bim ? 'btn-primary' : 'btn-cancel'}`}
+                      onClick={() => setBimestreActivo(bim)}
+                    >
+                      Trimestre {bim}
+                    </button>
+                  ))}
+                </div>
+
+                {/* BOTÓN PINCEL 🖌️ PARA PERSONALIZAR ESTADOS DE ASISTENCIA */}
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{
+                    background: 'linear-gradient(135deg, #8e44ad, #9c27b0)',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 4px 10px rgba(156, 39, 176, 0.3)'
+                  }}
+                  onClick={() => setIsPincelModalOpen(true)}
+                  title="Personalizar botones de asistencia (Agregar O de Orquesta, Obs, etc.)"
+                >
+                  🖌️ Personalizar Estados
+                </button>
+              </div>
+
+              {/* LEYENDA DE ESTADOS ACTIVOS */}
+              <div className="asistencia-legend-bar" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px', marginBottom: '12px', flexWrap: 'wrap', fontSize: '0.85rem' }}>
+                <span style={{ fontWeight: 'bold', color: '#00cbcb' }}>Botones activos:</span>
+                {attendanceStatuses.map(st => (
+                  <span key={st.code} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <span style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '4px',
+                      backgroundColor: st.color,
+                      color: '#fff',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold'
+                    }}>
+                      {st.code}
+                    </span>
+                    <span>{st.label}</span>
+                  </span>
                 ))}
               </div>
 
@@ -1949,7 +2090,7 @@ function Grupo({ user }) {
                               <tr className={`${isHighlighted ? 'highlight-row' : ''} ${alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')}`} style={{ backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.08)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined) }}>
                                 <td className="num-col" style={{ textAlign: 'center' }}>{index + 1}</td>
                                 <td className="matricula-col" style={{ textAlign: 'center', fontWeight: 'bold' }}>{alumno.matricula || '---'}</td>
-                                <td className="alumno-col">
+                                <td className="alumno-col notranslate" translate="no">
                                   {alumno.apellidoPaterno} {alumno.apellidoMaterno || ''} {alumno.nombre}
                                   {alumno.esBaja ? (
                                     <span style={{
@@ -1980,21 +2121,37 @@ function Grupo({ user }) {
                                   ))}
                                 </td>
                                 <td style={{ textAlign: 'center', fontSize: '0.85rem' }}>
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
                                     <span style={{ color: 'var(--success-color)' }}>✅ {totales.presentes}</span>
                                     <span style={{ color: 'var(--danger-color)' }}>❌ {totales.faltas}</span>
                                     <span style={{ color: 'var(--warning-color)' }}>⚠️ {totales.justificados}</span>
                                     <span style={{ color: '#ff9800' }}>🕒 {totales.retardos}</span>
+                                    {Object.entries(totales.customCounts || {}).map(([cCode, count]) => {
+                                      const stConf = getStatusConfig(cCode);
+                                      if (count === 0 && !stConf) return null;
+                                      return (
+                                        <span key={cCode} style={{ color: stConf?.color || '#9c27b0', fontWeight: 'bold' }}>
+                                          {stConf?.icon || '🎨'} {cCode}: {count}
+                                        </span>
+                                      );
+                                    })}
                                   </div>
                                 </td>
                                 {Array.from({ length: totalDias }).map((_, diaIndex) => {
                                   const key = `${alumno._id}-b${bimestreActivo}-d${diaIndex + 1}`;
                                   const registro = asistencia[key];
+                                  const stConf = getStatusConfig(registro?.estado);
                                   return (
                                     <td key={diaIndex} style={{ padding: '2px', textAlign: 'center' }}>
                                       <div
-                                        className={`cuadrito estado-${registro?.estado.toLowerCase() || ''}`}
-                                        style={{ margin: '0 auto' }}
+                                        className={`cuadrito ${stConf ? 'custom-active' : ''}`}
+                                        style={{
+                                          margin: '0 auto',
+                                          backgroundColor: stConf ? stConf.color : undefined,
+                                          color: '#ffffff',
+                                          fontWeight: 'bold',
+                                          border: stConf ? `1px solid ${stConf.color}` : undefined
+                                        }}
                                         onClick={() => handleMarcarAsistencia(alumno._id, bimestreActivo, diaIndex + 1)}
                                         onMouseEnter={(e) => handleMouseEnterCell(e, alumno._id, bimestreActivo, diaIndex + 1, registro?.fecha)}
                                         onMouseLeave={handleMouseLeaveCell}
@@ -2056,6 +2213,156 @@ function Grupo({ user }) {
               <div className="modal-actions">
                 <button className="btn btn-primary" onClick={guardarAsistencia}>Guardar Asistencia</button>
                 <button className="btn btn-cancel" onClick={cerrarModal}>Cerrar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL PINCEL 🖌️ PERSONALIZAR ESTADOS DE ASISTENCIA */}
+        {isPincelModalOpen && (
+          <div className="modal-backdrop" style={{ zIndex: 2500 }}>
+            <div className="modal-content modal-md" style={{ maxWidth: '550px' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#00cbcb' }}>
+                🖌️ Personalizar Botones de Asistencia
+              </h2>
+              <p style={{ fontSize: '0.88rem', color: '#ccc', marginBottom: '15px' }}>
+                Configura los botones personalizados que se alternarán al hacer clic en los cuadritos de asistencia (ejemplo: <strong>'O'</strong> para <strong>Orquesta</strong>, <strong>'Obs'</strong> para <strong>Observaciones</strong>).
+              </p>
+
+              {/* LISTA DE BOTONES ACTUALES */}
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ fontSize: '0.95rem', color: '#00cbcb', marginBottom: '8px' }}>Botones Configurados:</h4>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {attendanceStatuses.map(st => (
+                    <div
+                      key={st.code}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(255,255,255,0.08)',
+                        border: `1px solid ${st.color}`
+                      }}
+                    >
+                      <span style={{
+                        backgroundColor: st.color,
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        fontSize: '0.85rem'
+                      }}>
+                        {st.code}
+                      </span>
+                      <span style={{ fontSize: '0.9rem' }}>{st.label}</span>
+                      {!['P', 'F', 'J', 'R'].includes(st.code) && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCustomStatus(st.code)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#ff4d4d',
+                            cursor: 'pointer',
+                            fontSize: '1.1rem',
+                            padding: '0 2px',
+                            lineHeight: 1
+                          }}
+                          title="Eliminar botón personalizado"
+                        >
+                          &times;
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* FORMULARIO AGREGAR NUEVO BOTÓN */}
+              <div style={{ backgroundColor: 'rgba(0,0,0,0.25)', padding: '15px', borderRadius: '10px', marginBottom: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <h4 style={{ fontSize: '0.95rem', color: '#ffd866', marginBottom: '10px' }}>+ Agregar Nuevo Botón Personalizado</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px', marginBottom: '12px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: '#aaa', display: 'block', marginBottom: '4px' }}>Letra / Código:</label>
+                    <input
+                      type="text"
+                      placeholder="Ej: O, Obs"
+                      maxLength={4}
+                      value={newStatusInput.code}
+                      onChange={(e) => setNewStatusInput({ ...newStatusInput, code: e.target.value })}
+                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #555', backgroundColor: '#222', color: '#fff' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: '#aaa', display: 'block', marginBottom: '4px' }}>Significado / Descripción:</label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Orquesta, Taller..."
+                      value={newStatusInput.label}
+                      onChange={(e) => setNewStatusInput({ ...newStatusInput, label: e.target.value })}
+                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #555', backgroundColor: '#222', color: '#fff' }}
+                    />
+                  </div>
+                </div>
+
+                {/* SELECTOR DE COLOR PRESET */}
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ fontSize: '0.8rem', color: '#aaa', display: 'block', marginBottom: '6px' }}>Color del Botón:</label>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {PRESET_STATUS_COLORS.map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setNewStatusInput({ ...newStatusInput, color: c })}
+                        style={{
+                          width: '26px',
+                          height: '26px',
+                          borderRadius: '50%',
+                          backgroundColor: c,
+                          border: newStatusInput.color === c ? '3px solid #fff' : '1px solid #444',
+                          cursor: 'pointer',
+                          boxShadow: newStatusInput.color === c ? '0 0 8px ' + c : 'none'
+                        }}
+                      />
+                    ))}
+                    <input
+                      type="color"
+                      value={newStatusInput.color}
+                      onChange={(e) => setNewStatusInput({ ...newStatusInput, color: e.target.value })}
+                      style={{ width: '32px', height: '30px', border: 'none', background: 'none', cursor: 'pointer' }}
+                      title="Elegir color personalizado"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{ width: '100%', background: 'linear-gradient(135deg, #00cbcb, #009999)', color: '#111', fontWeight: 'bold' }}
+                  onClick={handleAddCustomStatus}
+                >
+                  + Guardar Nuevo Botón
+                </button>
+              </div>
+
+              <div className="modal-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="btn btn-cancel"
+                  style={{ backgroundColor: '#555', fontSize: '0.8rem' }}
+                  onClick={handleResetStatuses}
+                >
+                  Restablecer por Defecto
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setIsPincelModalOpen(false)}
+                >
+                  Listo / Cerrar
+                </button>
               </div>
             </div>
           </div>
