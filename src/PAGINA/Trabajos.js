@@ -2802,27 +2802,16 @@ const PanelCalificaciones = ({
                                                 );
                                             })}
                                             <th style={{ width: '80px', color: '#f39c12' }}>Prom</th>
-                                            {/* Botón +5 y Guardar en el header */}
+                                            {/* Botón +5 en el header */}
                                             <th>
-                                                <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', alignItems: 'center' }}>
-                                                    <button
-                                                        className="btn btn-agregar-dias"
-                                                        style={{ width: '40px', height: '30px', padding: 0, fontSize: '0.9rem' }}
-                                                        onClick={() => agregarTareas(criterioSeleccionadoGlobal)}
-                                                        title="Agregar 5 columnas más"
-                                                    >
-                                                        +5
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-primary"
-                                                        style={{ height: '30px', padding: '0 8px', fontSize: '0.8rem', backgroundColor: '#00cbcb', color: '#10172a', fontWeight: 'bold', border: 'none', borderRadius: '4px', whiteSpace: 'nowrap' }}
-                                                        onClick={guardarCalificaciones}
-                                                        disabled={isSaving}
-                                                        title="Guardar Calificaciones"
-                                                    >
-                                                        💾 Guardar
-                                                    </button>
-                                                </div>
+                                                <button
+                                                    className="btn btn-agregar-dias"
+                                                    style={{ width: '40px', height: '30px', padding: 0, fontSize: '0.9rem' }}
+                                                    onClick={() => agregarTareas(criterioSeleccionadoGlobal)}
+                                                    title="Agregar 5 columnas más"
+                                                >
+                                                    +5
+                                                </button>
                                             </th>
                                         </tr>
                                     </thead>
