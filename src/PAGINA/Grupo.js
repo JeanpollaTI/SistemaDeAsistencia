@@ -2081,28 +2081,33 @@ function Grupo({ user }) {
                 </button>
               </div>
 
-              {/* LEYENDA DE ESTADOS ACTIVOS */}
-              <div className="asistencia-legend-bar" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px', marginBottom: '12px', flexWrap: 'wrap', fontSize: '0.85rem' }}>
-                <span style={{ fontWeight: 'bold', color: '#00cbcb' }}>Botones activos:</span>
-                {attendanceStatuses.map(st => (
-                  <span key={st.code} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                    <span style={{
-                      width: '20px',
-                      height: '20px',
-                      borderRadius: '4px',
-                      backgroundColor: st.color,
-                      color: '#fff',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.75rem',
-                      fontWeight: 'bold'
-                    }}>
-                      {st.code}
+              {/* LEYENDA DE ESTADOS ACTIVOS Y TIP DE TOTALES */}
+              <div className="asistencia-legend-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '8px 12px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px', marginBottom: '12px', flexWrap: 'wrap', fontSize: '0.85rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <span style={{ fontWeight: 'bold', color: '#00cbcb' }}>Botones activos:</span>
+                  {attendanceStatuses.map(st => (
+                    <span key={st.code} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <span style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '4px',
+                        backgroundColor: st.color,
+                        color: '#fff',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold'
+                      }}>
+                        {st.code}
+                      </span>
+                      <span>{st.label}</span>
                     </span>
-                    <span>{st.label}</span>
-                  </span>
-                ))}
+                  ))}
+                </div>
+                <div style={{ color: '#ffd866', fontSize: '0.8rem', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  💡 <span>Haz clic en <strong>"📊 Totales ▶"</strong> para desplegar u ocultar el desglose.</span>
+                </div>
               </div>
 
               <div className="asistencia-grid">
@@ -2113,26 +2118,32 @@ function Grupo({ user }) {
                         <th className="num-col" style={{ width: '40px', minWidth: '40px', textAlign: 'center' }}>#</th>
                         <th className="matricula-col" style={{ width: '80px', minWidth: '80px', textAlign: 'center' }}>ID</th>
                         <th className="alumno-col" style={{ width: '250px', minWidth: '250px' }}>Alumno</th>
-                         <th style={{ width: isTotalesExpanded ? '140px' : '90px', minWidth: isTotalesExpanded ? '140px' : '90px', textAlign: 'center' }}>
-                           <button
-                             type="button"
-                             onClick={() => setIsTotalesExpanded(!isTotalesExpanded)}
-                             style={{
-                               background: 'none',
-                               border: 'none',
-                               color: '#00cbcb',
-                               fontWeight: 'bold',
-                               cursor: 'pointer',
-                               fontSize: '0.85rem',
-                               display: 'inline-flex',
-                               alignItems: 'center',
-                               gap: '4px'
-                             }}
-                             title={isTotalesExpanded ? "Contraer desglose de totales" : "Expandir desglose completo de totales"}
-                           >
-                             Totales {isTotalesExpanded ? '▼' : '▶'}
-                           </button>
-                         </th>
+                        <th style={{ width: isTotalesExpanded ? '150px' : '110px', minWidth: isTotalesExpanded ? '150px' : '110px', textAlign: 'center', padding: '6px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setIsTotalesExpanded(!isTotalesExpanded)}
+                            style={{
+                              background: isTotalesExpanded ? 'linear-gradient(135deg, #ff9800, #e67e22)' : 'linear-gradient(135deg, #00cbcb, #009999)',
+                              color: '#0d1b2a',
+                              border: 'none',
+                              borderRadius: '20px',
+                              padding: '5px 12px',
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                              fontSize: '0.82rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '5px',
+                              boxShadow: isTotalesExpanded ? '0 2px 8px rgba(230, 126, 34, 0.4)' : '0 2px 8px rgba(0, 203, 203, 0.4)',
+                              transition: 'all 0.2s ease',
+                              whiteSpace: 'nowrap'
+                            }}
+                            title={isTotalesExpanded ? "Clic para contraer desglose de totales" : "Clic para desplegar desglose completo de totales"}
+                          >
+                            📊 Totales {isTotalesExpanded ? '▼' : '▶'}
+                          </button>
+                        </th>
                          {Array.from({ length: diasPorBimestre[bimestreActivo] || DIAS_INICIALES }).map((_, i) => (
                            <th key={i} style={{ width: '30px', minWidth: '30px', textAlign: 'center', fontSize: '0.8rem' }}>{i + 1}</th>
                          ))}
