@@ -103,7 +103,10 @@ function Home({ user }) {
 
     // Uso de API_URL para compatibilidad con Render/Vercel
     axios.get(`${API_URL}/profesores`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => setProfesores(res.data || []))
+      .then((res) => {
+        const list = Array.isArray(res.data) ? res.data.filter(p => p.role === 'profesor') : [];
+        setProfesores(list);
+      })
       .catch((err) => {
         console.error("Error al obtener profesores:", err);
         if (err.response && err.response.status === 401) {

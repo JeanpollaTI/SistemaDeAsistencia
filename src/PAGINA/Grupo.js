@@ -232,7 +232,8 @@ function Grupo({ user }) {
             a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
           ) : [];
           setGrupos(sortedGrupos);
-          setProfesores(profesoresRes.data || []);
+          const rawProfs = Array.isArray(profesoresRes.data) ? profesoresRes.data : [];
+          setProfesores(rawProfs.filter(p => p && p.role === 'profesor'));
           setMateriasDb(materiasRes.data || []);
 
           // Fetch School Config if we have schoolId
@@ -1912,11 +1913,18 @@ function Grupo({ user }) {
                         >
                           <option value="" disabled>Agregar asignatura...</option>
                           {(() => {
-                            const profAsigs = profesor.asignaturas || [];
                             const dbAsigs = (materiasDb || []).map(m => (typeof m === 'object' ? m.nombre : m)).filter(Boolean);
                             
-                            // Únicamente materias pertenecientes a la escuela (sin inyectar catálogo global)
-                            const allUnique = Array.from(new Set([...profAsigs, ...dbAsigs]))
+                            // Filtrar asignaturas del perfil del docente para que SOLO incluyan las registradas en esta escuela
+                            const profAsigs = (profesor.asignaturas || []).filter(asig => 
+                              dbAsigs.some(m => m.trim().toLowerCase() === String(asig).trim().toLowerCase())
+                            );
+
+                            // Si el docente tiene materias configuradas en su perfil que existen en la escuela, sugerimos únicamente esas.
+                            // De lo contrario, se ofrecen todas las materias registradas en la escuela.
+                            const candidateAsigs = profAsigs.length > 0 ? profAsigs : dbAsigs;
+
+                            const allUnique = Array.from(new Set(candidateAsigs))
                               .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 
                             const currentAssigned = asignaciones[profId] || [];
