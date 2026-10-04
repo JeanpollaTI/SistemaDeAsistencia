@@ -84,18 +84,19 @@ router.get("/", authMiddleware, schoolMiddleware, async (req, res) => {
 });
 
 // [PUT] /grupos/:id/asignar-profesores - Asignar profesores y asignaturas (Admin)
-router.put("/:id/asignar-profesores", authMiddleware, isAdmin, async (req, res) => {
+router.put("/:id/asignar-profesores", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const { asignaciones } = req.body;
+        const school_id = req.user.school_id;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ error: "ID de grupo inválido." });
         }
 
-        const grupo = await Grupo.findById(id);
+        const grupo = await Grupo.findOne({ _id: id, school_id });
         if (!grupo) {
-            return res.status(404).json({ error: "Grupo no encontrado." });
+            return res.status(404).json({ error: "Grupo no encontrado o no pertenece a su escuela." });
         }
 
         // Mapear cada asignación enviada limpiando profesor ID y asignatura
@@ -137,13 +138,14 @@ router.put("/:id/asignar-profesores", authMiddleware, isAdmin, async (req, res) 
 });
 
 // [PUT] /grupos/:id - Actualizar nombre y/o lista de alumnos de un grupo (Admin)
-router.put("/:id", authMiddleware, isAdmin, async (req, res) => {
+router.put("/:id", authMiddleware, isAdmin, schoolMiddleware, async (req, res) => {
     try {
         const { nombre, alumnos } = req.body;
-        const grupo = await Grupo.findById(req.params.id);
+        const school_id = req.user.school_id;
+        const grupo = await Grupo.findOne({ _id: req.params.id, school_id });
 
         if (!grupo) {
-            return res.status(404).json({ error: "Grupo no encontrado." });
+            return res.status(404).json({ error: "Grupo no encontrado o no pertenece a su escuela." });
         }
 
         if (alumnos) {

@@ -1914,25 +1914,17 @@ function Grupo({ user }) {
                           {(() => {
                             const profAsigs = profesor.asignaturas || [];
                             const dbAsigs = (materiasDb || []).map(m => (typeof m === 'object' ? m.nombre : m)).filter(Boolean);
-                            const defaultAsigs = [
-                              'Español', 'Español I', 'Español II', 'Español III',
-                              'Matemáticas', 'Matemáticas I', 'Matemáticas II', 'Matemáticas III',
-                              'Inglés', 'Inglés I', 'Inglés II', 'Inglés III',
-                              'Ciencias', 'Ciencias I', 'Ciencias II', 'Ciencias III',
-                              'Historia', 'Historia I', 'Historia II', 'Historia III',
-                              'Geografía', 'Geografía I',
-                              'Formación Cívica y Ética', 'Formación Cívica y Ética I', 'Formación Cívica y Ética II', 'Formación Cívica y Ética III',
-                              'Educación Física', 'Artes', 'Tecnología', 'Tecnología I', 'Tecnología II', 'Tecnología III',
-                              'Tutoría', 'Tutoría I', 'Tutoría II', 'Tutoría III',
-                              'Integración Curricular', 'Integración Curricular I', 'Integración Curricular II', 'Integración Curricular III',
-                              'Vida Saludable'
-                            ];
                             
-                            const allUnique = Array.from(new Set([...profAsigs, ...dbAsigs, ...defaultAsigs]))
+                            // Únicamente materias pertenecientes a la escuela (sin inyectar catálogo global)
+                            const allUnique = Array.from(new Set([...profAsigs, ...dbAsigs]))
                               .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 
                             const currentAssigned = asignaciones[profId] || [];
                             const available = allUnique.filter(asig => !currentAssigned.includes(asig));
+
+                            if (allUnique.length === 0) {
+                              return <option disabled>No hay materias registradas en esta escuela (Créalos en Inicio)</option>;
+                            }
 
                             if (available.length === 0) {
                               return <option disabled>Todas las asignaturas ya están agregadas</option>;
