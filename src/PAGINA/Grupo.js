@@ -130,6 +130,7 @@ function Grupo({ user }) {
   });
   const [isPincelModalOpen, setIsPincelModalOpen] = useState(false);
   const [isTotalesExpanded, setIsTotalesExpanded] = useState(false);
+  const [editingStatusConfig, setEditingStatusConfig] = useState(null);
   const [newStatusInput, setNewStatusInput] = useState({ code: '', label: '', color: '#9c27b0', equivalent: 'P' });
 
   const getStatusConfig = (code) => {
@@ -933,12 +934,48 @@ function Grupo({ user }) {
     return { presentes, faltas, justificados, retardos, customCounts };
   }, [asistencia, diasPorBimestre, attendanceStatuses]);
 
-  const handleAddCustomStatus = () => {
+  const handleEditStatusInit = (st) => {
+    setEditingStatusConfig(st);
+    setNewStatusInput({
+      code: st.code,
+      label: st.label || '',
+      color: st.color || '#9c27b0',
+      equivalent: st.equivalent || (st.code === 'F' ? 'F' : 'P')
+    });
+  };
+
+  const handleCancelEditStatus = () => {
+    setEditingStatusConfig(null);
+    setNewStatusInput({ code: '', label: '', color: '#9c27b0', equivalent: 'P' });
+  };
+
+  const handleAddOrUpdateCustomStatus = () => {
     const codeClean = (newStatusInput.code || '').trim().toUpperCase();
     const labelClean = (newStatusInput.label || '').trim();
     const equivalentClean = newStatusInput.equivalent || 'P';
     if (!codeClean) return showAlert('Ingresa una letra o código para el botón (ejemplo: O, Obs).', 'error');
     if (!labelClean) return showAlert('Ingresa una descripción o significado (ejemplo: Orquesta).', 'error');
+
+    if (editingStatusConfig) {
+      const updated = attendanceStatuses.map(s => {
+        if (s.code === editingStatusConfig.code) {
+          return {
+            ...s,
+            label: labelClean,
+            color: newStatusInput.color || s.color,
+            equivalent: equivalentClean
+          };
+        }
+        return s;
+      });
+      setAttendanceStatuses(updated);
+      try {
+        localStorage.setItem('scholaris_custom_attendance_statuses', JSON.stringify(updated));
+      } catch (e) {}
+      setEditingStatusConfig(null);
+      setNewStatusInput({ code: '', label: '', color: '#9c27b0', equivalent: 'P' });
+      return showAlert(`Botón "${editingStatusConfig.code}" actualizado correctamente.`);
+    }
 
     if (attendanceStatuses.some(s => s.code === codeClean)) {
       return showAlert(`El botón "${codeClean}" ya existe en la lista.`, 'error');
@@ -2283,7 +2320,8 @@ function Grupo({ user }) {
                 <h4 style={{ fontSize: '0.95rem', color: '#00cbcb', marginBottom: '8px' }}>Botones Configurados:</h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {attendanceStatuses.map(st => {
-                    const eqMap = { P: 'Presente', F: 'Falta', J: 'Justificante', R: 'Retardo' };
+                    const isBase = ['P', 'F', 'J', 'R'].includes(st.code);
+                    const eqMap = { P: 'Presente', F: 'Falta' };
                     return (
                       <div
                         key={st.code}
@@ -2308,12 +2346,28 @@ function Grupo({ user }) {
                           {st.code}
                         </span>
                         <span style={{ fontSize: '0.9rem' }}>{st.label}</span>
-                        {!['P', 'F', 'J', 'R'].includes(st.code) && (
+                        {!isBase && (
                           <span style={{ fontSize: '0.73rem', color: '#ffd866', backgroundColor: 'rgba(255, 216, 102, 0.15)', padding: '2px 6px', borderRadius: '4px' }}>
-                            (Gráfica: {eqMap[st.equivalent || 'P']})
+                            (Gráfica: {eqMap[st.equivalent || 'P'] || 'Presente'})
                           </span>
                         )}
-                        {!['P', 'F', 'J', 'R'].includes(st.code) && (
+                        <button
+                          type="button"
+                          onClick={() => handleEditStatusInit(st)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#00cbcb',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            padding: '0 2px',
+                            lineHeight: 1
+                          }}
+                          title="Editar color o descripción de este botón"
+                        >
+                          ✏️
+                        </button>
+                        {!isBase && (
                           <button
                             type="button"
                             onClick={() => handleRemoveCustomStatus(st.code)}
@@ -2337,9 +2391,11 @@ function Grupo({ user }) {
                 </div>
               </div>
 
-              {/* FORMULARIO AGREGAR NUEVO BOTÓN */}
+              {/* FORMULARIO AGREGAR / EDITAR BOTÓN */}
               <div style={{ backgroundColor: 'rgba(0,0,0,0.25)', padding: '15px', borderRadius: '10px', marginBottom: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                <h4 style={{ fontSize: '0.95rem', color: '#ffd866', marginBottom: '10px' }}>+ Agregar Nuevo Botón Personalizado</h4>
+                <h4 style={{ fontSize: '0.95rem', color: '#ffd866', marginBottom: '10px' }}>
+                  {editingStatusConfig ? `✏️ Editar Botón: "${editingStatusConfig.code}"` : '+ Agregar Nuevo Botón Personalizado'}
+                </h4>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px', marginBottom: '12px' }}>
                   <div>
                     <label style={{ fontSize: '0.8rem', color: '#aaa', display: 'block', marginBottom: '4px' }}>Letra / Código:</label>
@@ -2347,9 +2403,10 @@ function Grupo({ user }) {
                       type="text"
                       placeholder="Ej: O, Obs"
                       maxLength={4}
+                      disabled={!!editingStatusConfig}
                       value={newStatusInput.code}
                       onChange={(e) => setNewStatusInput({ ...newStatusInput, code: e.target.value })}
-                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #555', backgroundColor: '#222', color: '#fff' }}
+                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #555', backgroundColor: editingStatusConfig ? '#333' : '#222', color: '#fff' }}
                     />
                   </div>
                   <div>
@@ -2364,22 +2421,22 @@ function Grupo({ user }) {
                   </div>
                 </div>
 
-                {/* SELECTOR DE EQUIVALENCIA EN REPORTES Y GRÁFICAS */}
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={{ fontSize: '0.8rem', color: '#aaa', display: 'block', marginBottom: '4px' }}>
-                    Equivalencia para Gráficas / Reportes (¿Cómo se contabiliza?):
-                  </label>
-                  <select
-                    value={newStatusInput.equivalent || 'P'}
-                    onChange={(e) => setNewStatusInput({ ...newStatusInput, equivalent: e.target.value })}
-                    style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #555', backgroundColor: '#222', color: '#fff' }}
-                  >
-                    <option value="P">✅ Sumar como Presente (Asistencia cumplida)</option>
-                    <option value="F">❌ Sumar como Falta (Inasistencia)</option>
-                    <option value="J">⚠️ Sumar como Justificante</option>
-                    <option value="R">🕒 Sumar como Retardo</option>
-                  </select>
-                </div>
+                {/* SELECTOR DE EQUIVALENCIA EN REPORTES Y GRÁFICAS (ÚNICAMENTE PRESENTE O FALTA) */}
+                {!['P', 'F', 'J', 'R'].includes(newStatusInput.code) && (
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ fontSize: '0.8rem', color: '#aaa', display: 'block', marginBottom: '4px' }}>
+                      Equivalencia para Gráficas / Reportes (¿Cómo contabilizar?):
+                    </label>
+                    <select
+                      value={newStatusInput.equivalent || 'P'}
+                      onChange={(e) => setNewStatusInput({ ...newStatusInput, equivalent: e.target.value })}
+                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #555', backgroundColor: '#222', color: '#fff' }}
+                    >
+                      <option value="P">✅ Sumar como Presente (Asistencia cumplida)</option>
+                      <option value="F">❌ Sumar como Falta (Inasistencia / No cumplió)</option>
+                    </select>
+                  </div>
+                )}
 
                 {/* SELECTOR DE COLOR PRESET */}
                 <div style={{ marginBottom: '15px' }}>
@@ -2411,14 +2468,26 @@ function Grupo({ user }) {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  style={{ width: '100%', background: 'linear-gradient(135deg, #00cbcb, #009999)', color: '#111', fontWeight: 'bold' }}
-                  onClick={handleAddCustomStatus}
-                >
-                  + Guardar Nuevo Botón
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ flex: 1, background: 'linear-gradient(135deg, #00cbcb, #009999)', color: '#111', fontWeight: 'bold' }}
+                    onClick={handleAddOrUpdateCustomStatus}
+                  >
+                    {editingStatusConfig ? '💾 Guardar Cambios del Botón' : '+ Guardar Nuevo Botón'}
+                  </button>
+                  {editingStatusConfig && (
+                    <button
+                      type="button"
+                      className="btn btn-cancel"
+                      style={{ backgroundColor: '#666' }}
+                      onClick={handleCancelEditStatus}
+                    >
+                      Cancelar Edición
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="modal-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
