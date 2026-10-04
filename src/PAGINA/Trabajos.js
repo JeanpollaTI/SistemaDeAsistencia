@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import jsPDF from 'jspdf';
@@ -1642,6 +1642,8 @@ const PanelCalificaciones = ({
     const [zoomLevel, setZoomLevel] = useState(1);
     const [hasChanges, setHasChanges] = useState(false);
     const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
+    const [autoSaveStatus, setAutoSaveStatus] = useState('');
+    const autoSaveGradesTimerRef = useRef(null);
 
     // 🌟 ESTADOS NUEVOS PARA CORTES Y MIGRACIÓN
     const [cortes, setCortes] = useState({});
@@ -1999,7 +2001,36 @@ const PanelCalificaciones = ({
     const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.1, 1.5));
     const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.2, 0.6));
 
-    // Lógica de manipulación de calificaciones (MODIFICADA para preservar el nombre)
+    // 🌟 AUTOGUARDADO DE CALIFICACIONES (DEBOUNCED)
+    const triggerAutoSaveGrades = useCallback((updatedCalificaciones, updatedCriterios, updatedNumTareas) => {
+        if (autoSaveGradesTimerRef.current) {
+            clearTimeout(autoSaveGradesTimerRef.current);
+        }
+        setAutoSaveStatus('Guardando...');
+        autoSaveGradesTimerRef.current = setTimeout(async () => {
+            const token = localStorage.getItem('token');
+            if (!token || !grupo?._id || !asignatura) return;
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const payload = {
+                grupoId: grupo._id,
+                asignatura,
+                criterios: updatedCriterios || criteriosPorBimestre,
+                calificaciones: updatedCalificaciones || calificaciones,
+                numTareas: updatedNumTareas || numTareas
+            };
+            try {
+                await axios.post(`${API_URL}/calificaciones`, payload, config);
+                setHasChanges(false);
+                setAutoSaveStatus('Guardado ✓');
+                setTimeout(() => setAutoSaveStatus(''), 2500);
+            } catch (err) {
+                console.error("Error en autoguardado de calificaciones:", err);
+                setAutoSaveStatus('Error al autoguardar');
+            }
+        }, 800);
+    }, [grupo, asignatura, criteriosPorBimestre, calificaciones, numTareas]);
+
+    // Lógica de manipulación de calificaciones (MODIFICADA para preservar el nombre y activar autoguardado)
     const handleCalificacionChange = (alumnoId, bimestre, criterioNombre, tareaIndex, valor) => {
         const notaFloat = valor === '' ? null : parseFloat(valor);
         if (notaFloat !== null && (isNaN(notaFloat) || notaFloat < 0 || notaFloat > 10)) return;
@@ -2017,19 +2048,22 @@ const PanelCalificaciones = ({
         setHasChanges(true);
         saveToHistory(); // 🌟 Guardar para deshacer cambios manuales
 
-        setCalificaciones(prev => ({
-            ...prev,
+        const newCalificaciones = {
+            ...calificaciones,
             [alumnoId]: {
-                ...prev[alumnoId],
+                ...calificaciones[alumnoId],
                 [bimestre]: {
-                    ...prev[alumnoId]?.[bimestre],
+                    ...calificaciones[alumnoId]?.[bimestre],
                     [criterioNombre]: {
-                        ...prev[alumnoId]?.[bimestre]?.[criterioNombre],
+                        ...calificaciones[alumnoId]?.[bimestre]?.[criterioNombre],
                         [tareaIndex]: nuevaEntrada,
                     },
                 },
             },
-        }));
+        };
+
+        setCalificaciones(newCalificaciones);
+        triggerAutoSaveGrades(newCalificaciones);
     };
 
     const guardarCalificaciones = async () => {
@@ -2582,6 +2616,19 @@ const PanelCalificaciones = ({
                             >
                                 🔄 Migrar Calificaciones
                             </button>
+                            <button
+                                className="btn btn-primary btn-compact"
+                                onClick={guardarCalificaciones}
+                                disabled={isSaving}
+                                style={{ marginLeft: '10px', backgroundColor: '#00cbcb', borderColor: '#00cbcb', color: '#10172a', fontWeight: 'bold' }}
+                            >
+                                {isSaving ? 'Guardando...' : '💾 Guardar Calificaciones'}
+                            </button>
+                            {autoSaveStatus && (
+                                <span style={{ marginLeft: '8px', fontSize: '0.85rem', color: autoSaveStatus.includes('✓') ? '#2ecc71' : '#f39c12', fontWeight: '600' }}>
+                                    {autoSaveStatus}
+                                </span>
+                            )}
                             <button className="btn btn-cancel btn-compact" onClick={handleConfirmarVolver} style={{ marginLeft: '10px' }}>Cerrar</button>
                         </div>
                     </header>
@@ -2691,24 +2738,34 @@ const PanelCalificaciones = ({
                         );
                     })()}
 
-                    {/* 🌟 SELECTOR DE CRITERIOS (TABS) */}
+                    {/* 🌟 SELECTOR DE CRITERIOS (TABS) CON BOTÓN GUARDAR AL LADO DERECHO */}
                     {criteriosActivos.length > 0 && (
-                        <div className="tabs-criterios" style={{ marginBottom: 0 }}>
-                            <div
-                                className={`tab-criterio ${criterioSeleccionadoGlobal === null ? 'activo' : ''}`}
-                                onClick={() => setCriterioSeleccionadoGlobal(null)}
-                            >
-                                📋 Vista General
-                            </div>
-                            {criteriosActivos.map(crit => (
+                        <div className="tabs-criterios" style={{ marginBottom: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                                 <div
-                                    key={crit.nombre}
-                                    className={`tab-criterio ${criterioSeleccionadoGlobal === crit.nombre ? 'activo' : ''}`}
-                                    onClick={() => setCriterioSeleccionadoGlobal(crit.nombre)}
+                                    className={`tab-criterio ${criterioSeleccionadoGlobal === null ? 'activo' : ''}`}
+                                    onClick={() => setCriterioSeleccionadoGlobal(null)}
                                 >
-                                    {crit.nombre} ({crit.porcentaje}%)
+                                    📋 Vista General
                                 </div>
-                            ))}
+                                {criteriosActivos.map(crit => (
+                                    <div
+                                        key={crit.nombre}
+                                        className={`tab-criterio ${criterioSeleccionadoGlobal === crit.nombre ? 'activo' : ''}`}
+                                        onClick={() => setCriterioSeleccionadoGlobal(crit.nombre)}
+                                    >
+                                        {crit.nombre} ({crit.porcentaje}%)
+                                    </div>
+                                ))}
+                            </div>
+                            <button
+                                className="btn btn-primary"
+                                onClick={guardarCalificaciones}
+                                disabled={isSaving}
+                                style={{ backgroundColor: '#00cbcb', borderColor: '#00cbcb', color: '#10172a', fontWeight: 'bold', padding: '6px 16px', borderRadius: '6px', fontSize: '0.9rem', flexShrink: 0 }}
+                            >
+                                {isSaving ? 'Guardando...' : '💾 Guardar Calificaciones'}
+                            </button>
                         </div>
                     )}
                 </div>
@@ -2755,16 +2812,27 @@ const PanelCalificaciones = ({
                                                 );
                                             })}
                                             <th style={{ width: '80px', color: '#f39c12' }}>Prom</th>
-                                            {/* Botón +5 en el header */}
+                                            {/* Botón +5 y Guardar en el header */}
                                             <th>
-                                                <button
-                                                    className="btn btn-agregar-dias"
-                                                    style={{ width: '40px', height: '30px', padding: 0, fontSize: '0.9rem' }}
-                                                    onClick={() => agregarTareas(criterioSeleccionadoGlobal)}
-                                                    title="Agregar 5 columnas más"
-                                                >
-                                                    +5
-                                                </button>
+                                                <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', alignItems: 'center' }}>
+                                                    <button
+                                                        className="btn btn-agregar-dias"
+                                                        style={{ width: '40px', height: '30px', padding: 0, fontSize: '0.9rem' }}
+                                                        onClick={() => agregarTareas(criterioSeleccionadoGlobal)}
+                                                        title="Agregar 5 columnas más"
+                                                    >
+                                                        +5
+                                                    </button>
+                                                    <button
+                                                        className="btn btn-primary"
+                                                        style={{ height: '30px', padding: '0 8px', fontSize: '0.8rem', backgroundColor: '#00cbcb', color: '#10172a', fontWeight: 'bold', border: 'none', borderRadius: '4px', whiteSpace: 'nowrap' }}
+                                                        onClick={guardarCalificaciones}
+                                                        disabled={isSaving}
+                                                        title="Guardar Calificaciones"
+                                                    >
+                                                        💾 Guardar
+                                                    </button>
+                                                </div>
                                             </th>
                                         </tr>
                                     </thead>
