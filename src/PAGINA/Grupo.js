@@ -135,6 +135,11 @@ function Grupo({ user }) {
   const [autoSavingStatus, setAutoSavingStatus] = useState('');
   const autoSaveTimerRef = useRef(null);
 
+  // 🌟 ESTADOS PARA MODAL DE LISTA DE ALUMNOS Y MATRÍCULAS
+  const [modalListaMatriculasGrupo, setModalListaMatriculasGrupo] = useState(null);
+  const [filtroMatricula, setFiltroMatricula] = useState('');
+  const [copiadoFeedback, setCopiadoFeedback] = useState(false);
+
   const getStatusConfig = (code) => {
     if (!code) return null;
     return attendanceStatuses.find(s => s.code === code) || { code, label: code, color: '#9c27b0' };
@@ -721,26 +726,220 @@ function Grupo({ user }) {
   const exportarXLS = (grupo) => {
     if (!grupo || !grupo.alumnos || grupo.alumnos.length === 0) return showAlert("Este grupo no tiene alumnos para exportar.", "danger");
 
-    const alumnosOrdenados = [...grupo.alumnos].sort((a, b) => {
-      const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', undefined, { sensitivity: 'base' });
-      if (resP !== 0) return resP;
-      const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', undefined, { sensitivity: 'base' });
-      if (resM !== 0) return resM;
-      return (a.nombre || '').localeCompare(b.nombre || '', undefined, { sensitivity: 'base' });
-    });
+    const alumnosOrdenados = sortAlumnosWithStatus(grupo.alumnos);
 
     const datosParaExportar = alumnosOrdenados.map((a, i) => ({
       'N°': i + 1,
-      'Apellido Paterno': a.apellidoPaterno,
+      'Matrícula': a.matricula || '---',
+      'Apellido Paterno': a.apellidoPaterno || '',
       'Apellido Materno': a.apellidoMaterno || '',
-      'Nombre(s)': a.nombre
+      'Nombre(s)': a.nombre || '',
+      'Nombre Completo': `${a.apellidoPaterno || ''} ${a.apellidoMaterno || ''} ${a.nombre || ''}`.replace(/\s+/g, ' ').trim()
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(datosParaExportar);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Alumnos');
-    worksheet['!cols'] = [{ wch: 5 }, { wch: 30 }, { wch: 25 }, { wch: 25 }];
+    worksheet['!cols'] = [{ wch: 6 }, { wch: 18 }, { wch: 25 }, { wch: 25 }, { wch: 25 }, { wch: 35 }];
     XLSX.writeFile(workbook, `Lista_${grupo.nombre.replace(/ /g, '_')}.xlsx`);
+  };
+
+  // 🌟 FUNCIONES PARA OBTENER LISTA DE ALUMNOS Y MATRÍCULAS (MODAL, PDF, XLS, COPIAR)
+  const abrirModalListaMatriculas = (grupo) => {
+    if (!grupo) return;
+    setModalListaMatriculasGrupo(grupo);
+    setFiltroMatricula('');
+    setCopiadoFeedback(false);
+  };
+
+  const exportarListaMatriculasXLS = (grupo) => {
+    if (!grupo || !grupo.alumnos || grupo.alumnos.length === 0) {
+      showAlert("Este grupo no tiene alumnos registrados para exportar.", "danger");
+      return;
+    }
+
+    try {
+      const alumnosOrdenados = sortAlumnosWithStatus(grupo.alumnos);
+
+      const datosParaExportar = alumnosOrdenados.map((a, i) => {
+        const matricula = a.matricula || '---';
+        const nombreCompleto = `${a.apellidoPaterno || ''} ${a.apellidoMaterno || ''} ${a.nombre || ''}`.replace(/\s+/g, ' ').trim();
+        let estatus = 'Activo';
+        if (a.esBaja) estatus = `Baja ${a.fechaBaja ? `(${a.fechaBaja})` : ''}`.trim();
+        else if (a.esNuevoIngreso) estatus = `Nuevo Ingreso ${a.fechaIngreso ? `(${a.fechaIngreso})` : ''}`.trim();
+
+        return {
+          'N°': i + 1,
+          'Matrícula': matricula,
+          'Apellido Paterno': a.apellidoPaterno || '',
+          'Apellido Materno': a.apellidoMaterno || '',
+          'Nombre(s)': a.nombre || '',
+          'Nombre Completo': nombreCompleto,
+          'Estatus': estatus
+        };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(datosParaExportar);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Matrículas');
+      worksheet['!cols'] = [
+        { wch: 6 },
+        { wch: 18 },
+        { wch: 22 },
+        { wch: 22 },
+        { wch: 22 },
+        { wch: 35 },
+        { wch: 18 }
+      ];
+      XLSX.writeFile(workbook, `Lista_Matriculas_${(grupo.nombre || 'Grupo').replace(/ /g, '_')}.xlsx`);
+      showAlert("Archivo Excel de alumnos y matrículas descargado con éxito.", "success");
+    } catch (err) {
+      console.error("Error al exportar XLS de matrículas:", err);
+      showAlert("Error al generar archivo Excel.", "danger");
+    }
+  };
+
+  const exportarListaMatriculasPDF = (grupo) => {
+    if (!grupo || !grupo.alumnos || grupo.alumnos.length === 0) {
+      showAlert("Este grupo no tiene alumnos registrados para exportar.", "danger");
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      const schoolName = schoolConfig?.name || 'Escuela Secundaria';
+      const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
+      const schoolDirector = schoolConfig?.directorName || localStorage.getItem('current_director_name') || '';
+
+      const margin = 14;
+      const pageWidth = doc.internal.pageSize.width;
+
+      // Intentar agregar logo
+      try {
+        const img = new Image();
+        img.src = schoolLogo;
+        const logoWidth = 22;
+        const logoHeight = 22;
+        doc.addImage(img, 'PNG', pageWidth - margin - logoWidth, margin - 4, logoWidth, logoHeight);
+      } catch (e) {
+        // Logo opcional
+      }
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(30, 41, 59);
+      let yPos = margin + 4;
+      doc.text(schoolName, margin, yPos);
+
+      yPos += 7;
+      doc.setFontSize(12);
+      doc.setTextColor(0, 150, 150);
+      doc.text(`LISTA DE ALUMNOS Y MATRÍCULAS`, margin, yPos);
+
+      yPos += 6;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(70, 80, 95);
+      doc.text(`Grupo: ${grupo.nombre}   |   Aula: ${grupo.aula || 'S/A'}   |   Asesor: ${grupo.asesor || 'Sin asignar'}`, margin, yPos);
+
+      yPos += 5;
+      const fechaHoy = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+      doc.text(`Total de Alumnos: ${grupo.alumnos.length}   |   Fecha: ${fechaHoy}`, margin, yPos);
+
+      yPos += 6;
+
+      const alumnosOrdenados = sortAlumnosWithStatus(grupo.alumnos);
+
+      const tableRows = alumnosOrdenados.map((a, index) => {
+        const matricula = a.matricula || '---';
+        const nombreCompleto = `${a.apellidoPaterno || ''} ${a.apellidoMaterno || ''} ${a.nombre || ''}`.replace(/\s+/g, ' ').trim();
+        let estatus = 'Activo';
+        if (a.esBaja) estatus = 'Baja';
+        else if (a.esNuevoIngreso) estatus = 'Nuevo Ingreso';
+
+        return [
+          index + 1,
+          matricula,
+          nombreCompleto,
+          estatus
+        ];
+      });
+
+      autoTable(doc, {
+        head: [['N°', 'Matrícula', 'Nombre Completo del Alumno', 'Estatus']],
+        body: tableRows,
+        startY: yPos,
+        theme: 'striped',
+        headStyles: {
+          fillColor: [0, 160, 160],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'center',
+          fontSize: 10
+        },
+        columnStyles: {
+          0: { cellWidth: 14, halign: 'center' },
+          1: { cellWidth: 38, halign: 'center', fontStyle: 'bold' },
+          2: { halign: 'left' },
+          3: { cellWidth: 30, halign: 'center' }
+        },
+        styles: {
+          fontSize: 9,
+          cellPadding: 3.5,
+          valign: 'middle'
+        },
+        alternateRowStyles: {
+          fillColor: [245, 248, 250]
+        },
+        didParseCell: (data) => {
+          if (data.section === 'body' && data.column.index === 3) {
+            if (data.cell.raw === 'Baja') {
+              data.cell.styles.textColor = [220, 53, 69];
+              data.cell.styles.fontStyle = 'bold';
+            } else if (data.cell.raw === 'Nuevo Ingreso') {
+              data.cell.styles.textColor = [230, 126, 34];
+              data.cell.styles.fontStyle = 'bold';
+            }
+          }
+        }
+      });
+
+      if (schoolDirector && user?.role !== 'profesor') {
+        const finalY = doc.lastAutoTable.finalY + 15;
+        if (finalY < doc.internal.pageSize.height - 25) {
+          doc.setFontSize(9);
+          doc.setTextColor(80, 80, 80);
+          doc.text(`Director(a): ${schoolDirector}`, margin, finalY);
+        }
+      }
+
+      doc.save(`Lista_Matriculas_${(grupo.nombre || 'Grupo').replace(/ /g, '_')}.pdf`);
+      showAlert("PDF de alumnos y matrículas descargado con éxito.", "success");
+    } catch (err) {
+      console.error("Error al generar PDF de matrículas:", err);
+      showAlert("Error al generar el documento PDF.", "danger");
+    }
+  };
+
+  const copiarListaMatriculas = (alumnos, grupoNombre) => {
+    if (!alumnos || alumnos.length === 0) return;
+    const lineas = [
+      `Lista de Alumnos y Matrículas - Grupo: ${grupoNombre || ''}`,
+      `N°\tMatrícula\tNombre Completo\tEstatus`,
+      ...alumnos.map((a, i) => {
+        const mat = a.matricula || '---';
+        const nom = `${a.apellidoPaterno || ''} ${a.apellidoMaterno || ''} ${a.nombre || ''}`.replace(/\s+/g, ' ').trim();
+        const est = a.esBaja ? 'Baja' : (a.esNuevoIngreso ? 'Nuevo Ingreso' : 'Activo');
+        return `${i + 1}\t${mat}\t${nom}\t${est}`;
+      })
+    ];
+    navigator.clipboard.writeText(lineas.join('\n')).then(() => {
+      setCopiadoFeedback(true);
+      showAlert("Lista copiada al portapapeles. Lista para pegar en Excel o Word.", "success");
+      setTimeout(() => setCopiadoFeedback(false), 2500);
+    }).catch(() => {
+      showAlert("No se pudo copiar automáticamente al portapapeles.", "danger");
+    });
   };
 
   const triggerAutoSave = (newAsistenciaState) => {
@@ -1532,6 +1731,14 @@ function Grupo({ user }) {
                       <button className="btn btn-primary" style={{ backgroundColor: '#00cbcb' }} onClick={() => { setCurrentGroupToAnalyze(grupo); setIsPerformanceModalOpen(true); }} title="Ver Rendimiento">📊</button>
                       <button className="btn btn-warning" onClick={() => abrirModal('gestionarGrupo', grupo)}>Editar</button>
                       <button className="btn btn-secondary" onClick={() => abrirModal('asignar', grupo)}>Asignar</button>
+                      <button 
+                        className="btn btn-info" 
+                        style={{ backgroundColor: '#00cbcb', borderColor: '#00cbcb', color: '#111', fontWeight: 'bold' }} 
+                        onClick={() => abrirModalListaMatriculas(grupo)}
+                        title="Ver o descargar lista de alumnos y matrículas en PDF / XLS"
+                      >
+                        📋 Matrículas
+                      </button>
                       <button className="btn btn-export" onClick={() => exportarXLS(grupo)}>XLS</button>
                       <button className="btn btn-danger" onClick={() => handleEliminarGrupo(grupo)}>Eliminar</button>
                     </td>
@@ -1590,6 +1797,14 @@ function Grupo({ user }) {
                             });
                           }
                         }}>PDF</button>
+                        <button 
+                          className="btn btn-info" 
+                          style={{ backgroundColor: '#00cbcb', borderColor: '#00cbcb', color: '#111', fontWeight: 'bold', marginLeft: '6px' }} 
+                          onClick={() => abrirModalListaMatriculas(grupo)}
+                          title="Obtener lista de alumnos y sus matrículas (PDF / XLS)"
+                        >
+                          📋 Lista y Matrículas
+                        </button>
                       </td>
                     </tr>
                   ));
@@ -1745,7 +1960,66 @@ function Grupo({ user }) {
                 {/* Columna 3: Listado de Alumnos */}
                 <div className="modal-column-right">
                   <div className="alumnos-list" ref={alumnosListRef} tabIndex={0}>
-                    <div className="alumnos-count-header">Alumnos en el grupo: {nuevoGrupo.alumnos.length}</div>
+                    <div className="alumnos-count-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                      <span>Alumnos en el grupo: {nuevoGrupo.alumnos.length}</span>
+                      <div style={{ display: 'flex', gap: '5px' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          style={{
+                            background: 'linear-gradient(135deg, #00cbcb, #009999)',
+                            color: '#111',
+                            fontWeight: 'bold',
+                            border: 'none',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '3px 8px',
+                            fontSize: '0.8rem',
+                            borderRadius: '5px',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => abrirModalListaMatriculas(nuevoGrupo)}
+                          title="Ver o consultar lista de alumnos con sus matrículas"
+                        >
+                          📋 Lista y Matrículas
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          style={{
+                            backgroundColor: '#e74c3c',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '3px 7px',
+                            fontSize: '0.8rem',
+                            borderRadius: '5px',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => exportarListaMatriculasPDF(nuevoGrupo)}
+                          title="Descargar PDF con nombres y matrículas"
+                        >
+                          📄 PDF
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          style={{
+                            backgroundColor: '#27ae60',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '3px 7px',
+                            fontSize: '0.8rem',
+                            borderRadius: '5px',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => exportarListaMatriculasXLS(nuevoGrupo)}
+                          title="Descargar Excel con nombres y matrículas"
+                        >
+                          📊 XLS
+                        </button>
+                      </div>
+                    </div>
                     <ul>
                       {nuevoGrupo.alumnos.map((a, index) => {
                         const isFirstNuevo = a.esNuevoIngreso && !a.esBaja && (index === 0 || (!nuevoGrupo.alumnos[index - 1]?.esNuevoIngreso || nuevoGrupo.alumnos[index - 1]?.esBaja));
@@ -1845,11 +2119,35 @@ function Grupo({ user }) {
                   </div>
                 </div>
               </div>
-              <div className="modal-actions">
-                <button className="btn btn-primary" onClick={grupoSeleccionado ? handleUpdateGrupo : handleGuardarGrupo}>
-                  {grupoSeleccionado ? 'Guardar Cambios' : 'Guardar Grupo'}
-                </button>
-                <button className="btn btn-cancel" onClick={cerrarModal}>Cancelar</button>
+              <div className="modal-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '10px' }}>
+                <div>
+                  {nuevoGrupo.alumnos?.length > 0 && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{
+                        background: 'linear-gradient(135deg, #00cbcb, #008080)',
+                        color: '#111',
+                        fontWeight: 'bold',
+                        border: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        borderRadius: '6px'
+                      }}
+                      onClick={() => abrirModalListaMatriculas(nuevoGrupo)}
+                      title="Obtener lista de alumnos y sus matrículas en PDF o Excel"
+                    >
+                      📋 Obtener Lista de Matrículas (PDF / XLS)
+                    </button>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button className="btn btn-primary" onClick={grupoSeleccionado ? handleUpdateGrupo : handleGuardarGrupo}>
+                    {grupoSeleccionado ? 'Guardar Cambios' : 'Guardar Grupo'}
+                  </button>
+                  <button className="btn btn-cancel" onClick={cerrarModal}>Cancelar</button>
+                </div>
               </div>
             </div>
           </div>
@@ -2124,6 +2422,25 @@ function Grupo({ user }) {
                     title="Personalizar botones de asistencia (Agregar O de Orquesta, Obs, etc.)"
                   >
                     🖌️ Personalizar Estados
+                  </button>
+
+                  {/* BOTÓN VER / DESCARGAR MATRÍCULAS */}
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{
+                      background: 'linear-gradient(135deg, #0284c7, #0369a1)',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 10px rgba(2, 132, 199, 0.3)'
+                    }}
+                    onClick={() => abrirModalListaMatriculas(grupoSeleccionado)}
+                    title="Ver o descargar lista de alumnos con sus matrículas"
+                  >
+                    📋 Lista y Matrículas
                   </button>
                 </div>
               </div>
@@ -2632,6 +2949,243 @@ function Grupo({ user }) {
             </div>
           </div>
         )}
+
+        {modalListaMatriculasGrupo && (() => {
+          const todosAlumnos = sortAlumnosWithStatus(modalListaMatriculasGrupo.alumnos || []);
+          const term = (filtroMatricula || '').toLowerCase().trim();
+          const filtrados = term 
+            ? todosAlumnos.filter(a => {
+                const nombreCompleto = `${a.apellidoPaterno || ''} ${a.apellidoMaterno || ''} ${a.nombre || ''}`.toLowerCase();
+                const mat = (a.matricula || '').toLowerCase();
+                return nombreCompleto.includes(term) || mat.includes(term);
+              })
+            : todosAlumnos;
+
+          const totalActivos = todosAlumnos.filter(a => !a.esBaja).length;
+          const totalBajas = todosAlumnos.filter(a => a.esBaja).length;
+          const totalNuevos = todosAlumnos.filter(a => a.esNuevoIngreso && !a.esBaja).length;
+
+          return (
+            <div className="modal-backdrop" onClick={() => setModalListaMatriculasGrupo(null)} style={{ zIndex: 3500 }}>
+              <div 
+                className="modal-content modal-matriculas-content" 
+                onClick={(e) => e.stopPropagation()}
+                style={{ maxWidth: '880px', width: '95vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', padding: '24px' }}
+              >
+                {/* Modal Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '14px', marginBottom: '16px' }}>
+                  <div>
+                    <h2 style={{ margin: '0 0 6px 0', fontSize: '1.4rem', color: '#00cbcb', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>📋</span> Lista de Alumnos y Matrículas: {modalListaMatriculasGrupo.nombre}
+                    </h2>
+                    <div style={{ fontSize: '0.88rem', color: '#aaa', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                      <span><strong>Aula:</strong> {modalListaMatriculasGrupo.aula || 'S/A'}</span>
+                      <span><strong>Asesor:</strong> {modalListaMatriculasGrupo.asesor || 'Sin asignar'}</span>
+                      <span><strong>Total:</strong> {todosAlumnos.length} alumnos ({totalActivos} activos{totalBajas > 0 ? `, ${totalBajas} bajas` : ''}{totalNuevos > 0 ? `, ${totalNuevos} nuevo ingreso` : ''})</span>
+                    </div>
+                  </div>
+                  <button 
+                    type="button"
+                    className="btn btn-cancel" 
+                    style={{ padding: '6px 12px', fontSize: '1rem', minWidth: 'auto', borderRadius: '6px' }}
+                    onClick={() => setModalListaMatriculasGrupo(null)}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Toolbar: Search & Action Buttons */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
+                  <div style={{ flex: '1', minWidth: '220px' }}>
+                    <input
+                      type="text"
+                      placeholder="🔍 Buscar por nombre o matrícula..."
+                      value={filtroMatricula}
+                      onChange={(e) => setFiltroMatricula(e.target.value)}
+                      style={{ 
+                        width: '100%', 
+                        padding: '9px 14px', 
+                        borderRadius: '8px', 
+                        fontSize: '0.92rem',
+                        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        color: '#fff'
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ 
+                        backgroundColor: '#27ae60', 
+                        color: '#fff', 
+                        border: 'none', 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: '6px', 
+                        fontSize: '0.86rem',
+                        fontWeight: 'bold',
+                        padding: '8px 14px',
+                        borderRadius: '6px',
+                        boxShadow: '0 2px 6px rgba(39, 174, 96, 0.3)',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => exportarListaMatriculasXLS(modalListaMatriculasGrupo)}
+                      title="Descargar archivo Excel con nombres y matrículas"
+                    >
+                      📊 Excel (XLS)
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ 
+                        backgroundColor: '#e74c3c', 
+                        color: '#fff', 
+                        border: 'none', 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: '6px', 
+                        fontSize: '0.86rem',
+                        fontWeight: 'bold',
+                        padding: '8px 14px',
+                        borderRadius: '6px',
+                        boxShadow: '0 2px 6px rgba(231, 76, 60, 0.3)',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => exportarListaMatriculasPDF(modalListaMatriculasGrupo)}
+                      title="Descargar documento PDF con nombres y matrículas"
+                    >
+                      📄 Descargar PDF
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ 
+                        backgroundColor: copiadoFeedback ? '#2ecc71' : '#334155', 
+                        color: '#fff', 
+                        border: 'none', 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: '6px', 
+                        fontSize: '0.86rem',
+                        fontWeight: 'bold',
+                        padding: '8px 14px',
+                        borderRadius: '6px',
+                        transition: 'background-color 0.2s',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => copiarListaMatriculas(todosAlumnos, modalListaMatriculasGrupo.nombre)}
+                      title="Copiar lista de nombres y matrículas al portapapeles"
+                    >
+                      {copiadoFeedback ? '✅ ¡Copiado!' : '📋 Copiar'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Table container */}
+                <div style={{ flex: '1', overflowY: 'auto', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', maxHeight: '52vh' }}>
+                  <table className="tabla-matriculas-modal" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead style={{ position: 'sticky', top: 0, backgroundColor: '#1e293b', zIndex: 10 }}>
+                      <tr>
+                        <th style={{ padding: '10px', color: '#00cbcb', borderBottom: '2px solid #00cbcb', textAlign: 'center', width: '45px' }}>#</th>
+                        <th style={{ padding: '10px', color: '#00cbcb', borderBottom: '2px solid #00cbcb', textAlign: 'center', width: '150px' }}>Matrícula</th>
+                        <th style={{ padding: '10px', color: '#00cbcb', borderBottom: '2px solid #00cbcb' }}>Nombre Completo del Alumno</th>
+                        <th style={{ padding: '10px', color: '#00cbcb', borderBottom: '2px solid #00cbcb', textAlign: 'center', width: '130px' }}>Estatus</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtrados.length > 0 ? (
+                        filtrados.map((a, idx) => {
+                          const nombreCompleto = `${a.apellidoPaterno || ''} ${a.apellidoMaterno || ''} ${a.nombre || ''}`.replace(/\s+/g, ' ').trim();
+                          const mat = a.matricula || '---';
+                          return (
+                            <tr key={a._id || idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', backgroundColor: a.esBaja ? 'rgba(255,77,77,0.04)' : undefined }}>
+                              <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#888', padding: '10px' }}>{idx + 1}</td>
+                              <td style={{ textAlign: 'center', padding: '10px' }}>
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '3px 10px',
+                                  backgroundColor: 'rgba(0, 203, 203, 0.12)',
+                                  color: '#00cbcb',
+                                  border: '1px solid rgba(0, 203, 203, 0.35)',
+                                  borderRadius: '5px',
+                                  fontFamily: 'monospace',
+                                  fontWeight: 'bold',
+                                  fontSize: '0.95rem'
+                                }}>
+                                  {mat}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px', fontWeight: '500', color: a.esBaja ? '#aaa' : '#fff' }}>
+                                {nombreCompleto}
+                              </td>
+                              <td style={{ textAlign: 'center', padding: '10px' }}>
+                                {a.esBaja ? (
+                                  <span style={{
+                                    backgroundColor: 'rgba(255, 77, 77, 0.15)',
+                                    color: '#ff4d4d',
+                                    padding: '3px 8px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 'bold',
+                                    border: '1px solid rgba(255, 77, 77, 0.3)'
+                                  }}>
+                                    🚫 Baja {a.fechaBaja ? `(${a.fechaBaja})` : ''}
+                                  </span>
+                                ) : a.esNuevoIngreso ? (
+                                  <span style={{
+                                    backgroundColor: 'rgba(255, 216, 102, 0.15)',
+                                    color: '#ffd866',
+                                    padding: '3px 8px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 'bold',
+                                    border: '1px solid rgba(255, 216, 102, 0.3)'
+                                  }}>
+                                    🌟 Nuevo {a.fechaIngreso ? `(${a.fechaIngreso})` : ''}
+                                  </span>
+                                ) : (
+                                  <span style={{
+                                    backgroundColor: 'rgba(39, 174, 96, 0.15)',
+                                    color: '#2ecc71',
+                                    padding: '3px 8px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 'bold',
+                                    border: '1px solid rgba(39, 174, 96, 0.3)'
+                                  }}>
+                                    ✅ Activo
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan="4" style={{ textAlign: 'center', padding: '30px', color: '#999' }}>
+                            No se encontraron alumnos que coincidan con "{filtroMatricula}".
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Footer */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                  <span style={{ fontSize: '0.85rem', color: '#888' }}>
+                    Mostrando {filtrados.length} de {todosAlumnos.length} alumnos
+                  </span>
+                  <button className="btn btn-cancel" onClick={() => setModalListaMatriculasGrupo(null)}>
+                    Cerrar
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         <GroupPerformanceModal 
           isOpen={isPerformanceModalOpen}
