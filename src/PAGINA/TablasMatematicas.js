@@ -32,12 +32,9 @@ const OPTIONS = [
 const sortAlumnosWithStatus = (alumnosList = []) => {
     const reg = [];
     const nuevos = [];
-    const bajas = [];
 
     (alumnosList || []).forEach(a => {
-        if (a.esBaja) {
-            bajas.push(a);
-        } else if (a.esNuevoIngreso) {
+        if (a.esNuevoIngreso) {
             nuevos.push(a);
         } else {
             reg.push(a);
@@ -54,9 +51,8 @@ const sortAlumnosWithStatus = (alumnosList = []) => {
 
     reg.sort(sortFn);
     nuevos.sort(sortFn);
-    bajas.sort(sortFn);
 
-    return [...reg, ...nuevos, ...bajas];
+    return [...reg, ...nuevos];
 };
 
 const TablasMatematicas = ({ user }) => {
@@ -522,8 +518,7 @@ const TablasMatematicas = ({ user }) => {
                                                  const id = String(alumno._id || alumno.id);
                                                  const alumnoMatrix = matrix[id] || {};
                                                  const fullStudentName = `${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''} ${alumno.nombre || ''}`.replace(/\s+/g, ' ').trim();
-                                                 const isFirstNuevo = alumno.esNuevoIngreso && !alumno.esBaja && (index === 0 || (!alumnosGrupo[index - 1]?.esNuevoIngreso || alumnosGrupo[index - 1]?.esBaja));
-                                                 const isFirstBaja = alumno.esBaja && (index === 0 || !alumnosGrupo[index - 1]?.esBaja);
+                                                 const isFirstNuevo = alumno.esNuevoIngreso && (index === 0 || !alumnosGrupo[index - 1]?.esNuevoIngreso);
 
                                                  return (
                                                      <React.Fragment key={id}>
@@ -544,26 +539,10 @@ const TablasMatematicas = ({ user }) => {
                                                                  </td>
                                                              </tr>
                                                          )}
-                                                         {isFirstBaja && (
-                                                             <tr key={`divider_baja_${index}`} className="divider-baja-row">
-                                                                 <td colSpan={37} style={{
-                                                                     background: 'rgba(255, 77, 77, 0.15)',
-                                                                     color: '#ff4d4d',
-                                                                     borderTop: '2px solid #ff4d4d',
-                                                                     borderBottom: '2px solid #ff4d4d',
-                                                                     padding: '8px 16px',
-                                                                     fontWeight: '800',
-                                                                     fontSize: '0.85rem',
-                                                                     letterSpacing: '0.5px',
-                                                                     textAlign: 'center'
-                                                                 }}>
-                                                                     🚫 ALUMNOS DADOS DE BAJA
-                                                                 </td>
-                                                             </tr>
-                                                         )}
-                                                         <tr className={alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')} style={{ backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.08)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined) }}>
-                                                             <td className="sticky-col num-col">{index + 1}</td>
-                                                             <td className="sticky-col name-col" title={fullStudentName}>
+                                                         
+                                                         <tr className={alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')} style={{ backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.12)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined), color: alumno.esBaja ? '#ff4d4d' : undefined }}>
+                                                              <td className="sticky-col num-col" style={{ color: alumno.esBaja ? '#ff4d4d' : undefined, fontWeight: alumno.esBaja ? 'bold' : undefined }}>{index + 1}</td>
+                                                              <td className="sticky-col name-col" title={fullStudentName} style={{ color: alumno.esBaja ? '#ff4d4d' : undefined }}>
                                                                  {fullStudentName}
                                                                  {alumno.esBaja ? (
                                                                      <span style={{

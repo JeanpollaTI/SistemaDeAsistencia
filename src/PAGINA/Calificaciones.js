@@ -49,12 +49,9 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const sortAlumnosWithStatus = (alumnosList = []) => {
   const reg = [];
   const nuevos = [];
-  const bajas = [];
 
   (alumnosList || []).forEach(a => {
-    if (a.esBaja) {
-      bajas.push(a);
-    } else if (a.esNuevoIngreso) {
+    if (a.esNuevoIngreso) {
       nuevos.push(a);
     } else {
       reg.push(a);
@@ -71,9 +68,8 @@ const sortAlumnosWithStatus = (alumnosList = []) => {
 
   reg.sort(sortFn);
   nuevos.sort(sortFn);
-  bajas.sort(sortFn);
 
-  return [...reg, ...nuevos, ...bajas];
+  return [...reg, ...nuevos];
 };
 
 // --- Componente Principal de Calificaciones (Vista Admin) ---
@@ -1055,8 +1051,7 @@ function Calificaciones({ user }) {
                     </thead>
                     <tbody>
                       {alumnos.map((alumno, index) => {
-                        const isFirstNuevo = alumno.esNuevoIngreso && !alumno.esBaja && (index === 0 || (!alumnos[index - 1]?.esNuevoIngreso || alumnos[index - 1]?.esBaja));
-                        const isFirstBaja = alumno.esBaja && (index === 0 || !alumnos[index - 1]?.esBaja);
+                        const isFirstNuevo = alumno.esNuevoIngreso && (index === 0 || !alumnos[index - 1]?.esNuevoIngreso);
                         const promFinal = calcularPromedioFinal(alumno._id);
                         const totalCols = 5 + materias.length * getPeriodCount() + getPeriodCount();
                         return (
@@ -1068,17 +1063,11 @@ function Calificaciones({ user }) {
                                 </td>
                               </tr>
                             )}
-                            {isFirstBaja && (
-                              <tr className="divider-baja-row" style={{ backgroundColor: 'rgba(255, 77, 77, 0.18)', color: '#ff4d4d', fontWeight: 'bold' }}>
-                                <td colSpan={totalCols} style={{ padding: '6px 12px', fontSize: '0.78rem', letterSpacing: '0.5px', textTransform: 'uppercase', textAlign: 'left' }}>
-                                  🚫 ALUMNOS DADOS DE BAJA
-                                </td>
-                              </tr>
-                            )}
-                            <tr className={alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')} style={{ backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.08)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined) }}>
-                              <td>{index + 1}</td>
-                              <td className="matricula-cell">{alumno.matricula || '---'}</td>
-                              <td className="nombre-cell">
+                            
+                            <tr className={alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')} style={{ backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.12)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined), color: alumno.esBaja ? '#ff4d4d' : undefined }}>
+                              <td style={{ color: alumno.esBaja ? '#ff4d4d' : undefined, fontWeight: alumno.esBaja ? 'bold' : undefined }}>{index + 1}</td>
+                              <td className="matricula-cell" style={{ color: alumno.esBaja ? '#ff4d4d' : undefined }}>{alumno.matricula || '---'}</td>
+                              <td className="nombre-cell" style={{ color: alumno.esBaja ? '#ff4d4d' : undefined }}>
                                 {`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}
                                 {alumno.esBaja ? (
                                   <span style={{

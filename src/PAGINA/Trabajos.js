@@ -1663,13 +1663,29 @@ const PanelCalificaciones = ({
     // Fixes the issue where students shuffle randomly during render or updates.
     const sortedAlumnos = useMemo(() => {
         if (!grupo || !grupo.alumnos) return [];
-        return [...grupo.alumnos].sort((a, b) => {
+        const reg = [];
+        const nuevos = [];
+
+        (grupo.alumnos || []).forEach(a => {
+            if (a.esNuevoIngreso) {
+                nuevos.push(a);
+            } else {
+                reg.push(a);
+            }
+        });
+
+        const sortFn = (a, b) => {
             const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
             if (resP !== 0) return resP;
             const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
             if (resM !== 0) return resM;
             return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
-        });
+        };
+
+        reg.sort(sortFn);
+        nuevos.sort(sortFn);
+
+        return [...reg, ...nuevos];
     }, [grupo]);
   
     // --- LÓGICA PARA EVITAR SALIR SIN GUARDAR ---
@@ -2816,9 +2832,20 @@ const PanelCalificaciones = ({
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {sortedAlumnos.map((alumno, index) => (
-                                            <tr key={alumno._id}>
-                                                <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{index + 1}</td>
+                                        {sortedAlumnos.map((alumno, index) => {
+                                            const isFirstNuevo = alumno.esNuevoIngreso && (index === 0 || !sortedAlumnos[index - 1]?.esNuevoIngreso);
+                                            const totalCols = (asignatura?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('tecnologia') ? 4 : 3) + (numTareas[criterioSeleccionadoGlobal] || 10);
+                                            return (
+                                                <React.Fragment key={alumno._id}>
+                                                    {isFirstNuevo && (
+                                                        <tr className="divider-nuevo-ingreso-row" style={{ backgroundColor: 'rgba(255, 216, 102, 0.18)', color: '#ffd866', fontWeight: 'bold' }}>
+                                                            <td colSpan={totalCols} style={{ padding: '6px 12px', fontSize: '0.78rem', letterSpacing: '0.5px', textTransform: 'uppercase', textAlign: 'left' }}>
+                                                                🌟 ALUMNOS DE NUEVO INGRESO (INGRESARON A MITAD DE CURSO)
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                    <tr className={alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')} style={{ backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.12)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined), color: alumno.esBaja ? '#ff4d4d' : undefined }}>
+                                                        <td style={{ textAlign: 'center', fontWeight: 'bold', color: alumno.esBaja ? '#ff4d4d' : undefined }}>{index + 1}</td>
                                                 {asignatura?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('tecnologia') && (
                                                     <td className="obs-col-body">
                                                         <input
@@ -2847,9 +2874,36 @@ const PanelCalificaciones = ({
                                                         />
                                                     </td>
                                                 )}
-                                                <td className="alumno-col">
-                                                    {`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}
-                                                </td>
+                                                <td className="alumno-col" style={{ color: alumno.esBaja ? '#ff4d4d' : undefined }}>
+                                                            {`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}
+                                                            {alumno.esBaja ? (
+                                                                <span style={{
+                                                                    backgroundColor: '#570000',
+                                                                    color: '#ff4d4d',
+                                                                    padding: '1px 5px',
+                                                                    borderRadius: '4px',
+                                                                    fontSize: '0.7rem',
+                                                                    fontWeight: 'bold',
+                                                                    marginLeft: '6px',
+                                                                    border: '1px solid #850404'
+                                                                }}>
+                                                                    🚫 Baja {alumno.fechaBaja ? `(${alumno.fechaBaja})` : ''}
+                                                                </span>
+                                                            ) : (alumno.esNuevoIngreso && (
+                                                                <span style={{
+                                                                    backgroundColor: '#574100',
+                                                                    color: '#ffd866',
+                                                                    padding: '1px 5px',
+                                                                    borderRadius: '4px',
+                                                                    fontSize: '0.7rem',
+                                                                    fontWeight: 'bold',
+                                                                    marginLeft: '6px',
+                                                                    border: '1px solid #856404'
+                                                                }}>
+                                                                    🌟 Nuevo {alumno.fechaIngreso ? `(${alumno.fechaIngreso})` : ''}
+                                                                </span>
+                                                            ))}
+                                                        </td>
                                                 {/* Celdas de Calificación */}
                                                 {Array.from({ length: numTareas[criterioSeleccionadoGlobal] || 10 }).map((_, tareaIndex) => (
                                                     <td key={tareaIndex}>
@@ -2900,7 +2954,9 @@ const PanelCalificaciones = ({
                                                 </td>
                                                 <td></td>
                                             </tr>
-                                        ))}
+                                                </React.Fragment>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
@@ -2908,10 +2964,46 @@ const PanelCalificaciones = ({
                             /* --- VISTA 2: LISTA DE ALUMNOS (ORIGINAL - VISTA GENERAL) --- */
                             <div className="asistencia-grid">
                                 <div className="asistencia-body">
-                                    {sortedAlumnos.map((alumno, index) => (
+                                    {sortedAlumnos.map((alumno, index) => {
+                                        const isFirstNuevo = alumno.esNuevoIngreso && (index === 0 || !sortedAlumnos[index - 1]?.esNuevoIngreso);
+                                        return (
                                         <React.Fragment key={alumno._id}>
-                                            <div className="asistencia-row">
-                                                <div className="alumno-nombre">{`${index + 1}. ${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}</div>
+                                            {isFirstNuevo && (
+                                                <div style={{ backgroundColor: 'rgba(255, 216, 102, 0.18)', color: '#ffd866', fontWeight: 'bold', padding: '6px 12px', fontSize: '0.78rem', letterSpacing: '0.5px', textTransform: 'uppercase', borderRadius: '4px', margin: '8px 0 4px 0' }}>
+                                                    🌟 ALUMNOS DE NUEVO INGRESO (INGRESARON A MITAD DE CURSO)
+                                                </div>
+                                            )}
+                                            <div className={`asistencia-row ${alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')}`} style={{ backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.12)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined) }}>
+                                                <div className="alumno-nombre" style={{ color: alumno.esBaja ? '#ff4d4d' : undefined }}>
+                                                    {`${index + 1}. ${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}
+                                                    {alumno.esBaja ? (
+                                                        <span style={{
+                                                            backgroundColor: '#570000',
+                                                            color: '#ff4d4d',
+                                                            padding: '1px 5px',
+                                                            borderRadius: '4px',
+                                                            fontSize: '0.7rem',
+                                                            fontWeight: 'bold',
+                                                            marginLeft: '6px',
+                                                            border: '1px solid #850404'
+                                                        }}>
+                                                            🚫 Baja
+                                                        </span>
+                                                    ) : (alumno.esNuevoIngreso && (
+                                                        <span style={{
+                                                            backgroundColor: '#574100',
+                                                            color: '#ffd866',
+                                                            padding: '1px 5px',
+                                                            borderRadius: '4px',
+                                                            fontSize: '0.7rem',
+                                                            fontWeight: 'bold',
+                                                            marginLeft: '6px',
+                                                            border: '1px solid #856404'
+                                                        }}>
+                                                            🌟 Nuevo
+                                                        </span>
+                                                    ))}
+                                                </div>
                                                 <div className="bimestres-container">
                                                     {criteriosActivos.map(criterio => (
                                                         <div
@@ -3040,7 +3132,8 @@ const PanelCalificaciones = ({
                                                 </div>
                                             )}
                                         </React.Fragment>
-                                    ))}
+                                    );
+                                })}
                                 </div>
                             </div>
                         )}

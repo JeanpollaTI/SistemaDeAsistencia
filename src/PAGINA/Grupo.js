@@ -46,12 +46,9 @@ const PRESET_STATUS_COLORS = [
 const sortAlumnosWithStatus = (alumnosList = []) => {
   const reg = [];
   const nuevos = [];
-  const bajas = [];
 
   (alumnosList || []).forEach(a => {
-    if (a.esBaja) {
-      bajas.push(a);
-    } else if (a.esNuevoIngreso) {
+    if (a.esNuevoIngreso) {
       nuevos.push(a);
     } else {
       reg.push(a);
@@ -68,9 +65,8 @@ const sortAlumnosWithStatus = (alumnosList = []) => {
 
   reg.sort(sortFn);
   nuevos.sort(sortFn);
-  bajas.sort(sortFn);
 
-  return [...reg, ...nuevos, ...bajas];
+  return [...reg, ...nuevos];
 };
 
 function Grupo({ user }) {
@@ -2022,8 +2018,7 @@ function Grupo({ user }) {
                     </div>
                     <ul>
                       {nuevoGrupo.alumnos.map((a, index) => {
-                        const isFirstNuevo = a.esNuevoIngreso && !a.esBaja && (index === 0 || (!nuevoGrupo.alumnos[index - 1]?.esNuevoIngreso || nuevoGrupo.alumnos[index - 1]?.esBaja));
-                        const isFirstBaja = a.esBaja && (index === 0 || !nuevoGrupo.alumnos[index - 1]?.esBaja);
+                        const isFirstNuevo = a.esNuevoIngreso && (index === 0 || !nuevoGrupo.alumnos[index - 1]?.esNuevoIngreso);
                         
                         return (
                           <React.Fragment key={a._id || index}>
@@ -2044,33 +2039,17 @@ function Grupo({ user }) {
                                 🌟 ALUMNOS DE NUEVO INGRESO (INGRESARON A MITAD DE CURSO)
                               </li>
                             )}
-                            {isFirstBaja && (
-                              <li className="divider-baja-header" style={{
-                                backgroundColor: 'rgba(255, 77, 77, 0.15)',
-                                color: '#ff4d4d',
-                                borderTop: '1px solid #ff4d4d',
-                                borderBottom: '1px solid #ff4d4d',
-                                padding: '6px 10px',
-                                fontWeight: 'bold',
-                                fontSize: '0.75rem',
-                                letterSpacing: '0.5px',
-                                cursor: 'default',
-                                marginTop: '8px',
-                                marginBottom: '4px'
-                              }}>
-                                🚫 ALUMNOS DADOS DE BAJA
-                              </li>
-                            )}
                             <li 
                               className={`${selectedAlumnoIndex === index ? 'selected' : ''} ${editingAlumno?._id === a._id ? 'editing' : ''}`}
                               onClick={() => handleSelectAlumno(index)}
                               style={{ 
                                 cursor: 'pointer', 
-                                background: a.esBaja ? 'rgba(255, 77, 77, 0.08)' : (a.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined) 
+                                background: a.esBaja ? 'rgba(255, 77, 77, 0.12)' : (a.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined),
+                                borderLeft: a.esBaja ? '4px solid #ff4d4d' : (a.esNuevoIngreso ? '4px solid #ffd866' : undefined)
                               }}
                             >
-                              <span className="alumno-nombre-display">
-                                <strong>{a.matricula || '---'}</strong> - {`${index + 1}. ${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`}
+                              <span className="alumno-nombre-display" style={{ color: a.esBaja ? '#ff4d4d' : undefined }}>
+                                <strong style={{ color: a.esBaja ? '#ff4d4d' : undefined }}>{a.matricula || '---'}</strong> - {`${index + 1}. ${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`}
                                 {a.esBaja ? (
                                   <span style={{
                                     backgroundColor: '#570000',
@@ -2105,7 +2084,7 @@ function Grupo({ user }) {
                                   </span>
                                 ))}
                                 <br />
-                                <small style={{ color: '#666' }}>{a.emailPadre || 'Sin correo'} | {a.telefonoPadre || 'Sin tel'}</small>
+                                <small style={{ color: a.esBaja ? '#ff9999' : '#666' }}>{a.emailPadre || 'Sin correo'} | {a.telefonoPadre || 'Sin tel'}</small>
                               </span>
                               <div className="alumno-actions">
                                 <button className="btn-delete-alumno" onClick={(e) => { e.stopPropagation(); handleDeleteAlumno(a); }}><FaTrash /></button>
@@ -2521,8 +2500,7 @@ function Grupo({ user }) {
                          const sortedAlumnos = sortAlumnosWithStatus(grupoSeleccionado?.alumnos || []);
                          const totalDias = diasPorBimestre[bimestreActivo] || DIAS_INICIALES;
                          return sortedAlumnos.map((alumno, index) => {
-                           const isFirstNuevo = alumno.esNuevoIngreso && !alumno.esBaja && (index === 0 || (!sortedAlumnos[index - 1]?.esNuevoIngreso || sortedAlumnos[index - 1]?.esBaja));
-                           const isFirstBaja = alumno.esBaja && (index === 0 || !sortedAlumnos[index - 1]?.esBaja);
+                           const isFirstNuevo = alumno.esNuevoIngreso && (index === 0 || !sortedAlumnos[index - 1]?.esNuevoIngreso);
                            const totales = calcularTotales(alumno._id, bimestreActivo, asistencia, diasPorBimestre);
                            const isHighlighted = highlightedAlumnoId === alumno._id;
                            return (
@@ -2534,17 +2512,11 @@ function Grupo({ user }) {
                                    </td>
                                  </tr>
                                )}
-                               {isFirstBaja && (
-                                 <tr className="divider-baja-row" style={{ backgroundColor: 'rgba(255, 77, 77, 0.18)', color: '#ff4d4d', fontWeight: 'bold' }}>
-                                   <td colSpan={5 + totalDias} style={{ padding: '6px 12px', fontSize: '0.78rem', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                                     🚫 ALUMNOS DADOS DE BAJA
-                                   </td>
-                                 </tr>
-                               )}
-                               <tr className={`${isHighlighted ? 'highlight-row' : ''} ${alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')}`} style={{ backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.08)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined) }}>
-                                 <td className="num-col" style={{ textAlign: 'center' }}>{index + 1}</td>
-                                 <td className="matricula-col" style={{ textAlign: 'center', fontWeight: 'bold' }}>{alumno.matricula || '---'}</td>
-                                 <td className="alumno-col notranslate" translate="no">
+                               
+                               <tr className={`${isHighlighted ? 'highlight-row' : ''} ${alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')}`} style={{ backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.12)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined), color: alumno.esBaja ? '#ff4d4d' : undefined }}>
+                                  <td className="num-col" style={{ textAlign: 'center', color: alumno.esBaja ? '#ff4d4d' : undefined, fontWeight: alumno.esBaja ? 'bold' : undefined }}>{index + 1}</td>
+                                  <td className="matricula-col" style={{ textAlign: 'center', fontWeight: 'bold', color: alumno.esBaja ? '#ff4d4d' : undefined }}>{alumno.matricula || '---'}</td>
+                                  <td className="alumno-col notranslate" translate="no" style={{ color: alumno.esBaja ? '#ff4d4d' : undefined, fontWeight: alumno.esBaja ? '600' : undefined }}>
                                    {alumno.apellidoPaterno} {alumno.apellidoMaterno || ''} {alumno.nombre}
                                    {alumno.esBaja ? (
                                      <span style={{
@@ -3100,15 +3072,15 @@ function Grupo({ user }) {
                           const nombreCompleto = `${a.apellidoPaterno || ''} ${a.apellidoMaterno || ''} ${a.nombre || ''}`.replace(/\s+/g, ' ').trim();
                           const mat = a.matricula || '---';
                           return (
-                            <tr key={a._id || idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', backgroundColor: a.esBaja ? 'rgba(255,77,77,0.04)' : undefined }}>
-                              <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#888', padding: '10px' }}>{idx + 1}</td>
+                            <tr key={a._id || idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', backgroundColor: a.esBaja ? 'rgba(255,77,77,0.12)' : (a.esNuevoIngreso ? 'rgba(255,216,102,0.08)' : undefined) }}>
+                              <td style={{ textAlign: 'center', fontWeight: 'bold', color: a.esBaja ? '#ff4d4d' : '#888', padding: '10px' }}>{idx + 1}</td>
                               <td style={{ textAlign: 'center', padding: '10px' }}>
                                 <span style={{
                                   display: 'inline-block',
                                   padding: '3px 10px',
-                                  backgroundColor: 'rgba(0, 203, 203, 0.12)',
-                                  color: '#00cbcb',
-                                  border: '1px solid rgba(0, 203, 203, 0.35)',
+                                  backgroundColor: a.esBaja ? 'rgba(255, 77, 77, 0.15)' : 'rgba(0, 203, 203, 0.12)',
+                                  color: a.esBaja ? '#ff4d4d' : '#00cbcb',
+                                  border: a.esBaja ? '1px solid rgba(255, 77, 77, 0.4)' : '1px solid rgba(0, 203, 203, 0.35)',
                                   borderRadius: '5px',
                                   fontFamily: 'monospace',
                                   fontWeight: 'bold',
@@ -3117,7 +3089,7 @@ function Grupo({ user }) {
                                   {mat}
                                 </span>
                               </td>
-                              <td style={{ padding: '10px', fontWeight: '500', color: a.esBaja ? '#aaa' : '#fff' }}>
+                              <td style={{ padding: '10px', fontWeight: '500', color: a.esBaja ? '#ff4d4d' : '#fff' }}>
                                 {nombreCompleto}
                               </td>
                               <td style={{ textAlign: 'center', padding: '10px' }}>
