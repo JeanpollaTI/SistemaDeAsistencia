@@ -1,5 +1,43 @@
 import mongoose from "mongoose";
 
+// Esquema para incidencias del área de Trabajo Social por alumno
+const IncidenciaTrabajoSocialSchema = new mongoose.Schema({
+  fecha: {
+    type: String,
+    required: [true, "La fecha de la incidencia es obligatoria"],
+  },
+  tipo: {
+    type: String,
+    required: [true, "El tipo de falta o motivo es obligatorio"],
+    trim: true,
+    default: "Reporte escolar",
+  },
+  descripcion: {
+    type: String,
+    required: [true, "La descripción del reporte es obligatoria"],
+    trim: true,
+  },
+  acciones: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+  estatus: {
+    type: String,
+    enum: ["Pendiente", "En seguimiento", "Resuelto"],
+    default: "Pendiente",
+  },
+  registradoPor: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 // Define un esquema para un alumno individual.
 const AlumnoSchema = new mongoose.Schema({
   nombre: {
@@ -49,6 +87,10 @@ const AlumnoSchema = new mongoose.Schema({
   fechaBaja: {
     type: String,
     default: "",
+  },
+  incidencias: {
+    type: [IncidenciaTrabajoSocialSchema],
+    default: [],
   }
 });
 

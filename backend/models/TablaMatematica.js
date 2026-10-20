@@ -36,6 +36,19 @@ const tablaMatematicaSchema = new mongoose.Schema(
                 ref: "User"
             }
         ],
+        cortesConfig: {
+            type: Map,
+            of: String,
+            default: {
+                p1: "1-5",
+                p2: "1-5",
+                p3: "1-5",
+                p4: "1-5",
+                p5: "6-10",
+                p6: "6-10",
+                p7: "6-10"
+            }
+        },
         evaluaciones: [evaluacionSchema],
     },
     {

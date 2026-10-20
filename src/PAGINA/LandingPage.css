@@ -11,7 +11,8 @@
 .landing-container.dark-theme {
     background-color: var(--scholaris-black);
     color: var(--scholaris-white);
-    min-height: 100vh;
+    min-height: 125vh;
+    width: 100%;
     padding-top: 0;
     position: relative;
     overflow-x: hidden;
@@ -31,7 +32,7 @@
 .hero-section {
     position: relative;
     z-index: 10;
-    min-height: 100vh;
+    min-height: 125vh;
     display: flex;
     align-items: center;
     justify-content: center;

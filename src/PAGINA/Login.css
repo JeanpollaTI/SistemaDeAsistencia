@@ -3,7 +3,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 125vh;
+  width: 100%;
   position: relative;
   overflow: hidden;
 }

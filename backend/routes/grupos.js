@@ -149,14 +149,22 @@ router.put("/:id", authMiddleware, isAdmin, schoolMiddleware, async (req, res) =
         }
 
         if (alumnos) {
+            const existingAlumnosMap = new Map(
+                (grupo.alumnos || []).map(a => [String(a._id), a])
+            );
             const alumnosProcesados = await Promise.all(alumnos.map(async alumno => {
                 const data = { ...alumno };
-                // Asignar matrÃ­cula a alumnos nuevos que no la tengan
+                // Asignar matrícula a alumnos nuevos que no la tengan
                 if (!data.matricula) {
                     data.matricula = await getNextMatricula();
                 }
                 if (data._id && String(data._id).startsWith('new-')) {
                     delete data._id;
+                } else if (data._id && !Array.isArray(data.incidencias)) {
+                    const existing = existingAlumnosMap.get(String(data._id));
+                    if (existing && Array.isArray(existing.incidencias)) {
+                        data.incidencias = existing.incidencias;
+                    }
                 }
                 return data;
             }));
@@ -841,6 +849,151 @@ router.get("/:id/analytics", authMiddleware, isAdmin, schoolMiddleware, async (r
     } catch (err) {
         console.error("Error en analytics:", err);
         res.status(500).json({ error: "Error al calcular analíticas." });
+    }
+});
+
+// =========================================================================
+// SUBMÓDULO DE TRABAJO SOCIAL (HISTORIAL DISCIPLINARIO POR ALUMNO Y GRUPO)
+// =========================================================================
+
+// [POST] /grupos/:grupoId/alumnos/:alumnoId/incidencias - Registrar nueva incidencia disciplinaria
+router.post("/:grupoId/alumnos/:alumnoId/incidencias", authMiddleware, schoolMiddleware, async (req, res) => {
+    try {
+        const { grupoId, alumnoId } = req.params;
+        const { fecha, tipo, descripcion, acciones, estatus } = req.body;
+        const school_id = req.user.school_id;
+
+        if (!fecha || !tipo || !descripcion || !descripcion.trim()) {
+            return res.status(400).json({ error: "Fecha, motivo y descripción detallada son obligatorios." });
+        }
+
+        const grupo = await Grupo.findOne({ _id: grupoId, school_id });
+        if (!grupo) {
+            return res.status(404).json({ error: "Grupo no encontrado." });
+        }
+
+        const alumno = grupo.alumnos.id(alumnoId);
+        if (!alumno) {
+            return res.status(404).json({ error: "Alumno no encontrado en este grupo." });
+        }
+
+        if (!Array.isArray(alumno.incidencias)) {
+            alumno.incidencias = [];
+        }
+
+        const autorNombre = `${req.user.nombre || ''} ${req.user.apellidoPaterno || ''}`.replace(/\s+/g, ' ').trim() || req.user.email || 'Docente / Trabajo Social';
+
+        alumno.incidencias.push({
+            fecha,
+            tipo: tipo.trim(),
+            descripcion: descripcion.trim(),
+            acciones: (acciones || '').trim(),
+            estatus: ['Pendiente', 'En seguimiento', 'Resuelto'].includes(estatus) ? estatus : 'Pendiente',
+            registradoPor: autorNombre,
+            createdAt: new Date()
+        });
+
+        await grupo.save();
+
+        const grupoActualizado = await Grupo.findById(grupoId).populate({
+            path: 'profesoresAsignados.profesor',
+            select: 'nombre apellidoPaterno apellidoMaterno email foto role'
+        });
+
+        res.status(201).json({
+            msg: "Incidencia registrada correctamente.",
+            grupo: grupoActualizado,
+            alumno: grupoActualizado.alumnos.id(alumnoId)
+        });
+    } catch (err) {
+        console.error("Error al registrar incidencia de Trabajo Social:", err);
+        res.status(500).json({ error: "Error al registrar la incidencia disciplinaria.", details: err.message });
+    }
+});
+
+// [PUT] /grupos/:grupoId/alumnos/:alumnoId/incidencias/:incidenciaId - Actualizar incidencia o su estatus
+router.put("/:grupoId/alumnos/:alumnoId/incidencias/:incidenciaId", authMiddleware, schoolMiddleware, async (req, res) => {
+    try {
+        const { grupoId, alumnoId, incidenciaId } = req.params;
+        const { fecha, tipo, descripcion, acciones, estatus } = req.body;
+        const school_id = req.user.school_id;
+
+        const grupo = await Grupo.findOne({ _id: grupoId, school_id });
+        if (!grupo) {
+            return res.status(404).json({ error: "Grupo no encontrado." });
+        }
+
+        const alumno = grupo.alumnos.id(alumnoId);
+        if (!alumno) {
+            return res.status(404).json({ error: "Alumno no encontrado en este grupo." });
+        }
+
+        const incidencia = alumno.incidencias?.id(incidenciaId);
+        if (!incidencia) {
+            return res.status(404).json({ error: "Incidencia no encontrada." });
+        }
+
+        if (fecha !== undefined) incidencia.fecha = fecha;
+        if (tipo !== undefined) incidencia.tipo = tipo.trim();
+        if (descripcion !== undefined) incidencia.descripcion = descripcion.trim();
+        if (acciones !== undefined) incidencia.acciones = acciones.trim();
+        if (estatus && ['Pendiente', 'En seguimiento', 'Resuelto'].includes(estatus)) {
+            incidencia.estatus = estatus;
+        }
+
+        await grupo.save();
+
+        const grupoActualizado = await Grupo.findById(grupoId).populate({
+            path: 'profesoresAsignados.profesor',
+            select: 'nombre apellidoPaterno apellidoMaterno email foto role'
+        });
+
+        res.json({
+            msg: "Incidencia actualizada correctamente.",
+            grupo: grupoActualizado,
+            alumno: grupoActualizado.alumnos.id(alumnoId)
+        });
+    } catch (err) {
+        console.error("Error al actualizar incidencia de Trabajo Social:", err);
+        res.status(500).json({ error: "Error al actualizar la incidencia.", details: err.message });
+    }
+});
+
+// [DELETE] /grupos/:grupoId/alumnos/:alumnoId/incidencias/:incidenciaId - Eliminar incidencia
+router.delete("/:grupoId/alumnos/:alumnoId/incidencias/:incidenciaId", authMiddleware, schoolMiddleware, async (req, res) => {
+    try {
+        const { grupoId, alumnoId, incidenciaId } = req.params;
+        const school_id = req.user.school_id;
+
+        const grupo = await Grupo.findOne({ _id: grupoId, school_id });
+        if (!grupo) {
+            return res.status(404).json({ error: "Grupo no encontrado." });
+        }
+
+        const alumno = grupo.alumnos.id(alumnoId);
+        if (!alumno) {
+            return res.status(404).json({ error: "Alumno no encontrado en este grupo." });
+        }
+
+        alumno.incidencias = (alumno.incidencias || []).filter(
+            inc => String(inc._id) !== String(incidenciaId)
+        );
+
+        await grupo.save();
+
+        const grupoActualizado = await Grupo.findById(grupoId).populate({
+            path: 'profesoresAsignados.profesor',
+            select: 'nombre apellidoPaterno apellidoMaterno email foto role'
+        });
+
+        res.json({
+            msg: "Incidencia eliminada correctamente.",
+            grupo: grupoActualizado,
+            alumno: grupoActualizado.alumnos.id(alumnoId)
+        });
+    } catch (err) {
+        console.error("Error al eliminar incidencia de Trabajo Social:", err);
+        res.status(500).json({ error: "Error al eliminar la incidencia.", details: err.message });
     }
 });
 

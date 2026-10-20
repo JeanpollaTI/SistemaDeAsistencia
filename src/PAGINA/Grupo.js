@@ -14,6 +14,7 @@ import importFormatImg from './formato.png';
 import BrandingModal from '../COMPONENTE/BrandingModal';
 import GroupPerformanceModal from '../COMPONENTE/GroupPerformanceModal';
 import PromoverAlumnosModal from '../COMPONENTE/PromoverAlumnosModal';
+import TrabajoSocialModal from '../COMPONENTE/TrabajoSocialModal';
 
 // --- URL de la API desde variables de entorno para Vercel ---
 // CORRECCIÓN: Eliminado '/api' para coincidir con Home.js y la estructura del backend
@@ -131,8 +132,9 @@ function Grupo({ user }) {
   const [autoSavingStatus, setAutoSavingStatus] = useState('');
   const autoSaveTimerRef = useRef(null);
 
-  // 🌟 ESTADOS PARA MODAL DE LISTA DE ALUMNOS Y MATRÍCULAS
+  // 🌟 ESTADOS PARA MODAL DE LISTA DE ALUMNOS Y MATRÍCULAS Y SUBMÓDULO TRABAJO SOCIAL
   const [modalListaMatriculasGrupo, setModalListaMatriculasGrupo] = useState(null);
+  const [modalTrabajoSocialGrupo, setModalTrabajoSocialGrupo] = useState(null);
   const [filtroMatricula, setFiltroMatricula] = useState('');
   const [copiadoFeedback, setCopiadoFeedback] = useState(false);
 
@@ -740,12 +742,19 @@ function Grupo({ user }) {
     XLSX.writeFile(workbook, `Lista_${grupo.nombre.replace(/ /g, '_')}.xlsx`);
   };
 
-  // 🌟 FUNCIONES PARA OBTENER LISTA DE ALUMNOS Y MATRÍCULAS (MODAL, PDF, XLS, COPIAR)
+  // 🌟 FUNCIONES PARA OBTENER LISTA DE ALUMNOS Y MATRÍCULAS (MODAL, PDF, XLS, COPIAR) Y TRABAJO SOCIAL
   const abrirModalListaMatriculas = (grupo) => {
     if (!grupo) return;
+    setModalTrabajoSocialGrupo(null);
     setModalListaMatriculasGrupo(grupo);
     setFiltroMatricula('');
     setCopiadoFeedback(false);
+  };
+
+  const abrirModalTrabajoSocial = (grupo) => {
+    if (!grupo) return;
+    setModalListaMatriculasGrupo(null);
+    setModalTrabajoSocialGrupo(grupo);
   };
 
   const exportarListaMatriculasXLS = (grupo) => {
@@ -1735,6 +1744,14 @@ function Grupo({ user }) {
                       >
                         📋 Matrículas
                       </button>
+                      <button 
+                        className="btn btn-info" 
+                        style={{ backgroundColor: '#f59e0b', borderColor: '#f59e0b', color: '#111', fontWeight: 'bold' }} 
+                        onClick={() => abrirModalTrabajoSocial(grupo)}
+                        title="Abrir submódulo de Trabajo Social e historial disciplinario del grupo"
+                      >
+                        🤝 Trabajo Social
+                      </button>
                       <button className="btn btn-export" onClick={() => exportarXLS(grupo)}>XLS</button>
                       <button className="btn btn-danger" onClick={() => handleEliminarGrupo(grupo)}>Eliminar</button>
                     </td>
@@ -1800,6 +1817,14 @@ function Grupo({ user }) {
                           title="Obtener lista de alumnos y sus matrículas (PDF / XLS)"
                         >
                           📋 Lista y Matrículas
+                        </button>
+                        <button 
+                          className="btn btn-info" 
+                          style={{ backgroundColor: '#f59e0b', borderColor: '#f59e0b', color: '#111', fontWeight: 'bold', marginLeft: '6px' }} 
+                          onClick={() => abrirModalTrabajoSocial(grupo)}
+                          title="Abrir submódulo de Trabajo Social e historial disciplinario del grupo"
+                        >
+                          🤝 Trabajo Social
                         </button>
                       </td>
                     </tr>
@@ -2421,6 +2446,25 @@ function Grupo({ user }) {
                   >
                     📋 Lista y Matrículas
                   </button>
+
+                  {/* BOTÓN SUBMÓDULO DE TRABAJO SOCIAL */}
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{
+                      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                      color: '#111',
+                      fontWeight: 'bold',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 10px rgba(245, 158, 11, 0.3)'
+                    }}
+                    onClick={() => abrirModalTrabajoSocial(grupoSeleccionado)}
+                    title="Abrir submódulo de Trabajo Social e historial disciplinario del grupo"
+                  >
+                    🤝 Trabajo Social
+                  </button>
                 </div>
               </div>
 
@@ -2944,12 +2988,43 @@ function Grupo({ user }) {
                 onClick={(e) => e.stopPropagation()}
                 style={{ maxWidth: '880px', width: '95vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', padding: '24px' }}
               >
-                {/* Modal Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '14px', marginBottom: '16px' }}>
+                {/* Modal Header with Tabs: Matrículas | Trabajo Social */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '14px', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
                   <div>
-                    <h2 style={{ margin: '0 0 6px 0', fontSize: '1.4rem', color: '#00cbcb', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span>📋</span> Lista de Alumnos y Matrículas: {modalListaMatriculasGrupo.nombre}
-                    </h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        style={{
+                          padding: '7px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid #00cbcb',
+                          background: 'linear-gradient(135deg, #00cbcb, #009999)',
+                          color: '#111',
+                          fontWeight: '800',
+                          fontSize: '0.88rem',
+                          cursor: 'default'
+                        }}
+                      >
+                        📋 Matrículas: {modalListaMatriculasGrupo.nombre}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => abrirModalTrabajoSocial(modalListaMatriculasGrupo)}
+                        style={{
+                          padding: '7px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(245, 158, 11, 0.5)',
+                          backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                          color: '#fbbf24',
+                          fontWeight: '700',
+                          fontSize: '0.88rem',
+                          cursor: 'pointer'
+                        }}
+                        title="Cambiar a la pestaña de Trabajo Social de este grupo"
+                      >
+                        🤝 Trabajo Social
+                      </button>
+                    </div>
                     <div style={{ fontSize: '0.88rem', color: '#aaa', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                       <span><strong>Aula:</strong> {modalListaMatriculasGrupo.aula || 'S/A'}</span>
                       <span><strong>Asesor:</strong> {modalListaMatriculasGrupo.asesor || 'Sin asignar'}</span>
@@ -3158,6 +3233,24 @@ function Grupo({ user }) {
             </div>
           );
         })()}
+
+        {modalTrabajoSocialGrupo && (
+          <TrabajoSocialModal
+            grupo={modalTrabajoSocialGrupo}
+            onClose={() => setModalTrabajoSocialGrupo(null)}
+            onSwitchToMatriculas={(g) => abrirModalListaMatriculas(g)}
+            onGrupoUpdated={(grupoActualizado) => {
+              setModalTrabajoSocialGrupo(grupoActualizado);
+              setGrupos(prev => prev.map(g => String(g._id) === String(grupoActualizado._id) ? grupoActualizado : g));
+              if (grupoSeleccionado && String(grupoSeleccionado._id) === String(grupoActualizado._id)) {
+                setGrupoSeleccionado(grupoActualizado);
+              }
+            }}
+            schoolConfig={schoolConfig}
+            defaultLogo={logoImage}
+            showAlert={showAlert}
+          />
+        )}
 
         <GroupPerformanceModal 
           isOpen={isPerformanceModalOpen}
