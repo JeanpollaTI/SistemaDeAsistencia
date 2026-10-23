@@ -261,7 +261,7 @@
     width: 28px;
 }
 
-.student-name {
+.promover-modal-content .student-name {
     font-weight: 700 !important;
     color: #ffffff !important;
     font-size: 0.95rem !important;

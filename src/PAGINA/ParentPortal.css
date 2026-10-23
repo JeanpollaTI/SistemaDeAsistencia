@@ -253,15 +253,16 @@
     flex-direction: column;
 }
 
-.student-name {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--portal-black);
+.portal-student-name-display .student-name,
+.portal-student-name {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    color: #000000 !important;
 }
 
-.student-group {
-    font-size: 0.9rem;
-    color: var(--portal-muted);
+.portal-student-name-display .student-group {
+    font-size: 0.9rem !important;
+    color: #475569 !important;
 }
 
 .portal-student-name-display .student-icon {
