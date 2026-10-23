@@ -624,11 +624,15 @@ function Grupo({ user }) {
 
   // Auto-save guiado al presionar Enter o perder foco (onBlur) en campos generales del grupo
   const handleGrupoFieldCommit = async (fieldName) => {
+    const currentVal = String(nuevoGrupo[fieldName] || '').trim();
     if (!grupoSeleccionado?._id) {
-      setTempFieldStatus(fieldName, '', 10);
+      if (currentVal) {
+        setTempFieldStatus(fieldName, 'saved', 2000);
+      } else {
+        setTempFieldStatus(fieldName, '', 10);
+      }
       return;
     }
-    const currentVal = String(nuevoGrupo[fieldName] || '').trim();
     const originalVal = String(grupoSeleccionado[fieldName] || '').trim();
 
     // Validar que solo se dispare si el valor realmente cambió respecto al original
@@ -679,8 +683,16 @@ function Grupo({ user }) {
     }
   };
 
-  const handleAgregarOActualizarAlumno = async () => {
-    if (!alumnoInput.nombre.trim() || !alumnoInput.apellidoPaterno.trim()) {
+  const handleAgregarOActualizarAlumno = async (e) => {
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+    }
+    if (!alumnoInput.apellidoPaterno.trim() || !alumnoInput.nombre.trim()) {
+      if (!alumnoInput.apellidoPaterno.trim() && alumnoInputRefs.current[0]) {
+        alumnoInputRefs.current[0].focus();
+      } else if (!alumnoInput.nombre.trim() && alumnoInputRefs.current[2]) {
+        alumnoInputRefs.current[2].focus();
+      }
       return showAlert('Nombre y Apellido Paterno son obligatorios.', 'error');
     }
 
@@ -729,6 +741,13 @@ function Grupo({ user }) {
         setHasChanges(true);
         showAlert('Alumno agregado a la lista.');
       }
+
+      // Devolver foco al primer campo (Apellido Paterno) para captura continua con Enter
+      setTimeout(() => {
+        if (alumnoInputRefs.current[0]) {
+          alumnoInputRefs.current[0].focus();
+        }
+      }, 60);
     }
   };
 
@@ -2085,14 +2104,12 @@ function Grupo({ user }) {
         )}
         {(modalVisible === 'gestionarGrupo') && (
           <div className="modal-backdrop">
-            <div className="modal-content">
+            <div className="modal-content gestionar-grupo-modal-content">
               <h2>
                 <span>{grupoSeleccionado ? `Editar Grupo: ${grupoSeleccionado.nombre}` : 'Crear Nuevo Grupo'}</span>
-                {grupoSeleccionado && (
-                  <span className={`autosave-header-pill ${isSavingGrupo ? 'saving' : (hasChanges ? 'dirty' : 'saved')}`}>
-                    {isSavingGrupo ? '⏳ Guardando...' : (hasChanges ? '✏️ Editando...' : '✓ Guardado automático activo')}
-                  </span>
-                )}
+                <span className={`autosave-header-pill ${isSavingGrupo ? 'saving' : (hasChanges ? 'dirty' : 'saved')}`}>
+                  {isSavingGrupo ? '⏳ Guardando...' : (hasChanges ? '✏️ Editando...' : '✓ Guardado automático activo')}
+                </span>
               </h2>
               <div className="modal-body-grid">
                 {/* Columna 1: Información General */}
@@ -2108,7 +2125,7 @@ function Grupo({ user }) {
                       type="text"
                       className={`input-autosave ${fieldSaveStatus.nombre ? `state-${fieldSaveStatus.nombre}` : ''}`}
                       value={nuevoGrupo.nombre}
-                      onFocus={() => grupoSeleccionado && setTempFieldStatus('nombre', 'editing', 0)}
+                      onFocus={() => setTempFieldStatus('nombre', 'editing', 0)}
                       onChange={e => {
                         setNuevoGrupo({ ...nuevoGrupo, nombre: e.target.value });
                         setHasChanges(true);
@@ -2122,7 +2139,7 @@ function Grupo({ user }) {
                       }}
                     />
                   </div>
-                  <div className="form-group" style={{ marginTop: '1rem' }}>
+                  <div className="form-group">
                     <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
                       <span>Asesor del Grupo:</span>
                       {fieldSaveStatus.asesor === 'editing' && <span className="field-status-pill status-editing">Editando...</span>}
@@ -2133,7 +2150,7 @@ function Grupo({ user }) {
                       type="text"
                       className={`input-autosave ${fieldSaveStatus.asesor ? `state-${fieldSaveStatus.asesor}` : ''}`}
                       value={nuevoGrupo.asesor || ''}
-                      onFocus={() => grupoSeleccionado && setTempFieldStatus('asesor', 'editing', 0)}
+                      onFocus={() => setTempFieldStatus('asesor', 'editing', 0)}
                       onChange={e => {
                         setNuevoGrupo({ ...nuevoGrupo, asesor: e.target.value });
                         setHasChanges(true);
@@ -2147,7 +2164,7 @@ function Grupo({ user }) {
                       }}
                     />
                   </div>
-                  <div className="form-group" style={{ marginTop: '1rem' }}>
+                  <div className="form-group">
                     <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
                       <span>Aula / Salón:</span>
                       {fieldSaveStatus.aula === 'editing' && <span className="field-status-pill status-editing">Editando...</span>}
@@ -2159,7 +2176,7 @@ function Grupo({ user }) {
                       className={`input-autosave ${fieldSaveStatus.aula ? `state-${fieldSaveStatus.aula}` : ''}`}
                       placeholder="Ej: Aula 10, Lab A..."
                       value={nuevoGrupo.aula || ''}
-                      onFocus={() => grupoSeleccionado && setTempFieldStatus('aula', 'editing', 0)}
+                      onFocus={() => setTempFieldStatus('aula', 'editing', 0)}
                       onChange={e => {
                         setNuevoGrupo({ ...nuevoGrupo, aula: e.target.value });
                         setHasChanges(true);
@@ -2177,8 +2194,11 @@ function Grupo({ user }) {
 
                 {/* Columna 2: Formulario de Registro / Edición */}
                 <div className="modal-column-center">
-                  <div className={`alumno-form ${editingAlumno ? 'edit-mode' : ''} ${editingAlumno && rowSaveStatus[editingAlumno._id] ? `form-row-${rowSaveStatus[editingAlumno._id]}` : ''}`}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                  <form
+                    onSubmit={handleAgregarOActualizarAlumno}
+                    className={`alumno-form ${editingAlumno ? 'edit-mode' : ''} ${editingAlumno && rowSaveStatus[editingAlumno._id] ? `form-row-${rowSaveStatus[editingAlumno._id]}` : ''}`}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
                       <h4 className="form-subtitle" style={{ margin: 0, textAlign: 'left' }}>
                         {editingAlumno ? `Editando: ${editingAlumno.apellidoPaterno} ${editingAlumno.apellidoMaterno || ''} ${editingAlumno.nombre}`.replace(/\s+/g, ' ').trim() : 'Agregar Nuevo Alumno'}
                       </h4>
@@ -2200,40 +2220,40 @@ function Grupo({ user }) {
                         type="text" placeholder="Apellido Paterno" value={alumnoInput.apellidoPaterno} 
                         onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoPaterno: e.target.value })} 
                         onBlur={handleAlumnoFieldBlur}
-                        onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAgregarOActualizarAlumno(e); } }} 
                       />
                       <input 
                         ref={el => alumnoInputRefs.current[1] = el}
                         type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} 
                         onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} 
                         onBlur={handleAlumnoFieldBlur}
-                        onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAgregarOActualizarAlumno(e); } }} 
                       />
                       <input 
                         ref={el => alumnoInputRefs.current[2] = el}
                         type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} 
                         onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} 
                         onBlur={handleAlumnoFieldBlur}
-                        onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAgregarOActualizarAlumno(e); } }} 
                       />
                       <input 
                         ref={el => alumnoInputRefs.current[3] = el}
                         type="email" placeholder="Correo del Padre/Alumno" value={alumnoInput.emailPadre} 
                         onChange={(e) => setAlumnoInput({ ...alumnoInput, emailPadre: e.target.value })} 
                         onBlur={handleAlumnoFieldBlur}
-                        onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAgregarOActualizarAlumno(e); } }} 
                       />
                       <input 
                         ref={el => alumnoInputRefs.current[4] = el}
                         type="text" placeholder="Teléfono (Opcional)" value={alumnoInput.telefonoPadre || ''} 
                         onChange={(e) => setAlumnoInput({ ...alumnoInput, telefonoPadre: e.target.value })} 
                         onBlur={handleAlumnoFieldBlur}
-                        onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAgregarOActualizarAlumno(e); } }} 
                       />
                       
                       {/* Casilla y Fecha: Nuevo Ingreso */}
-                      <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                        <label className="checkbox-nuevo-ingreso-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', color: '#ffb703', fontWeight: 'bold' }}>
+                      <div style={{ marginTop: '4px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                        <label className="checkbox-nuevo-ingreso-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.84rem', color: '#ffb703', fontWeight: 'bold' }}>
                           <input 
                             type="checkbox" 
                             checked={!!alumnoInput.esNuevoIngreso} 
@@ -2246,28 +2266,29 @@ function Grupo({ user }) {
                                 fechaIngreso: checked ? (alumnoInput.fechaIngreso || today) : ''
                               });
                             }} 
-                            style={{ accentColor: '#ffb703', width: '16px', height: '16px', cursor: 'pointer' }}
+                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAgregarOActualizarAlumno(e); } }}
+                            style={{ accentColor: '#ffb703', width: '15px', height: '15px', cursor: 'pointer', flexShrink: 0 }}
                           />
                           <span>🌟 Alumno de Nuevo Ingreso (Ingresó a mitad de curso)</span>
                         </label>
                         {alumnoInput.esNuevoIngreso && (
-                          <div style={{ marginTop: '6px', paddingLeft: '24px' }}>
-                            <label style={{ fontSize: '0.78rem', color: '#ffb703', display: 'block', marginBottom: '3px' }}>Fecha de Ingreso:</label>
+                          <div style={{ marginTop: '4px', paddingLeft: '22px' }}>
+                            <label style={{ fontSize: '0.76rem', color: '#ffb703', display: 'block', marginBottom: '2px' }}>Fecha de Ingreso:</label>
                             <input 
                               type="date" 
                               value={alumnoInput.fechaIngreso || ''} 
                               onChange={(e) => setAlumnoInput({ ...alumnoInput, fechaIngreso: e.target.value })} 
                               onBlur={handleAlumnoFieldBlur}
-                              onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()}
-                              style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #ffb703', backgroundColor: 'rgba(255,183,3,0.1)', color: '#fff' }}
+                              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAgregarOActualizarAlumno(e); } }}
+                              style={{ width: '100%', padding: '4px 8px', height: '32px', borderRadius: '6px', border: '1px solid #ffb703', backgroundColor: 'rgba(255,183,3,0.1)', color: '#fff' }}
                             />
                           </div>
                         )}
                       </div>
 
                       {/* Casilla y Fecha: Dado de Baja */}
-                      <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                        <label className="checkbox-baja-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', color: '#ff4d4d', fontWeight: 'bold' }}>
+                      <div style={{ marginTop: '4px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                        <label className="checkbox-baja-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.84rem', color: '#ff4d4d', fontWeight: 'bold' }}>
                           <input 
                             type="checkbox" 
                             checked={!!alumnoInput.esBaja} 
@@ -2280,35 +2301,40 @@ function Grupo({ user }) {
                                 fechaBaja: checked ? (alumnoInput.fechaBaja || today) : ''
                               });
                             }} 
-                            style={{ accentColor: '#ff4d4d', width: '16px', height: '16px', cursor: 'pointer' }}
+                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAgregarOActualizarAlumno(e); } }}
+                            style={{ accentColor: '#ff4d4d', width: '15px', height: '15px', cursor: 'pointer', flexShrink: 0 }}
                           />
                           <span>🚫 Alumno Dado de Baja</span>
                         </label>
                         {alumnoInput.esBaja && (
-                          <div style={{ marginTop: '6px', paddingLeft: '24px' }}>
-                            <label style={{ fontSize: '0.78rem', color: '#ff4d4d', display: 'block', marginBottom: '3px' }}>Fecha de Baja:</label>
+                          <div style={{ marginTop: '4px', paddingLeft: '22px' }}>
+                            <label style={{ fontSize: '0.76rem', color: '#ff4d4d', display: 'block', marginBottom: '2px' }}>Fecha de Baja:</label>
                             <input 
                               type="date" 
                               value={alumnoInput.fechaBaja || ''} 
                               onChange={(e) => setAlumnoInput({ ...alumnoInput, fechaBaja: e.target.value })} 
                               onBlur={handleAlumnoFieldBlur}
-                              onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()}
-                              style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #ff4d4d', backgroundColor: 'rgba(255,77,77,0.1)', color: '#fff' }}
+                              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAgregarOActualizarAlumno(e); } }}
+                              style={{ width: '100%', padding: '4px 8px', height: '32px', borderRadius: '6px', border: '1px solid #ff4d4d', backgroundColor: 'rgba(255,77,77,0.1)', color: '#fff' }}
                             />
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="alumno-form-actions alumno-form-actions-sticky" style={{ marginTop: '15px' }}>
-                      <button className="btn btn-add" disabled={isSavingGrupo} onClick={handleAgregarOActualizarAlumno}>
+                    <div className="alumno-form-actions alumno-form-actions-sticky" style={{ marginTop: '10px' }}>
+                      <button type="submit" className="btn btn-add" disabled={isSavingGrupo}>
                         {isSavingGrupo ? '⏳ Guardando...' : (editingAlumno ? (grupoSeleccionado ? '✓ Actualizar y Guardar' : 'Actualizar') : 'Agregar Alumno')}
                       </button>
                       {editingAlumno && (
-                        <button className="btn btn-cancel" onClick={handleCancelarEdicion} style={{ padding: '8px' }}>Nuevo</button>
+                        <button type="button" className="btn btn-cancel" onClick={handleCancelarEdicion} style={{ padding: '8px' }}>Nuevo</button>
                       )}
                     </div>
-                    {editingAlumno && <p className="key-hint">Auto-guardado con Enter o al cambiar de campo • ESC para cancelar</p>}
-                  </div>
+                    <p className="key-hint">
+                      {editingAlumno
+                        ? 'Auto-guardado con Enter o al cambiar de campo • ESC para cancelar'
+                        : 'Presiona Enter en cualquier campo para agregar alumno'}
+                    </p>
+                  </form>
                 </div>
 
                 {/* Columna 3: Listado de Alumnos */}
