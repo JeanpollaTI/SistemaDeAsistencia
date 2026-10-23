@@ -141,6 +141,7 @@ export default function RegisterProfesor() {
                                                 {!firstAdmin && (
                                                         <select name="role" value={form.role} onChange={handleChange}>
                                                                 <option value="profesor">Profesor</option>
+                                                                <option value="capturista_reflexion">Capturista de Reflexión Serena</option>
                                                                 <option value="admin">Admin</option>
                                                         </select>
                                                 )}

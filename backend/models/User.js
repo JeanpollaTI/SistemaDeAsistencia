@@ -69,6 +69,10 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    esCapturistaReflexion: {
+      type: Boolean,
+      default: false,
+    },
     // Añadidos campos para manejar tokens de reseteo desde la DB (alternativa al objeto 'resetTokens' en memoria)
     resetPasswordToken: String,
     resetPasswordExpires: Date,

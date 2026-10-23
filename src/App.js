@@ -31,6 +31,7 @@ import MaintenanceScreen from "./PAGINA/MaintenanceScreen";
 import TablasMatematicas from "./PAGINA/TablasMatematicas";
 import ExtensionsDashboard from "./PAGINA/Extensions/ExtensionsDashboard";
 import DynamicSpreadsheetView from "./PAGINA/Extensions/DynamicSpreadsheetView";
+import ReflexionSerenaView from "./PAGINA/Extensions/ReflexionSerenaView";
 import SchoolConfigModal from "./COMPONENTE/SchoolConfigModal";
 
 import SearchBar from "./COMPONENTE/SearchBar";
@@ -384,6 +385,7 @@ function App() {
                     <Route path="/calificaciones" element={<PrivateRoute requiredRole="admin"><Calificaciones user={user} /></PrivateRoute>} />
                     <Route path="/extensiones" element={<PrivateRoute requiredRole={["admin", "profesor"]}><ExtensionsDashboard user={user} /></PrivateRoute>} />
                     <Route path="/extensiones/:id" element={<PrivateRoute requiredRole={["admin", "profesor"]}><DynamicSpreadsheetView user={user} /></PrivateRoute>} />
+                    <Route path="/reflexion-serena" element={<PrivateRoute requiredRole={["admin", "profesor"]}><ReflexionSerenaView user={user} /></PrivateRoute>} />
                     <Route path="/tablas-matematicas" element={<Navigate to="/extensiones" replace />} />
                     {/* Nueva Ruta SuperAdmin */}
                     <Route path="/manager-dashboard" element={<PrivateRoute requiredRole="superadmin"><SuperAdminDashboard user={user} /></PrivateRoute>} />

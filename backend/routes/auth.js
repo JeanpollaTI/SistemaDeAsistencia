@@ -129,6 +129,7 @@ router.post("/login", async (req, res) => {
         school_name: user.school_id?.name || "",
         subscriptionStatus: subStatus,
         asignaturas: user.asignaturas || [],
+        esCapturistaReflexion: !!user.esCapturistaReflexion,
         fechaRegistro: formatDate(user.createdAt)
       }
     });

@@ -82,6 +82,9 @@ profesoresRouter.post("/registrar", authMiddleware, isAdmin, upload.single("foto
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const isCapturista = role === "capturista_reflexion" || req.body.esCapturistaReflexion === "true" || req.body.esCapturistaReflexion === true;
+    const normalizedRole = role === "admin" ? "admin" : "profesor";
+
     const newUser = new User({
       nombre,
       email,
@@ -89,7 +92,9 @@ profesoresRouter.post("/registrar", authMiddleware, isAdmin, upload.single("foto
       celular,
       edad,
       sexo,
-      role: role || "profesor",
+      role: normalizedRole,
+      esCapturistaReflexion: isCapturista,
+      asignaturas: isCapturista ? ["Reflexión Serena"] : [],
       foto: fotoUrl,
       school_id
     });

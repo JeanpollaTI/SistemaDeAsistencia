@@ -131,6 +131,45 @@ function Grupo({ user }) {
   const [newStatusInput, setNewStatusInput] = useState({ code: '', label: '', color: '#9c27b0', equivalent: 'P' });
   const [autoSavingStatus, setAutoSavingStatus] = useState('');
   const autoSaveTimerRef = useRef(null);
+  const [isSavingGrupo, setIsSavingGrupo] = useState(false);
+  const [rowSaveStatus, setRowSaveStatus] = useState({}); // { [id]: 'editing' | 'saving' | 'saved' | 'error' }
+  const [fieldSaveStatus, setFieldSaveStatus] = useState({}); // { [field]: 'editing' | 'saving' | 'saved' | 'error' }
+  const rowStatusTimersRef = useRef({});
+  const fieldStatusTimersRef = useRef({});
+
+  const setTempRowStatus = (rowKey, status, clearAfterMs = 2800) => {
+    if (!rowKey) return;
+    if (rowStatusTimersRef.current[rowKey]) {
+      clearTimeout(rowStatusTimersRef.current[rowKey]);
+    }
+    setRowSaveStatus(prev => ({ ...prev, [rowKey]: status }));
+    if (clearAfterMs > 0) {
+      rowStatusTimersRef.current[rowKey] = setTimeout(() => {
+        setRowSaveStatus(prev => {
+          const next = { ...prev };
+          delete next[rowKey];
+          return next;
+        });
+      }, clearAfterMs);
+    }
+  };
+
+  const setTempFieldStatus = (fieldKey, status, clearAfterMs = 2800) => {
+    if (!fieldKey) return;
+    if (fieldStatusTimersRef.current[fieldKey]) {
+      clearTimeout(fieldStatusTimersRef.current[fieldKey]);
+    }
+    setFieldSaveStatus(prev => ({ ...prev, [fieldKey]: status }));
+    if (clearAfterMs > 0) {
+      fieldStatusTimersRef.current[fieldKey] = setTimeout(() => {
+        setFieldSaveStatus(prev => {
+          const next = { ...prev };
+          delete next[fieldKey];
+          return next;
+        });
+      }, clearAfterMs);
+    }
+  };
 
   // 🌟 ESTADOS PARA MODAL DE LISTA DE ALUMNOS Y MATRÍCULAS Y SUBMÓDULO TRABAJO SOCIAL
   const [modalListaMatriculasGrupo, setModalListaMatriculasGrupo] = useState(null);
@@ -485,56 +524,263 @@ function Grupo({ user }) {
     });
   };
 
-  // --- FUNCIONES CRUD Y LÓGICA ---
+  // --- FUNCIONES CRUD Y LÓGICA DE AUTO-SAVE GUIADO ---
   const getAxiosConfig = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
 
-  const handleAgregarOActualizarAlumno = () => {
+  const hasAlumnoChanged = (input, original) => {
+    if (!original) return true;
+    const norm = (v) => String(v || '').trim();
+    return (
+      norm(input.nombre) !== norm(original.nombre) ||
+      norm(input.apellidoPaterno) !== norm(original.apellidoPaterno) ||
+      norm(input.apellidoMaterno) !== norm(original.apellidoMaterno) ||
+      norm(input.emailPadre) !== norm(original.emailPadre) ||
+      norm(input.telefonoPadre) !== norm(original.telefonoPadre) ||
+      Boolean(input.esNuevoIngreso) !== Boolean(original.esNuevoIngreso) ||
+      norm(input.fechaIngreso) !== norm(original.fechaIngreso) ||
+      Boolean(input.esBaja) !== Boolean(original.esBaja) ||
+      norm(input.fechaBaja) !== norm(original.fechaBaja)
+    );
+  };
+
+  // Persistencia unificada en un solo paso hacia el backend con feedback visual por fila/celda
+  const persistirGrupoEnBackend = async (
+    grupoPayload,
+    {
+      targetRowKey = null,
+      targetFieldKey = null,
+      closeAfter = false,
+      customSuccessMsg = 'Cambios guardados con éxito'
+    } = {}
+  ) => {
+    if (!grupoSeleccionado?._id) return null;
+    if (!grupoPayload.nombre || !grupoPayload.nombre.trim()) {
+      showAlert('El nombre del grupo es obligatorio.', 'error');
+      return null;
+    }
+
+    setIsSavingGrupo(true);
+    if (targetRowKey) setTempRowStatus(targetRowKey, 'saving', 0);
+    if (targetFieldKey) setTempFieldStatus(targetFieldKey, 'saving', 0);
+
+    try {
+      const response = await axios.put(
+        `${API_URL}/grupos/${grupoSeleccionado._id}`,
+        grupoPayload,
+        getAxiosConfig()
+      );
+      const updatedGrupoData = response.data;
+      if (updatedGrupoData && Array.isArray(updatedGrupoData.alumnos)) {
+        updatedGrupoData.alumnos = sortAlumnosWithStatus(updatedGrupoData.alumnos);
+      }
+
+      setGrupos(prev => prev.map(g => (g._id === grupoSeleccionado._id ? updatedGrupoData : g)));
+      setGrupoSeleccionado(updatedGrupoData);
+      setNuevoGrupo(prev => ({
+        ...prev,
+        nombre: updatedGrupoData.nombre,
+        asesor: updatedGrupoData.asesor || '',
+        aula: updatedGrupoData.aula || '',
+        alumnos: updatedGrupoData.alumnos || prev.alumnos
+      }));
+
+      // Si estábamos editando un alumno, sincronizar la referencia original para futuras comparaciones
+      if (editingAlumno && updatedGrupoData?.alumnos) {
+        const refreshedAlumno = updatedGrupoData.alumnos.find(
+          a =>
+            String(a._id) === String(editingAlumno._id) ||
+            (a.nombre === alumnoInput.nombre.trim() &&
+              a.apellidoPaterno === alumnoInput.apellidoPaterno.trim() &&
+              (a.apellidoMaterno || '') === (alumnoInput.apellidoMaterno || '').trim())
+        );
+        if (refreshedAlumno) {
+          setEditingAlumno(refreshedAlumno);
+          if (targetRowKey && String(refreshedAlumno._id) !== String(targetRowKey)) {
+            setTempRowStatus(refreshedAlumno._id, 'saved', 3000);
+          }
+        }
+      }
+
+      if (targetRowKey) setTempRowStatus(targetRowKey, 'saved', 3000);
+      if (targetFieldKey) setTempFieldStatus(targetFieldKey, 'saved', 3000);
+
+      setHasChanges(false);
+      showAlert(customSuccessMsg, 'success');
+
+      if (closeAfter) {
+        cerrarModal(true);
+      }
+      return updatedGrupoData;
+    } catch (error) {
+      console.error('Error al guardar cambios del grupo:', error);
+      if (targetRowKey) setTempRowStatus(targetRowKey, 'error', 3500);
+      if (targetFieldKey) setTempFieldStatus(targetFieldKey, 'error', 3500);
+      showAlert(error.response?.data?.error || error.message || 'Error al actualizar.', 'error');
+      return null;
+    } finally {
+      setIsSavingGrupo(false);
+    }
+  };
+
+  // Auto-save guiado al presionar Enter o perder foco (onBlur) en campos generales del grupo
+  const handleGrupoFieldCommit = async (fieldName) => {
+    if (!grupoSeleccionado?._id) {
+      setTempFieldStatus(fieldName, '', 10);
+      return;
+    }
+    const currentVal = String(nuevoGrupo[fieldName] || '').trim();
+    const originalVal = String(grupoSeleccionado[fieldName] || '').trim();
+
+    // Validar que solo se dispare si el valor realmente cambió respecto al original
+    if (currentVal === originalVal) {
+      setFieldSaveStatus(prev => {
+        const next = { ...prev };
+        delete next[fieldName];
+        return next;
+      });
+      return;
+    }
+
+    if (fieldName === 'nombre' && !currentVal) {
+      showAlert('El nombre del grupo no puede quedar vacío.', 'error');
+      setNuevoGrupo(prev => ({ ...prev, nombre: grupoSeleccionado.nombre }));
+      return;
+    }
+
+    await persistirGrupoEnBackend(nuevoGrupo, {
+      targetFieldKey: fieldName,
+      customSuccessMsg: 'Cambios guardados con éxito'
+    });
+  };
+
+  // Auto-save guiado en edición de alumno al perder el foco (onBlur) si hubo cambios reales
+  const handleAlumnoFieldBlur = async () => {
+    if (!editingAlumno) return;
+    if (!alumnoInput.nombre.trim() || !alumnoInput.apellidoPaterno.trim()) return;
+    if (!hasAlumnoChanged(alumnoInput, editingAlumno)) return;
+
+    const alumnosActualizados = sortAlumnosWithStatus(
+      nuevoGrupo.alumnos.map(a =>
+        a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a
+      )
+    );
+    const nextGrupo = { ...nuevoGrupo, alumnos: alumnosActualizados };
+    setNuevoGrupo(nextGrupo);
+    setEditingAlumno({ ...editingAlumno, ...alumnoInput });
+
+    if (grupoSeleccionado?._id) {
+      await persistirGrupoEnBackend(nextGrupo, {
+        targetRowKey: editingAlumno._id,
+        customSuccessMsg: 'Cambios guardados con éxito'
+      });
+    } else {
+      setTempRowStatus(editingAlumno._id, 'saved', 2500);
+      setHasChanges(true);
+    }
+  };
+
+  const handleAgregarOActualizarAlumno = async () => {
     if (!alumnoInput.nombre.trim() || !alumnoInput.apellidoPaterno.trim()) {
       return showAlert('Nombre y Apellido Paterno son obligatorios.', 'error');
     }
 
     if (editingAlumno) {
-      // ACTUALIZAR INLINE
-      setNuevoGrupo(prev => ({
-        ...prev,
-        alumnos: sortAlumnosWithStatus(prev.alumnos.map(a => a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a))
-      }));
-      showAlert("Alumno actualizado en la lista.");
+      // Validar si realmente hubo cambios respecto al alumno original
+      if (!hasAlumnoChanged(alumnoInput, editingAlumno) && !hasChanges) {
+        setTempRowStatus(editingAlumno._id, 'saved', 2000);
+        return showAlert('Sin cambios pendientes en este alumno.');
+      }
+
+      const rowId = editingAlumno._id;
+      const alumnosActualizados = sortAlumnosWithStatus(
+        nuevoGrupo.alumnos.map(a => (a._id === rowId ? { ...a, ...alumnoInput } : a))
+      );
+      const nextGrupo = { ...nuevoGrupo, alumnos: alumnosActualizados };
+      setNuevoGrupo(nextGrupo);
+      setEditingAlumno({ ...editingAlumno, ...alumnoInput });
+
+      if (grupoSeleccionado?._id) {
+        // Guardado directo en 1 solo paso al backend
+        await persistirGrupoEnBackend(nextGrupo, {
+          targetRowKey: rowId,
+          customSuccessMsg: 'Cambios guardados con éxito'
+        });
+      } else {
+        setTempRowStatus(rowId, 'saved', 2500);
+        setHasChanges(true);
+        showAlert('Alumno actualizado en la lista.');
+      }
     } else {
-      // AGREGAR NUEVO
+      // AGREGAR NUEVO ALUMNO
       const alumnoId = `new-${Date.now()}`;
       const nuevoAlumno = { _id: alumnoId, ...alumnoInput };
-      setNuevoGrupo(prev => ({ 
-        ...prev, 
-        alumnos: sortAlumnosWithStatus([...prev.alumnos, nuevoAlumno])
-      }));
+      const alumnosActualizados = sortAlumnosWithStatus([...nuevoGrupo.alumnos, nuevoAlumno]);
+      const nextGrupo = { ...nuevoGrupo, alumnos: alumnosActualizados };
+      setNuevoGrupo(nextGrupo);
       handleCancelarEdicion();
+
+      if (grupoSeleccionado?._id) {
+        await persistirGrupoEnBackend(nextGrupo, {
+          targetRowKey: alumnoId,
+          customSuccessMsg: 'Alumno agregado y cambios guardados con éxito'
+        });
+      } else {
+        setTempRowStatus(alumnoId, 'saved', 2500);
+        setHasChanges(true);
+        showAlert('Alumno agregado a la lista.');
+      }
     }
-    setHasChanges(true);
   };
 
-  const handleUpdateAlumno = () => {
+  const handleUpdateAlumno = async () => {
     if (!editingAlumno) return;
-    setNuevoGrupo(prev => ({
-      ...prev,
-      alumnos: sortAlumnosWithStatus(prev.alumnos.map(a => a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a))
-    }));
+    if (!alumnoInput.nombre.trim() || !alumnoInput.apellidoPaterno.trim()) {
+      return showAlert('Nombre y Apellido Paterno son obligatorios.', 'error');
+    }
+    const rowId = editingAlumno._id;
+    const alumnosActualizados = sortAlumnosWithStatus(
+      nuevoGrupo.alumnos.map(a => (a._id === rowId ? { ...a, ...alumnoInput } : a))
+    );
+    const nextGrupo = { ...nuevoGrupo, alumnos: alumnosActualizados };
+    setNuevoGrupo(nextGrupo);
     setModalVisible('gestionarGrupo');
     setEditingAlumno(null);
-    setHasChanges(true);
-    showAlert("Alumno actualizado correctamente.");
+
+    if (grupoSeleccionado?._id) {
+      await persistirGrupoEnBackend(nextGrupo, {
+        targetRowKey: rowId,
+        customSuccessMsg: 'Cambios guardados con éxito'
+      });
+    } else {
+      setTempRowStatus(rowId, 'saved', 2500);
+      setHasChanges(true);
+      showAlert('Alumno actualizado correctamente.');
+    }
   };
 
   const handleDeleteAlumno = (alumno) => {
     setAlumnoParaEliminar(alumno);
   };
 
-  const confirmarEliminacionAlumno = () => {
+  const confirmarEliminacionAlumno = async () => {
     if (!alumnoParaEliminar) return;
-    setNuevoGrupo(prev => ({ ...prev, alumnos: prev.alumnos.filter(a => a._id !== alumnoParaEliminar._id) }));
+    const idEliminado = alumnoParaEliminar._id;
+    const alumnosRestantes = nuevoGrupo.alumnos.filter(a => a._id !== idEliminado);
+    const nextGrupo = { ...nuevoGrupo, alumnos: alumnosRestantes };
+    setNuevoGrupo(nextGrupo);
+    if (editingAlumno?._id === idEliminado) {
+      handleCancelarEdicion();
+    }
     setAlumnoParaEliminar(null);
-    setHasChanges(true);
-    showAlert("Alumno eliminado de la lista.");
+
+    if (grupoSeleccionado?._id) {
+      await persistirGrupoEnBackend(nextGrupo, {
+        customSuccessMsg: 'Alumno eliminado y cambios guardados con éxito'
+      });
+    } else {
+      setHasChanges(true);
+      showAlert('Alumno eliminado de la lista.');
+    }
   };
 
   // Autofocus inicial al abrir el modal (Solo una vez por apertura)
@@ -649,27 +895,27 @@ function Grupo({ user }) {
 
   const handleUpdateGrupo = async () => {
     if (!grupoSeleccionado) return;
-    try {
-      const response = await axios.put(`${API_URL}/grupos/${grupoSeleccionado._id}`, nuevoGrupo, getAxiosConfig());
-      const updatedGrupoData = response.data;
-      if (updatedGrupoData && Array.isArray(updatedGrupoData.alumnos)) {
-        updatedGrupoData.alumnos.sort((a, b) => {
-          const resP = (a.apellidoPaterno || '').localeCompare(b.apellidoPaterno || '', 'es', { sensitivity: 'base' });
-          if (resP !== 0) return resP;
-          const resM = (a.apellidoMaterno || '').localeCompare(b.apellidoMaterno || '', 'es', { sensitivity: 'base' });
-          if (resM !== 0) return resM;
-          return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
-        });
-      }
-      setGrupos(prev => prev.map(g => g._id === grupoSeleccionado._id ? updatedGrupoData : g));
-      setGrupoSeleccionado(updatedGrupoData);
-      showAlert(`Grupo "${nuevoGrupo.nombre}" actualizado.`);
-      setHasChanges(false);
-      cerrarModal(true);
-    } catch (error) {
-      console.error("Error al actualizar grupo:", error);
-      showAlert(error.response?.data?.error || error.message || 'Error al actualizar.', 'error');
+    let payloadToSave = { ...nuevoGrupo };
+
+    // Si hay un alumno en edición con cambios en los inputs, integrarlos automáticamente antes de guardar
+    if (
+      editingAlumno &&
+      alumnoInput.nombre.trim() &&
+      alumnoInput.apellidoPaterno.trim() &&
+      hasAlumnoChanged(alumnoInput, editingAlumno)
+    ) {
+      payloadToSave.alumnos = sortAlumnosWithStatus(
+        nuevoGrupo.alumnos.map(a =>
+          a._id === editingAlumno._id ? { ...a, ...alumnoInput } : a
+        )
+      );
+      setNuevoGrupo(payloadToSave);
     }
+
+    await persistirGrupoEnBackend(payloadToSave, {
+      closeAfter: true,
+      customSuccessMsg: `Grupo "${payloadToSave.nombre}" actualizado con éxito.`
+    });
   };
 
   const handleGuardarAsignacion = async () => {
@@ -1680,6 +1926,7 @@ function Grupo({ user }) {
               </div>
             </header>
             <h3 className="subtitulo">TODOS LOS GRUPOS EXISTENTES</h3>
+            <div className="table-responsive-wrapper">
             <table className="grupos-table">
               <thead>
                 <tr>
@@ -1759,11 +2006,13 @@ function Grupo({ user }) {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
         {user.role === 'profesor' && (
           <div className="profesor-view">
             <header className="main-header"><h1>Mis Grupos Asignados</h1></header>
+            <div className="table-responsive-wrapper">
             <table className="grupos-table">
               <thead>
                 <tr>
@@ -1776,7 +2025,6 @@ function Grupo({ user }) {
               </thead>
               <tbody>
                 {grupos.flatMap(grupo => {
-                  // Filtrar todas las asignaciones para este profesor
                   // Filtrar todas las asignaciones para este profesor
                   const misAsignaciones = grupo.profesoresAsignados.filter(asig => {
                     const assignedId = getSafeId(asig.profesor);
@@ -1832,73 +2080,154 @@ function Grupo({ user }) {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         )}
         {(modalVisible === 'gestionarGrupo') && (
           <div className="modal-backdrop">
             <div className="modal-content">
-              <h2>{grupoSeleccionado ? `Editar Grupo: ${grupoSeleccionado.nombre}` : 'Crear Nuevo Grupo'}</h2>
+              <h2>
+                <span>{grupoSeleccionado ? `Editar Grupo: ${grupoSeleccionado.nombre}` : 'Crear Nuevo Grupo'}</span>
+                {grupoSeleccionado && (
+                  <span className={`autosave-header-pill ${isSavingGrupo ? 'saving' : (hasChanges ? 'dirty' : 'saved')}`}>
+                    {isSavingGrupo ? '⏳ Guardando...' : (hasChanges ? '✏️ Editando...' : '✓ Guardado automático activo')}
+                  </span>
+                )}
+              </h2>
               <div className="modal-body-grid">
                 {/* Columna 1: Información General */}
                 <div className="modal-column-left">
                   <div className="form-group">
-                    <label>Nombre del Grupo:</label>
-                    <input type="text" value={nuevoGrupo.nombre} onChange={e => {
-                      setNuevoGrupo({ ...nuevoGrupo, nombre: e.target.value });
-                      setHasChanges(true);
-                    }} />
+                    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
+                      <span>Nombre del Grupo:</span>
+                      {fieldSaveStatus.nombre === 'editing' && <span className="field-status-pill status-editing">Editando...</span>}
+                      {fieldSaveStatus.nombre === 'saving' && <span className="field-status-pill status-saving">⏳ Guardando...</span>}
+                      {fieldSaveStatus.nombre === 'saved' && <span className="field-status-pill status-saved">✓ Guardado</span>}
+                    </label>
+                    <input
+                      type="text"
+                      className={`input-autosave ${fieldSaveStatus.nombre ? `state-${fieldSaveStatus.nombre}` : ''}`}
+                      value={nuevoGrupo.nombre}
+                      onFocus={() => grupoSeleccionado && setTempFieldStatus('nombre', 'editing', 0)}
+                      onChange={e => {
+                        setNuevoGrupo({ ...nuevoGrupo, nombre: e.target.value });
+                        setHasChanges(true);
+                      }}
+                      onBlur={() => handleGrupoFieldCommit('nombre')}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleGrupoFieldCommit('nombre');
+                        }
+                      }}
+                    />
                   </div>
                   <div className="form-group" style={{ marginTop: '1rem' }}>
-                    <label>Asesor del Grupo:</label>
-                    <input type="text" value={nuevoGrupo.asesor || ''} onChange={e => {
-                      setNuevoGrupo({ ...nuevoGrupo, asesor: e.target.value });
-                      setHasChanges(true);
-                    }} />
+                    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
+                      <span>Asesor del Grupo:</span>
+                      {fieldSaveStatus.asesor === 'editing' && <span className="field-status-pill status-editing">Editando...</span>}
+                      {fieldSaveStatus.asesor === 'saving' && <span className="field-status-pill status-saving">⏳ Guardando...</span>}
+                      {fieldSaveStatus.asesor === 'saved' && <span className="field-status-pill status-saved">✓ Guardado</span>}
+                    </label>
+                    <input
+                      type="text"
+                      className={`input-autosave ${fieldSaveStatus.asesor ? `state-${fieldSaveStatus.asesor}` : ''}`}
+                      value={nuevoGrupo.asesor || ''}
+                      onFocus={() => grupoSeleccionado && setTempFieldStatus('asesor', 'editing', 0)}
+                      onChange={e => {
+                        setNuevoGrupo({ ...nuevoGrupo, asesor: e.target.value });
+                        setHasChanges(true);
+                      }}
+                      onBlur={() => handleGrupoFieldCommit('asesor')}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleGrupoFieldCommit('asesor');
+                        }
+                      }}
+                    />
                   </div>
                   <div className="form-group" style={{ marginTop: '1rem' }}>
-                    <label>Aula / Salón:</label>
-                    <input type="text" placeholder="Ej: Aula 10, Lab A..." value={nuevoGrupo.aula || ''} onChange={e => {
-                      setNuevoGrupo({ ...nuevoGrupo, aula: e.target.value });
-                      setHasChanges(true);
-                    }} />
+                    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
+                      <span>Aula / Salón:</span>
+                      {fieldSaveStatus.aula === 'editing' && <span className="field-status-pill status-editing">Editando...</span>}
+                      {fieldSaveStatus.aula === 'saving' && <span className="field-status-pill status-saving">⏳ Guardando...</span>}
+                      {fieldSaveStatus.aula === 'saved' && <span className="field-status-pill status-saved">✓ Guardado</span>}
+                    </label>
+                    <input
+                      type="text"
+                      className={`input-autosave ${fieldSaveStatus.aula ? `state-${fieldSaveStatus.aula}` : ''}`}
+                      placeholder="Ej: Aula 10, Lab A..."
+                      value={nuevoGrupo.aula || ''}
+                      onFocus={() => grupoSeleccionado && setTempFieldStatus('aula', 'editing', 0)}
+                      onChange={e => {
+                        setNuevoGrupo({ ...nuevoGrupo, aula: e.target.value });
+                        setHasChanges(true);
+                      }}
+                      onBlur={() => handleGrupoFieldCommit('aula')}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleGrupoFieldCommit('aula');
+                        }
+                      }}
+                    />
                   </div>
                 </div>
 
                 {/* Columna 2: Formulario de Registro / Edición */}
                 <div className="modal-column-center">
-                  <div className={`alumno-form ${editingAlumno ? 'edit-mode' : ''}`}>
-                    <h4 className="form-subtitle">
-                      {editingAlumno ? `Editando: ${editingAlumno.apellidoPaterno} ${editingAlumno.apellidoMaterno || ''} ${editingAlumno.nombre}`.replace(/\s+/g, ' ').trim() : 'Agregar Nuevo Alumno'}
-                    </h4>
+                  <div className={`alumno-form ${editingAlumno ? 'edit-mode' : ''} ${editingAlumno && rowSaveStatus[editingAlumno._id] ? `form-row-${rowSaveStatus[editingAlumno._id]}` : ''}`}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                      <h4 className="form-subtitle" style={{ margin: 0, textAlign: 'left' }}>
+                        {editingAlumno ? `Editando: ${editingAlumno.apellidoPaterno} ${editingAlumno.apellidoMaterno || ''} ${editingAlumno.nombre}`.replace(/\s+/g, ' ').trim() : 'Agregar Nuevo Alumno'}
+                      </h4>
+                      {editingAlumno && (
+                        <span className={`row-status-badge status-${rowSaveStatus[editingAlumno._id] || (hasAlumnoChanged(alumnoInput, editingAlumno) ? 'editing' : 'idle')}`}>
+                          {rowSaveStatus[editingAlumno._id] === 'saving'
+                            ? '⏳ Guardando...'
+                            : rowSaveStatus[editingAlumno._id] === 'saved'
+                            ? '✓ Guardado'
+                            : hasAlumnoChanged(alumnoInput, editingAlumno)
+                            ? '✏️ Editando...'
+                            : 'Seleccionado'}
+                        </span>
+                      )}
+                    </div>
                     <div className="alumno-form-inputs">
                       <input 
                         ref={el => alumnoInputRefs.current[0] = el}
                         type="text" placeholder="Apellido Paterno" value={alumnoInput.apellidoPaterno} 
                         onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoPaterno: e.target.value })} 
+                        onBlur={handleAlumnoFieldBlur}
                         onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
                       />
                       <input 
                         ref={el => alumnoInputRefs.current[1] = el}
                         type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} 
                         onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} 
+                        onBlur={handleAlumnoFieldBlur}
                         onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
                       />
                       <input 
                         ref={el => alumnoInputRefs.current[2] = el}
                         type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} 
                         onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} 
+                        onBlur={handleAlumnoFieldBlur}
                         onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
                       />
                       <input 
                         ref={el => alumnoInputRefs.current[3] = el}
                         type="email" placeholder="Correo del Padre/Alumno" value={alumnoInput.emailPadre} 
                         onChange={(e) => setAlumnoInput({ ...alumnoInput, emailPadre: e.target.value })} 
+                        onBlur={handleAlumnoFieldBlur}
                         onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
                       />
                       <input 
                         ref={el => alumnoInputRefs.current[4] = el}
                         type="text" placeholder="Teléfono (Opcional)" value={alumnoInput.telefonoPadre || ''} 
                         onChange={(e) => setAlumnoInput({ ...alumnoInput, telefonoPadre: e.target.value })} 
+                        onBlur={handleAlumnoFieldBlur}
                         onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()} 
                       />
                       
@@ -1928,6 +2257,8 @@ function Grupo({ user }) {
                               type="date" 
                               value={alumnoInput.fechaIngreso || ''} 
                               onChange={(e) => setAlumnoInput({ ...alumnoInput, fechaIngreso: e.target.value })} 
+                              onBlur={handleAlumnoFieldBlur}
+                              onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()}
                               style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #ffb703', backgroundColor: 'rgba(255,183,3,0.1)', color: '#fff' }}
                             />
                           </div>
@@ -1960,21 +2291,23 @@ function Grupo({ user }) {
                               type="date" 
                               value={alumnoInput.fechaBaja || ''} 
                               onChange={(e) => setAlumnoInput({ ...alumnoInput, fechaBaja: e.target.value })} 
+                              onBlur={handleAlumnoFieldBlur}
+                              onKeyDown={e => e.key === 'Enter' && handleAgregarOActualizarAlumno()}
                               style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #ff4d4d', backgroundColor: 'rgba(255,77,77,0.1)', color: '#fff' }}
                             />
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="alumno-form-actions" style={{ marginTop: '15px' }}>
-                      <button className="btn btn-add" onClick={handleAgregarOActualizarAlumno}>
-                        {editingAlumno ? 'Actualizar' : 'Agregar Alumno'}
+                    <div className="alumno-form-actions alumno-form-actions-sticky" style={{ marginTop: '15px' }}>
+                      <button className="btn btn-add" disabled={isSavingGrupo} onClick={handleAgregarOActualizarAlumno}>
+                        {isSavingGrupo ? '⏳ Guardando...' : (editingAlumno ? (grupoSeleccionado ? '✓ Actualizar y Guardar' : 'Actualizar') : 'Agregar Alumno')}
                       </button>
                       {editingAlumno && (
                         <button className="btn btn-cancel" onClick={handleCancelarEdicion} style={{ padding: '8px' }}>Nuevo</button>
                       )}
                     </div>
-                    {editingAlumno && <p className="key-hint">Presiona ESC para cancelar o Enter para guardar</p>}
+                    {editingAlumno && <p className="key-hint">Auto-guardado con Enter o al cambiar de campo • ESC para cancelar</p>}
                   </div>
                 </div>
 
@@ -2044,6 +2377,7 @@ function Grupo({ user }) {
                     <ul>
                       {nuevoGrupo.alumnos.map((a, index) => {
                         const isFirstNuevo = a.esNuevoIngreso && (index === 0 || !nuevoGrupo.alumnos[index - 1]?.esNuevoIngreso);
+                        const rowSt = rowSaveStatus[a._id];
                         
                         return (
                           <React.Fragment key={a._id || index}>
@@ -2065,7 +2399,7 @@ function Grupo({ user }) {
                               </li>
                             )}
                             <li 
-                              className={`${selectedAlumnoIndex === index ? 'selected' : ''} ${editingAlumno?._id === a._id ? 'editing' : ''}`}
+                              className={`${selectedAlumnoIndex === index ? 'selected' : ''} ${editingAlumno?._id === a._id ? 'editing' : ''} ${rowSt ? `row-state-${rowSt}` : ''}`}
                               onClick={() => handleSelectAlumno(index)}
                               style={{ 
                                 cursor: 'pointer', 
@@ -2075,6 +2409,15 @@ function Grupo({ user }) {
                             >
                               <span className="alumno-nombre-display" style={{ color: a.esBaja ? '#ff4d4d' : undefined }}>
                                 <strong style={{ color: a.esBaja ? '#ff4d4d' : undefined }}>{a.matricula || '---'}</strong> - {`${index + 1}. ${a.apellidoPaterno} ${a.apellidoMaterno || ''} ${a.nombre}`}
+                                {rowSt === 'saving' && (
+                                  <span className="row-status-badge status-saving" style={{ marginLeft: '6px' }}>⏳ Guardando...</span>
+                                )}
+                                {rowSt === 'saved' && (
+                                  <span className="row-status-badge status-saved" style={{ marginLeft: '6px' }}>✓ Guardado</span>
+                                )}
+                                {!rowSt && editingAlumno?._id === a._id && (
+                                  <span className="row-status-badge status-editing" style={{ marginLeft: '6px' }}>✏️ Editando...</span>
+                                )}
                                 {a.esBaja ? (
                                   <span style={{
                                     backgroundColor: '#570000',
@@ -2123,8 +2466,8 @@ function Grupo({ user }) {
                   </div>
                 </div>
               </div>
-              <div className="modal-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '10px' }}>
-                <div>
+              <div className="modal-actions modal-actions-sticky" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   {nuevoGrupo.alumnos?.length > 0 && (
                     <button
                       type="button"
@@ -2146,11 +2489,11 @@ function Grupo({ user }) {
                     </button>
                   )}
                 </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button className="btn btn-primary" onClick={grupoSeleccionado ? handleUpdateGrupo : handleGuardarGrupo}>
-                    {grupoSeleccionado ? 'Guardar Cambios' : 'Guardar Grupo'}
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button className="btn btn-primary" disabled={isSavingGrupo} onClick={grupoSeleccionado ? handleUpdateGrupo : handleGuardarGrupo}>
+                    {isSavingGrupo ? '⏳ Guardando...' : (grupoSeleccionado ? 'Guardar y Cerrar' : 'Guardar Grupo')}
                   </button>
-                  <button className="btn btn-cancel" onClick={cerrarModal}>Cancelar</button>
+                  <button className="btn btn-cancel" onClick={cerrarModal}>Cerrar</button>
                 </div>
               </div>
             </div>
@@ -2163,11 +2506,11 @@ function Grupo({ user }) {
               <h2>Editar Alumno - {grupoSeleccionado?.nombre}</h2>
               <div className="alumno-form">
                 <div className="alumno-form-inputs">
-                  <input type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} />
-                  <input type="text" placeholder="Apellido Paterno" value={alumnoInput.apellidoPaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoPaterno: e.target.value })} />
-                  <input type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} />
-                  <input type="email" placeholder="Correo del Padre/Alumno" value={alumnoInput.emailPadre} onChange={(e) => setAlumnoInput({ ...alumnoInput, emailPadre: e.target.value })} />
-                  <input type="text" placeholder="Teléfono (Opcional)" value={alumnoInput.telefonoPadre || ''} onChange={(e) => setAlumnoInput({ ...alumnoInput, telefonoPadre: e.target.value })} />
+                  <input type="text" placeholder="Nombre(s)" value={alumnoInput.nombre} onChange={(e) => setAlumnoInput({ ...alumnoInput, nombre: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleUpdateAlumno()} />
+                  <input type="text" placeholder="Apellido Paterno" value={alumnoInput.apellidoPaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoPaterno: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleUpdateAlumno()} />
+                  <input type="text" placeholder="Apellido Materno" value={alumnoInput.apellidoMaterno} onChange={(e) => setAlumnoInput({ ...alumnoInput, apellidoMaterno: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleUpdateAlumno()} />
+                  <input type="email" placeholder="Correo del Padre/Alumno" value={alumnoInput.emailPadre} onChange={(e) => setAlumnoInput({ ...alumnoInput, emailPadre: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleUpdateAlumno()} />
+                  <input type="text" placeholder="Teléfono (Opcional)" value={alumnoInput.telefonoPadre || ''} onChange={(e) => setAlumnoInput({ ...alumnoInput, telefonoPadre: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleUpdateAlumno()} />
                   
                   {/* Casilla y Fecha: Nuevo Ingreso */}
                   <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
@@ -2234,8 +2577,8 @@ function Grupo({ user }) {
                   </div>
                 </div>
               </div>
-              <div className="modal-actions">
-                <button className="btn btn-primary" onClick={handleUpdateAlumno}>Actualizar</button>
+              <div className="modal-actions modal-actions-sticky">
+                <button className="btn btn-primary" onClick={handleUpdateAlumno}>Actualizar y Guardar</button>
                 <button className="btn btn-cancel" onClick={() => { setModalVisible('gestionarGrupo'); setEditingAlumno(null); }}>Volver</button>
               </div>
             </div>
@@ -2363,7 +2706,7 @@ function Grupo({ user }) {
                   </div>
                 )}
               </div>
-              <div className="modal-actions">
+              <div className="modal-actions modal-actions-sticky">
                 <button className="btn btn-primary" onClick={handleGuardarAsignacion}>Guardar Cambios</button>
                 <button className="btn btn-cancel" onClick={cerrarModal}>Cancelar</button>
               </div>
@@ -2687,7 +3030,7 @@ function Grupo({ user }) {
                   </div>
                 )}
               </div>
-              <div className="modal-actions">
+              <div className="modal-actions modal-actions-sticky">
                 <button className="btn btn-primary" onClick={guardarAsistencia}>Guardar Asistencia</button>
                 <button className="btn btn-cancel" onClick={cerrarModal}>Cerrar</button>
               </div>

@@ -145,44 +145,88 @@ const ExtensionsDashboard = ({ user }) => {
                 </div>
             ) : (
                 <div className="ext-cards-grid">
+                    {!extensions.some(e => /reflexi[oó]n\s*serena/i.test(e.title || '')) && (
+                        <div className="ext-card" style={{ border: '1px solid rgba(0, 203, 203, 0.45)' }}>
+                            <div className="ext-card-header">
+                                <div className="ext-card-title-row">
+                                    <FaTable className="ext-card-icon" />
+                                    <h3 className="ext-card-title">Reflexión Serena</h3>
+                                </div>
+                                <span className="ext-type-badge badge-group">
+                                    <FaUsers /> 15 Grupos (1° A - 3° E)
+                                </span>
+                            </div>
+                            <div className="ext-card-body">
+                                <p className="ext-card-desc">
+                                    Registro semanal por grupo (Semanas 1 a 40, iniciando en septiembre) de porcentaje de cumplimiento (0-100%) y reportes mensuales automáticos.
+                                </p>
+                            </div>
+                            <div className="ext-card-footer">
+                                <button
+                                    className="ext-btn ext-btn-primary ext-flex-1"
+                                    onClick={() => navigate('/reflexion-serena')}
+                                >
+                                    <FaEye /> Abrir Módulo Reflexión Serena
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     {extensions.map((ext) => {
-                        const isUserAuthorized = isAdmin || (ext.authorizedTeachers || []).some(
+                        const isReflexionSerena = /reflexi[oó]n\s*serena/i.test(ext.title || '');
+                        const isUserAuthorized = isAdmin || user?.esCapturistaReflexion || (ext.authorizedTeachers || []).some(
                             t => (typeof t === 'object' ? t._id : t) === user?._id
                         );
 
                         return (
-                            <div key={ext._id} className="ext-card">
+                            <div key={ext._id} className="ext-card" style={isReflexionSerena ? { border: '1px solid rgba(0, 203, 203, 0.45)' } : undefined}>
                                 <div className="ext-card-header">
                                     <div className="ext-card-title-row">
                                         <FaTable className="ext-card-icon" />
                                         <h3 className="ext-card-title">{ext.title}</h3>
                                     </div>
-                                    <span className={`ext-type-badge ${ext.rowType === 'STUDENTS' ? 'badge-student' : 'badge-group'}`}>
-                                        {ext.rowType === 'STUDENTS' ? <><FaUserGraduate /> Por Alumnos</> : <><FaUsers /> Por Grupos</>}
+                                    <span className={`ext-type-badge ${(ext.rowType === 'STUDENTS' && !isReflexionSerena) ? 'badge-student' : 'badge-group'}`}>
+                                        {(ext.rowType === 'STUDENTS' && !isReflexionSerena) ? <><FaUserGraduate /> Por Alumnos</> : <><FaUsers /> {isReflexionSerena ? '15 Grupos (40 Semanas)' : 'Por Grupos'}</>}
                                     </span>
                                 </div>
 
                                 <div className="ext-card-body">
-                                    {ext.description && <p className="ext-card-desc">{ext.description}</p>}
+                                    {isReflexionSerena ? (
+                                        <p className="ext-card-desc">
+                                            Registro exclusivo por grupo (1° A a 3° E) durante las 40 semanas del ciclo escolar (0 a 100%) con cálculo automático de promedios mensuales.
+                                        </p>
+                                    ) : (
+                                        ext.description && <p className="ext-card-desc">{ext.description}</p>
+                                    )}
 
                                     <div className="ext-card-meta">
-                                        {ext.rowType === 'STUDENTS' && (
+                                        {ext.rowType === 'STUDENTS' && !isReflexionSerena && (
                                             <div className="ext-meta-item">
                                                 <strong>Grupo:</strong> {ext.assignedGroupId?.nombre || 'Sin asignar'}
                                             </div>
                                         )}
 
-                                        <div className="ext-meta-item">
-                                            <strong>Columnas ({ext.columns?.length || 0}):</strong>
-                                            <div className="ext-cols-preview">
-                                                {(ext.columns || []).slice(0, 4).map((c) => (
-                                                    <span key={c.key} className="ext-col-chip">{c.label}</span>
-                                                ))}
-                                                {(ext.columns || []).length > 4 && (
-                                                    <span className="ext-col-chip ext-more">+{ext.columns.length - 4} más</span>
-                                                )}
+                                        {isReflexionSerena ? (
+                                            <div className="ext-meta-item">
+                                                <strong>Estructura:</strong>
+                                                <div className="ext-cols-preview">
+                                                    <span className="ext-col-chip">15 Grupos (1°A - 3°E)</span>
+                                                    <span className="ext-col-chip">Semanas 1 a 40</span>
+                                                    <span className="ext-col-chip">Promedios Mensuales</span>
+                                                </div>
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <div className="ext-meta-item">
+                                                <strong>Columnas ({ext.columns?.length || 0}):</strong>
+                                                <div className="ext-cols-preview">
+                                                    {(ext.columns || []).slice(0, 4).map((c) => (
+                                                        <span key={c.key} className="ext-col-chip">{c.label}</span>
+                                                    ))}
+                                                    {(ext.columns || []).length > 4 && (
+                                                        <span className="ext-col-chip ext-more">+{ext.columns.length - 4} más</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
 
                                         <div className="ext-meta-item">
                                             <strong>Encargados:</strong>

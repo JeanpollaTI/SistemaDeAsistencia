@@ -12,6 +12,7 @@ import jsPDF from 'jspdf';
 import './Extensions.css';
 
 import ColumnHeaderCell from './ColumnHeaderCell';
+import ReflexionSerenaView from './ReflexionSerenaView';
 
 const DynamicSpreadsheetView = ({ user }) => {
     const { id } = useParams();
@@ -431,6 +432,11 @@ const DynamicSpreadsheetView = ({ user }) => {
                 </button>
             </div>
         );
+    }
+
+    // Si la extensión es "Reflexión Serena", renderizar el módulo refactorizado por grupo (15 grupos, 40 semanas, 0-100%)
+    if (/reflexi[oó]n\s*serena/i.test(template.title || '')) {
+        return <ReflexionSerenaView user={user} embeddedTemplateId={template._id} />;
     }
 
     // Filter rows based on search & status pill

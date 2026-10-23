@@ -192,6 +192,12 @@ router.get('/', authMiddleware, async (req, res) => {
 
         await ensureDefaultTemplates(schoolId);
 
+        // Asegurar que cualquier extensión "Reflexión Serena" sea a nivel de GRUPOS (15 grupos, 40 semanas)
+        await CustomTableTemplate.updateMany(
+            { school_id: schoolId, title: { $regex: /reflexi[oó]n\s*serena/i }, rowType: { $ne: 'GROUPS' } },
+            { $set: { rowType: 'GROUPS' } }
+        );
+
         const extensions = await CustomTableTemplate.find({ school_id: schoolId, isActive: true })
             .populate('assignedGroupId', 'nombre')
             .populate('authorizedTeachers', 'nombre apellidoPaterno apellidoMaterno email role')
