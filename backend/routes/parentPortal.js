@@ -266,89 +266,15 @@ router.get("/mis-datos", verifyParentToken, async (req, res) => {
             };
         });
 
-        // 3. Obtener historial de reportes / incidencias de Trabajo Social del alumno
-        const grupoDoc = await Grupo.findOne({ _id: gId, school_id: sId });
-        let incidencias = [];
-        if (grupoDoc && Array.isArray(grupoDoc.alumnos)) {
-            const alumnoDoc = grupoDoc.alumnos.find(
-                a => String(a._id) === String(id) || (req.user.matricula && a.matricula === req.user.matricula)
-            );
-            if (alumnoDoc && Array.isArray(alumnoDoc.incidencias)) {
-                incidencias = [...alumnoDoc.incidencias].sort((a, b) =>
-                    (b.fecha || "").localeCompare(a.fecha || "")
-                );
-            }
-        }
-
         res.json({
             escuela: school?.name || "Institución",
             calificaciones,
-            asistencias: asistenciasDetalle,
-            incidencias
+            asistencias: asistenciasDetalle
         });
 
     } catch (err) {
         console.error("Error al obtener datos del portal de padres:", err);
         res.status(500).json({ msg: "Error al obtener la información." });
-    }
-});
-
-// [PUT] /portal-padres/incidencias/:incidenciaId/enterado
-router.put("/incidencias/:incidenciaId/enterado", verifyParentToken, async (req, res) => {
-    try {
-        const { id, grupo_id, school_id, matricula } = req.user;
-        const { incidenciaId } = req.params;
-        const { compromisoPadre } = req.body || {};
-
-        const gId = new mongoose.Types.ObjectId(grupo_id);
-        const sId = new mongoose.Types.ObjectId(school_id);
-
-        const grupoDoc = await Grupo.findOne({ _id: gId, school_id: sId });
-        if (!grupoDoc) {
-            return res.status(404).json({ msg: "Grupo no encontrado." });
-        }
-
-        const alumnoDoc = grupoDoc.alumnos.find(
-            a => String(a._id) === String(id) || (matricula && a.matricula === matricula)
-        );
-        if (!alumnoDoc) {
-            return res.status(404).json({ msg: "Alumno no encontrado en el grupo." });
-        }
-
-        const incidencia = alumnoDoc.incidencias?.id(incidenciaId);
-        if (!incidencia) {
-            return res.status(404).json({ msg: "Reporte de Trabajo Social no encontrado." });
-        }
-
-        const ahoraStr = new Date().toLocaleString("es-MX", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit"
-        });
-
-        incidencia.enteradoPadre = true;
-        incidencia.fechaEnteradoPadre = ahoraStr;
-        incidencia.compromisoPadre = (
-            compromisoPadre ||
-            "Enterado(a) del reporte, hablaré con mi hijo(a) y tomaré medidas en casa."
-        ).trim();
-
-        await grupoDoc.save();
-
-        const incidenciasActualizadas = [...(alumnoDoc.incidencias || [])].sort((a, b) =>
-            (b.fecha || "").localeCompare(a.fecha || "")
-        );
-
-        res.json({
-            msg: "Confirmación de enterado registrada correctamente.",
-            incidencia,
-            incidencias: incidenciasActualizadas
-        });
-    } catch (err) {
-        console.error("Error al confirmar enterado de reporte en portal de padres:", err);
-        res.status(500).json({ msg: "Error al registrar la confirmación del reporte." });
     }
 });
 

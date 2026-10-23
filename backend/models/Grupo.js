@@ -32,19 +32,6 @@ const IncidenciaTrabajoSocialSchema = new mongoose.Schema({
     trim: true,
     default: "",
   },
-  enteradoPadre: {
-    type: Boolean,
-    default: false,
-  },
-  fechaEnteradoPadre: {
-    type: String,
-    default: "",
-  },
-  compromisoPadre: {
-    type: String,
-    trim: true,
-    default: "",
-  },
   createdAt: {
     type: Date,
     default: Date.now,
