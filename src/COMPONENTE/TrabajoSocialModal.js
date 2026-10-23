@@ -594,6 +594,8 @@ const TrabajoSocialModal = ({
               'Descripción Detallada': inc.descripcion || '',
               'Acciones Tomadas / Seguimiento': inc.acciones || '',
               'Estatus': inc.estatus || 'Pendiente',
+              'Enterado Padre/Tutor': inc.enteradoPadre ? `Sí (${inc.fechaEnteradoPadre || ''})` : 'Pendiente',
+              'Compromiso Padre/Tutor': inc.compromisoPadre || '',
               'Registrado Por': inc.registradoPor || '',
               'Teléfono Padre/Tutor': alumno.telefonoPadre || '',
               'Correo Padre/Tutor': alumno.emailPadre || ''
@@ -610,6 +612,8 @@ const TrabajoSocialModal = ({
             'Descripción Detallada': '',
             'Acciones Tomadas / Seguimiento': '',
             'Estatus': 'Sin reportes',
+            'Enterado Padre/Tutor': '---',
+            'Compromiso Padre/Tutor': '',
             'Registrado Por': '',
             'Teléfono Padre/Tutor': alumno.telefonoPadre || '',
             'Correo Padre/Tutor': alumno.emailPadre || ''
@@ -1344,6 +1348,29 @@ const TrabajoSocialModal = ({
                               {inc.acciones}
                             </div>
                           )}
+
+                          {/* Estado de enterado del padre/tutor en Portal de Padres */}
+                          <div style={{
+                            fontSize: '0.8rem',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            background: inc.enteradoPadre ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.1)',
+                            border: inc.enteradoPadre ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(245, 158, 11, 0.3)',
+                            color: inc.enteradoPadre ? '#6ee7b7' : '#fde68a'
+                          }}>
+                            {inc.enteradoPadre ? (
+                              <>
+                                <strong>✅ Padre/Tutor Enterado {inc.fechaEnteradoPadre ? `(${inc.fechaEnteradoPadre})` : ''}:</strong>
+                                {inc.compromisoPadre && (
+                                  <div style={{ color: '#e2e8f0', fontStyle: 'italic', marginTop: '2px' }}>
+                                    "{inc.compromisoPadre}"
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <span>⏳ Pendiente de confirmación de enterado por el padre/tutor en el Portal de Padres</span>
+                            )}
+                          </div>
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                             <span style={{ fontSize: '0.72rem', color: '#64748b' }}>

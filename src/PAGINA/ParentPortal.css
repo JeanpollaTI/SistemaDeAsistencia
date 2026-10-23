@@ -4,8 +4,8 @@
     --portal-bg: #f4f7f6;
     --portal-card: #ffffff;
     --portal-text: #333333;
-    --portal-muted: #666666;
-    --portal-black: #222222;
+    --portal-muted: #555555;
+    --portal-black: #000000;
 }
 
 /* Login View */
@@ -90,7 +90,7 @@
 .input-group input:focus {
     outline: none;
     border-color: #00CBCB;
-    background: rgba(0, 0, 0, 0.6) !important; /* Force dark background when focused */
+    background: rgba(0, 0, 0, 0.6) !important;
     box-shadow: 0 0 15px rgba(0, 203, 203, 0.2);
 }
 
@@ -98,7 +98,7 @@
 .input-group input:-webkit-autofill,
 .input-group input:-webkit-autofill:hover, 
 .input-group input:-webkit-autofill:focus, 
-.input-group input:-webkit-autofill:active{
+.input-group input:-webkit-autofill:active {
     -webkit-box-shadow: 0 0 0 30px #111 inset !important;
     -webkit-text-fill-color: #ffffff !important;
     transition: background-color 5000s ease-in-out 0s;
@@ -140,6 +140,7 @@
 .portal-dashboard {
     min-height: 100vh;
     background: var(--portal-bg);
+    color: #000000;
 }
 
 .portal-header {
@@ -221,7 +222,7 @@
 .section-header h2 {
     margin: 0;
     font-size: 1.25rem;
-    color: var(--portal-text) !important;
+    color: #000000 !important;
 }
 
 .portal-brand h1 {
@@ -237,38 +238,201 @@
     font-weight: 400;
 }
 
+/* TARJETA DE NOMBRE DEL ALUMNO Y BOTÓN DE TRABAJO SOCIAL */
 .portal-student-name-display {
     background: #f8fafc;
-    padding: 1rem 1.5rem;
+    padding: 1.1rem 1.5rem;
     border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    margin-bottom: 2rem;
+    border: 1px solid #cbd5e1;
+    margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
     gap: 1.2rem;
+}
+
+.portal-student-info-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
 .student-details {
     display: flex;
     flex-direction: column;
+    gap: 2px;
 }
 
+.portal-student-name-display .student-name,
 .student-name {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--portal-black);
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #000000 !important;
 }
 
+.portal-student-name-display .student-group,
+.portal-student-name-display .student-group strong,
 .student-group {
-    font-size: 0.9rem;
-    color: var(--portal-muted);
+    font-size: 0.95rem;
+    color: #222222 !important;
 }
 
 .portal-student-name-display .student-icon {
-    font-size: 1.8rem;
+    font-size: 2rem;
     color: var(--portal-primary);
+    flex-shrink: 0;
 }
 
+.portal-student-actions-right {
+    display: flex;
+    align-items: center;
+}
+
+/* BOTÓN DE HISTORIAL DE REPORTES (TRABAJO SOCIAL) */
+.btn-historial-reportes {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.btn-historial-reportes.is-empty {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #1e293b !important;
+}
+
+.btn-historial-reportes.is-empty:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+    transform: translateY(-1px);
+}
+
+.btn-historial-reportes.has-reports {
+    background: #ecfdf5;
+    border-color: #10b981;
+    color: #065f46 !important;
+}
+
+.btn-historial-reportes.has-reports:hover {
+    background: #d1fae5;
+    transform: translateY(-1px);
+}
+
+.btn-historial-reportes.has-pending {
+    background: #fffbeb;
+    border-color: #f59e0b;
+    color: #92400e !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.btn-historial-reportes.has-pending:hover {
+    background: #fef3c7;
+    transform: translateY(-1px);
+}
+
+.btn-reportes-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.btn-historial-reportes.is-empty .btn-reportes-icon {
+    color: #475569;
+}
+
+.btn-historial-reportes.has-reports .btn-reportes-icon {
+    color: #059669;
+}
+
+.btn-historial-reportes.has-pending .btn-reportes-icon {
+    color: #d97706;
+}
+
+.btn-reportes-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.btn-reportes-title {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #000000 !important;
+}
+
+.btn-reportes-badge {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #334155 !important;
+}
+
+.btn-historial-reportes.has-pending .btn-reportes-badge {
+    color: #b45309 !important;
+    font-weight: 700;
+}
+
+.btn-historial-reportes.has-reports .btn-reportes-badge {
+    color: #047857 !important;
+    font-weight: 700;
+}
+
+/* BANNER DE AVISO CUANDO HAY REPORTES PENDIENTES DE ENTERADO */
+.portal-ts-alert-banner {
+    background: #fff7ed;
+    border: 1px solid #fb923c;
+    border-left: 5px solid #ea580c;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    cursor: pointer;
+    color: #7c2d12 !important;
+}
+
+.portal-ts-alert-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.92rem;
+    color: #7c2d12 !important;
+}
+
+.portal-ts-alert-content strong {
+    color: #431407 !important;
+}
+
+.portal-ts-alert-icon {
+    font-size: 1.3rem;
+    color: #ea580c;
+    flex-shrink: 0;
+}
+
+.portal-ts-alert-btn {
+    background: #ea580c;
+    color: #ffffff !important;
+    border: none;
+    padding: 7px 14px;
+    border-radius: 7px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.portal-ts-alert-btn:hover {
+    background: #c2410c;
+}
+
+/* TABLAS */
 .portal-table-container {
     overflow-x: auto;
 }
@@ -282,20 +446,21 @@
     text-align: left;
     padding: 12px;
     background: #f8f9fa;
-    color: var(--portal-muted) !important;
+    color: #333333 !important;
     font-size: 0.9rem;
+    font-weight: 700;
 }
 
 .portal-table td {
     padding: 15px 12px;
     border-bottom: 1px solid #eee;
     font-size: 0.95rem;
-    color: var(--portal-black) !important;
+    color: #000000 !important;
 }
 
 .final-grade {
     font-weight: bold;
-    color: var(--portal-primary);
+    color: var(--portal-primary) !important;
 }
 
 .inactive {
@@ -304,7 +469,7 @@
 
 .placeholder-text {
     font-style: italic;
-    color: var(--portal-muted) !important;
+    color: #555555 !important;
 }
 
 .portal-footer-actions {
@@ -335,8 +500,359 @@
 
 .footer-note {
     margin-top: 10px;
-    color: var(--portal-muted);
+    color: #555555 !important;
     font-size: 0.85rem;
+}
+
+/* =========================================================================
+   MODAL DE HISTORIAL DE REPORTES DE TRABAJO SOCIAL (PORTAL DE PADRES)
+   ========================================================================= */
+.portal-reportes-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    padding: 16px;
+}
+
+.portal-reportes-modal-card {
+    background: #ffffff;
+    color: #000000;
+    width: 100%;
+    max-width: 780px;
+    max-height: 90vh;
+    border-radius: 16px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalPopIn 0.25s ease-out;
+}
+
+.portal-reportes-modal-header {
+    background: #0f172a;
+    color: #ffffff;
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.portal-reportes-header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.portal-reportes-header-icon {
+    font-size: 1.7rem;
+    color: #00cbcb;
+    flex-shrink: 0;
+}
+
+.portal-reportes-header-title h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #ffffff !important;
+}
+
+.portal-reportes-header-title p {
+    margin: 3px 0 0 0;
+    font-size: 0.86rem;
+    color: #cbd5e1 !important;
+}
+
+.portal-reportes-header-title p strong {
+    color: #ffffff !important;
+}
+
+.portal-reportes-close-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.portal-reportes-close-btn:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+}
+
+.portal-reportes-modal-body {
+    padding: 20px 22px;
+    overflow-y: auto;
+    flex: 1;
+    background: #f8fafc;
+}
+
+/* ESTADO VACÍO */
+.portal-reportes-empty {
+    background: #ffffff;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+}
+
+.portal-reportes-empty-icon {
+    font-size: 3rem;
+    color: #10b981;
+    margin-bottom: 12px;
+}
+
+.portal-reportes-empty h4 {
+    margin: 0 0 8px 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #0f172a !important;
+}
+
+.portal-reportes-empty p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #334155 !important;
+    line-height: 1.5;
+}
+
+/* LISTA DE REPORTES */
+.portal-reportes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.portal-reporte-item {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px 18px;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.portal-reporte-item.is-pending-ack {
+    border-left: 5px solid #f59e0b;
+}
+
+.portal-reporte-item.is-acknowledged {
+    border-left: 5px solid #10b981;
+}
+
+.portal-reporte-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.portal-reporte-badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.portal-reporte-tipo {
+    background: #0f172a;
+    color: #ffffff !important;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.portal-reporte-estatus {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.portal-reporte-estatus.estatus-pendiente {
+    background: #fee2e2;
+    color: #991b1b !important;
+}
+
+.portal-reporte-estatus.estatus-en-seguimiento {
+    background: #fef3c7;
+    color: #92400e !important;
+}
+
+.portal-reporte-estatus.estatus-resuelto {
+    background: #dcfce7;
+    color: #166534 !important;
+}
+
+.portal-reporte-fecha {
+    font-size: 0.88rem;
+    color: #1e293b !important;
+    background: #f1f5f9;
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+.portal-reporte-fecha strong {
+    color: #000000 !important;
+}
+
+.portal-reporte-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.portal-reporte-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #475569 !important;
+}
+
+.portal-reporte-desc {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #000000 !important;
+    line-height: 1.5;
+}
+
+.portal-reporte-section.acciones-box {
+    background: #f0fdfa;
+    border: 1px solid #99f6e4;
+    padding: 10px 12px;
+    border-radius: 8px;
+}
+
+/* CAJA DE ENTERADO / COMPROMISO DEL PADRE */
+.portal-reporte-ack-box {
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.portal-reporte-ack-confirmed {
+    background: #ecfdf5;
+    border: 1px solid #6ee7b7;
+    border-radius: 8px;
+    padding: 10px 14px;
+}
+
+.ack-confirmed-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #065f46 !important;
+    font-size: 0.9rem;
+}
+
+.ack-confirmed-header strong {
+    color: #064e3b !important;
+}
+
+.ack-icon {
+    color: #10b981;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.ack-confirmed-message {
+    margin: 6px 0 0 0;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: #0f172a !important;
+}
+
+.portal-reporte-ack-form {
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ack-form-label {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #78350f !important;
+}
+
+.ack-select-preset,
+.ack-custom-input {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+}
+
+.btn-confirmar-enterado {
+    align-self: flex-start;
+    background: #059669;
+    color: #ffffff !important;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+    box-shadow: 0 4px 10px rgba(5, 150, 105, 0.25);
+}
+
+.btn-confirmar-enterado:hover:not(:disabled) {
+    background: #047857;
+    transform: translateY(-1px);
+}
+
+.btn-confirmar-enterado:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.portal-reportes-modal-footer {
+    background: #f1f5f9;
+    padding: 12px 22px;
+    border-top: 1px solid #cbd5e1;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.portal-reportes-btn-cerrar {
+    background: #334155;
+    color: #ffffff !important;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.portal-reportes-btn-cerrar:hover {
+    background: #1e293b;
 }
 
 @media (max-width: 600px) {
@@ -350,11 +866,26 @@
         flex-direction: column;
     }
 
+    .portal-student-name-display {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-historial-reportes {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-confirmar-enterado {
+        width: 100%;
+        text-align: center;
+    }
+
     /* Fix mobile login card layout */
     .portal-login-card.glass {
         padding: 2rem 1.5rem;
-        width: 95%; /* More width on small screens */
-        box-sizing: border-box; /* Avoid overflow */
+        width: 95%;
+        box-sizing: border-box;
     }
 
     .portal-logo-icon {
@@ -367,7 +898,7 @@
     }
 
     .portal-login-container {
-        padding: 10px; /* Reduce container padding to give card more space */
+        padding: 10px;
     }
 }
 
@@ -510,4 +1041,4 @@
     color: #fff;
     border-color: #fff;
     background: rgba(255, 255, 255, 0.05);
-}
+}
