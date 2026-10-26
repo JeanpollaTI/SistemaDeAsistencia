@@ -2867,7 +2867,7 @@ function Grupo({ user }) {
               </div>
 
               <div className="asistencia-grid">
-                <div className="tabla-global-container" style={{ maxHeight: '70vh', overflow: 'auto' }}>
+                <div className="tabla-global-container">
                   <table className="tabla-global">
                     <thead>
                       <tr>
@@ -3015,6 +3015,7 @@ function Grupo({ user }) {
                       })()}
                     </tbody>
                   </table>
+                  <div className="tabla-scroll-bottom-spacer" aria-hidden="true" />
                 </div>
 
                 {/* 🌟 RENDERIZADO DEL TOOLTIP PERSONALIZADO */}

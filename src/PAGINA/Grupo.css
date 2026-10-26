@@ -464,7 +464,7 @@
   max-height: 60vh;
   overflow-y: auto;
   border: 1px solid var(--border-color);
-  padding: 1rem;
+  padding: 1rem 1rem 4rem 1rem;
   border-radius: 8px;
   margin-top: 0.5rem;
   text-align: left;
@@ -481,6 +481,7 @@
 
 .grupo-componente .alumnos-list ul {
   padding-left: 0;
+  padding-bottom: 3.5rem;
   list-style: none;
   margin: 0;
 }
@@ -658,24 +659,47 @@
 }
 
 /* ======================================= */
-/* ASISTENCIA (ESTILO ACORDEÓN)            */
+/* ASISTENCIA (ESTILO ACORDEÓN Y TABLA)    */
 /* ======================================= */
-.grupo-componente .asistencia-modal-content {
-  max-width: 98vw;
-  width: 98%;
+.grupo-componente .asistencia-modal-content,
+.grupo-componente .modal-content.asistencia-modal-content {
+  max-width: 98vw !important;
+  width: 98vw !important;
+  height: calc(100vh - 28px) !important;
+  max-height: calc(100vh - 28px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.grupo-componente .asistencia-modal-content .bimestre-selector,
+.grupo-componente .asistencia-modal-content .asistencia-legend-bar {
+  flex-shrink: 0 !important;
+  margin-bottom: 0.65rem !important;
+}
+
+.grupo-componente .asistencia-modal-content .asistencia-grid {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .grupo-componente .bimestre-selector {
   display: flex;
   justify-content: center;
   gap: 2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   flex-wrap: wrap; /* NEW: Allow wrapping on mobile */
 }
 
 .grupo-componente .asistencia-body {
   max-height: 75vh;
   overflow-y: auto;
+  padding-bottom: 5rem;
 }
 
 .grupo-componente .tabla-global-container::-webkit-scrollbar {
@@ -953,7 +977,7 @@
   position: sticky;
   bottom: 0;
   background-color: var(--dark-color, #111827);
-  z-index: 50;
+  z-index: 250;
   padding: 10px 0 12px 0;
   margin-top: 0;
   border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
@@ -1402,19 +1426,30 @@
 /* ======================================= */
 
 .grupo-componente .tabla-global-container {
-  overflow: auto;
-  max-height: 85vh;
-  /* Maximized for 1080p screens */
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow: auto !important;
+  padding-bottom: 5.5rem !important;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   position: relative;
 }
 
+.grupo-componente .tabla-scroll-bottom-spacer {
+  height: 5.5rem;
+  min-height: 5.5rem;
+  width: 100%;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
 .grupo-componente .tabla-global {
   width: max-content;
   border-collapse: separate;
   border-spacing: 0;
+  margin-bottom: 1.5rem;
 }
 
 .grupo-componente .tabla-global th,

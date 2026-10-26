@@ -794,13 +794,18 @@ function Trabajos({ user }) {
                 }
 
                 .grupo-componente .asistencia-grid {
-                    padding: 1rem 0;
+                    padding: 0.5rem 0 0 0;
+                    flex: 1 1 auto;
+                    min-height: 0;
+                    display: flex;
+                    flex-direction: column;
                 }
 
                 .grupo-componente .asistencia-body {
                     max-height: 65vh;
                     overflow-y: auto;
                     padding-right: 10px;
+                    padding-bottom: 5.5rem;
                 }
 
                 .grupo-componente .asistencia-row {
@@ -1243,8 +1248,9 @@ function Trabajos({ user }) {
                 .grupo-componente .tabla-global-container {
                     overflow-x: auto;
                     overflow-y: auto;
-                    padding: 0 0 40px 0; /* Eliminado el padding lateral que causaba el filtrado visual */
+                    padding: 0 0 5.5rem 0; /* Suficiente padding inferior para no ocultar el último alumno */
                     flex-grow: 1; /* fills remaining height */
+                    min-height: 0;
                     border-bottom: 1px solid var(--border-color);
                     position: relative;
                 }
