@@ -574,12 +574,12 @@ function Trabajos({ user }) {
                     opacity: 0.6; cursor: not-allowed; transform: none; filter: none;
                 }
 
-                /* Estilos de asistencia (Mantenidos) */
+                /* Estilos de asistencia y contenedor principal de calificaciones */
                 .grupo-componente .modal-backdrop-solid {
                     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
                     background-color: var(--dark-color); display: flex;
                     justify-content: center; align-items: flex-start;
-                    z-index: 1000; padding: 5rem 1rem 2rem 1rem; box-sizing: border-box;
+                    z-index: 1000; padding: 4.2rem 0.75rem 1rem 0.75rem; box-sizing: border-box;
                     overflow-y: auto;
                 }
                 /* ... otros estilos de asistencia (cuadritos, etc.) ... */
@@ -725,28 +725,42 @@ function Trabajos({ user }) {
 
 
 
-                .grupo-componente .modal-content.asistencia-modal-content {
+                .grupo-componente .calificaciones-panel-content {
                     background-color: var(--dark-color-alt);
                     border-radius: 12px;
                     box-shadow: 0 5px 25px rgba(0, 0, 0, 0.6);
                     padding: 0;
-                    width: 98vw;
-                    height: 96vh;
-                    max-width: 98vw;
-                    margin: 0;
-                    display: flex;
-                    flex-direction: column;
-                    overflow: hidden;
+                    width: 98vw !important;
+                    max-width: 98vw !important;
+                    height: auto !important;
+                    min-height: calc(100vh - 5.2rem) !important;
+                    max-height: none !important;
+                    margin: 0 auto;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    overflow: visible !important;
                     border: 1px solid var(--border-color);
+                }
+
+                .grupo-componente .calificaciones-panel-content .main-header {
+                    margin-bottom: 0 !important;
+                    padding: 6px 16px !important;
+                    border-bottom: 1px solid var(--border-color);
+                    gap: 8px;
+                }
+
+                .grupo-componente .calificaciones-panel-content .main-header h2 {
+                    font-size: 1.25rem !important;
+                    margin: 0 !important;
                 }
 
                 .grupo-componente .bimestre-selector {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    gap: 15px;
-                    margin-bottom: 0.8rem;
-                    padding: 6px 20px;
+                    gap: 12px;
+                    margin-bottom: 0.35rem !important;
+                    padding: 6px 16px;
                     border-bottom: 1px solid var(--border-color);
                 }
                 .grupo-componente .bimestre-selector-buttons {
@@ -793,19 +807,24 @@ function Trabajos({ user }) {
                     text-align: center;
                 }
 
+                .grupo-componente .calificaciones-panel-content .asistencia-grid,
                 .grupo-componente .asistencia-grid {
                     padding: 0.5rem 0 0 0;
+                    width: 100%;
                     flex: 1 1 auto;
                     min-height: 0;
                     display: flex;
                     flex-direction: column;
                 }
 
+                .grupo-componente .calificaciones-panel-content .asistencia-body,
                 .grupo-componente .asistencia-body {
-                    max-height: 65vh;
-                    overflow-y: auto;
-                    padding-right: 10px;
-                    padding-bottom: 5.5rem;
+                    width: 100%;
+                    max-height: 70vh !important;
+                    min-height: 420px !important;
+                    overflow-y: auto !important;
+                    overflow-x: hidden;
+                    padding: 0.5rem 16px 5rem 16px !important;
                 }
 
                 .grupo-componente .asistencia-row {
@@ -1179,13 +1198,18 @@ function Trabajos({ user }) {
                     margin-bottom: 2rem; font-size: 1.2rem; color: var(--warning-color);
                 }
 
-                /* --- ESTILOS DE SCROLLBAR (Mejorados) --- */
+                /* --- ESTILOS DE SCROLLBAR (Mejorados y Visibles) --- */
                 .grupo-componente .asistencia-body::-webkit-scrollbar {
-                    display: none;
+                    width: 8px;
+                    height: 8px;
                 }
-                .grupo-componente .asistencia-body {
-                    scrollbar-width: none;
-                    -ms-overflow-style: none;
+                .grupo-componente .asistencia-body::-webkit-scrollbar-track {
+                    background: var(--dark-color-alt);
+                    border-radius: 10px;
+                }
+                .grupo-componente .asistencia-body::-webkit-scrollbar-thumb {
+                    background-color: var(--main-color);
+                    border-radius: 10px;
                 }
                 .grupo-componente .modal-backdrop-solid::-webkit-scrollbar {
                     width: 8px;
@@ -1205,15 +1229,14 @@ function Trabajos({ user }) {
                 /* --- VISTA GLOBAL DE CRITERIOS (TABLA MASIVA) --- */
                 .grupo-componente .tabs-criterios {
                     display: flex;
-                    gap: 10px;
-                    margin-bottom: 20px;
-                    padding: 0 20px;
+                    gap: 8px;
+                    margin-bottom: 0;
+                    padding: 4px 16px 8px 16px;
                     flex-wrap: wrap;
                     border-bottom: 1px solid #444;
-                    padding-bottom: 10px;
                 }
                 .grupo-componente .tab-criterio {
-                    padding: 8px 20px;
+                    padding: 6px 16px;
                     background-color: transparent;
                     border: 1px solid #444;
                     border-radius: 20px;
@@ -1221,7 +1244,8 @@ function Trabajos({ user }) {
                     cursor: pointer;
                     font-weight: 500;
                     transition: all 0.2s;
-                    font-size: 0.95rem;
+                    font-size: 0.88rem;
+                    white-space: nowrap;
                 }
                 .grupo-componente .tab-criterio:hover {
                     background-color: #2a2f3c;
@@ -1240,29 +1264,32 @@ function Trabajos({ user }) {
                     position: relative;
                     z-index: 200;
                     background-color: var(--dark-color);
-                    padding-bottom: 5px;
+                    padding-bottom: 4px;
                     border-bottom: 2px solid #00CBCB; /* Teal más brillante para visibilidad */
                     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
                     flex-shrink: 0;
                 }
+                .grupo-componente .calificaciones-panel-content .tabla-global-container,
                 .grupo-componente .tabla-global-container {
-                    overflow-x: auto;
-                    overflow-y: auto;
-                    padding: 0 0 5.5rem 0; /* Suficiente padding inferior para no ocultar el último alumno */
-                    flex-grow: 1; /* fills remaining height */
-                    min-height: 0;
+                    width: 100% !important;
+                    max-height: 70vh !important;
+                    min-height: 420px !important;
+                    overflow-x: auto !important;
+                    overflow-y: auto !important;
+                    padding: 0 0 5rem 0 !important;
+                    flex: 1 1 auto !important;
                     border-bottom: 1px solid var(--border-color);
                     position: relative;
                 }
                 .grupo-componente .tabla-global {
-                    width: 100%;
+                    width: max-content !important;
+                    min-width: 100% !important;
                     border-collapse: separate; /* Necesario para sticky headers */
                     border-spacing: 0;
-                    min-width: 800px;
                 }
                 .grupo-componente .tabla-global th,
                 .grupo-componente .tabla-global td {
-                    padding: 8px 5px;
+                    padding: 8px 6px;
                     border-bottom: 1px solid var(--border-color);
                     border-right: 1px solid var(--border-color);
                     text-align: center;
@@ -1272,32 +1299,44 @@ function Trabajos({ user }) {
                     background-color: #1e293b !important;
                     color: #00cbcb !important;
                     font-weight: 600;
-                    font-size: 0.9rem;
+                    font-size: 0.88rem;
                     position: sticky;
                     top: 0;
                     z-index: 200; /* Horizontal headers */
-                    height: 50px;
+                    min-height: 48px;
+                    white-space: nowrap;
                     box-shadow: 0 4px 6px rgba(0,0,0,0.4); 
+                }
+                .grupo-componente .tabla-global th.task-col,
+                .grupo-componente .tabla-global td.task-cell {
+                    min-width: 120px !important;
+                    width: 120px;
+                    max-width: 150px;
+                    white-space: nowrap;
+                    padding: 6px 8px !important;
                 }
                 .grupo-componente .tabla-global th.alumno-col {
                     text-align: left;
                     min-width: 250px;
+                    width: 250px;
                     padding-left: 15px;
                     position: sticky;
                     left: 40px; 
                     top: 0; 
                     z-index: 300; /* Corner highest */
-                    background-color: #1e293b !important;
+                    background-color: #0f172a !important;
                     color: #00cbcb !important;
                     border-right: 2px solid var(--border-color); 
                     box-shadow: 6px 0 10px -2px rgba(0,0,0,0.5); 
                 }
                 .grupo-componente .tabla-global td.alumno-col {
                     text-align: left;
+                    min-width: 250px;
+                    width: 250px;
                     padding-left: 15px;
                     position: sticky;
                     left: 40px; 
-                    background-color: var(--dark-color-alt) !important;
+                    background-color: #0f172a !important;
                     z-index: 150; 
                     border-right: 2px solid var(--border-color);
                     font-weight: 500;
@@ -1309,7 +1348,7 @@ function Trabajos({ user }) {
                     left: 0;
                     z-index: 300; 
                     top: 0;
-                    background-color: #1e293b !important;
+                    background-color: #0f172a !important;
                     color: #00cbcb !important;
                     border-right: 1px solid var(--border-color);
                 }
@@ -1317,7 +1356,7 @@ function Trabajos({ user }) {
                     position: sticky;
                     left: 0;
                     z-index: 150; 
-                    background-color: var(--dark-color-alt) !important;
+                    background-color: #0f172a !important;
                     color: var(--text-color) !important;
                     border-right: 1px solid var(--border-color);
                 }
@@ -1333,7 +1372,7 @@ function Trabajos({ user }) {
                     left: 40px;
                     top: 0;
                     z-index: 300; 
-                    background-color: #1e293b !important;
+                    background-color: #0f172a !important;
                     color: #00cbcb !important;
                     border-right: 1px solid var(--border-color);
                     width: 50px;
@@ -1342,7 +1381,7 @@ function Trabajos({ user }) {
                      position: sticky;
                      left: 40px;
                      z-index: 150;
-                     background-color: var(--dark-color-alt) !important;
+                     background-color: #0f172a !important;
                      border-right: 1px solid var(--border-color);
                      padding: 0;
                 }
@@ -1362,7 +1401,7 @@ function Trabajos({ user }) {
                 .grupo-componente .tabla-global tr:hover td.alumno-col,
                 .grupo-componente .tabla-global tr:hover td:first-child,
                 .grupo-componente .tabla-global tr:hover td.obs-col-body {
-                    background-color: var(--dark-color) !important; 
+                    background-color: #1e293b !important; 
                 }
 
                 .grupo-componente .tabla-header-task {
@@ -1371,30 +1410,39 @@ function Trabajos({ user }) {
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    height: 100%;
+                    min-width: 104px;
+                    max-width: 136px;
+                    margin: 0 auto;
+                    gap: 2px;
                 }
                 .grupo-componente .tabla-header-task:hover .task-num {
                     color: var(--main-color);
                     text-decoration: underline;
                 }
                 .grupo-componente .tabla-header-task .task-name {
-                    font-size: 0.82rem;
+                    font-size: 0.74rem !important;
                     color: #ffd866 !important;
-                    font-weight: 700 !important;
-                    margin-top: 4px;
-                    max-width: 120px;
-                    overflow: visible;
+                    font-weight: 600 !important;
+                    margin-top: 2px;
+                    width: 100%;
+                    max-width: 134px;
                     white-space: normal;
-                    line-height: 1.1;
-                    word-break: break-word;
-                }
+                    word-break: normal !important;
+                    overflow-wrap: break-word;
+                    line-height: 1.15;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-height: 2.35em;
                     text-align: center;
-                    word-wrap: break-word;
-                    font-weight: 500;
                 }
                 .grupo-componente .tabla-header-task .task-num {
-                    font-size: 0.85rem;
-                    opacity: 0.8;
+                    font-size: 0.82rem;
+                    font-weight: 700;
+                    white-space: nowrap;
+                    color: #00cbcb;
                 }
 
                 @media (max-width: 768px) {
@@ -2576,7 +2624,7 @@ const PanelCalificaciones = ({
 
 
             {/* Contenido principal del panel de calificaciones */}
-            <div className="asistencia-modal-content">
+            <div className="asistencia-modal-content calificaciones-panel-content">
                 <div className="sticky-context">
                     <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '6px 20px' }}>
                         <h2>Calificaciones: {grupo.nombre} - {asignatura}</h2>
@@ -2805,10 +2853,10 @@ const PanelCalificaciones = ({
                                                     )?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[tareaIndex]?.nombre;
 
                                                 return (
-                                                    <th key={tareaIndex}>
+                                                    <th key={tareaIndex} className="task-col">
                                                         <div
                                                             className="tabla-header-task"
-                                                            title={nombreTarea || `Clic para nombrar Tarea ${tareaIndex + 1}`}
+                                                            title={nombreTarea ? `T${tareaIndex + 1}: ${nombreTarea}` : `Clic para nombrar Tarea ${tareaIndex + 1}`}
                                                             onClick={() => setTareaPorNombrar({
                                                                 criterioNombre: criterioSeleccionadoGlobal,
                                                                 tareaIndex,
@@ -2912,7 +2960,7 @@ const PanelCalificaciones = ({
                                                         </td>
                                                 {/* Celdas de Calificación */}
                                                 {Array.from({ length: numTareas[criterioSeleccionadoGlobal] || 10 }).map((_, tareaIndex) => (
-                                                    <td key={tareaIndex}>
+                                                    <td key={tareaIndex} className="task-cell">
                                                         <CriterioCell
                                                             alumnoId={alumno._id}
                                                             bimestreActivo={bimestreActivo}
