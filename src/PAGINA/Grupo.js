@@ -2740,25 +2740,54 @@ function Grupo({ user }) {
           </div>
         )}
         {modalVisible === 'asistencia' && (
-          <div className="modal-backdrop">
-            <div className="modal-content asistencia-modal-content grupo-componente">
-              <h2>Toma de Asistencia: {grupoSeleccionado?.nombre} - {asignaturaActual}</h2>
-
-              {/* Selector de Trimestre Global, Botón de Guardar y Botón Pincel 🖌️ */}
-              <div className="bimestre-selector" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '15px' }}>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  {[1, 2, 3].map(bim => (
-                    <button
-                      key={bim}
-                      className={`btn ${bimestreActivo === bim ? 'btn-primary' : 'btn-cancel'}`}
-                      onClick={() => setBimestreActivo(bim)}
-                    >
-                      Trimestre {bim}
-                    </button>
-                  ))}
+          <div className="modal-backdrop" style={{ zIndex: 9999, padding: '6px' }}>
+            <div
+              className="modal-content asistencia-modal-content grupo-componente"
+              style={{
+                width: '98vw',
+                maxWidth: '98vw',
+                height: '95vh',
+                maxHeight: '95vh',
+                padding: '8px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden'
+              }}
+            >
+              {/* BARRA SUPERIOR UNIFICADA Y COMPACTA: Título + Trimestres + Botones de Acción */}
+              <div
+                className="bimestre-selector"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                  flexWrap: 'wrap',
+                  marginBottom: '6px',
+                  paddingBottom: '6px',
+                  borderBottom: '1px solid rgba(255,255,255,0.12)',
+                  flexShrink: 0
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '1.02rem', fontWeight: '700', color: '#00cbcb', whiteSpace: 'nowrap' }}>
+                    📋 Asistencia: <strong style={{ color: '#fff' }}>{grupoSeleccionado?.nombre} - {asignaturaActual}</strong>
+                  </span>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {[1, 2, 3].map(bim => (
+                      <button
+                        key={bim}
+                        className={`btn ${bimestreActivo === bim ? 'btn-primary' : 'btn-cancel'}`}
+                        style={{ padding: '5px 10px', fontSize: '0.76rem', borderRadius: '6px' }}
+                        onClick={() => setBimestreActivo(bim)}
+                      >
+                        Trimestre {bim}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                   {/* BOTÓN GUARDAR ASISTENCIA (VISIBILIDAD Y AUTOGUARDADO SUPERIOR) */}
                   <button
                     type="button"
@@ -2767,15 +2796,18 @@ function Grupo({ user }) {
                       background: 'linear-gradient(135deg, #00cbcb, #008080)',
                       color: '#111',
                       fontWeight: 'bold',
+                      padding: '5px 10px',
+                      fontSize: '0.76rem',
+                      borderRadius: '6px',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '6px',
-                      boxShadow: '0 4px 10px rgba(0, 203, 203, 0.4)'
+                      gap: '5px',
+                      boxShadow: '0 2px 6px rgba(0, 203, 203, 0.35)'
                     }}
                     onClick={guardarAsistencia}
                     title="Guardar asistencia manualmente"
                   >
-                    💾 Guardar Asistencia {autoSavingStatus && <span style={{ fontSize: '0.75rem', backgroundColor: 'rgba(255,255,255,0.25)', color: '#000', padding: '2px 6px', borderRadius: '4px', marginLeft: '4px' }}>{autoSavingStatus}</span>}
+                    💾 Guardar Asistencia {autoSavingStatus && <span style={{ fontSize: '0.7rem', backgroundColor: 'rgba(255,255,255,0.25)', color: '#000', padding: '1px 5px', borderRadius: '4px', marginLeft: '3px' }}>{autoSavingStatus}</span>}
                   </button>
 
                   {/* BOTÓN PINCEL 🖌️ PARA PERSONALIZAR ESTADOS DE ASISTENCIA */}
@@ -2786,10 +2818,13 @@ function Grupo({ user }) {
                       background: 'linear-gradient(135deg, #8e44ad, #9c27b0)',
                       color: '#fff',
                       fontWeight: 'bold',
+                      padding: '5px 10px',
+                      fontSize: '0.76rem',
+                      borderRadius: '6px',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '6px',
-                      boxShadow: '0 4px 10px rgba(156, 39, 176, 0.3)'
+                      gap: '5px',
+                      boxShadow: '0 2px 6px rgba(156, 39, 176, 0.3)'
                     }}
                     onClick={() => setIsPincelModalOpen(true)}
                     title="Personalizar botones de asistencia (Agregar O de Orquesta, Obs, etc.)"
@@ -2805,10 +2840,13 @@ function Grupo({ user }) {
                       background: 'linear-gradient(135deg, #0284c7, #0369a1)',
                       color: '#fff',
                       fontWeight: 'bold',
+                      padding: '5px 10px',
+                      fontSize: '0.76rem',
+                      borderRadius: '6px',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '6px',
-                      boxShadow: '0 4px 10px rgba(2, 132, 199, 0.3)'
+                      gap: '5px',
+                      boxShadow: '0 2px 6px rgba(2, 132, 199, 0.3)'
                     }}
                     onClick={() => abrirModalListaMatriculas(grupoSeleccionado)}
                     title="Ver o descargar lista de alumnos con sus matrículas"
@@ -2824,35 +2862,63 @@ function Grupo({ user }) {
                       background: 'linear-gradient(135deg, #f59e0b, #d97706)',
                       color: '#111',
                       fontWeight: 'bold',
+                      padding: '5px 10px',
+                      fontSize: '0.76rem',
+                      borderRadius: '6px',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '6px',
-                      boxShadow: '0 4px 10px rgba(245, 158, 11, 0.3)'
+                      gap: '5px',
+                      boxShadow: '0 2px 6px rgba(245, 158, 11, 0.3)'
                     }}
                     onClick={() => abrirModalTrabajoSocial(grupoSeleccionado)}
                     title="Abrir submódulo de Trabajo Social e historial disciplinario del grupo"
                   >
                     🤝 Trabajo Social
                   </button>
+
+                  <button
+                    type="button"
+                    className="btn btn-cancel"
+                    style={{ padding: '5px 10px', fontSize: '0.76rem', borderRadius: '6px' }}
+                    onClick={cerrarModal}
+                    title="Cerrar ventana de asistencia"
+                  >
+                    ✕ Cerrar
+                  </button>
                 </div>
               </div>
 
-              {/* LEYENDA DE ESTADOS ACTIVOS Y TIP DE TOTALES */}
-              <div className="asistencia-legend-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '8px 12px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '8px', marginBottom: '12px', flexWrap: 'wrap', fontSize: '0.85rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              {/* LEYENDA COMPACTA DE ESTADOS ACTIVOS Y TIP DE TOTALES */}
+              <div
+                className="asistencia-legend-bar"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                  padding: '4px 10px',
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  borderRadius: '6px',
+                  marginBottom: '6px',
+                  flexWrap: 'wrap',
+                  fontSize: '0.76rem',
+                  flexShrink: 0
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <span style={{ fontWeight: 'bold', color: '#00cbcb' }}>Botones activos:</span>
                   {attendanceStatuses.map(st => (
-                    <span key={st.code} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <span key={st.code} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                       <span style={{
-                        width: '20px',
-                        height: '20px',
+                        width: '18px',
+                        height: '18px',
                         borderRadius: '4px',
                         backgroundColor: st.color,
                         color: '#fff',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '0.75rem',
+                        fontSize: '0.7rem',
                         fontWeight: 'bold'
                       }}>
                         {st.code}
@@ -2861,13 +2927,13 @@ function Grupo({ user }) {
                     </span>
                   ))}
                 </div>
-                <div style={{ color: '#ffd866', fontSize: '0.8rem', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div style={{ color: '#ffd866', fontSize: '0.74rem', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   💡 <span>Haz clic en <strong>"📊 Totales ▶"</strong> para desplegar u ocultar el desglose.</span>
                 </div>
               </div>
 
-              <div className="asistencia-grid">
-                <div className="tabla-global-container">
+              <div className="asistencia-grid" style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', width: '100%' }}>
+                <div className="tabla-global-container" style={{ flex: '1 1 auto', minHeight: '260px', width: '100%', overflowY: 'auto', overflowX: 'auto', paddingBottom: '4rem' }}>
                   <table className="tabla-global">
                     <thead>
                       <tr>
@@ -3057,9 +3123,9 @@ function Grupo({ user }) {
                   </div>
                 )}
               </div>
-              <div className="modal-actions modal-actions-sticky">
-                <button className="btn btn-primary" onClick={guardarAsistencia}>Guardar Asistencia</button>
-                <button className="btn btn-cancel" onClick={cerrarModal}>Cerrar</button>
+              <div className="modal-actions modal-actions-sticky" style={{ padding: '6px 0 4px 0', marginTop: '4px', flexShrink: 0 }}>
+                <button className="btn btn-primary" style={{ padding: '6px 16px', fontSize: '0.82rem' }} onClick={guardarAsistencia}>Guardar Asistencia</button>
+                <button className="btn btn-cancel" style={{ padding: '6px 16px', fontSize: '0.82rem' }} onClick={cerrarModal}>Cerrar</button>
               </div>
             </div>
           </div>
