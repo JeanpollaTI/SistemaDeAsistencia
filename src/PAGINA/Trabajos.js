@@ -730,10 +730,10 @@ function Trabajos({ user }) {
                     border-radius: 12px;
                     box-shadow: 0 5px 25px rgba(0, 0, 0, 0.6);
                     padding: 0;
-                    width: 98vw !important;
-                    max-width: 98vw !important;
+                    width: 98% !important;
+                    max-width: 98% !important;
                     height: auto !important;
-                    min-height: calc(100vh - 5.2rem) !important;
+                    min-height: calc(100% - 1rem) !important;
                     max-height: none !important;
                     margin: 0 auto;
                     display: flex !important;

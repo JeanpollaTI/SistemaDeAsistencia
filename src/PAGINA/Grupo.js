@@ -2740,15 +2740,16 @@ function Grupo({ user }) {
           </div>
         )}
         {modalVisible === 'asistencia' && (
-          <div className="modal-backdrop" style={{ zIndex: 9999, padding: '6px' }}>
+          <div className="modal-backdrop" style={{ zIndex: 9999, padding: '12px' }}>
             <div
               className="modal-content asistencia-modal-content grupo-componente"
               style={{
-                width: '98vw',
-                maxWidth: '98vw',
-                height: '95vh',
-                maxHeight: '95vh',
-                padding: '8px 14px',
+                width: '98%',
+                maxWidth: '98%',
+                height: '94%',
+                maxHeight: '94%',
+                margin: 'auto',
+                padding: '10px 16px',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden'

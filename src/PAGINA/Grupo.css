@@ -292,18 +292,19 @@
 /* ======================================= */
 .grupo-componente .modal-backdrop {
   position: fixed;
-  inset: 0;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
   padding: 1rem;
   box-sizing: border-box;
-  background-color: rgba(0, 0, 0, 0.65);
+  background-color: rgba(0, 0, 0, 0.75);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 9999;
 }
 
 .grupo-componente .modal-content {
@@ -666,14 +667,15 @@
 /* ======================================= */
 .grupo-componente .modal-content.asistencia-modal-content,
 .modal-content.asistencia-modal-content.grupo-componente {
-  width: 98vw !important;
-  max-width: 98vw !important;
-  height: 95vh !important;
-  max-height: 95vh !important;
+  width: 98% !important;
+  max-width: 98% !important;
+  height: 94% !important;
+  max-height: 94% !important;
+  margin: auto !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
-  padding: 8px 14px !important;
+  padding: 10px 16px !important;
 }
 
 .grupo-componente .modal-content.asistencia-modal-content h2 {
@@ -690,8 +692,8 @@
 
 .grupo-componente .modal-content.asistencia-modal-content .asistencia-grid {
   flex: 1 1 auto !important;
-  height: calc(95vh - 135px) !important;
-  min-height: 280px !important;
+  height: 100% !important;
+  min-height: 0 !important;
   width: 100% !important;
   display: flex !important;
   flex-direction: column !important;
@@ -703,7 +705,7 @@
 .grupo-componente .modal-content.asistencia-modal-content .tabla-global-container {
   flex: 1 1 auto !important;
   height: 100% !important;
-  min-height: 280px !important;
+  min-height: 0 !important;
   max-height: 100% !important;
   width: 100% !important;
   overflow-y: auto !important;
