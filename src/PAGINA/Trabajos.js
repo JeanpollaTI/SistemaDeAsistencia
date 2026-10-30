@@ -1061,34 +1061,141 @@ function Trabajos({ user }) {
                     font-weight: 600;
                 }
 
-                /* --- MODAL DE CRITERIOS (CON NUEVOS ESTILOS) --- */
+                /* --- MODAL DE CRITERIOS Y MODALES RESPONSIVOS (FLEXBOX VERTICAL) --- */
+                .grupo-componente .modal-overlay,
+                .modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    width: 100% !important;
+                    height: 100% !important;
+                    padding: 12px;
+                    box-sizing: border-box;
+                    background-color: rgba(0, 0, 0, 0.72);
+                    backdrop-filter: blur(5px);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 2500;
+                }
+
                 .grupo-componente .modal-content {
                     background-color: var(--dark-color-alt);
-                    padding: 2.5rem; border-radius: 12px; width: 90%;
-                    max-width: 900px; /* Wider for PC */
-                    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+                    padding: 1.25rem 1.5rem;
+                    border-radius: 12px;
+                    width: 92%;
+                    max-width: 880px;
+                    max-height: 90% !important;
+                    margin: auto;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    overflow: hidden !important;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.65);
+                    border: 1px solid var(--border-color);
+                    box-sizing: border-box;
                 }
-                /* New Grid Layout for Modal Content */
+
+                /* Header fijo del modal (shrink-0) */
+                .grupo-componente .criterios-modal-header {
+                    flex-shrink: 0;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.6rem;
+                    padding-bottom: 0.75rem;
+                    border-bottom: 1px solid var(--border-color);
+                }
+
+                .grupo-componente .criterios-modal-title-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 12px;
+                }
+
+                .grupo-componente .modal-content h2 {
+                    text-align: left;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    font-size: 1.3rem !important;
+                    border-bottom: none !important;
+                    box-shadow: none !important;
+                    position: static !important;
+                    background: transparent !important;
+                }
+
+                .grupo-componente .criterios-close-icon {
+                    background: rgba(255, 255, 255, 0.06);
+                    border: 1px solid var(--border-color);
+                    color: var(--text-color);
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 8px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1rem;
+                    cursor: pointer;
+                    flex-shrink: 0;
+                    transition: all 0.2s;
+                }
+                .grupo-componente .criterios-close-icon:hover {
+                    background: var(--danger-color);
+                    color: #fff;
+                    border-color: var(--danger-color);
+                }
+
+                /* Body scrolleable del modal (flex-1 overflow-y-auto) */
+                .grupo-componente .criterios-modal-body {
+                    flex: 1 1 auto;
+                    min-height: 0;
+                    overflow-y: auto;
+                    overflow-x: hidden;
+                    padding: 0.85rem 0.4rem 0.85rem 0;
+                }
+
+                /* Footer fijo del modal (shrink-0 mt-auto border-t) */
+                .grupo-componente .criterios-modal-footer {
+                    flex-shrink: 0;
+                    margin-top: auto;
+                    padding-top: 0.85rem;
+                    border-top: 1px solid var(--border-color);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 1rem;
+                    flex-wrap: wrap;
+                }
+
+                /* Grid Layout responsivo del contenido de Criterios */
                 .grupo-componente .modal-grid-layout {
                     display: grid;
-                    grid-template-columns: 1.2fr 0.8fr;
-                    gap: 2rem;
-                    margin-top: 1rem;
+                    grid-template-columns: 1.15fr 0.85fr;
+                    gap: 1.25rem;
+                    margin-top: 0;
+                    align-items: start;
                 }
-                @media (max-width: 768px) {
+                @media (max-width: 860px) {
                     .grupo-componente .modal-grid-layout {
                         grid-template-columns: 1fr;
                         gap: 1rem;
                     }
                 }
-                .grupo-componente .modal-content h2 {
-                    text-align: center;
-                    margin-bottom: 2rem;
-                    font-size: 1.6rem;
+
+                .grupo-componente .criterios-list-scroll {
+                    max-height: 42vh;
+                    overflow-y: auto;
+                    padding-right: 6px;
                 }
 
                 .grupo-componente .modal-actions {
-                    display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;
+                    display: flex;
+                    justify-content: flex-end;
+                    align-items: center;
+                    gap: 0.75rem;
+                    margin-top: 0;
+                    flex-shrink: 0;
                 }
 
                 .grupo-componente .criterio-item {
@@ -1096,86 +1203,93 @@ function Trabajos({ user }) {
                     justify-content: space-between;
                     align-items: center;
                     background-color: var(--dark-color);
-                    padding: 12px 20px;
+                    padding: 8px 14px;
                     border-radius: 8px;
-                    margin-bottom: 10px;
-                    border-left: 5px solid var(--main-color);
+                    margin-bottom: 8px;
+                    border-left: 4px solid var(--main-color);
                 }
                 .grupo-componente .criterio-item span {
-                    font-size: 1rem;
+                    font-size: 0.95rem;
                 }
                 .grupo-componente .criterio-item span strong {
                     color: var(--main-color);
-                    font-size: 1.1rem;
+                    font-size: 1rem;
                 }
                 .grupo-componente .criterio-item button {
                     color: var(--danger-color);
-                    width: 30px;
-                    height: 30px;
-                    font-size: 1.5rem;
+                    width: 28px;
+                    height: 28px;
+                    font-size: 1.15rem;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
                 }
 
-                /* MEJORA: Formulario de adición de criterios */
+                /* Formulario compacto de adición de criterios */
                 .grupo-componente .criterio-form {
                     display: flex;
-                    gap: 10px; /* Reducimos el espacio */
-                    margin: 2rem 0 1rem 0;
+                    gap: 8px;
+                    margin: 0.5rem 0 0.75rem 0;
                     align-items: center;
                 }
-                /* MEJORA: Inputs más grandes y visualmente impactantes */
                 .grupo-componente .criterio-form input {
                     background: var(--dark-color);
-                    border: 2px solid #555; /* Borde más grueso */
+                    border: 1.5px solid #555;
                     border-radius: 8px;
                     color: var(--text-color);
-                    padding: 14px 12px; /* Mayor padding vertical */
+                    padding: 9px 12px;
                     box-sizing: border-box;
-                    font-size: 1.05rem; /* Letra un poco más grande */
+                    font-size: 0.95rem;
                     font-weight: 500;
+                    width: 100%;
                 }
                 .grupo-componente .criterio-form input:focus {
                     border-color: var(--main-color);
-                    box-shadow: 0 0 5px rgba(0, 122, 122, 0.5); /* Sombra al enfocar */
+                    box-shadow: 0 0 5px rgba(0, 122, 122, 0.5);
+                    outline: none;
                 }
 
                 .grupo-componente .porcentaje-wrapper {
                     position: relative;
                     flex-grow: 1;
-                    max-width: 120px; /* Reducimos el ancho para que el botón "Añadir" quepa mejor */
+                    max-width: 130px;
                 }
                 .grupo-componente .porcentaje-wrapper::after {
                     content: '%';
                     position: absolute;
-                    right: 15px;
+                    right: 12px;
                     top: 50%;
                     transform: translateY(-50%);
                     color: #888;
                     pointer-events: none;
                 }
                 .grupo-componente .criterio-form input[type="number"] {
-                    padding-right: 35px;
-                    text-align: center; /* Centramos el porcentaje */
+                    padding-right: 30px;
+                    text-align: center;
                 }
-                /* MEJORA: Botón Añadir más llamativo y con el color principal */
                 .grupo-componente .criterio-form .btn {
-                    padding: 14px 25px; /* Más ancho para que no se vea apretado */
+                    padding: 9px 18px;
                     background-color: var(--main-color);
-                    color: white;
+                    color: #10172a;
                     font-weight: 700;
                     border: none;
                     border-radius: 8px;
-                    line-height: 1;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+                    line-height: 1.1;
+                    box-shadow: 0 3px 6px rgba(0,0,0,0.25);
                     transition: all 0.2s;
-                    margin-left: 10px;
+                    margin-left: 0;
                 }
                 .grupo-componente .criterio-form .btn:hover {
                     background-color: #00cbcb;
-                    transform: translateY(-2px);
+                    transform: translateY(-1px);
                 }
                 .grupo-componente .criterio-total {
-                    text-align: right; font-size: 1.3rem; font-weight: bold;
-                    margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #444;
+                    text-align: center;
+                    font-size: 1rem;
+                    font-weight: bold;
+                    margin-top: 0.75rem;
+                    padding: 10px 14px;
+                    border-radius: 8px;
                     color: var(--text-color);
                 }
                 .grupo-componente .criterio-total.error {
@@ -1526,14 +1640,18 @@ function Trabajos({ user }) {
                     gap: 10px;
                 }
 
-                /* 🔄 MIGRACIÓN MODAL STYLES */
+                /* 🔄 MIGRACIÓN MODAL STYLES (FLEXBOX RESPONSIVO) */
                 .migracion-modal-overlay {
                     position: fixed;
                     top: 0;
                     left: 0;
-                    width: 100vw;
-                    height: 100vh;
-                    background: rgba(0, 0, 0, 0.6);
+                    right: 0;
+                    bottom: 0;
+                    width: 100%;
+                    height: 100%;
+                    padding: 12px;
+                    box-sizing: border-box;
+                    background: rgba(0, 0, 0, 0.65);
                     backdrop-filter: blur(8px);
                     display: flex;
                     justify-content: center;
@@ -1542,57 +1660,70 @@ function Trabajos({ user }) {
                     animation: fadeIn 0.2s ease-out;
                 }
                 .migracion-modal-content {
-                    background: rgba(20, 20, 20, 0.85);
+                    background: rgba(20, 20, 20, 0.92);
                     backdrop-filter: blur(20px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 16px;
-                    width: 500px;
-                    max-width: 90%;
-                    padding: 30px;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    border-radius: 14px;
+                    width: 520px;
+                    max-width: 92%;
+                    max-height: 90%;
+                    margin: auto;
+                    padding: 1.25rem 1.5rem;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.55);
                     color: #fff;
-                    animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
+                    box-sizing: border-box;
+                    animation: slideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
                 }
                 @keyframes fadeIn {
                     from { opacity: 0; }
                     to { opacity: 1; }
                 }
                 @keyframes slideUp {
-                    from { transform: translateY(30px); opacity: 0; }
+                    from { transform: translateY(20px); opacity: 0; }
                     to { transform: translateY(0); opacity: 1; }
                 }
                 .migracion-modal-header {
-                    margin-bottom: 20px;
+                    flex-shrink: 0;
+                    margin-bottom: 12px;
                     display: flex;
                     align-items: center;
-                    gap: 12px;
+                    gap: 10px;
                     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-                    padding-bottom: 15px;
+                    padding-bottom: 10px;
                 }
                 .migracion-modal-header h3 {
                     margin: 0;
-                    font-size: 1.4rem;
+                    font-size: 1.25rem;
                     font-weight: 600;
                     color: #fff;
                 }
+                .migracion-modal-body {
+                    flex: 1 1 auto;
+                    min-height: 0;
+                    overflow-y: auto;
+                    padding-right: 4px;
+                }
                 .migracion-form-group {
-                    margin-bottom: 20px;
+                    margin-bottom: 14px;
                 }
                 .migracion-form-group label {
                     display: block;
-                    margin-bottom: 8px;
-                    font-size: 0.9rem;
+                    margin-bottom: 6px;
+                    font-size: 0.85rem;
                     font-weight: 500;
-                    color: rgba(255, 255, 255, 0.8);
+                    color: rgba(255, 255, 255, 0.85);
                 }
                 .migracion-select {
                     width: 100%;
                     background: rgba(255, 255, 255, 0.05);
                     border: 1px solid rgba(255, 255, 255, 0.15);
                     border-radius: 8px;
-                    padding: 10px 12px;
+                    padding: 8px 12px;
                     color: #fff;
-                    font-size: 0.95rem;
+                    font-size: 0.9rem;
                     outline: none;
                     transition: border-color 0.2s;
                 }
@@ -1606,10 +1737,10 @@ function Trabajos({ user }) {
                 .migracion-options-grid {
                     display: grid;
                     grid-template-columns: 1fr;
-                    gap: 15px;
-                    margin-bottom: 25px;
+                    gap: 10px;
+                    margin-bottom: 14px;
                     background: rgba(255, 255, 255, 0.02);
-                    padding: 15px;
+                    padding: 12px;
                     border-radius: 10px;
                     border: 1px solid rgba(255, 255, 255, 0.05);
                 }
@@ -1617,24 +1748,115 @@ function Trabajos({ user }) {
                     background: rgba(231, 76, 60, 0.15);
                     border: 1px solid rgba(231, 76, 60, 0.3);
                     border-radius: 8px;
-                    padding: 12px 15px;
+                    padding: 10px 12px;
                     color: #e74c3c;
-                    font-size: 0.8rem;
-                    line-height: 1.4;
-                    margin-bottom: 25px;
+                    font-size: 0.78rem;
+                    line-height: 1.35;
+                    margin-bottom: 12px;
                     display: flex;
                     align-items: flex-start;
-                    gap: 10px;
+                    gap: 8px;
                 }
                 .migracion-warning span {
-                    font-size: 1.2rem;
+                    font-size: 1.1rem;
                     flex-shrink: 0;
-                    margin-top: -2px;
+                    margin-top: -1px;
                 }
                 .migracion-actions {
+                    flex-shrink: 0;
+                    margin-top: auto;
+                    padding-top: 12px;
+                    border-top: 1px solid rgba(255, 255, 255, 0.08);
                     display: flex;
                     justify-content: flex-end;
-                    gap: 12px;
+                    gap: 10px;
+                }
+
+                /* ========================================================= */
+                /* MEDIA QUERIES PARA CHROMEBOOKS (11.6") Y LAPTOPS (768p)   */
+                /* ========================================================= */
+                @media (max-height: 760px) {
+                    .grupo-componente .modal-backdrop-solid {
+                        padding: 3.6rem 0.5rem 0.5rem 0.5rem !important;
+                    }
+                    .grupo-componente .calificaciones-panel-content .main-header {
+                        padding: 4px 12px !important;
+                    }
+                    .grupo-componente .calificaciones-panel-content .main-header h2 {
+                        font-size: 1.05rem !important;
+                    }
+                    .grupo-componente .btn-compact {
+                        padding: 4px 9px !important;
+                        font-size: 0.76rem !important;
+                    }
+                    .grupo-componente .bimestre-selector {
+                        padding: 4px 12px !important;
+                        margin-bottom: 0.2rem !important;
+                    }
+                    .grupo-componente .bimestre-selector .btn {
+                        padding: 3px 10px !important;
+                        font-size: 0.78rem !important;
+                    }
+                    .corte-controller-card {
+                        padding: 4px 12px !important;
+                        margin: 2px 12px 4px 12px !important;
+                    }
+                    .corte-status-details h4 {
+                        font-size: 0.78rem !important;
+                    }
+                    .corte-status-details p {
+                        font-size: 0.72rem !important;
+                    }
+                    .grupo-componente .tabs-criterios {
+                        padding: 3px 12px 5px 12px !important;
+                        gap: 6px !important;
+                    }
+                    .grupo-componente .tab-criterio {
+                        padding: 4px 12px !important;
+                        font-size: 0.8rem !important;
+                    }
+                    .grupo-componente .calificaciones-panel-content .tabla-global-container,
+                    .grupo-componente .tabla-global-container,
+                    .grupo-componente .calificaciones-panel-content .asistencia-body,
+                    .grupo-componente .asistencia-body {
+                        max-height: 62vh !important;
+                        min-height: 280px !important;
+                        padding-bottom: 4rem !important;
+                    }
+                    .grupo-componente .modal-content {
+                        padding: 0.9rem 1.25rem !important;
+                        max-height: 92% !important;
+                    }
+                    .grupo-componente .criterios-modal-header {
+                        gap: 0.4rem !important;
+                        padding-bottom: 0.5rem !important;
+                    }
+                    .grupo-componente .modal-content h2 {
+                        font-size: 1.12rem !important;
+                    }
+                    .grupo-componente .criterios-modal-body {
+                        padding: 0.55rem 0.35rem 0.55rem 0 !important;
+                    }
+                    .grupo-componente .criterio-item {
+                        padding: 6px 12px !important;
+                        margin-bottom: 6px !important;
+                    }
+                    .grupo-componente .criterio-form input {
+                        padding: 7px 10px !important;
+                        font-size: 0.88rem !important;
+                    }
+                    .grupo-componente .criterio-form .btn {
+                        padding: 7px 14px !important;
+                        font-size: 0.88rem !important;
+                    }
+                    .grupo-componente .criterio-total {
+                        padding: 8px 10px !important;
+                        margin-top: 0.5rem !important;
+                        font-size: 0.9rem !important;
+                    }
+                    .grupo-componente .criterios-modal-footer {
+                        padding-top: 0.6rem !important;
+                    }
                 }
              `}</style>
             <div className="trabajos-container grupo-componente">
@@ -2512,78 +2734,80 @@ const PanelCalificaciones = ({
                 <div className="migracion-modal-overlay">
                     <div className="migracion-modal-content">
                         <div className="migracion-modal-header">
-                            <span style={{ fontSize: '1.8rem' }}>🔄</span>
+                            <span style={{ fontSize: '1.5rem' }}>🔄</span>
                             <h3>Migrar Calificaciones</h3>
                         </div>
 
-                        <div className="migracion-form-group">
-                            <label>Trimestre de Origen (Desde donde se copiarán los datos):</label>
-                            <select
-                                className="migracion-select"
-                                value={migracionConfig.origenBimestre}
-                                onChange={(e) => setMigracionConfig({ ...migracionConfig, origenBimestre: e.target.value })}
-                            >
-                                {Array.from({ length: getPeriodCount() }).map((_, i) => (
-                                    <option key={i+1} value={i+1}>{getPeriodLabel(i)}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="migracion-form-group">
-                            <label>Trimestre de Destino (Hacia donde se enviarán):</label>
-                            <select
-                                className="migracion-select"
-                                value={migracionConfig.destinoBimestre}
-                                onChange={(e) => setMigracionConfig({ ...migracionConfig, destinoBimestre: e.target.value })}
-                            >
-                                {Array.from({ length: getPeriodCount() }).map((_, i) => (
-                                    <option key={i+1} value={i+1}>{getPeriodLabel(i)}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="migracion-options-grid">
-                            <div className="migracion-form-group" style={{ marginBottom: '10px' }}>
-                                <label>Acción sobre el Trimestre Origen:</label>
+                        <div className="migracion-modal-body">
+                            <div className="migracion-form-group">
+                                <label>Trimestre de Origen (Desde donde se copiarán los datos):</label>
                                 <select
                                     className="migracion-select"
-                                    value={migracionConfig.accionOrigen}
-                                    onChange={(e) => setMigracionConfig({ ...migracionConfig, accionOrigen: e.target.value })}
+                                    value={migracionConfig.origenBimestre}
+                                    onChange={(e) => setMigracionConfig({ ...migracionConfig, origenBimestre: e.target.value })}
                                 >
-                                    <option value="keep">Copiar (Mantener calificaciones en origen)</option>
-                                    <option value="clear">Mover (Limpiar origen después de migrar)</option>
+                                    {Array.from({ length: getPeriodCount() }).map((_, i) => (
+                                        <option key={i+1} value={i+1}>{getPeriodLabel(i)}</option>
+                                    ))}
                                 </select>
                             </div>
 
-                            <div className="migracion-form-group" style={{ marginBottom: 0 }}>
-                                <label>Resolución de Conflictos (Si el destino ya tiene datos):</label>
+                            <div className="migracion-form-group">
+                                <label>Trimestre de Destino (Hacia donde se enviarán):</label>
                                 <select
                                     className="migracion-select"
-                                    value={migracionConfig.accionConflictos}
-                                    onChange={(e) => setMigracionConfig({ ...migracionConfig, accionConflictos: e.target.value })}
+                                    value={migracionConfig.destinoBimestre}
+                                    onChange={(e) => setMigracionConfig({ ...migracionConfig, destinoBimestre: e.target.value })}
                                 >
-                                    <option value="merge">Combinar (Solo copiar donde esté vacío)</option>
-                                    <option value="overwrite">Sobrescribir (Reemplazar todo en destino)</option>
+                                    {Array.from({ length: getPeriodCount() }).map((_, i) => (
+                                        <option key={i+1} value={i+1}>{getPeriodLabel(i)}</option>
+                                    ))}
                                 </select>
                             </div>
-                        </div>
 
-                        {migracionConfig.origenBimestre === migracionConfig.destinoBimestre ? (
-                            <div className="migracion-warning" style={{ background: 'rgba(230, 126, 34, 0.15)', borderColor: 'rgba(230, 126, 34, 0.3)', color: '#f39c12' }}>
-                                <span>⚠️</span>
-                                <div>El trimestre de origen y destino no pueden ser el mismo. Seleccione trimestres diferentes.</div>
-                            </div>
-                        ) : (migracionConfig.accionOrigen === 'clear' || migracionConfig.accionConflictos === 'overwrite') ? (
-                            <div className="migracion-warning">
-                                <span>⚠️</span>
-                                <div>
-                                    <strong>¡Atención!</strong> esta acción {migracionConfig.accionOrigen === 'clear' ? 'borrará las calificaciones de origen' : ''} 
-                                    {migracionConfig.accionOrigen === 'clear' && migracionConfig.accionConflictos === 'overwrite' ? ' y ' : ''}
-                                    {migracionConfig.accionConflictos === 'overwrite' ? 'sobrescribirá las calificaciones de destino' : ''}. 
-                                    Esta acción no se puede deshacer.
+                            <div className="migracion-options-grid">
+                                <div className="migracion-form-group" style={{ marginBottom: '6px' }}>
+                                    <label>Acción sobre el Trimestre Origen:</label>
+                                    <select
+                                        className="migracion-select"
+                                        value={migracionConfig.accionOrigen}
+                                        onChange={(e) => setMigracionConfig({ ...migracionConfig, accionOrigen: e.target.value })}
+                                    >
+                                        <option value="keep">Copiar (Mantener calificaciones en origen)</option>
+                                        <option value="clear">Mover (Limpiar origen después de migrar)</option>
+                                    </select>
+                                </div>
+
+                                <div className="migracion-form-group" style={{ marginBottom: 0 }}>
+                                    <label>Resolución de Conflictos (Si el destino ya tiene datos):</label>
+                                    <select
+                                        className="migracion-select"
+                                        value={migracionConfig.accionConflictos}
+                                        onChange={(e) => setMigracionConfig({ ...migracionConfig, accionConflictos: e.target.value })}
+                                    >
+                                        <option value="merge">Combinar (Solo copiar donde esté vacío)</option>
+                                        <option value="overwrite">Sobrescribir (Reemplazar todo en destino)</option>
+                                    </select>
                                 </div>
                             </div>
-                        ) : null}
+
+                            {migracionConfig.origenBimestre === migracionConfig.destinoBimestre ? (
+                                <div className="migracion-warning" style={{ background: 'rgba(230, 126, 34, 0.15)', borderColor: 'rgba(230, 126, 34, 0.3)', color: '#f39c12' }}>
+                                    <span>⚠️</span>
+                                    <div>El trimestre de origen y destino no pueden ser el mismo. Seleccione trimestres diferentes.</div>
+                                </div>
+                            ) : (migracionConfig.accionOrigen === 'clear' || migracionConfig.accionConflictos === 'overwrite') ? (
+                                <div className="migracion-warning">
+                                    <span>⚠️</span>
+                                    <div>
+                                        <strong>¡Atención!</strong> esta acción {migracionConfig.accionOrigen === 'clear' ? 'borrará las calificaciones de origen' : ''} 
+                                        {migracionConfig.accionOrigen === 'clear' && migracionConfig.accionConflictos === 'overwrite' ? ' y ' : ''}
+                                        {migracionConfig.accionConflictos === 'overwrite' ? 'sobrescribirá las calificaciones de destino' : ''}. 
+                                        Esta acción no se puede deshacer.
+                                    </div>
+                                </div>
+                            ) : null}
+                        </div>
 
                         <div className="migracion-actions">
                             <button 
@@ -3426,173 +3650,211 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onRename, onClose, se
     };
 
     return (
-        <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1050 }}>
+        <div className="modal-overlay" onClick={onClose} style={{ zIndex: 2500 }}>
             {/* WRAPPER CLAVE: Aplicamos la clase grupo-componente aquí para heredar estilos */}
             <div className="grupo-componente" style={{ display: 'contents' }}>
                 <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                    <h2>Definir Criterios de Evaluación por Trimestre</h2>
-
-                    <div className="bimestre-selector" style={{ justifyContent: 'center', borderBottom: 'none' }}>
-                        {[1, 2, 3].map(bim => (
+                    {/* 1. HEADER FIJO (shrink-0) */}
+                    <div className="criterios-modal-header">
+                        <div className="criterios-modal-title-row">
+                            <h2>Definir Criterios de Evaluación por Trimestre</h2>
                             <button
-                                key={bim}
-                                className={`btn ${bimestreActivo === bim ? 'btn-primary' : 'btn-cancel'}`}
-                                onClick={() => handleSetBimestre(bim)}
+                                type="button"
+                                className="criterios-close-icon"
+                                onClick={onClose}
+                                title="Cerrar"
                             >
-                                Trimestre {bim}
+                                ✕
                             </button>
-                        ))}
-                    </div>
-
-                    {/* 🌟 LAYOUT HORIZONTAL (GRID) */}
-                    <div className="modal-grid-layout">
-                        {/* COLUMNA IZQUIERDA: LISTA DE CRITERIOS */}
-                        <div className="modal-col-left">
-                            <h3 style={{ marginTop: 0 }}>Criterios para Trimestre {bimestreActivo}</h3>
-                            <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '5px' }}>
-                                {criteriosDelBimestre.map((c, index) => (
-                                    <div key={index} className="criterio-item">
-                                        <span>{c.nombre} - <strong>{c.porcentaje}%</strong></span>
-                                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                                            <button
-                                                onClick={() => handleEdit(index)}
-                                                style={{
-                                                    background: 'none',
-                                                    border: 'none',
-                                                    cursor: 'pointer',
-                                                    marginLeft: '10px',
-                                                    marginRight: '5px',
-                                                    fontSize: '1.2rem'
-                                                }}
-                                                title="Editar (Conserva Calificaciones)"
-                                            >
-                                                ✏️
-                                            </button>
-                                            <button
-                                                onClick={() => removeCriterio(index)}
-                                                style={{
-                                                    background: 'none',
-                                                    border: 'none',
-                                                    cursor: 'pointer',
-                                                    fontSize: '1.2rem',
-                                                    color: '#e74c3c'
-                                                }}
-                                                title="Eliminar"
-                                            >
-                                                🗑️
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                                {criteriosDelBimestre.length === 0 && <p style={{ textAlign: 'center', color: '#999', marginTop: '20px' }}>No hay criterios definidos para este Trimestre.</p>}
-                            </div>
                         </div>
 
-                        {/* COLUMNA DERECHA: ACCIONES Y FORMULARIO */}
-                        <div className="modal-col-right">
-                            <div style={{ textAlign: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #444', paddingBottom: '1rem' }}>
-                                {bimestreActivo > 1 && (
-                                    <button
-                                        className="btn btn-secondary"
-                                        onClick={() => handleCopiarCriterios(bimestreActivo - 1, bimestreActivo)}
-                                        disabled={criteriosDelBimestre.length > 0 || criteriosLocales[bimestreActivo - 1]?.length === 0}
-                                        title={criteriosDelBimestre.length > 0 ? "Elimina los criterios actuales para copiar." : `Copia criterios de Bimestre ${bimestreActivo - 1}`}
-                                        style={{ width: '100%', fontSize: '0.9rem' }}
-                                    >
-                                        <span role="img" aria-label="copiar">📋</span> Copiar del T{bimestreActivo - 1}
-                                    </button>
-                                )}
+                        <div className="bimestre-selector" style={{ justifyContent: 'flex-start', borderBottom: 'none', padding: 0, margin: 0 }}>
+                            <div className="bimestre-selector-buttons" style={{ flexWrap: 'wrap' }}>
+                                {[1, 2, 3].map(bim => {
+                                    const sumBim = (criteriosLocales[bim] || []).reduce((acc, c) => acc + (Number(c.porcentaje) || 0), 0);
+                                    return (
+                                        <button
+                                            key={bim}
+                                            type="button"
+                                            className={`btn ${bimestreActivo === bim ? 'btn-primary' : 'btn-cancel'}`}
+                                            onClick={() => handleSetBimestre(bim)}
+                                        >
+                                            Trimestre {bim} ({sumBim}%)
+                                        </button>
+                                    );
+                                })}
                             </div>
+                        </div>
+                    </div>
 
-                            <div className="criterio-form" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-                                {/* 🌟 UX MEASURE: Hide inputs if 100% complete and not editing */}
-                                {totalPorcentaje === 100 && editingIndex === null ? (
-                                    <div style={{ textAlign: 'center', marginTop: '10px', color: '#888', fontStyle: 'italic', fontSize: '0.9rem' }}>
-                                        (Trimestre al 100%)
-                                    </div>
-                                ) : (
-                                    <>
-                                        <label style={{ fontSize: '0.9rem', marginBottom: '5px', color: '#aaa' }}>{editingIndex !== null ? 'Editar Criterio:' : 'Nuevo Criterio:'}</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Nombre (Ej: Tareas)"
-                                            value={nombre}
-                                            onChange={e => setNombre(e.target.value)}
-                                            style={{ marginBottom: '10px' }}
-                                            onKeyDown={(e) => e.key === 'Enter' && addCriterio()}
-                                        />
-                                        <div style={{ display: 'flex', gap: '10px' }}>
-                                            <div className="porcentaje-wrapper" style={{ flexGrow: 1 }}>
-                                                <input
-                                                    type="number"
-                                                    placeholder="%"
-                                                    min="1"
-                                                    max="100"
-                                                    value={porcentaje}
-                                                    onChange={e => setPorcentaje(e.target.value)}
-                                                    onKeyDown={(e) => e.key === 'Enter' && addCriterio()}
-                                                />
+                    {/* 2. BODY SCROLLEABLE (flex-1 overflow-y-auto) */}
+                    <div className="criterios-modal-body">
+                        <div className="modal-grid-layout">
+                            {/* COLUMNA IZQUIERDA: LISTA DE CRITERIOS */}
+                            <div className="modal-col-left">
+                                <h3 style={{ marginTop: 0, marginBottom: '0.6rem', fontSize: '1.05rem' }}>
+                                    Criterios para Trimestre {bimestreActivo}
+                                </h3>
+                                <div className="criterios-list-scroll">
+                                    {criteriosDelBimestre.map((c, index) => (
+                                        <div key={index} className="criterio-item">
+                                            <span>{c.nombre} — <strong>{c.porcentaje}%</strong></span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleEdit(index)}
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
+                                                        fontSize: '1.05rem'
+                                                    }}
+                                                    title="Editar (Conserva Calificaciones)"
+                                                >
+                                                    ✏️
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeCriterio(index)}
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
+                                                        fontSize: '1.05rem',
+                                                        color: '#e74c3c'
+                                                    }}
+                                                    title="Eliminar"
+                                                >
+                                                    🗑️
+                                                </button>
                                             </div>
-                                            <button
-                                                className="btn"
-                                                onClick={addCriterio}
-                                                disabled={(editingIndex === null && (totalPorcentaje + (parseInt(porcentaje) || 0) > 100)) || !nombre.trim() || !porcentaje}
-                                                style={{ flexGrow: 1, backgroundColor: editingIndex !== null ? '#f39c12' : 'var(--main-color)' }}
-                                            >
-                                                {editingIndex !== null ? 'Actualizar' : 'Añadir'}
-                                            </button>
                                         </div>
-                                        {editingIndex !== null && (
-                                            <button
-                                                className="btn-cancel"
-                                                onClick={() => { setEditingIndex(null); setNombre(''); setPorcentaje(''); }}
-                                                style={{ marginTop: '5px', width: '100%', borderRadius: '6px', fontSize: '0.9rem', padding: '5px' }}
-                                            >
-                                                Cancelar Edición
-                                            </button>
-                                        )}
-                                    </>
-                                )}
+                                    ))}
+                                    {criteriosDelBimestre.length === 0 && (
+                                        <p style={{ textAlign: 'center', color: '#999', marginTop: '14px', fontSize: '0.9rem' }}>
+                                            No hay criterios definidos para este Trimestre.
+                                        </p>
+                                    )}
+                                </div>
                             </div>
 
-                            <div className={`criterio-total ${totalPorcentaje !== 100 ? 'error' : 'success'}`}
-                                style={{
-                                    padding: '15px',
-                                    marginTop: '20px',
-                                    borderRadius: '8px',
-                                    backgroundColor: totalPorcentaje === 100 ? 'rgba(39, 174, 96, 0.1)' : 'rgba(231, 76, 60, 0.1)',
-                                    border: `1px solid ${totalPorcentaje === 100 ? '#27ae60' : '#e74c3c'}`,
-                                    color: totalPorcentaje === 100 ? '#27ae60' : '#e74c3c',
-                                    textAlign: 'center'
-                                }}
-                            >
-                                <div style={{ fontSize: '1.2rem', marginBottom: '5px' }}>Total T{bimestreActivo}</div>
-                                <strong style={{ fontSize: '1.5rem' }}>{totalPorcentaje}%</strong>
-                                <span style={{ fontSize: '1rem', color: '#888' }}> / 100%</span>
-                                {totalPorcentaje !== 100 && (
-                                    <div style={{ fontSize: '0.9em', marginTop: '10px', fontWeight: '500' }}>
-                                        {totalPorcentaje < 100 ? `Falta asignar: ${100 - totalPorcentaje}%` : `Excede por: ${totalPorcentaje - 100}%`}
+                            {/* COLUMNA DERECHA: ACCIONES Y FORMULARIO COMPACTO */}
+                            <div className="modal-col-right">
+                                {bimestreActivo > 1 && (
+                                    <div style={{ textAlign: 'center', marginBottom: '0.75rem', borderBottom: '1px solid #444', paddingBottom: '0.65rem' }}>
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary"
+                                            onClick={() => handleCopiarCriterios(bimestreActivo - 1, bimestreActivo)}
+                                            disabled={criteriosDelBimestre.length > 0 || criteriosLocales[bimestreActivo - 1]?.length === 0}
+                                            title={criteriosDelBimestre.length > 0 ? "Elimina los criterios actuales para copiar." : `Copia criterios de Trimestre ${bimestreActivo - 1}`}
+                                            style={{ width: '100%', fontSize: '0.85rem', padding: '7px 12px' }}
+                                        >
+                                            <span role="img" aria-label="copiar">📋</span> Copiar del T{bimestreActivo - 1}
+                                        </button>
                                     </div>
                                 )}
-                            </div>
 
-                            <div className="modal-actions" style={{ marginTop: 'auto', paddingTop: '20px' }}>
-                                <button type="button" className="btn btn-cancel" onClick={() => onClose()} style={{ marginRight: '10px' }}>Cerrar</button>
-                                <button
-                                    type="button"
-                                    className="btn btn-primary"
-                                    onClick={handleGuardar}
-                                    style={{ opacity: (criteriosDelBimestre.length > 0 && totalPorcentaje !== 100) ? 0.5 : 1 }}
+                                <div className="criterio-form" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                                    {totalPorcentaje === 100 && editingIndex === null ? (
+                                        <div style={{ textAlign: 'center', padding: '8px', color: '#2ecc71', fontStyle: 'italic', fontSize: '0.88rem', background: 'rgba(46, 204, 113, 0.08)', borderRadius: '8px' }}>
+                                            ✓ Trimestre {bimestreActivo} completo al 100%
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <label style={{ fontSize: '0.85rem', marginBottom: '4px', color: '#aaa', fontWeight: 500 }}>
+                                                {editingIndex !== null ? 'Editar Criterio:' : 'Nuevo Criterio:'}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Nombre (Ej: Tareas, Examen, Proyecto)"
+                                                value={nombre}
+                                                onChange={e => setNombre(e.target.value)}
+                                                style={{ marginBottom: '8px' }}
+                                                onKeyDown={(e) => e.key === 'Enter' && addCriterio()}
+                                            />
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <div className="porcentaje-wrapper" style={{ flexGrow: 1 }}>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="%"
+                                                        min="1"
+                                                        max="100"
+                                                        value={porcentaje}
+                                                        onChange={e => setPorcentaje(e.target.value)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && addCriterio()}
+                                                    />
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    className="btn"
+                                                    onClick={addCriterio}
+                                                    disabled={(editingIndex === null && (totalPorcentaje + (parseInt(porcentaje) || 0) > 100)) || !nombre.trim() || !porcentaje}
+                                                    style={{ flexGrow: 1, backgroundColor: editingIndex !== null ? '#f39c12' : 'var(--main-color)' }}
+                                                >
+                                                    {editingIndex !== null ? 'Actualizar' : 'Añadir'}
+                                                </button>
+                                            </div>
+                                            {editingIndex !== null && (
+                                                <button
+                                                    type="button"
+                                                    className="btn-cancel"
+                                                    onClick={() => { setEditingIndex(null); setNombre(''); setPorcentaje(''); }}
+                                                    style={{ marginTop: '5px', width: '100%', borderRadius: '6px', fontSize: '0.85rem', padding: '5px' }}
+                                                >
+                                                    Cancelar Edición
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+
+                                <div
+                                    className={`criterio-total ${totalPorcentaje !== 100 ? 'error' : 'success'}`}
+                                    style={{
+                                        backgroundColor: totalPorcentaje === 100 ? 'rgba(39, 174, 96, 0.1)' : 'rgba(231, 76, 60, 0.1)',
+                                        border: `1px solid ${totalPorcentaje === 100 ? '#27ae60' : '#e74c3c'}`,
+                                        color: totalPorcentaje === 100 ? '#27ae60' : '#e74c3c'
+                                    }}
                                 >
-                                    Guardar Todos
-                                </button>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '0.92rem' }}>Total T{bimestreActivo}:</span>
+                                        <div>
+                                            <strong style={{ fontSize: '1.2rem' }}>{totalPorcentaje}%</strong>
+                                            <span style={{ fontSize: '0.88rem', color: '#888' }}> / 100%</span>
+                                        </div>
+                                    </div>
+                                    {totalPorcentaje !== 100 && (
+                                        <div style={{ fontSize: '0.82rem', marginTop: '4px', fontWeight: '500' }}>
+                                            {totalPorcentaje < 100 ? `Falta asignar: ${100 - totalPorcentaje}%` : `Excede por: ${totalPorcentaje - 100}%`}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* 3. FOOTER FIJO SIEMPRE VISIBLE ABAJO (shrink-0 mt-auto border-t) */}
+                    <div className="criterios-modal-footer">
+                        <span style={{ fontSize: '0.82rem', color: '#999' }}>
+                            💡 Cada trimestre con criterios debe sumar 100% para guardar.
+                        </span>
+                        <div className="modal-actions">
+                            <button type="button" className="btn btn-cancel" onClick={() => onClose()}>
+                                Cerrar
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-primary"
+                                onClick={handleGuardar}
+                                style={{ opacity: (criteriosDelBimestre.length > 0 && totalPorcentaje !== 100) ? 0.5 : 1 }}
+                            >
+                                💾 Guardar Todos
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-
-            {/* BrandingModal removed from here and moved to PanelCalificaciones scope */}
         </div>
     );
 };

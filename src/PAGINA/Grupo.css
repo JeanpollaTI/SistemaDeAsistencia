@@ -314,7 +314,8 @@
   width: 95%;
   max-width: 980px;
   height: auto;
-  max-height: calc(100vh - 40px) !important;
+  max-height: 92% !important;
+  margin: auto;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
