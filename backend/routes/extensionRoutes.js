@@ -118,45 +118,48 @@ const ensureDefaultTemplates = async (schoolId) => {
 
     // Migrate old TablaMatematica if exists
     try {
-        const oldRecords = await TablaMatematica.find({ school_id: schoolId });
-        for (const oldRec of oldRecords) {
-            if (oldRec.evaluaciones && oldRec.evaluaciones.length > 0) {
-                for (const ev of oldRec.evaluaciones) {
-                    if (ev.alumno_id && ev.registros) {
-                        const dataObj = {};
-                        const rawMap = ev.registros instanceof Map ? Object.fromEntries(ev.registros) : ev.registros;
-                        for (const [k, val] of Object.entries(rawMap || {})) {
-                            let mappedVal = val;
-                            if (val === 'En orden') mappedVal = 'O';
-                            else if (val === 'Incompleta') mappedVal = 'I';
-                            else if (val === 'Salteadas') mappedVal = 'S';
+        const builtIn = await CustomTableTemplate.findOne({ school_id: schoolId, title: 'Tablas Matemáticas' });
+        if (builtIn) {
+            const oldRecords = await TablaMatematica.find({ school_id: schoolId });
+            for (const oldRec of oldRecords) {
+                if (oldRec.evaluaciones && oldRec.evaluaciones.length > 0) {
+                    for (const ev of oldRec.evaluaciones) {
+                        if (ev.alumno_id && ev.registros) {
+                            const dataObj = {};
+                            const rawMap = ev.registros instanceof Map ? Object.fromEntries(ev.registros) : ev.registros;
+                            for (const [k, val] of Object.entries(rawMap || {})) {
+                                let mappedVal = val;
+                                if (val === 'En orden') mappedVal = 'O';
+                                else if (val === 'Incompleta') mappedVal = 'I';
+                                else if (val === 'Salteadas') mappedVal = 'S';
 
-                            // Map legacy p1..p5 to p1_t1..p1_t5, p6..p7 to p2_t1..p2_t2
-                            if (k.startsWith('p')) {
-                                const num = parseInt(k.replace('p', ''), 10);
-                                if (!isNaN(num)) {
-                                    if (num <= 5) dataObj[`p1_t${num}`] = mappedVal;
-                                    else dataObj[`p2_t${num - 5}`] = mappedVal;
+                                // Map legacy p1..p5 to p1_t1..p1_t5, p6..p7 to p2_t1..p2_t2
+                                if (k.startsWith('p')) {
+                                    const num = parseInt(k.replace('p', ''), 10);
+                                    if (!isNaN(num)) {
+                                        if (num <= 5) dataObj[`p1_t${num}`] = mappedVal;
+                                        else dataObj[`p2_t${num - 5}`] = mappedVal;
+                                    } else {
+                                        dataObj[k] = mappedVal;
+                                    }
                                 } else {
                                     dataObj[k] = mappedVal;
                                 }
-                            } else {
-                                dataObj[k] = mappedVal;
                             }
+                            await CustomTableRowData.updateOne(
+                                { tableId: builtIn._id, rowEntityId: ev.alumno_id },
+                                {
+                                    $set: {
+                                        tableId: builtIn._id,
+                                        school_id: schoolId,
+                                        rowEntityId: ev.alumno_id,
+                                        rowEntityName: ev.alumnoNombre || '',
+                                        data: dataObj
+                                    }
+                                },
+                                { upsert: true }
+                            );
                         }
-                        await CustomTableRowData.updateOne(
-                            { tableId: builtIn._id, rowEntityId: ev.alumno_id },
-                            {
-                                $set: {
-                                    tableId: builtIn._id,
-                                    school_id: schoolId,
-                                    rowEntityId: ev.alumno_id,
-                                    rowEntityName: ev.alumnoNombre || '',
-                                    data: dataObj
-                                }
-                            },
-                            { upsert: true }
-                        );
                     }
                 }
             }

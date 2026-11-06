@@ -15,16 +15,18 @@ const router = express.Router();
 router.get('/', authMiddleware, schoolMiddleware, async (req, res) => {
   try {
     const { grupoId, asignatura } = req.query;
-    const school_id = req.user.school_id;
     if (!grupoId || !asignatura) {
       return res.status(400).json({ msg: 'Se requieren los parámetros grupoId y asignatura' });
     }
 
-    // Busca el documento de calificación que coincida con el grupo Y la asignatura
+    const cleanAsignatura = String(asignatura).trim();
+    const asignaturaVariants = asignatura === cleanAsignatura ? [cleanAsignatura] : [asignatura, cleanAsignatura];
+
+    // Busca el documento de calificación que coincida con el grupo y la asignatura
+    // (El índice único en MongoDB es { grupo: 1, asignatura: 1 })
     const registroDeCalificaciones = await Calificacion.findOne({
       grupo: grupoId,
-      asignatura: asignatura,
-      school_id
+      asignatura: { $in: asignaturaVariants }
     });
 
     if (!registroDeCalificaciones) {
@@ -39,7 +41,7 @@ router.get('/', authMiddleware, schoolMiddleware, async (req, res) => {
 
   } catch (error) {
     console.error("Error al obtener calificaciones (Profesor):", error.message);
-    res.status(500).send('Error del Servidor');
+    res.status(500).json({ msg: 'Error del Servidor al obtener calificaciones', error: error.message });
   }
 });
 
@@ -50,18 +52,79 @@ router.get('/', authMiddleware, schoolMiddleware, async (req, res) => {
  */
 router.post('/', authMiddleware, schoolMiddleware, async (req, res) => {
   const { grupoId, asignatura, criterios, calificaciones, numTareas } = req.body;
-  const school_id = req.user.school_id;
+  let school_id = req.user?.school_id;
 
   if (!grupoId || !asignatura || !criterios || calificaciones === undefined) {
     return res.status(400).json({ msg: 'Faltan datos requeridos (grupoId, asignatura, criterios, calificaciones)' });
   }
 
+  const cleanAsignatura = String(asignatura).trim();
+  const asignaturaVariants = asignatura === cleanAsignatura ? [cleanAsignatura] : [asignatura, cleanAsignatura];
+  const safeCalificaciones = calificaciones && typeof calificaciones === 'object' ? calificaciones : {};
+  const safeCriterios = criterios && typeof criterios === 'object' ? criterios : { 1: [], 2: [], 3: [] };
+
   try {
-    const registroActualizado = await Calificacion.findOneAndUpdate(
-      { grupo: grupoId, asignatura: asignatura, school_id },
-      { criterios, calificaciones, numTareas, grupo: grupoId, asignatura: asignatura, school_id },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    // Si el usuario (ej. superadmin) no trae school_id en sesión, lo resolvemos desde el grupo
+    if (!school_id) {
+      const grupoDoc = await Grupo.findById(grupoId).select('school_id').lean();
+      if (grupoDoc?.school_id) {
+        school_id = grupoDoc.school_id;
+      }
+    }
+
+    const updateFields = {
+      criterios: safeCriterios,
+      calificaciones: safeCalificaciones,
+      grupo: grupoId,
+      asignatura: cleanAsignatura
+    };
+
+    if (school_id) {
+      updateFields.school_id = school_id;
+    }
+
+    if (numTareas && typeof numTareas === 'object') {
+      updateFields.numTareas = numTareas;
+    }
+
+    let registroActualizado;
+    try {
+      // Filtramos por { grupo, asignatura } para coincidir exactamente con el índice único grupo_1_asignatura_1
+      registroActualizado = await Calificacion.findOneAndUpdate(
+        { grupo: grupoId, asignatura: { $in: asignaturaVariants } },
+        { $set: updateFields },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    } catch (upsertErr) {
+      // Si ocurre colisión E11000 por autoguardado concurrente o restricción de actualización,
+      // buscamos o instanciamos el documento y guardamos con markModified
+      let doc = await Calificacion.findOne({
+        grupo: grupoId,
+        asignatura: { $in: asignaturaVariants }
+      });
+
+      if (!doc) {
+        doc = new Calificacion({
+          grupo: grupoId,
+          asignatura: cleanAsignatura,
+          school_id,
+          criterios: safeCriterios,
+          calificaciones: safeCalificaciones,
+          numTareas: numTareas && typeof numTareas === 'object' ? numTareas : {}
+        });
+      } else {
+        doc.criterios = safeCriterios;
+        doc.calificaciones = safeCalificaciones;
+        if (school_id) doc.school_id = school_id;
+        if (numTareas && typeof numTareas === 'object') {
+          doc.numTareas = numTareas;
+        }
+        doc.markModified('criterios');
+        doc.markModified('calificaciones');
+        doc.markModified('numTareas');
+      }
+      registroActualizado = await doc.save();
+    }
 
     res.status(200).json({
       msg: 'Calificaciones guardadas exitosamente',
@@ -69,8 +132,8 @@ router.post('/', authMiddleware, schoolMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error al guardar calificaciones:", error.message);
-    res.status(500).send('Error del Servidor');
+    console.error("Error al guardar calificaciones:", error);
+    res.status(500).json({ msg: 'Error del Servidor al guardar calificaciones', error: error.message });
   }
 });
 
@@ -81,14 +144,16 @@ router.post('/', authMiddleware, schoolMiddleware, async (req, res) => {
  */
 router.post('/migrar', authMiddleware, schoolMiddleware, async (req, res) => {
   const { grupoId, asignatura, origenBimestre, destinoBimestre, accionConflictos, accionOrigen } = req.body;
-  const school_id = req.user.school_id;
 
   if (!grupoId || !asignatura || !origenBimestre || !destinoBimestre) {
     return res.status(400).json({ msg: 'Faltan parámetros requeridos para la migración.' });
   }
 
+  const cleanAsignatura = String(asignatura).trim();
+  const asignaturaVariants = asignatura === cleanAsignatura ? [cleanAsignatura] : [asignatura, cleanAsignatura];
+
   try {
-    const registro = await Calificacion.findOne({ grupo: grupoId, asignatura, school_id });
+    const registro = await Calificacion.findOne({ grupo: grupoId, asignatura: { $in: asignaturaVariants } });
     if (!registro) {
       return res.status(404).json({ msg: 'No se encontró registro de calificaciones para este grupo y asignatura.' });
     }
@@ -104,7 +169,7 @@ router.post('/migrar', authMiddleware, schoolMiddleware, async (req, res) => {
     nuevosCriterios[destinoBimestre] = JSON.parse(JSON.stringify(criteriosOrigen));
 
     // Realizar la copia de calificaciones por alumno
-    const nuevasCalificaciones = { ...registro.calificaciones };
+    const nuevasCalificaciones = { ...(registro.calificaciones || {}) };
     
     // Recorrer los alumnos en calificaciones
     for (const alumnoId of Object.keys(nuevasCalificaciones)) {
@@ -168,7 +233,7 @@ router.post('/migrar', authMiddleware, schoolMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error("Error al migrar calificaciones:", error.message);
-    res.status(500).send('Error del Servidor');
+    res.status(500).json({ msg: 'Error del Servidor al migrar calificaciones', error: error.message });
   }
 });
 
@@ -179,14 +244,16 @@ router.post('/migrar', authMiddleware, schoolMiddleware, async (req, res) => {
  */
 router.post('/corte', authMiddleware, schoolMiddleware, async (req, res) => {
   const { grupoId, asignatura, trimestre, accion } = req.body;
-  const school_id = req.user.school_id;
 
   if (!grupoId || !asignatura || !trimestre || !accion) {
     return res.status(400).json({ msg: 'Faltan parámetros requeridos (grupoId, asignatura, trimestre, accion).' });
   }
 
+  const cleanAsignatura = String(asignatura).trim();
+  const asignaturaVariants = asignatura === cleanAsignatura ? [cleanAsignatura] : [asignatura, cleanAsignatura];
+
   try {
-    const registro = await Calificacion.findOne({ grupo: grupoId, asignatura, school_id });
+    const registro = await Calificacion.findOne({ grupo: grupoId, asignatura: { $in: asignaturaVariants } });
     if (!registro) {
       return res.status(404).json({ msg: 'No se encontró el registro de calificaciones.' });
     }
@@ -296,7 +363,7 @@ router.post('/corte', authMiddleware, schoolMiddleware, async (req, res) => {
 
   } catch (error) {
     console.error("Error al gestionar corte de calificaciones:", error.message);
-    res.status(500).send('Error del Servidor');
+    res.status(500).json({ msg: 'Error del Servidor al gestionar el corte', error: error.message });
   }
 });
 

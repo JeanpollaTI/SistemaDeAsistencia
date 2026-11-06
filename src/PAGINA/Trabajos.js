@@ -21,17 +21,17 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 function Notificacion({ mensaje, tipo, onClose }) {
     useEffect(() => {
         if (mensaje) {
-            const timer = setTimeout(onClose, 3000);
+            const timer = setTimeout(onClose, 3500);
             return () => clearTimeout(timer);
         }
     }, [mensaje, onClose]);
 
     if (!mensaje) return null;
 
-    const claseTipo = tipo === 'exito' ? 'exito' : 'error';
+    const claseTipo = (tipo === 'exito' || tipo === 'info') ? 'exito' : 'error';
 
-    // CLAVE: Usamos un z-index alto para la notificación
-    return <div className={`notificacion-flotante ${claseTipo}`}>{mensaje}</div>;
+    // CLAVE: Usamos un z-index superior a cualquier modal para que la notificación siempre sea visible
+    return <div className={`notificacion-flotante ${claseTipo}`} style={{ zIndex: 100000 }}>{mensaje}</div>;
 }
 
 
@@ -2020,37 +2020,88 @@ const PanelCalificaciones = ({
         setNotificacion({ mensaje: 'Cambio rehecho.', tipo: 'info' });
     };
 
+    // Referencias para mantener siempre el último estado y evitar cierres obsoletos o colisiones de autoguardado
+    const latestCalificacionesRef = useRef(calificaciones);
+    const latestCriteriosRef = useRef(criteriosPorBimestre);
+    const latestNumTareasRef = useRef(numTareas);
+
+    useEffect(() => { latestCalificacionesRef.current = calificaciones; }, [calificaciones]);
+    useEffect(() => { latestCriteriosRef.current = criteriosPorBimestre; }, [criteriosPorBimestre]);
+    useEffect(() => { latestNumTareasRef.current = numTareas; }, [numTareas]);
+
+    useEffect(() => {
+        return () => {
+            if (autoSaveGradesTimerRef.current) {
+                clearTimeout(autoSaveGradesTimerRef.current);
+            }
+        };
+    }, []);
+
+    // Helper para enviar calificaciones con reintento automático ante fallos transitorios de red o servidor
+    const postCalificacionesToServer = useCallback(async (payload) => {
+        const token = localStorage.getItem('token');
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+        try {
+            return await axios.post(`${API_URL}/calificaciones`, payload, config);
+        } catch (err) {
+            // Reintento automático único si es un error de red o 5xx transitorio
+            if (!err.response || err.response.status >= 500) {
+                await new Promise(resolve => setTimeout(resolve, 600));
+                return await axios.post(`${API_URL}/calificaciones`, payload, config);
+            }
+            throw err;
+        }
+    }, []);
+
     // Obtener los criterios del bimestre activo
     const criteriosActivos = criteriosPorBimestre[bimestreActivo] || [];
 
     // 🌟 Manejador para guardar criterios que viene del Modal (Auto-save)
     const handleGuardarCriterios = useCallback(async (nuevosCriterios) => {
-        setCriteriosPorBimestre(nuevosCriterios);
-        setModalCriterios(false);
-        setNotificacion({ mensaje: 'Guardando nuevos criterios...', tipo: 'info' });
+        if (autoSaveGradesTimerRef.current) {
+            clearTimeout(autoSaveGradesTimerRef.current);
+            autoSaveGradesTimerRef.current = null;
+        }
 
-        // AUTO-SAVE: Invocamos guardarCalificaciones inmediatamente con los nuevos criterios
-        const token = localStorage.getItem('token');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        
-        // 🎯 FIX: Se incluye numTareas para evitar pérdida de configuración al guardar criterios
+        // Asegurar que todos los criterios tengan numTareas inicializado (mínimo 10)
+        const allCriterios = [
+            ...(nuevosCriterios?.[1] || []),
+            ...(nuevosCriterios?.[2] || []),
+            ...(nuevosCriterios?.[3] || [])
+        ];
+        const updatedNumTareas = { ...(latestNumTareasRef.current || {}) };
+        allCriterios.forEach(c => {
+            if (c?.nombre && !updatedNumTareas[c.nombre]) {
+                updatedNumTareas[c.nombre] = 10;
+            }
+        });
+
+        latestCriteriosRef.current = nuevosCriterios;
+        latestNumTareasRef.current = updatedNumTareas;
+        setCriteriosPorBimestre(nuevosCriterios);
+        setNumTareas(updatedNumTareas);
+        setModalCriterios(false);
+
         const payload = { 
             grupoId: grupo._id, 
-            asignatura, 
+            asignatura: String(asignatura).trim(), 
             criterios: nuevosCriterios, 
-            calificaciones,
-            numTareas 
+            calificaciones: latestCalificacionesRef.current || {},
+            numTareas: updatedNumTareas
         };
 
         try {
-            await axios.post(`${API_URL}/calificaciones`, payload, config);
+            await postCalificacionesToServer(payload);
             setHasChanges(false);
+            setAutoSaveStatus('Guardado ✓');
+            setTimeout(() => setAutoSaveStatus(''), 2500);
             setNotificacion({ mensaje: 'Criterios actualizados y guardados correctamente.', tipo: 'exito' });
         } catch (error) {
             console.error("Error auto-guardando criterios:", error);
-            setNotificacion({ mensaje: 'Criterios actualizados localmente, pero error al guardar en servidor.', tipo: 'warning' });
+            const serverMsg = error.response?.data?.msg || error.response?.data?.error || 'Criterios actualizados localmente, pero error al guardar en servidor.';
+            setNotificacion({ mensaje: serverMsg, tipo: 'error' });
         }
-    }, [grupo._id, asignatura, calificaciones, numTareas, setCriteriosPorBimestre, setModalCriterios, setNotificacion]);
+    }, [grupo._id, asignatura, postCalificacionesToServer, setCriteriosPorBimestre, setModalCriterios, setNotificacion]);
 
     const getPeriodCount = () => {
         if (!schoolConfig) return 3;
@@ -2083,7 +2134,7 @@ const PanelCalificaciones = ({
             }
 
             try {
-                const url = `${API_URL}/calificaciones?grupoId=${grupo._id}&asignatura=${asignatura}`;
+                const url = `${API_URL}/calificaciones?grupoId=${grupo._id}&asignatura=${encodeURIComponent(asignatura)}`;
                 const res = await axios.get(url, config);
 
                 // AJUSTE CLAVE: Se actualizan los criterios en el padre (Trabajos)
@@ -2103,30 +2154,35 @@ const PanelCalificaciones = ({
                 const initialNumTareas = allCriterios.reduce((acc, criterio) => {
                     let maxIndex = 0;
                     Object.values(res.data?.calificaciones || {}).forEach(alumnoCal => {
-                        Object.values(alumnoCal).forEach(bimestreCal => {
-                            const tareas = bimestreCal[criterio.nombre];
-                            if (tareas) {
-                                const currentMax = Math.max(...Object.keys(tareas).map(Number));
-                                if (currentMax >= maxIndex) maxIndex = currentMax + 1;
+                        Object.values(alumnoCal || {}).forEach(bimestreCal => {
+                            const tareas = bimestreCal?.[criterio.nombre];
+                            if (tareas && typeof tareas === 'object') {
+                                const validKeys = Object.keys(tareas).map(Number).filter(n => !isNaN(n));
+                                if (validKeys.length > 0) {
+                                    const currentMax = Math.max(...validKeys);
+                                    if (currentMax >= maxIndex) maxIndex = currentMax + 1;
+                                }
                             }
                         });
                     });
-                    acc[criterio.nombre] = Math.max(10, maxIndex + 5);
+                    const savedMax = res.data?.numTareas?.[criterio.nombre] || 10;
+                    acc[criterio.nombre] = Math.max(savedMax, 10, maxIndex + 5);
                     return acc;
                 }, {});
 
                 setNumTareas(initialNumTareas);
 
-                // Fetch School Config
-                const schoolRes = await axios.get(`${API_URL}/schools/${user.school_id}`, config);
-                setSchoolConfig(schoolRes.data);
-
-                // Abrir el modal de criterios si el bimestre 1 no tiene ninguno.
-                // if (fetchedCriterios[1]?.length === 0) {
-                //     setModalCriterios(true);
-                // }
+                // Fetch School Config de manera aislada para no bloquear la carga de calificaciones si falla
+                if (user?.school_id) {
+                    try {
+                        const schoolRes = await axios.get(`${API_URL}/schools/${user.school_id}`, config);
+                        setSchoolConfig(schoolRes.data);
+                    } catch (schoolErr) {
+                        console.warn("No se pudo cargar la configuración de la escuela:", schoolErr);
+                    }
+                }
             } catch (error) {
-                // Notificación de error si la carga falla
+                console.error("Error al cargar datos de calificaciones:", error);
                 setNotificacion({ mensaje: 'Error al cargar los datos de calificaciones.', tipo: 'error' });
             } finally {
                 setIsLoadingData(false);
@@ -2147,35 +2203,36 @@ const PanelCalificaciones = ({
         setHasChanges(true);
         saveToHistory(); // 🌟 Guardar antes de renombrar tarea
 
-        setCalificaciones(prev => {
-            const nextCalificaciones = { ...prev };
+        const nextCalificaciones = { ...(latestCalificacionesRef.current || calificaciones) };
 
-            alumnosIds.forEach(alumnoId => {
-                const alumnoCal = nextCalificaciones[alumnoId] || {};
-                const bimestreCal = alumnoCal[bimestreActivo] || {};
-                const criterioCal = bimestreCal[criterioNombre] || {};
-                const tareaCal = criterioCal[tareaIndex] || {};
+        alumnosIds.forEach(alumnoId => {
+            const alumnoCal = nextCalificaciones[alumnoId] || {};
+            const bimestreCal = alumnoCal[bimestreActivo] || {};
+            const criterioCal = bimestreCal[criterioNombre] || {};
+            const tareaCal = criterioCal[tareaIndex] || {};
 
-                // Mantenemos la nota y la fecha si ya existen, y solo agregamos/actualizamos el nombre.
-                const notaExistente = tareaCal?.nota !== undefined ? tareaCal.nota : null;
+            // Mantenemos la nota y la fecha si ya existen, y solo agregamos/actualizamos el nombre.
+            const notaExistente = tareaCal?.nota !== undefined ? tareaCal.nota : null;
 
-                nextCalificaciones[alumnoId] = {
-                    ...alumnoCal,
-                    [bimestreActivo]: {
-                        ...bimestreCal,
-                        [criterioNombre]: {
-                            ...criterioCal,
-                            [tareaIndex]: {
-                                nota: notaExistente, // Mantenemos la nota
-                                fecha: tareaCal?.fecha || new Date().toISOString(), // Mantenemos la fecha o la actual si hay nota
-                                nombre: nuevoNombre // 🎯 Guardamos el nombre aquí para todos los alumnos
-                            }
-                        },
+            nextCalificaciones[alumnoId] = {
+                ...alumnoCal,
+                [bimestreActivo]: {
+                    ...bimestreCal,
+                    [criterioNombre]: {
+                        ...criterioCal,
+                        [tareaIndex]: {
+                            nota: notaExistente, // Mantenemos la nota
+                            fecha: tareaCal?.fecha || new Date().toISOString(), // Mantenemos la fecha o la actual si hay nota
+                            nombre: nuevoNombre // 🎯 Guardamos el nombre aquí para todos los alumnos
+                        }
                     },
-                };
-            });
-            return nextCalificaciones;
+                },
+            };
         });
+
+        latestCalificacionesRef.current = nextCalificaciones;
+        setCalificaciones(nextCalificaciones);
+        triggerAutoSaveGrades(nextCalificaciones);
 
         setTareaPorNombrar(null); // Cerrar el modal
         setNotificacion({ mensaje: `Se asignó el nombre "${nuevoNombre}" a la Tarea ${tareaIndex + 1}.`, tipo: 'exito' });
@@ -2184,16 +2241,20 @@ const PanelCalificaciones = ({
     // 🌟 MANEJO DE OBSERVACIONES (TECNOLOGIA)
     const handleObservacionChange = (alumnoId, bimestre, val) => {
         setHasChanges(true);
-        setCalificaciones(prev => ({
-            ...prev,
+        const currentCal = latestCalificacionesRef.current || calificaciones;
+        const nextCalificaciones = {
+            ...currentCal,
             [alumnoId]: {
-                ...prev[alumnoId],
+                ...currentCal[alumnoId],
                 [bimestre]: {
-                    ...prev[alumnoId]?.[bimestre],
+                    ...currentCal[alumnoId]?.[bimestre],
                     OBSERVACIONES: val
                 }
             }
-        }));
+        };
+        latestCalificacionesRef.current = nextCalificaciones;
+        setCalificaciones(nextCalificaciones);
+        triggerAutoSaveGrades(nextCalificaciones);
     };
 
     // 🌟 FUNCIÓN NUEVA: Eliminar nombre y calificaciones de una columna
@@ -2203,19 +2264,16 @@ const PanelCalificaciones = ({
         setHasChanges(true);
         saveToHistory(); // 🌟 Guardar antes de eliminar tarea
 
-        setCalificaciones(prev => {
-            const nextCalificaciones = { ...prev };
-            alumnosIds.forEach(alumnoId => {
-                if (nextCalificaciones[alumnoId]?.[bimestreActivo]?.[criterioNombre]?.[tareaIndex]) {
-                    // Opción A: Eliminar completamente la entrada
-                    delete nextCalificaciones[alumnoId][bimestreActivo][criterioNombre][tareaIndex];
-
-                    // Opción B: Si quisieras solo borrar el nombre pero dejar la nota, harías:
-                    // nextCalificaciones[alumnoId][bimestreActivo][criterioNombre][tareaIndex].nombre = null;
-                }
-            });
-            return nextCalificaciones;
+        const nextCalificaciones = { ...(latestCalificacionesRef.current || calificaciones) };
+        alumnosIds.forEach(alumnoId => {
+            if (nextCalificaciones[alumnoId]?.[bimestreActivo]?.[criterioNombre]?.[tareaIndex]) {
+                delete nextCalificaciones[alumnoId][bimestreActivo][criterioNombre][tareaIndex];
+            }
         });
+
+        latestCalificacionesRef.current = nextCalificaciones;
+        setCalificaciones(nextCalificaciones);
+        triggerAutoSaveGrades(nextCalificaciones);
 
         setTareaPorNombrar(null);
         setNotificacion({ mensaje: `Se eliminó la Tarea ${tareaIndex + 1} y sus calificaciones.`, tipo: 'exito' });
@@ -2224,19 +2282,17 @@ const PanelCalificaciones = ({
     // 🌟 FUNCIÓN RENOMBRE SEGURO: Actualizar keys en calificaciones cuando cambia el nombre del criterio
     const handleRenameCriterio = (bimestre, oldName, newName) => {
         if (oldName === newName) return;
-        setCalificaciones(prev => {
-            const nextCalificaciones = { ...prev };
-            Object.keys(nextCalificaciones).forEach(alumnoId => {
-                const aluBim = nextCalificaciones[alumnoId]?.[bimestre];
-                if (aluBim && aluBim[oldName]) {
-                    // Mover datos a la nueva key
-                    aluBim[newName] = aluBim[oldName];
-                    delete aluBim[oldName];
-                    // También actualizar el nombre registrado dentro de las tareas si fuera necesario (opcional)
-                }
-            });
-            return nextCalificaciones;
+        const nextCalificaciones = { ...(latestCalificacionesRef.current || calificaciones) };
+        Object.keys(nextCalificaciones).forEach(alumnoId => {
+            const aluBim = nextCalificaciones[alumnoId]?.[bimestre];
+            if (aluBim && aluBim[oldName]) {
+                // Mover datos a la nueva key
+                aluBim[newName] = aluBim[oldName];
+                delete aluBim[oldName];
+            }
         });
+        latestCalificacionesRef.current = nextCalificaciones;
+        setCalificaciones(nextCalificaciones);
     };
 
 
@@ -2248,42 +2304,42 @@ const PanelCalificaciones = ({
         setHasChanges(true);
         saveToHistory(); // 🌟 Guardar estado actual antes de pegar
 
-        setCalificaciones(prev => {
-            const nextCalificaciones = { ...prev };
+        const nextCalificaciones = { ...(latestCalificacionesRef.current || calificaciones) };
 
-            updates.forEach(update => {
-                const { alumnoId, bimestre, criterioNombre, tareaIndex, valor } = update;
-                const notaFloat = valor === '' ? null : parseFloat(valor);
+        updates.forEach(update => {
+            const { alumnoId, bimestre, criterioNombre, tareaIndex, valor } = update;
+            const notaFloat = valor === '' ? null : parseFloat(valor);
 
-                // Validaciones básicas, igual que en individual
-                if (notaFloat !== null && (isNaN(notaFloat) || notaFloat < 0 || notaFloat > 10)) return;
+            // Validaciones básicas, igual que en individual
+            if (notaFloat !== null && (isNaN(notaFloat) || notaFloat < 0 || notaFloat > 10)) return;
 
-                const alumnoCal = nextCalificaciones[alumnoId] || {};
-                const bimestreCal = alumnoCal[bimestre] || {};
-                const criterioCal = bimestreCal[criterioNombre] || {};
-                const tareaCal = criterioCal[tareaIndex] || {};
+            const alumnoCal = nextCalificaciones[alumnoId] || {};
+            const bimestreCal = alumnoCal[bimestre] || {};
+            const criterioCal = bimestreCal[criterioNombre] || {};
+            const tareaCal = criterioCal[tareaIndex] || {};
 
-                // Mantenemos datos anteriores (fecha y nombre)
-                const datosAnteriores = tareaCal;
+            // Mantenemos datos anteriores (fecha y nombre)
+            const datosAnteriores = tareaCal;
 
-                nextCalificaciones[alumnoId] = {
-                    ...alumnoCal,
-                    [bimestre]: {
-                        ...bimestreCal,
-                        [criterioNombre]: {
-                            ...criterioCal,
-                            [tareaIndex]: {
-                                nota: notaFloat,
-                                fecha: datosAnteriores.fecha || new Date().toISOString(),
-                                nombre: datosAnteriores.nombre // Preservar nombre
-                            },
+            nextCalificaciones[alumnoId] = {
+                ...alumnoCal,
+                [bimestre]: {
+                    ...bimestreCal,
+                    [criterioNombre]: {
+                        ...criterioCal,
+                        [tareaIndex]: {
+                            nota: notaFloat,
+                            fecha: datosAnteriores.fecha || new Date().toISOString(),
+                            nombre: datosAnteriores.nombre // Preservar nombre
                         },
                     },
-                };
-            });
-
-            return nextCalificaciones;
+                },
+            };
         });
+
+        latestCalificacionesRef.current = nextCalificaciones;
+        setCalificaciones(nextCalificaciones);
+        triggerAutoSaveGrades(nextCalificaciones);
 
         const count = updates.length;
         setNotificacion({ mensaje: `Se pegaron ${count} calificaciones correctamente.`, tipo: 'exito' });
@@ -2298,20 +2354,24 @@ const PanelCalificaciones = ({
         if (autoSaveGradesTimerRef.current) {
             clearTimeout(autoSaveGradesTimerRef.current);
         }
+        if (updatedCalificaciones) latestCalificacionesRef.current = updatedCalificaciones;
+        if (updatedCriterios) latestCriteriosRef.current = updatedCriterios;
+        if (updatedNumTareas) latestNumTareasRef.current = updatedNumTareas;
+
         setAutoSaveStatus('Guardando...');
         autoSaveGradesTimerRef.current = setTimeout(async () => {
+            autoSaveGradesTimerRef.current = null;
             const token = localStorage.getItem('token');
             if (!token || !grupo?._id || !asignatura) return;
-            const config = { headers: { Authorization: `Bearer ${token}` } };
             const payload = {
                 grupoId: grupo._id,
-                asignatura,
-                criterios: updatedCriterios || criteriosPorBimestre,
-                calificaciones: updatedCalificaciones || calificaciones,
-                numTareas: updatedNumTareas || numTareas
+                asignatura: String(asignatura).trim(),
+                criterios: latestCriteriosRef.current || criteriosPorBimestre,
+                calificaciones: latestCalificacionesRef.current || calificaciones,
+                numTareas: latestNumTareasRef.current || numTareas
             };
             try {
-                await axios.post(`${API_URL}/calificaciones`, payload, config);
+                await postCalificacionesToServer(payload);
                 setHasChanges(false);
                 setAutoSaveStatus('Guardado ✓');
                 setTimeout(() => setAutoSaveStatus(''), 2500);
@@ -2319,8 +2379,8 @@ const PanelCalificaciones = ({
                 console.error("Error en autoguardado de calificaciones:", err);
                 setAutoSaveStatus('Error al autoguardar');
             }
-        }, 800);
-    }, [grupo, asignatura, criteriosPorBimestre, calificaciones, numTareas]);
+        }, 1200);
+    }, [grupo, asignatura, criteriosPorBimestre, calificaciones, numTareas, postCalificacionesToServer]);
 
     // Lógica de manipulación de calificaciones (MODIFICADA para preservar el nombre y activar autoguardado)
     const handleCalificacionChange = (alumnoId, bimestre, criterioNombre, tareaIndex, valor) => {
@@ -2354,28 +2414,35 @@ const PanelCalificaciones = ({
             },
         };
 
+        latestCalificacionesRef.current = newCalificaciones;
         setCalificaciones(newCalificaciones);
         triggerAutoSaveGrades(newCalificaciones);
     };
 
     const guardarCalificaciones = async () => {
+        if (autoSaveGradesTimerRef.current) {
+            clearTimeout(autoSaveGradesTimerRef.current);
+            autoSaveGradesTimerRef.current = null;
+        }
         setIsSaving(true);
-        const token = localStorage.getItem('token');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
         // Envía el objeto de criterios completo, separado por bimestre, que viene del estado del padre.
         const payload = {
             grupoId: grupo._id,
-            asignatura,
-            criterios: criteriosPorBimestre,
-            calificaciones,
-            numTareas // 🎯 Enviamos configuración de tareas visibles
+            asignatura: String(asignatura).trim(),
+            criterios: latestCriteriosRef.current || criteriosPorBimestre,
+            calificaciones: latestCalificacionesRef.current || calificaciones,
+            numTareas: latestNumTareasRef.current || numTareas // 🎯 Enviamos configuración de tareas visibles
         };
         try {
-            await axios.post(`${API_URL}/calificaciones`, payload, config);
+            await postCalificacionesToServer(payload);
             setHasChanges(false);
+            setAutoSaveStatus('Guardado ✓');
+            setTimeout(() => setAutoSaveStatus(''), 2500);
             setNotificacion({ mensaje: '¡Calificaciones guardadas con éxito!', tipo: 'exito' });
         } catch (error) {
-            setNotificacion({ mensaje: 'Error al guardar las calificaciones.', tipo: 'error' });
+            console.error("Error al guardar calificaciones:", error);
+            const serverMsg = error.response?.data?.msg || error.response?.data?.error || 'Error al guardar las calificaciones.';
+            setNotificacion({ mensaje: serverMsg, tipo: 'error' });
         } finally {
             setIsSaving(false);
         }
@@ -2514,7 +2581,7 @@ const PanelCalificaciones = ({
         criteriosDelBimestre.forEach(criterio => {
             // Verificar si este criterio tiene calificaciones válidas (números reales) EN TAREAS VISIBLES
             const tareas = calificaciones[alumnoId]?.[bimestre]?.[criterio.nombre] || {};
-            const maxTareas = numTareas[criterio.nombre] || 0;
+            const maxTareas = numTareas[criterio.nombre] || 10;
 
             // Filtrar por índice visible y por validez de nota
             const validNotesCount = Object.keys(tareas)
@@ -3611,9 +3678,42 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onRename, onClose, se
 
     // Función principal de guardado
     const handleGuardar = () => {
-        for (const [bimestre, criterios] of Object.entries(criteriosLocales)) {
-            const totalBimestre = criterios.reduce((acc, curr) => acc + (Number(curr.porcentaje) || 0), 0);
-            if (criterios.length > 0 && totalBimestre !== 100) {
+        let criteriosParaGuardar = { ...criteriosLocales };
+
+        // Si el usuario dejó un criterio escrito en los inputs sin pulsar "Añadir"/"Actualizar", lo incorporamos si es válido
+        if (nombre.trim() && porcentaje !== '') {
+            const porciento = parseInt(porcentaje, 10);
+            const listaActual = criteriosParaGuardar[bimestreActivo] || [];
+            const currentTotal = editingIndex !== null
+                ? totalPorcentaje - (listaActual[editingIndex]?.porcentaje || 0)
+                : totalPorcentaje;
+
+            if (!isNaN(porciento) && porciento > 0 && currentTotal + porciento <= 100) {
+                const duplicado = listaActual.some((c, i) => i !== editingIndex && c.nombre.toLowerCase() === nombre.trim().toLowerCase());
+                if (!duplicado) {
+                    const nuevoCriterio = { nombre: nombre.trim(), porcentaje: porciento };
+                    if (editingIndex !== null) {
+                        const updatedList = [...listaActual];
+                        updatedList[editingIndex] = nuevoCriterio;
+                        criteriosParaGuardar[bimestreActivo] = updatedList;
+                        if (originalNameEditing && originalNameEditing !== nuevoCriterio.nombre && onRename) {
+                            onRename(bimestreActivo, originalNameEditing, nuevoCriterio.nombre);
+                        }
+                    } else {
+                        criteriosParaGuardar[bimestreActivo] = [...listaActual, nuevoCriterio];
+                    }
+                    setCriteriosLocales(criteriosParaGuardar);
+                    setNombre('');
+                    setPorcentaje('');
+                    setEditingIndex(null);
+                    setOriginalNameEditing(null);
+                }
+            }
+        }
+
+        for (const [bimestre, criterios] of Object.entries(criteriosParaGuardar)) {
+            const totalBimestre = (criterios || []).reduce((acc, curr) => acc + (Number(curr.porcentaje) || 0), 0);
+            if (criterios && criterios.length > 0 && totalBimestre !== 100) {
                 setNotificacion({
                     mensaje: `ERROR: El Trimestre ${bimestre} debe sumar exactamente 100% para guardar. Actualmente suma ${totalBimestre}%.`,
                     tipo: 'error'
@@ -3622,9 +3722,7 @@ const ModalCriterios = ({ criteriosPorBimestre, onGuardar, onRename, onClose, se
             }
         }
 
-        onGuardar(criteriosLocales);
-        onClose();
-        setNotificacion({ mensaje: 'Criterios de evaluación actualizados.', tipo: 'exito' });
+        onGuardar(criteriosParaGuardar);
     };
 
     // Función para copiar los criterios de un bimestre anterior (ej. 1 -> 2)
