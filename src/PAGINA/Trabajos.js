@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import logoImage from './Logoescuela.png';
 import ConfirmacionModal from './ConfirmacionModal';
@@ -576,11 +577,11 @@ function Trabajos({ user }) {
 
                 /* Estilos de asistencia y contenedor principal de calificaciones */
                 .grupo-componente .modal-backdrop-solid {
-                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
                     background-color: var(--dark-color); display: flex;
                     justify-content: center; align-items: flex-start;
-                    z-index: 1000; padding: 4.2rem 0.75rem 1rem 0.75rem; box-sizing: border-box;
-                    overflow-y: auto;
+                    z-index: 1000; padding: 3.9rem 0.6rem 0.5rem 0.6rem; box-sizing: border-box;
+                    overflow: hidden;
                 }
                 /* ... otros estilos de asistencia (cuadritos, etc.) ... */
 
@@ -730,46 +731,64 @@ function Trabajos({ user }) {
                     border-radius: 12px;
                     box-shadow: 0 5px 25px rgba(0, 0, 0, 0.6);
                     padding: 0;
-                    width: 98% !important;
-                    max-width: 98% !important;
-                    height: auto !important;
-                    min-height: calc(100% - 1rem) !important;
-                    max-height: none !important;
+                    width: 99% !important;
+                    max-width: 99% !important;
+                    height: calc(100vh - 4.4rem) !important;
+                    max-height: calc(100vh - 4.4rem) !important;
+                    min-height: 0 !important;
                     margin: 0 auto;
                     display: flex !important;
                     flex-direction: column !important;
-                    overflow: visible !important;
+                    overflow: hidden !important;
                     border: 1px solid var(--border-color);
                 }
 
                 .grupo-componente .calificaciones-panel-content .main-header {
                     margin-bottom: 0 !important;
-                    padding: 6px 16px !important;
+                    padding: 6px 14px !important;
                     border-bottom: 1px solid var(--border-color);
-                    gap: 8px;
+                    display: flex !important;
+                    flex-wrap: wrap !important;
+                    justify-content: space-between !important;
+                    align-items: center !important;
+                    gap: 6px 10px !important;
                 }
 
                 .grupo-componente .calificaciones-panel-content .main-header h2 {
-                    font-size: 1.25rem !important;
+                    font-size: 1.12rem !important;
                     margin: 0 !important;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 100%;
+                }
+
+                .grupo-componente .header-actions-toolbar {
+                    display: flex;
+                    flex-wrap: wrap;
+                    align-items: center;
+                    gap: 6px;
+                    justify-content: flex-end;
                 }
 
                 .grupo-componente .bimestre-selector {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    gap: 12px;
-                    margin-bottom: 0.35rem !important;
-                    padding: 6px 16px;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    margin-bottom: 0.25rem !important;
+                    padding: 5px 14px;
                     border-bottom: 1px solid var(--border-color);
                 }
                 .grupo-componente .bimestre-selector-buttons {
                     display: flex;
-                    gap: 10px;
+                    flex-wrap: wrap;
+                    gap: 8px;
                 }
                 .grupo-componente .bimestre-selector .btn {
-                    padding: 5px 12px;
-                    font-size: 0.85rem;
+                    padding: 4px 12px;
+                    font-size: 0.82rem;
                     border-radius: 6px;
                 }
                 .grupo-componente .zoom-controls {
@@ -809,22 +828,24 @@ function Trabajos({ user }) {
 
                 .grupo-componente .calificaciones-panel-content .asistencia-grid,
                 .grupo-componente .asistencia-grid {
-                    padding: 0.5rem 0 0 0;
+                    padding: 0.25rem 0 0 0;
                     width: 100%;
-                    flex: 1 1 auto;
-                    min-height: 0;
-                    display: flex;
-                    flex-direction: column;
+                    flex: 1 1 auto !important;
+                    min-height: 0 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    overflow: hidden !important;
                 }
 
                 .grupo-componente .calificaciones-panel-content .asistencia-body,
                 .grupo-componente .asistencia-body {
                     width: 100%;
-                    max-height: 70vh !important;
-                    min-height: 420px !important;
+                    flex: 1 1 auto !important;
+                    max-height: none !important;
+                    min-height: 0 !important;
                     overflow-y: auto !important;
-                    overflow-x: hidden;
-                    padding: 0.5rem 16px 5rem 16px !important;
+                    overflow-x: auto !important;
+                    padding: 0.4rem 14px 4rem 14px !important;
                 }
 
                 .grupo-componente .asistencia-row {
@@ -1386,12 +1407,12 @@ function Trabajos({ user }) {
                 .grupo-componente .calificaciones-panel-content .tabla-global-container,
                 .grupo-componente .tabla-global-container {
                     width: 100% !important;
-                    max-height: 70vh !important;
-                    min-height: 420px !important;
+                    flex: 1 1 auto !important;
+                    min-height: 0 !important;
+                    max-height: none !important;
                     overflow-x: auto !important;
                     overflow-y: auto !important;
-                    padding: 0 0 5rem 0 !important;
-                    flex: 1 1 auto !important;
+                    padding: 0 0 4.5rem 0 !important;
                     border-bottom: 1px solid var(--border-color);
                     position: relative;
                 }
@@ -1401,75 +1422,96 @@ function Trabajos({ user }) {
                     border-collapse: separate; /* Necesario para sticky headers */
                     border-spacing: 0;
                 }
+                .grupo-componente .tabla-global tbody tr {
+                    height: 46px;
+                    min-height: 46px;
+                }
                 .grupo-componente .tabla-global th,
                 .grupo-componente .tabla-global td {
-                    padding: 8px 6px;
+                    padding: 6px 8px;
+                    height: 46px;
+                    min-height: 46px;
                     border-bottom: 1px solid var(--border-color);
                     border-right: 1px solid var(--border-color);
                     text-align: center;
                     vertical-align: middle;
+                    box-sizing: border-box;
                 }
                 .grupo-componente .tabla-global th {
                     background-color: #1e293b !important;
                     color: #00cbcb !important;
                     font-weight: 600;
-                    font-size: 0.88rem;
+                    font-size: 0.85rem;
                     position: sticky;
                     top: 0;
                     z-index: 200; /* Horizontal headers */
-                    min-height: 48px;
+                    min-height: 46px;
                     white-space: nowrap;
                     box-shadow: 0 4px 6px rgba(0,0,0,0.4); 
                 }
                 .grupo-componente .tabla-global th.task-col,
                 .grupo-componente .tabla-global td.task-cell {
-                    min-width: 120px !important;
-                    width: 120px;
-                    max-width: 150px;
+                    min-width: 110px !important;
+                    width: 110px;
+                    max-width: 145px;
                     white-space: nowrap;
-                    padding: 6px 8px !important;
+                    padding: 4px 6px !important;
                 }
                 .grupo-componente .tabla-global th.alumno-col {
                     text-align: left;
-                    min-width: 250px;
-                    width: 250px;
-                    padding-left: 15px;
-                    position: sticky;
-                    left: 40px; 
-                    top: 0; 
-                    z-index: 300; /* Corner highest */
+                    min-width: 240px !important;
+                    width: 240px !important;
+                    max-width: 280px !important;
+                    padding-left: 12px;
+                    position: sticky !important;
+                    left: 40px !important; 
+                    top: 0 !important; 
+                    z-index: 300 !important; /* Corner highest */
                     background-color: #0f172a !important;
                     color: #00cbcb !important;
                     border-right: 2px solid var(--border-color); 
                     box-shadow: 6px 0 10px -2px rgba(0,0,0,0.5); 
+                    white-space: nowrap !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
                 }
                 .grupo-componente .tabla-global td.alumno-col {
                     text-align: left;
-                    min-width: 250px;
-                    width: 250px;
-                    padding-left: 15px;
-                    position: sticky;
-                    left: 40px; 
+                    min-width: 240px !important;
+                    width: 240px !important;
+                    max-width: 280px !important;
+                    padding-left: 12px;
+                    position: sticky !important;
+                    left: 40px !important; 
                     background-color: #0f172a !important;
-                    z-index: 150; 
+                    z-index: 150 !important; 
                     border-right: 2px solid var(--border-color);
                     font-weight: 500;
                     color: var(--text-color) !important;
-                    box-shadow: 6px 0 10px -2px rgba(0,0,0,0.5); 
+                    box-shadow: 6px 0 10px -2px rgba(0,0,0,0.5);
+                    white-space: nowrap !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
                 }
                 .grupo-componente .tabla-global .num-col {
-                    position: sticky;
-                    left: 0;
-                    z-index: 300; 
-                    top: 0;
+                    position: sticky !important;
+                    left: 0 !important;
+                    z-index: 300 !important; 
+                    top: 0 !important;
+                    width: 40px !important;
+                    min-width: 40px !important;
+                    max-width: 40px !important;
                     background-color: #0f172a !important;
                     color: #00cbcb !important;
                     border-right: 1px solid var(--border-color);
                 }
                 .grupo-componente .tabla-global tbody td:first-child {
-                    position: sticky;
-                    left: 0;
-                    z-index: 150; 
+                    position: sticky !important;
+                    left: 0 !important;
+                    z-index: 150 !important;
+                    width: 40px !important;
+                    min-width: 40px !important;
+                    max-width: 40px !important;
                     background-color: #0f172a !important;
                     color: var(--text-color) !important;
                     border-right: 1px solid var(--border-color);
@@ -1819,8 +1861,9 @@ function Trabajos({ user }) {
                     .grupo-componente .tabla-global-container,
                     .grupo-componente .calificaciones-panel-content .asistencia-body,
                     .grupo-componente .asistencia-body {
-                        max-height: 62vh !important;
-                        min-height: 280px !important;
+                        flex: 1 1 auto !important;
+                        max-height: none !important;
+                        min-height: 0 !important;
                         padding-bottom: 4rem !important;
                     }
                     .grupo-componente .modal-content {
@@ -2720,6 +2763,192 @@ const PanelCalificaciones = ({
         doc.save(`Reporte_${grupo.nombre}_${asignatura.replace(/\s/g, '_')}.pdf`);
     };
 
+    // 🌟 FUNCIÓN NUEVA: Exportar Calificaciones a Excel (.xlsx) para Concentradores Oficiales
+    const exportarCalificacionesExcel = () => {
+        try {
+            const wb = XLSX.utils.book_new();
+            const periodLabel = getPeriodLabel(bimestreActivo - 1);
+            const isTec = asignatura?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('tecnologia');
+
+            // 1. Hoja Principal: Calificaciones por Criterio/Rubro del Periodo Activo
+            const rowsPeriodo = sortedAlumnos.map((alumno, idx) => {
+                const nombreOficial = `${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''} ${alumno.nombre || ''}`.replace(/\s+/g, ' ').trim();
+                const row = {
+                    'No.': idx + 1,
+                    'Nombre del Alumno': nombreOficial
+                };
+
+                if (isTec) {
+                    row['Observaciones'] = calificaciones[alumno._id]?.[bimestreActivo]?.OBSERVACIONES || '';
+                }
+
+                criteriosActivos.forEach(crit => {
+                    const colKey = `${crit.nombre} (${crit.porcentaje}%)`;
+                    const tareas = calificaciones[alumno._id]?.[bimestreActivo]?.[crit.nombre] || {};
+                    const maxT = numTareas[crit.nombre] || 10;
+                    const tieneNotas = Object.keys(tareas).some(
+                        tIdx => parseInt(tIdx, 10) < maxT && tareas[tIdx] && typeof tareas[tIdx].nota === 'number'
+                    );
+                    if (tieneNotas) {
+                        const promCrit = calcularPromedioCriterio(alumno._id, bimestreActivo, crit.nombre);
+                        row[colKey] = Number(promCrit.toFixed(1));
+                    } else {
+                        row[colKey] = '';
+                    }
+                });
+
+                const frozenGrade = cortes[bimestreActivo]?.promedios?.[alumno._id];
+                const promBim = calcularPromedioBimestre(alumno._id, bimestreActivo);
+                const califFinalPeriodo = (frozenGrade !== undefined && frozenGrade !== null)
+                    ? frozenGrade
+                    : (promBim > 0 ? promBim : '');
+
+                row[`Calificación Final (${periodLabel})`] = califFinalPeriodo;
+                return row;
+            });
+
+            const wsPeriodo = XLSX.utils.json_to_sheet(rowsPeriodo);
+            const colsPeriodo = [
+                { wch: 6 },
+                { wch: 38 },
+                ...(isTec ? [{ wch: 15 }] : []),
+                ...criteriosActivos.map(c => ({ wch: Math.max(16, (c.nombre?.length || 10) + 8) })),
+                { wch: 24 }
+            ];
+            wsPeriodo['!cols'] = colsPeriodo;
+            XLSX.utils.book_append_sheet(wb, wsPeriodo, `${periodLabel}`.substring(0, 31));
+
+            // 2. Si hay un criterio seleccionado en la tabla global, agregar hoja con desglose de tareas
+            if (criterioSeleccionadoGlobal) {
+                const maxT = numTareas[criterioSeleccionadoGlobal] || 10;
+                const primerAlumnoId = sortedAlumnos[0]?._id;
+                const rowsCriterio = sortedAlumnos.map((alumno, idx) => {
+                    const nombreOficial = `${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''} ${alumno.nombre || ''}`.replace(/\s+/g, ' ').trim();
+                    const row = {
+                        'No.': idx + 1,
+                        'Nombre del Alumno': nombreOficial
+                    };
+                    for (let t = 0; t < maxT; t++) {
+                        const nombreTarea = calificaciones[primerAlumnoId]?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[t]?.nombre
+                            || Object.values(calificaciones).find(
+                                aCal => aCal?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[t]?.nombre
+                            )?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[t]?.nombre;
+                        const headerCol = nombreTarea ? `T${t + 1}: ${nombreTarea}` : `T${t + 1}`;
+                        const notaVal = calificaciones[alumno._id]?.[bimestreActivo]?.[criterioSeleccionadoGlobal]?.[t]?.nota;
+                        row[headerCol] = typeof notaVal === 'number' ? notaVal : '';
+                    }
+                    const promCrit = calcularPromedioCriterio(alumno._id, bimestreActivo, criterioSeleccionadoGlobal);
+                    row['Promedio Criterio'] = promCrit > 0 ? redondearCalificacion(promCrit) : '';
+                    return row;
+                });
+                const wsCrit = XLSX.utils.json_to_sheet(rowsCriterio);
+                wsCrit['!cols'] = [{ wch: 6 }, { wch: 38 }, ...Array.from({ length: maxT }, () => ({ wch: 12 })), { wch: 18 }];
+                const cleanCritSheetName = `Rubro_${criterioSeleccionadoGlobal.replace(/[\\/?*[\]:]/g, '')}`.substring(0, 31);
+                XLSX.utils.book_append_sheet(wb, wsCrit, cleanCritSheetName);
+            }
+
+            // 3. Hoja de Concentrado Anual (T1, T2, T3 y Promedio Final)
+            const rowsConcentrado = sortedAlumnos.map((alumno, idx) => {
+                const nombreOficial = `${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''} ${alumno.nombre || ''}`.replace(/\s+/g, ' ').trim();
+                const p1 = cortes[1]?.promedios?.[alumno._id] ?? calcularPromedioBimestre(alumno._id, 1);
+                const p2 = cortes[2]?.promedios?.[alumno._id] ?? calcularPromedioBimestre(alumno._id, 2);
+                const p3 = cortes[3]?.promedios?.[alumno._id] ?? calcularPromedioBimestre(alumno._id, 3);
+
+                let suma = 0;
+                let count = 0;
+                if (p1 > 0) { suma += Number(p1); count++; }
+                if (p2 > 0) { suma += Number(p2); count++; }
+                if (p3 > 0) { suma += Number(p3); count++; }
+                const final = count > 0 ? redondearCalificacion(suma / count) : '';
+
+                return {
+                    'No.': idx + 1,
+                    'Nombre del Alumno': nombreOficial,
+                    'Trimestre 1': p1 > 0 ? p1 : '',
+                    'Trimestre 2': p2 > 0 ? p2 : '',
+                    'Trimestre 3': p3 > 0 ? p3 : '',
+                    'Promedio Final': final
+                };
+            });
+            const wsConcentrado = XLSX.utils.json_to_sheet(rowsConcentrado);
+            wsConcentrado['!cols'] = [{ wch: 6 }, { wch: 38 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }];
+            XLSX.utils.book_append_sheet(wb, wsConcentrado, 'Concentrado T1-T2-T3');
+
+            const safeAsig = String(asignatura || 'Asignatura').replace(/[\\/?*[\]:\s]+/g, '_');
+            XLSX.writeFile(wb, `Calificaciones_${grupo.nombre}_${safeAsig}_T${bimestreActivo}.xlsx`);
+            setNotificacion({ mensaje: '📊 Archivo Excel (.xlsx) descargado correctamente.', tipo: 'exito' });
+        } catch (err) {
+            console.error("Error exportando a Excel:", err);
+            setNotificacion({ mensaje: 'Error al generar el archivo Excel.', tipo: 'error' });
+        }
+    };
+
+    // 🌟 FUNCIÓN NUEVA: Copiar tabla al portapapeles en formato TSV para pegar directo en Excel (Ctrl + V)
+    const copiarCalificacionesPortapapeles = async () => {
+        try {
+            const periodLabel = getPeriodLabel(bimestreActivo - 1);
+            const headers = [
+                'No.',
+                'Nombre del Alumno',
+                ...criteriosActivos.map(c => `${c.nombre} (${c.porcentaje}%)`),
+                `Calificación Final (${periodLabel})`
+            ];
+
+            const lines = [headers.join('\t')];
+
+            sortedAlumnos.forEach((alumno, idx) => {
+                const nombreOficial = `${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''} ${alumno.nombre || ''}`.replace(/\s+/g, ' ').trim();
+                const valoresCriterios = criteriosActivos.map(crit => {
+                    const tareas = calificaciones[alumno._id]?.[bimestreActivo]?.[crit.nombre] || {};
+                    const maxT = numTareas[crit.nombre] || 10;
+                    const tieneNotas = Object.keys(tareas).some(
+                        tIdx => parseInt(tIdx, 10) < maxT && tareas[tIdx] && typeof tareas[tIdx].nota === 'number'
+                    );
+                    if (!tieneNotas) return '';
+                    const promCrit = calcularPromedioCriterio(alumno._id, bimestreActivo, crit.nombre);
+                    return promCrit > 0 ? promCrit.toFixed(1) : '';
+                });
+
+                const frozenGrade = cortes[bimestreActivo]?.promedios?.[alumno._id];
+                const promBim = calcularPromedioBimestre(alumno._id, bimestreActivo);
+                const califFinalPeriodo = (frozenGrade !== undefined && frozenGrade !== null)
+                    ? frozenGrade
+                    : (promBim > 0 ? promBim : '');
+
+                const rowCells = [
+                    idx + 1,
+                    nombreOficial,
+                    ...valoresCriterios,
+                    califFinalPeriodo
+                ];
+                lines.push(rowCells.join('\t'));
+            });
+
+            const tsvText = lines.join('\r\n');
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(tsvText);
+            } else {
+                const textArea = document.createElement('textarea');
+                textArea.value = tsvText;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-9999px';
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            }
+
+            setNotificacion({
+                mensaje: '📋 Tabla copiada al portapapeles. Pégala con Ctrl + V directo en tu plantilla de Excel.',
+                tipo: 'exito'
+            });
+        } catch (err) {
+            console.error("Error al copiar al portapapeles:", err);
+            setNotificacion({ mensaje: 'No se pudo copiar al portapapeles.', tipo: 'error' });
+        }
+    };
+
     // 🌟 FUNCIÓN NUEVA: Limpiar Calificaciones
     const handleLimpiarCalificaciones = () => {
         setConfirmModal({
@@ -2917,11 +3146,11 @@ const PanelCalificaciones = ({
             {/* Contenido principal del panel de calificaciones */}
             <div className="asistencia-modal-content calificaciones-panel-content">
                 <div className="sticky-context">
-                    <header className="main-header" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '6px 20px' }}>
+                    <header className="main-header">
                         <h2>Calificaciones: {grupo.nombre} - {asignatura}</h2>
-                        <div>
-                            {/* Botones de Acción Nuevos */}
-                            <div style={{ display: 'inline-flex', gap: '5px', marginRight: '15px', verticalAlign: 'middle', alignItems: 'center' }}>
+                        <div className="header-actions-toolbar">
+                            {/* Botones Deshacer / Rehacer */}
+                            <div style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
                                 <button
                                     className="btn btn-compact"
                                     style={{ backgroundColor: '#95a5a6', color: 'white', opacity: history.past.length === 0 ? 0.5 : 1, cursor: history.past.length === 0 ? 'not-allowed' : 'pointer' }}
@@ -2951,13 +3180,28 @@ const PanelCalificaciones = ({
                                         onConfirm: (brandingData) => generateSubjectReport(brandingData)
                                     });
                                 }
-                            }} style={{ marginRight: '10px', backgroundColor: '#2980b9', borderColor: '#2980b9', color: 'white' }}>
+                            }} style={{ backgroundColor: '#2980b9', borderColor: '#2980b9', color: 'white' }} title="Descargar reporte en PDF">
                                 📄 Reporte PDF
                             </button>
-                            <button className="btn btn-compact" onClick={handleLimpiarCalificaciones} style={{ marginRight: '10px', backgroundColor: '#c0392b', borderColor: '#c0392b', color: 'white' }}>
+                            <button
+                                className="btn btn-compact"
+                                onClick={exportarCalificacionesExcel}
+                                style={{ backgroundColor: '#1d6f42', borderColor: '#1d6f42', color: 'white', fontWeight: 600 }}
+                                title="Descargar calificaciones en formato Excel (.xlsx) para concentradores oficiales"
+                            >
+                                📊 Descargar en Excel
+                            </button>
+                            <button
+                                className="btn btn-compact"
+                                onClick={copiarCalificacionesPortapapeles}
+                                style={{ backgroundColor: '#16a085', borderColor: '#16a085', color: 'white', fontWeight: 600 }}
+                                title="Copiar tabla en formato tabular (TSV) para pegar con Ctrl + V directo en Excel"
+                            >
+                                📋 Copiar para Excel
+                            </button>
+                            <button className="btn btn-compact" onClick={handleLimpiarCalificaciones} style={{ backgroundColor: '#c0392b', borderColor: '#c0392b', color: 'white' }}>
                                 🗑️ Limpiar Calificaciones
                             </button>
-
 
                             {/* Botón para abrir el modal de criterios */}
                             <button className="btn btn-compact" onClick={() => setModalCriterios(true)}>Criterios</button>
@@ -2972,7 +3216,7 @@ const PanelCalificaciones = ({
                                     });
                                     setIsMigrarModalOpen(true);
                                 }} 
-                                style={{ marginLeft: '10px', backgroundColor: '#8e44ad', borderColor: '#8e44ad', color: 'white' }}
+                                style={{ backgroundColor: '#8e44ad', borderColor: '#8e44ad', color: 'white' }}
                                 title="Migrar calificaciones entre trimestres"
                             >
                                 🔄 Migrar Calificaciones
@@ -2981,16 +3225,16 @@ const PanelCalificaciones = ({
                                 className="btn btn-primary btn-compact"
                                 onClick={guardarCalificaciones}
                                 disabled={isSaving}
-                                style={{ marginLeft: '10px', backgroundColor: '#00cbcb', borderColor: '#00cbcb', color: '#10172a', fontWeight: 'bold' }}
+                                style={{ backgroundColor: '#00cbcb', borderColor: '#00cbcb', color: '#10172a', fontWeight: 'bold' }}
                             >
                                 {isSaving ? 'Guardando...' : '💾 Guardar Calificaciones'}
                             </button>
                             {autoSaveStatus && (
-                                <span style={{ marginLeft: '8px', fontSize: '0.85rem', color: autoSaveStatus.includes('✓') ? '#2ecc71' : '#f39c12', fontWeight: '600' }}>
+                                <span style={{ fontSize: '0.82rem', color: autoSaveStatus.includes('✓') ? '#2ecc71' : '#f39c12', fontWeight: '600' }}>
                                     {autoSaveStatus}
                                 </span>
                             )}
-                            <button className="btn btn-cancel btn-compact" onClick={handleConfirmarVolver} style={{ marginLeft: '10px' }}>Cerrar</button>
+                            <button className="btn btn-cancel btn-compact" onClick={handleConfirmarVolver}>Cerrar</button>
                         </div>
                     </header>
 
@@ -3219,7 +3463,7 @@ const PanelCalificaciones = ({
                                                         />
                                                     </td>
                                                 )}
-                                                <td className="alumno-col" style={{ color: alumno.esBaja ? '#ff4d4d' : undefined }}>
+                                                <td className="alumno-col" title={`${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''} ${alumno.nombre || ''}`.replace(/\s+/g, ' ').trim()} style={{ color: alumno.esBaja ? '#ff4d4d' : undefined }}>
                                                             {`${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`}
                                                             {alumno.esBaja ? (
                                                                 <span style={{

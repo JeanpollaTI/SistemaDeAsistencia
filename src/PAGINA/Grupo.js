@@ -2993,10 +2993,10 @@ function Grupo({ user }) {
                                  </tr>
                                )}
                                
-                               <tr className={`${isHighlighted ? 'highlight-row' : ''} ${alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')}`} style={{ backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.12)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined), color: alumno.esBaja ? '#ff4d4d' : undefined }}>
+                               <tr className={`${isHighlighted ? 'highlight-row' : ''} ${alumno.esBaja ? 'row-baja' : (alumno.esNuevoIngreso ? 'row-nuevo-ingreso' : '')}`} style={{ height: '48px', minHeight: '48px', backgroundColor: alumno.esBaja ? 'rgba(255, 77, 77, 0.12)' : (alumno.esNuevoIngreso ? 'rgba(255, 216, 102, 0.08)' : undefined), color: alumno.esBaja ? '#ff4d4d' : undefined }}>
                                   <td className="num-col" style={{ textAlign: 'center', color: alumno.esBaja ? '#ff4d4d' : undefined, fontWeight: alumno.esBaja ? 'bold' : undefined }}>{index + 1}</td>
                                   <td className="matricula-col" style={{ textAlign: 'center', fontWeight: 'bold', color: alumno.esBaja ? '#ff4d4d' : undefined }}>{alumno.matricula || '---'}</td>
-                                  <td className="alumno-col notranslate" translate="no" style={{ color: alumno.esBaja ? '#ff4d4d' : undefined, fontWeight: alumno.esBaja ? '600' : undefined }}>
+                                  <td className="alumno-col notranslate" translate="no" title={`${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''} ${alumno.nombre || ''}`.replace(/\s+/g, ' ').trim()} style={{ color: alumno.esBaja ? '#ff4d4d' : undefined, fontWeight: alumno.esBaja ? '600' : undefined }}>
                                    {alumno.apellidoPaterno} {alumno.apellidoMaterno || ''} {alumno.nombre}
                                    {alumno.esBaja ? (
                                      <span style={{
@@ -3055,7 +3055,7 @@ function Grupo({ user }) {
                                   const registro = asistencia[key];
                                   const stConf = getStatusConfig(registro?.estado);
                                   return (
-                                    <td key={diaIndex} style={{ padding: '2px', textAlign: 'center' }}>
+                                    <td key={diaIndex} style={{ padding: '4px 3px', textAlign: 'center', height: '48px', minHeight: '48px', minWidth: '36px' }}>
                                       <div
                                         className={`cuadrito ${stConf ? 'custom-active' : ''}`}
                                         style={{

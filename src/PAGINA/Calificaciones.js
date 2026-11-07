@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -330,6 +331,153 @@ function Calificaciones({ user }) {
   const getPeriodsArray = () => {
     const count = getPeriodCount();
     return Array.from({ length: count }, (_, i) => i);
+  };
+
+  // --- EXPORTAR CONCENTRADO GRUPAL A EXCEL (.XLSX) ---
+  const exportarExcelConsolidado = () => {
+    if (!selectedGrupo || !alumnos || alumnos.length === 0) {
+      showAlert('No hay alumnos para exportar.', 'warning');
+      return;
+    }
+
+    const wb = XLSX.utils.book_new();
+    const periods = getPeriodsArray();
+
+    // Hoja 1: Concentrado por Trimestre y Materia
+    const headersDetalle = ['No.', 'Matrícula', 'Nombre del Alumno'];
+    materias.forEach(mat => {
+      periods.forEach(pIdx => {
+        headersDetalle.push(`${mat} (${getPeriodLabel(pIdx)})`);
+      });
+    });
+    periods.forEach(pIdx => {
+      headersDetalle.push(`Promedio ${getPeriodLabel(pIdx)}`);
+    });
+    headersDetalle.push('Promedio Final');
+
+    const rowsDetalle = alumnos.map((alumno, idx) => {
+      const nombreOficial = `${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''} ${alumno.nombre || ''}`.replace(/\s+/g, ' ').trim();
+      const row = [idx + 1, alumno.matricula || '', nombreOficial];
+
+      materias.forEach(materia => {
+        periods.forEach(bimestreIndex => {
+          const trimesterKey = String(bimestreIndex + 1);
+          const frozenGrade = cortes[materia]?.[trimesterKey]?.promedios?.[alumno._id];
+          const rawCal = calificaciones[alumno._id]?.[materia]?.[bimestreIndex];
+          const cal = clampGrade(rawCal);
+          const liveGradeNum = cal != null ? redondearCalificacion(cal) : null;
+          const finalVal = (frozenGrade !== undefined && frozenGrade !== null) ? frozenGrade : liveGradeNum;
+          row.push(finalVal !== null && finalVal !== undefined && finalVal > 0 ? finalVal : '');
+        });
+      });
+
+      periods.forEach(pIdx => {
+        const promBim = calcularPromedioBimestre(alumno._id, pIdx);
+        row.push(promBim > 0 ? promBim : '');
+      });
+
+      const promFinal = calcularPromedioFinal(alumno._id);
+      row.push(promFinal > 0 ? promFinal : '');
+      return row;
+    });
+
+    const wsDetalle = XLSX.utils.aoa_to_sheet([headersDetalle, ...rowsDetalle]);
+    wsDetalle['!cols'] = [
+      { wch: 6 },
+      { wch: 12 },
+      { wch: 38 },
+      ...headersDetalle.slice(3).map(() => ({ wch: 16 }))
+    ];
+    XLSX.utils.book_append_sheet(wb, wsDetalle, 'Concentrado Detalle');
+
+    // Hoja por cada Trimestre (Limpia por Materia)
+    periods.forEach(pIdx => {
+      const label = getPeriodLabel(pIdx);
+      const headersTrim = ['No.', 'Nombre del Alumno', ...materias, `Promedio ${label}`];
+      const rowsTrim = alumnos.map((alumno, idx) => {
+        const nombreOficial = `${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''} ${alumno.nombre || ''}`.replace(/\s+/g, ' ').trim();
+        const row = [idx + 1, nombreOficial];
+        materias.forEach(materia => {
+          const trimesterKey = String(pIdx + 1);
+          const frozenGrade = cortes[materia]?.[trimesterKey]?.promedios?.[alumno._id];
+          const rawCal = calificaciones[alumno._id]?.[materia]?.[pIdx];
+          const cal = clampGrade(rawCal);
+          const liveGradeNum = cal != null ? redondearCalificacion(cal) : null;
+          const finalVal = (frozenGrade !== undefined && frozenGrade !== null) ? frozenGrade : liveGradeNum;
+          row.push(finalVal !== null && finalVal !== undefined && finalVal > 0 ? finalVal : '');
+        });
+        const promBim = calcularPromedioBimestre(alumno._id, pIdx);
+        row.push(promBim > 0 ? promBim : '');
+        return row;
+      });
+      const wsTrim = XLSX.utils.aoa_to_sheet([headersTrim, ...rowsTrim]);
+      wsTrim['!cols'] = [{ wch: 6 }, { wch: 38 }, ...materias.map(() => ({ wch: 16 })), { wch: 16 }];
+      XLSX.utils.book_append_sheet(wb, wsTrim, label.substring(0, 31));
+    });
+
+    const safeGrupo = (selectedGrupo?.nombre || 'Grupo').replace(/[^a-zA-Z0-9_-]/g, '_');
+    XLSX.writeFile(wb, `Concentrado_Calificaciones_${safeGrupo}.xlsx`);
+    showAlert('📊 Archivo Excel descargado correctamente.', 'success');
+  };
+
+  // --- COPIAR TABLA CONSOLIDADA AL PORTAPAPELES (TSV PARA EXCEL) ---
+  const copiarConsolidadoPortapapeles = async () => {
+    if (!selectedGrupo || !alumnos || alumnos.length === 0) {
+      showAlert('No hay alumnos para copiar.', 'warning');
+      return;
+    }
+
+    const periods = getPeriodsArray();
+    const headers = ['No.', 'Nombre del Alumno'];
+    materias.forEach(mat => {
+      periods.forEach(pIdx => {
+        headers.push(`${mat} (${getPeriodLabel(pIdx)})`);
+      });
+    });
+    periods.forEach(pIdx => {
+      headers.push(`Promedio ${getPeriodLabel(pIdx)}`);
+    });
+    headers.push('Promedio Final');
+
+    const rows = alumnos.map((alumno, idx) => {
+      const nombreOficial = `${alumno.apellidoPaterno || ''} ${alumno.apellidoMaterno || ''} ${alumno.nombre || ''}`.replace(/\s+/g, ' ').trim();
+      const cols = [idx + 1, nombreOficial];
+
+      materias.forEach(materia => {
+        periods.forEach(bimestreIndex => {
+          const trimesterKey = String(bimestreIndex + 1);
+          const frozenGrade = cortes[materia]?.[trimesterKey]?.promedios?.[alumno._id];
+          const rawCal = calificaciones[alumno._id]?.[materia]?.[bimestreIndex];
+          const cal = clampGrade(rawCal);
+          const liveGradeNum = cal != null ? redondearCalificacion(cal) : null;
+          const finalVal = (frozenGrade !== undefined && frozenGrade !== null) ? frozenGrade : liveGradeNum;
+          cols.push(finalVal !== null && finalVal !== undefined && finalVal > 0 ? finalVal : '');
+        });
+      });
+
+      periods.forEach(pIdx => {
+        const promBim = calcularPromedioBimestre(alumno._id, pIdx);
+        cols.push(promBim > 0 ? promBim : '');
+      });
+
+      const promFinal = calcularPromedioFinal(alumno._id);
+      cols.push(promFinal > 0 ? promFinal : '');
+      return cols.join('\t');
+    });
+
+    const tsvContent = [headers.join('\t'), ...rows].join('\n');
+    try {
+      await navigator.clipboard.writeText(tsvContent);
+      showAlert('📋 Tabla copiada al portapapeles. Pégala directamente en Excel con Ctrl + V.', 'success');
+    } catch (err) {
+      const textArea = document.createElement('textarea');
+      textArea.value = tsvContent;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      showAlert('📋 Tabla copiada al portapapeles. Pégala en Excel con Ctrl + V.', 'success');
+    }
   };
 
   // --- FUNCIÓN REUTILIZABLE PARA DIBUJAR UNA BOLETA EN UNA PÁGINA EXISTENTE ---
@@ -911,6 +1059,24 @@ function Calificaciones({ user }) {
                 title="Generar un solo PDF con todas las boletas del grupo"
               >
                 📄 Descargar Todas las Boletas
+              </button>
+
+              <button
+                className="button"
+                onClick={exportarExcelConsolidado}
+                style={{ backgroundColor: '#1d6f42', color: 'white' }}
+                title="Descargar concentrado de calificaciones en formato Excel (.xlsx)"
+              >
+                📊 Descargar en Excel
+              </button>
+
+              <button
+                className="button"
+                onClick={copiarConsolidadoPortapapeles}
+                style={{ backgroundColor: '#0d9488', color: 'white' }}
+                title="Copiar tabla al portapapeles para pegar directamente con Ctrl + V en Excel"
+              >
+                📋 Copiar para Excel
               </button>
 
               <button
