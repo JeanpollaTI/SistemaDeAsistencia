@@ -207,12 +207,25 @@ function Calificaciones({ user }) {
   useEffect(() => {
     fetchGrupos();
     fetchSchoolConfig();
-    // Cargar directores guardados y el director actual
-    const saved = localStorage.getItem('saved_directores');
-    if (saved) {
-      setSavedDirectores(JSON.parse(saved));
-    }
+    // Limpiar claves globales antiguas para evitar compartir firmas entre escuelas
+    try {
+      localStorage.removeItem('current_director_name');
+      localStorage.removeItem('saved_directores');
+    } catch (e) {}
   }, []);
+
+  const getSchoolDirectorName = (overrideDirector = '') => {
+    if (overrideDirector && overrideDirector.trim()) return overrideDirector.trim();
+    if (schoolConfig?.directorName && schoolConfig.directorName.trim()) return schoolConfig.directorName.trim();
+    if (schoolConfig?._id) {
+      return localStorage.getItem(`director_name_${schoolConfig._id}`) || '';
+    }
+    return '';
+  };
+
+  const getSchoolLogoUrl = (brandingData = {}) => {
+    return brandingData?.logoUrl || schoolConfig?.config?.logoUrl || '';
+  };
 
   const handleBackToGrupos = () => {
     setSelectedGrupo(null);
@@ -513,10 +526,12 @@ function Calificaciones({ user }) {
 
   // --- OBTENER MATERIAS DE TUTORÍA E INTEGRACIÓN CURRICULAR SEGÚN EL GRUPO ---
   const obtenerMateriasTutoriaEIntegracion = () => {
+    const califKeys = Object.values(calificaciones || {}).flatMap(c => Object.keys(c || {}));
     const todasLasMateriasSet = new Set([
       ...materias,
       ...((selectedGrupo?.profesoresAsignados || []).map(a => a.asignatura).filter(Boolean)),
-      ...Object.keys(cortes || {})
+      ...Object.keys(cortes || {}),
+      ...califKeys
     ]);
     const todasLasMaterias = [...todasLasMateriasSet];
 
@@ -544,10 +559,8 @@ function Calificaciones({ user }) {
     const tituloReporte = options.tituloBoleta || 'Boleta parcial de calificaciones';
 
     const schoolName = schoolConfig?.name || 'Escuela Secundaria';
-    const schoolLogo = brandingData.logoUrl || schoolConfig?.config?.logoUrl || logoImage;
-    const schoolDirector = brandingData.directorName || schoolConfig?.directorName || '';
-
-    let nombreDirector = schoolDirector || localStorage.getItem('current_director_name') || '';
+    const schoolLogo = getSchoolLogoUrl(brandingData);
+    let nombreDirector = getSchoolDirectorName(brandingData.directorName);
     let nombreDocente = selectedGrupo?.asesor || '';
 
     const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
@@ -556,13 +569,20 @@ function Calificaciones({ user }) {
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
 
-    // Solo agregar el logo/sello si el rol no es profesor
-    if (user?.role !== 'profesor') {
-      const img = new Image();
-      img.src = schoolLogo;
-      await img.decode().catch(() => { }); // Catch error si ya está decodificada o falla
-      const logoHeight = (img.height * logoWidth) / img.width;
-      doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+    // Solo agregar el logo/sello si el rol no es profesor y la escuela tiene logo configurado
+    if (user?.role !== 'profesor' && schoolLogo) {
+      try {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.src = schoolLogo;
+        await img.decode().catch(() => { });
+        if (img.width > 0 && img.height > 0) {
+          const logoHeight = (img.height * logoWidth) / img.width;
+          doc.addImage(img, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+        }
+      } catch (e) {
+        console.warn('No se pudo cargar el logo en la boleta:', e);
+      }
     }
 
     doc.setFontSize(12);
@@ -594,15 +614,28 @@ function Calificaciones({ user }) {
     const alumnoCal = calificaciones[alumno._id] || {};
     const updatesList = []; // 🌟 Track any updates post-cut to print as a legend
 
+    const resolverMateriaKey = (materiaLabel) => {
+      if (alumnoCal[materiaLabel] || cortes[materiaLabel]) return materiaLabel;
+      const allKeys = [...new Set([...Object.keys(alumnoCal), ...Object.keys(cortes || {})])];
+      if (esMateriaTutoria(materiaLabel)) {
+        return allKeys.find(k => esMateriaTutoria(k)) || materiaLabel;
+      }
+      if (esMateriaIntegracion(materiaLabel)) {
+        return allKeys.find(k => esMateriaIntegracion(k)) || materiaLabel;
+      }
+      return materiaLabel;
+    };
+
     const tableBody = materiasObjetivo.map(materia => {
-      const cals = alumnoCal[materia] || [null, null, null];
+      const realKey = resolverMateriaKey(materia);
+      const cals = alumnoCal[realKey] || [null, null, null];
       const row = [materia];
       cals.forEach((cal, index) => {
         if (bimestresSeleccionados[index]) {
           const trimesterKey = String(index + 1);
           const rawCal = clampGrade(cal);
           const roundedCal = rawCal != null ? redondearCalificacion(rawCal) : null;
-          const frozenGrade = cortes[materia]?.[trimesterKey]?.promedios?.[alumno._id];
+          const frozenGrade = cortes[realKey]?.[trimesterKey]?.promedios?.[alumno._id];
 
           if (frozenGrade !== undefined && frozenGrade !== null) {
             const isDifferent = roundedCal !== null && roundedCal !== frozenGrade;
@@ -853,21 +886,26 @@ function Calificaciones({ user }) {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     const schoolName = schoolConfig?.name || 'Escuela Secundaria';
-    const schoolLogo = brandingData.logoUrl || schoolConfig?.config?.logoUrl || logoImage;
-    const schoolDirector = brandingData.directorName || schoolConfig?.directorName || '';
+    const schoolLogo = getSchoolLogoUrl(brandingData);
+    const schoolDirector = getSchoolDirectorName(brandingData.directorName);
     let currentY = 0;
 
     // --- ENCABEZADO REPORTE ---
     const margin = 14;
     const pageHeight = doc.internal.pageSize.height;
 
-    if (user?.role !== 'profesor') {
-      const img = new Image();
-      img.src = schoolLogo;
-      await img.decode().catch(() => { });
-      const logoWidth = 25;
-      const logoHeight = (img.height * logoWidth) / img.width;
-      doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+    if (user?.role !== 'profesor' && schoolLogo) {
+      try {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.src = schoolLogo;
+        await img.decode().catch(() => { });
+        if (img.width > 0 && img.height > 0) {
+          const logoWidth = 25;
+          const logoHeight = (img.height * logoWidth) / img.width;
+          doc.addImage(img, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+        }
+      } catch (e) {}
     }
 
     doc.setFontSize(12);
@@ -883,7 +921,7 @@ function Calificaciones({ user }) {
     yPos += 7;
 
     if (user?.role !== 'profesor') {
-      doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, yPos);
+      doc.text(`Director(a): ${schoolDirector || 'N/A'}`, margin, yPos);
       yPos += 5;
     }
 
@@ -970,18 +1008,22 @@ function Calificaciones({ user }) {
     const pageHeight = doc.internal.pageSize.height;
     const margin = 14;
     const schoolName = schoolConfig?.name || 'Escuela Secundaria';
-    const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
-    const schoolDirector = schoolConfig?.directorName || '';
+    const schoolLogo = getSchoolLogoUrl({});
+    const schoolDirector = getSchoolDirectorName();
 
     // Logo
-    if (user?.role !== 'profesor') {
-      const img = new Image();
-      img.src = schoolLogo;
-      await img.decode().catch(() => { });
-
-      const logoWidth = 25;
-      const logoHeight = (img.height * logoWidth) / img.width;
-      doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+    if (user?.role !== 'profesor' && schoolLogo) {
+      try {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.src = schoolLogo;
+        await img.decode().catch(() => { });
+        if (img.width > 0 && img.height > 0) {
+          const logoWidth = 25;
+          const logoHeight = (img.height * logoWidth) / img.width;
+          doc.addImage(img, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+        }
+      } catch (e) {}
     }
 
     doc.setFontSize(14);
@@ -994,7 +1036,7 @@ function Calificaciones({ user }) {
     doc.text(`Asesor: ${selectedGrupo.asesor || 'N/A'}`, margin, margin + 18);
     
     if (user?.role !== 'profesor') {
-      doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, margin + 24);
+      doc.text(`Director(a): ${schoolDirector || 'N/A'}`, margin, margin + 24);
     }
 
     const head = [
@@ -1056,7 +1098,7 @@ function Calificaciones({ user }) {
 
       // Director
       doc.text("Nombre y firma del director (a)", margin, finalY);
-      const directorName = schoolDirector || localStorage.getItem('current_director_name') || '';
+      const directorName = schoolDirector || '';
       if (directorName) {
         doc.setFont(undefined, 'bold');
         doc.text(directorName.toUpperCase(), margin, finalY + 10);
@@ -1607,11 +1649,14 @@ function Calificaciones({ user }) {
           {brandingModal.visible && (
             <BrandingModal
               initialData={{
-                directorName: schoolConfig?.directorName || localStorage.getItem('current_director_name') || '',
-                logoUrl: schoolConfig?.config?.logoUrl || '',
-                defaultLogo: logoImage
+                schoolId: schoolConfig?._id || '',
+                directorName: getSchoolDirectorName(),
+                logoUrl: schoolConfig?.config?.logoUrl || ''
               }}
               onConfirm={(data) => {
+                if (data?.directorName !== undefined) {
+                  setSchoolConfig(prev => prev ? { ...prev, directorName: data.directorName } : prev);
+                }
                 setBrandingModal({ ...brandingModal, visible: false });
                 brandingModal.onConfirm(data);
               }}

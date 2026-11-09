@@ -1078,8 +1078,8 @@ function Grupo({ user }) {
     try {
       const doc = new jsPDF();
       const schoolName = schoolConfig?.name || 'Escuela Secundaria';
-      const schoolLogo = schoolConfig?.config?.logoUrl || logoImage;
-      const schoolDirector = schoolConfig?.directorName || localStorage.getItem('current_director_name') || '';
+      const schoolLogo = schoolConfig?.config?.logoUrl || '';
+      const schoolDirector = schoolConfig?.directorName || (schoolConfig?._id ? localStorage.getItem(`director_name_${schoolConfig._id}`) : '') || '';
 
       const margin = 14;
       const pageWidth = doc.internal.pageSize.width;
@@ -1733,21 +1733,25 @@ function Grupo({ user }) {
 
       const doc = new jsPDF();
       const schoolName = schoolConfig?.name || 'Escuela Secundaria';
-      const schoolLogo = brandingData.logoUrl || schoolConfig?.config?.logoUrl || logoImage;
+      const schoolLogo = brandingData.logoUrl || schoolConfig?.config?.logoUrl || '';
       const schoolDirector = brandingData.directorName || schoolConfig?.directorName || '';
 
       // --- INICIO DE CAMBIOS PARA LOGO Y ESTILOS ---
       const margin = 14;
       const pageWidth = doc.internal.pageSize.width;
 
-      if (user?.role !== 'profesor') {
-        const img = new Image();
-        img.src = schoolLogo;
-        await img.decode().catch(() => { }); // Esperar a que la imagen se cargue
-
-        const logoWidth = 25; // Ancho del logo en mm
-        const logoHeight = (img.height * logoWidth) / img.width; // Calcular altura para mantener proporción
-        doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+      if (user?.role !== 'profesor' && schoolLogo) {
+        try {
+          const img = new Image();
+          img.crossOrigin = 'Anonymous';
+          img.src = schoolLogo;
+          await img.decode().catch(() => { }); // Esperar a que la imagen se cargue
+          if (img.width > 0 && img.height > 0) {
+            const logoWidth = 25; // Ancho del logo en mm
+            const logoHeight = (img.height * logoWidth) / img.width; // Calcular altura para mantener proporción
+            doc.addImage(img, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+          }
+        } catch (e) {}
       }
 
       doc.setFontSize(12);
@@ -1773,7 +1777,7 @@ function Grupo({ user }) {
       // 7. Director(a)
       if (user?.role !== 'profesor') {
         yPos += 7;
-        doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, yPos);
+        doc.text(`Director(a): ${schoolDirector || (schoolConfig?._id ? localStorage.getItem(`director_name_${schoolConfig._id}`) : '') || 'N/A'}`, margin, yPos);
       }
 
       // 8. AUMENTO CLAVE: Añadir un espacio adicional (e.g., 7mm) para que el texto NO toque la tabla.
@@ -1903,11 +1907,14 @@ function Grupo({ user }) {
       {brandingModal.visible && (
         <BrandingModal
           initialData={{
-            directorName: schoolConfig?.directorName || localStorage.getItem('current_director_name') || '',
-            logoUrl: schoolConfig?.config?.logoUrl || '',
-            defaultLogo: logoImage
+            schoolId: schoolConfig?._id || '',
+            directorName: schoolConfig?.directorName || (schoolConfig?._id ? localStorage.getItem(`director_name_${schoolConfig._id}`) : '') || '',
+            logoUrl: schoolConfig?.config?.logoUrl || ''
           }}
           onConfirm={(data) => {
+            if (data?.directorName !== undefined) {
+              setSchoolConfig(prev => prev ? { ...prev, directorName: data.directorName } : prev);
+            }
             setBrandingModal({ ...brandingModal, visible: false });
             brandingModal.onConfirm(data);
           }}

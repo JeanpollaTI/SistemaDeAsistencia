@@ -188,25 +188,28 @@ function Horario({ user }) {
 
   // --- Lógica de generación de PDF refactorizada (con logos locales) ---
   const generarContenidoPDF = async (doc, brandingData = {}) => {
-    const schoolName = schoolConfig?.name || "ESCUELA SECUNDARIA GENERAL, No. 9";
-    const schoolLogo = brandingData.logoUrl || schoolConfig?.config?.logoUrl || logoDerecho;
-    const schoolDirector = brandingData.directorName || schoolConfig?.directorName || '';
-
-    // USANDO LAS VARIABLES DE LOGO IMPORTADAS LOCALMENTE
-    const imgLogoDer = new Image();
-    imgLogoDer.src = schoolLogo;
-    imgLogoDer.crossOrigin = "Anonymous";
-    await imgLogoDer.decode().catch(() => { });
+    const schoolName = schoolConfig?.name || "ESCUELA SECUNDARIA";
+    const schoolLogo = brandingData.logoUrl || schoolConfig?.config?.logoUrl || '';
+    const schoolDirector = brandingData.directorName || schoolConfig?.directorName || (schoolConfig?._id ? localStorage.getItem(`director_name_${schoolConfig._id}`) : '') || '';
 
     const imgLogoAgs = new Image();
     imgLogoAgs.src = logoAgs;
     await imgLogoAgs.decode().catch(() => { });
-
-    const logoDerWidth = 25;
-    const logoDerHeight = (imgLogoDer.height * logoDerWidth) / imgLogoDer.width;
-
     doc.addImage(logoAgs, "PNG", 15, 8, 40, 16);
-    doc.addImage(schoolLogo, "PNG", 255, 8, logoDerWidth, logoDerHeight);
+
+    if (schoolLogo) {
+      try {
+        const imgLogoDer = new Image();
+        imgLogoDer.crossOrigin = "Anonymous";
+        imgLogoDer.src = schoolLogo;
+        await imgLogoDer.decode().catch(() => { });
+        if (imgLogoDer.width > 0 && imgLogoDer.height > 0) {
+          const logoDerWidth = 25;
+          const logoDerHeight = (imgLogoDer.height * logoDerWidth) / imgLogoDer.width;
+          doc.addImage(imgLogoDer, "PNG", 255, 8, logoDerWidth, logoDerHeight);
+        }
+      } catch (e) {}
+    }
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
@@ -544,11 +547,14 @@ function Horario({ user }) {
           {brandingModal.visible && (
             <BrandingModal
               initialData={{
-                directorName: schoolConfig?.directorName || localStorage.getItem('current_director_name') || '',
-                logoUrl: schoolConfig?.config?.logoUrl || '',
-                defaultLogo: logoDerecho
+                schoolId: schoolConfig?._id || '',
+                directorName: schoolConfig?.directorName || (schoolConfig?._id ? localStorage.getItem(`director_name_${schoolConfig._id}`) : '') || '',
+                logoUrl: schoolConfig?.config?.logoUrl || ''
               }}
               onConfirm={(data) => {
+                if (data?.directorName !== undefined) {
+                  setSchoolConfig(prev => prev ? { ...prev, directorName: data.directorName } : prev);
+                }
                 setBrandingModal({ ...brandingModal, visible: false });
                 brandingModal.onConfirm(data);
               }}

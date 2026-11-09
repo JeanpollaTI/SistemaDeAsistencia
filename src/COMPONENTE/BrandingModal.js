@@ -1,9 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
+import apiClient from '../api/apiClient';
 import './BrandingModal.css';
 
 const BrandingModal = ({ initialData = {}, onConfirm, onClose, title }) => {
+    const schoolId = initialData?.schoolId || '';
+    const schoolStorageKey = schoolId ? `director_name_${schoolId}` : null;
+
     const [directorName, setDirectorName] = useState(() => {
-        return initialData?.directorName || localStorage.getItem('current_director_name') || '';
+        // Limpiar clave global antigua que mezclaba firmas entre escuelas
+        try {
+            localStorage.removeItem('current_director_name');
+            localStorage.removeItem('saved_directores');
+        } catch (e) {}
+
+        if (initialData?.directorName !== undefined && initialData?.directorName !== '') {
+            return initialData.directorName;
+        }
+        if (schoolStorageKey) {
+            return localStorage.getItem(schoolStorageKey) || '';
+        }
+        return '';
     });
     const [logoPreview, setLogoPreview] = useState(() => {
         return initialData?.logoUrl || '';
@@ -13,13 +29,13 @@ const BrandingModal = ({ initialData = {}, onConfirm, onClose, title }) => {
     const fileInputRef = useRef(null);
 
     useEffect(() => {
-        if (initialData?.directorName && !directorName) {
-            setDirectorName(initialData.directorName);
-        }
-        if (initialData?.logoUrl && !logoPreview) {
-            setLogoPreview(initialData.logoUrl);
-        }
-    }, [initialData]);
+        const nextDirector =
+            (initialData?.directorName !== undefined && initialData?.directorName !== '')
+                ? initialData.directorName
+                : (schoolStorageKey ? (localStorage.getItem(schoolStorageKey) || '') : '');
+        setDirectorName(nextDirector);
+        setLogoPreview(initialData?.logoUrl || '');
+    }, [initialData?.schoolId, initialData?.directorName, initialData?.logoUrl, schoolStorageKey]);
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -48,14 +64,24 @@ const BrandingModal = ({ initialData = {}, onConfirm, onClose, title }) => {
         e.preventDefault();
         setError(null);
 
-        if (directorName.trim()) {
-            localStorage.setItem('current_director_name', directorName.trim());
+        const trimmedDirector = directorName.trim();
+        if (schoolStorageKey) {
+            if (trimmedDirector) {
+                localStorage.setItem(schoolStorageKey, trimmedDirector);
+            } else {
+                localStorage.removeItem(schoolStorageKey);
+            }
+        }
+
+        // Persistir la firma únicamente en la escuela activa en segundo plano
+        if (schoolId && trimmedDirector !== (initialData?.directorName || '')) {
+            apiClient.put(`/schools/${schoolId}`, { directorName: trimmedDirector }).catch(() => {});
         }
 
         setIsProcessing(true);
         try {
             onConfirm({
-                directorName: directorName.trim() || 'Dirección de la Escuela',
+                directorName: trimmedDirector,
                 logoUrl: logoPreview || ''
             });
         } catch (err) {

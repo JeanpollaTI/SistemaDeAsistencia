@@ -100,6 +100,17 @@ const SchoolConfigModal = ({ isOpen, onClose, school, onSave }) => {
                 config: updatedConfig
             });
 
+            try {
+                localStorage.removeItem('current_director_name');
+                if (school._id) {
+                    if (directorName.trim()) {
+                        localStorage.setItem(`director_name_${school._id}`, directorName.trim());
+                    } else {
+                        localStorage.removeItem(`director_name_${school._id}`);
+                    }
+                }
+            } catch (e) {}
+
             if (addNotification) {
                 addNotification('Configuración de la escuela guardada correctamente', 'success');
             }

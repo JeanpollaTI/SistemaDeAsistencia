@@ -2671,20 +2671,25 @@ const PanelCalificaciones = ({
         const doc = new jsPDF();
 
         const schoolName = schoolConfig?.name || 'Escuela Secundaria';
-        const schoolLogo = brandingData.logoUrl || schoolConfig?.config?.logoUrl || logoImage;
+        const schoolLogo = brandingData.logoUrl || schoolConfig?.config?.logoUrl || '';
         const schoolDirector = brandingData.directorName || schoolConfig?.directorName || '';
 
         // --- LOGO Y ENCABEZADO (Reutilizado de Calificaciones.js) ---
         const margin = 14;
         const pageWidth = doc.internal.pageSize.width;
 
-        if (user?.role !== 'profesor') {
-            const img = new Image();
-            img.src = schoolLogo;
-            await img.decode().catch(() => { });
-            const logoWidth = 25;
-            const logoHeight = (img.height * logoWidth) / img.width;
-            doc.addImage(schoolLogo, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+        if (user?.role !== 'profesor' && schoolLogo) {
+            try {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.src = schoolLogo;
+                await img.decode().catch(() => { });
+                if (img.width > 0 && img.height > 0) {
+                    const logoWidth = 25;
+                    const logoHeight = (img.height * logoWidth) / img.width;
+                    doc.addImage(img, 'PNG', pageWidth - margin - logoWidth, margin - 5, logoWidth, logoHeight);
+                }
+            } catch (e) {}
         }
 
         doc.setFontSize(12);
@@ -2697,7 +2702,7 @@ const PanelCalificaciones = ({
         yPos += 7;
 
         if (user?.role !== 'profesor') {
-            doc.text(`Director(a): ${schoolDirector || localStorage.getItem('current_director_name') || 'N/A'}`, margin, yPos);
+            doc.text(`Director(a): ${schoolDirector || (schoolConfig?._id ? localStorage.getItem(`director_name_${schoolConfig._id}`) : '') || 'N/A'}`, margin, yPos);
             yPos += 7;
         }
 
@@ -3746,11 +3751,14 @@ const PanelCalificaciones = ({
                 {brandingModal.visible && (
                     <BrandingModal
                         initialData={{
-                            directorName: schoolConfig?.directorName || localStorage.getItem('current_director_name') || '',
-                            logoUrl: schoolConfig?.config?.logoUrl || '',
-                            defaultLogo: logoImage
+                            schoolId: schoolConfig?._id || '',
+                            directorName: schoolConfig?.directorName || (schoolConfig?._id ? localStorage.getItem(`director_name_${schoolConfig._id}`) : '') || '',
+                            logoUrl: schoolConfig?.config?.logoUrl || ''
                         }}
                         onConfirm={(data) => {
+                            if (data?.directorName !== undefined) {
+                                setSchoolConfig(prev => prev ? { ...prev, directorName: data.directorName } : prev);
+                            }
                             setBrandingModal({ ...brandingModal, visible: false });
                             brandingModal.onConfirm(data);
                         }}
