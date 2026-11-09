@@ -47,6 +47,29 @@ function SortableHeader({ id, children, disabled, colSpan }) {
 // --- CAMBIO: URL de la API desde variables de entorno para Vercel ---
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+// --- HELPERS DE NORMALIZACIÓN Y REGLAS POR GRUPO / MATERIA ---
+const normalizeSubjectOrGroup = (str = '') =>
+  String(str)
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+
+const esGrupo1A = (nombreGrupo = '') => {
+  const clean = normalizeSubjectOrGroup(nombreGrupo).replace(/[^A-Z0-9]/g, '');
+  return clean === '1A';
+};
+
+const esMateriaTutoria = (materia = '') => {
+  const norm = normalizeSubjectOrGroup(materia);
+  return norm.includes('TUTORIA');
+};
+
+const esMateriaIntegracion = (materia = '') => {
+  const norm = normalizeSubjectOrGroup(materia);
+  return norm.includes('INTEGRACION CURRICULAR') || norm.startsWith('INTEGRACION');
+};
+
 const sortAlumnosWithStatus = (alumnosList = []) => {
   const reg = [];
   const nuevos = [];
@@ -204,11 +227,18 @@ function Calificaciones({ user }) {
     setAlumnos(alumnosOrdenados);
 
     // Combinar asignaturas asignadas y orden guardado
-    const materiasSet = new Set(grupo.profesoresAsignados.map(asig => asig.asignatura));
+    const materiasSet = new Set((grupo.profesoresAsignados || []).map(asig => asig.asignatura).filter(Boolean));
     if (grupo.ordenMaterias) {
-      grupo.ordenMaterias.forEach(m => materiasSet.add(m));
+      grupo.ordenMaterias.forEach(m => {
+        if (m) materiasSet.add(m);
+      });
     }
-    const materiasAsignadas = [...materiasSet];
+    let materiasAsignadas = [...materiasSet];
+
+    // 🌟 REGLA DE NEGOCIO: En el grupo 1°A ('1A'), TUTORÍA no debe aparecer en la sábana ni en el cálculo
+    if (esGrupo1A(grupo.nombre)) {
+      materiasAsignadas = materiasAsignadas.filter(m => !esMateriaTutoria(m));
+    }
 
     // Si hay un orden guardado, ordenar las materias
     if (grupo.ordenMaterias && grupo.ordenMaterias.length > 0) {
@@ -269,14 +299,15 @@ function Calificaciones({ user }) {
     return grade;
   };
 
-  const calcularPromedioBimestre = (alumnoId, bimestreIndex) => {
+  const calcularPromedioBimestre = (alumnoId, bimestreIndex, customMaterias = null) => {
     const alumnoCal = calificaciones[alumnoId];
     if (!alumnoCal) return 0;
     let suma = 0;
     let count = 0;
     const trimesterKey = String(bimestreIndex + 1);
+    const listaMaterias = Array.isArray(customMaterias) ? customMaterias : materias;
 
-    materias.forEach(materia => {
+    listaMaterias.forEach(materia => {
       // Check if there is a frozen grade for this student, materia, and trimester
       const frozenGrade = cortes[materia]?.[trimesterKey]?.promedios?.[alumnoId];
       let cal;
@@ -480,8 +511,38 @@ function Calificaciones({ user }) {
     }
   };
 
+  // --- OBTENER MATERIAS DE TUTORÍA E INTEGRACIÓN CURRICULAR SEGÚN EL GRUPO ---
+  const obtenerMateriasTutoriaEIntegracion = () => {
+    const todasLasMateriasSet = new Set([
+      ...materias,
+      ...((selectedGrupo?.profesoresAsignados || []).map(a => a.asignatura).filter(Boolean)),
+      ...Object.keys(cortes || {})
+    ]);
+    const todasLasMaterias = [...todasLasMateriasSet];
+
+    const materiasTutoria = todasLasMaterias.filter(m => esMateriaTutoria(m));
+    const materiasIntegracion = todasLasMaterias.filter(m => esMateriaIntegracion(m));
+
+    // En 1°A ('1A'), solo se incluye INTEGRACIÓN CURRICULAR (TUTORÍA no aplica para 1°A)
+    if (esGrupo1A(selectedGrupo?.nombre)) {
+      return materiasIntegracion.length > 0 ? materiasIntegracion : ['INTEGRACIÓN CURRICULAR'];
+    }
+
+    // En el resto de los grupos (1°B, 1°C, 2°, 3°, etc.), incluir TUTORÍA e INTEGRACIÓN CURRICULAR
+    const resultado = [
+      ...(materiasTutoria.length > 0 ? materiasTutoria : ['TUTORÍA']),
+      ...(materiasIntegracion.length > 0 ? materiasIntegracion : ['INTEGRACIÓN CURRICULAR'])
+    ];
+    return [...new Set(resultado)];
+  };
+
   // --- FUNCIÓN REUTILIZABLE PARA DIBUJAR UNA BOLETA EN UNA PÁGINA EXISTENTE ---
-  const drawReportCard = async (doc, alumno, bimestresSeleccionados, brandingData = {}) => {
+  const drawReportCard = async (doc, alumno, bimestresSeleccionados, brandingData = {}, options = {}) => {
+    const materiasObjetivo = Array.isArray(options.materiasEspecificas) && options.materiasEspecificas.length > 0
+      ? options.materiasEspecificas
+      : materias;
+    const tituloReporte = options.tituloBoleta || 'Boleta parcial de calificaciones';
+
     const schoolName = schoolConfig?.name || 'Escuela Secundaria';
     const schoolLogo = brandingData.logoUrl || schoolConfig?.config?.logoUrl || logoImage;
     const schoolDirector = brandingData.directorName || schoolConfig?.directorName || '';
@@ -513,7 +574,7 @@ function Calificaciones({ user }) {
 
     // 2. Boleta de Calificaciones
     doc.setFont(undefined, 'bold');
-    doc.text('Boleta parcial de calificaciones', margin, yPos);
+    doc.text(tituloReporte, margin, yPos);
     doc.setFont(undefined, 'normal');
     yPos += 7;
 
@@ -533,7 +594,7 @@ function Calificaciones({ user }) {
     const alumnoCal = calificaciones[alumno._id] || {};
     const updatesList = []; // 🌟 Track any updates post-cut to print as a legend
 
-    const tableBody = materias.map(materia => {
+    const tableBody = materiasObjetivo.map(materia => {
       const cals = alumnoCal[materia] || [null, null, null];
       const row = [materia];
       cals.forEach((cal, index) => {
@@ -567,7 +628,7 @@ function Calificaciones({ user }) {
     const promedioRow = ['PROMEDIO'];
     [0, 1, 2].forEach(index => {
       if (bimestresSeleccionados[index]) {
-        const promedio = calcularPromedioBimestre(alumno._id, index);
+        const promedio = calcularPromedioBimestre(alumno._id, index, materiasObjetivo);
         promedioRow.push(promedio > 0 ? promedio : 'N/A');
       }
     });
@@ -728,6 +789,57 @@ function Calificaciones({ user }) {
     const nombreGrupo = selectedGrupo.nombre.replace(/\s/g, '_');
     doc.save(`Boletas_Grupo_${nombreGrupo}.pdf`);
     showAlert("PDF grupal descargado correctamente.");
+  };
+
+  // 🌟 NUEVA FUNCIÓN: Generar Boleta Específica de Tutoría e Integración Curricular (Grupal)
+  const generatePdfTutoriaIntegracionGrupal = async (brandingData = {}) => {
+    if (!alumnos || alumnos.length === 0) {
+      showAlert("No hay alumnos en el grupo.", "danger");
+      return;
+    }
+
+    const materiasEspeciales = obtenerMateriasTutoriaEIntegracion();
+    const tituloBoleta = esGrupo1A(selectedGrupo?.nombre)
+      ? 'Boleta de Integración Curricular'
+      : 'Boleta de Tutoría e Integración Curricular';
+
+    const doc = new jsPDF();
+    let isFirstPage = true;
+
+    showAlert("Generando Boleta de Tutoría e Integración, por favor espere...", "info");
+
+    for (const alumno of alumnos) {
+      if (!isFirstPage) {
+        doc.addPage();
+      }
+      isFirstPage = false;
+      await drawReportCard(doc, alumno, [true, true, true], brandingData, {
+        materiasEspecificas: materiasEspeciales,
+        tituloBoleta
+      });
+    }
+
+    const nombreGrupo = selectedGrupo.nombre.replace(/\s/g, '_');
+    doc.save(`Boleta_Tutoria_Integracion_${nombreGrupo}.pdf`);
+    showAlert("Boleta de Tutoría e Integración descargada correctamente.");
+  };
+
+  // 🌟 NUEVA FUNCIÓN: Generar Boleta Específica de Tutoría e Integración Curricular (Individual)
+  const generatePdfTutoriaIntegracionIndividual = async (alumno, bimestresSeleccionados, brandingData = {}) => {
+    const materiasEspeciales = obtenerMateriasTutoriaEIntegracion();
+    const tituloBoleta = esGrupo1A(selectedGrupo?.nombre)
+      ? 'Boleta de Integración Curricular'
+      : 'Boleta de Tutoría e Integración Curricular';
+
+    const doc = new jsPDF();
+    await drawReportCard(doc, alumno, bimestresSeleccionados, brandingData, {
+      materiasEspecificas: materiasEspeciales,
+      tituloBoleta
+    });
+
+    const nombreCompleto = `${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ''} ${alumno.nombre}`;
+    doc.save(`Boleta_Tutoria_Integracion_${nombreCompleto.replace(/\s/g, '_')}.pdf`);
+    setModalPdf({ visible: false, alumno: null });
   };
 
   // 🌟 NUEVA FUNCIÓN: Generar reporte de bajo rendimiento (Promedios <= 6)
@@ -1023,8 +1135,33 @@ function Calificaciones({ user }) {
                     <p><strong>Nota:</strong> Se usará el Director asignado globalmente y el Asesor del grupo.</p>
                   </div>
 
-                  <div className="modal-actions" style={{ marginTop: '20px' }}>
-                    <button type="submit" className="button">Descargar Boleta</button>
+                  <div className="modal-actions" style={{ marginTop: '20px', display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <button type="submit" className="button">Descargar Boleta General</button>
+                    <button
+                      type="button"
+                      className="button"
+                      style={{ backgroundColor: '#6c5ce7', color: 'white' }}
+                      onClick={(e) => {
+                        const form = e.currentTarget.closest('form');
+                        const bimestresSeleccionados = [form.b1.checked, form.b2.checked, form.b3.checked];
+                        if (!bimestresSeleccionados.some(b => b)) {
+                          showAlert("Debes seleccionar al menos un Trimestre.", "danger");
+                          return;
+                        }
+                        setModalPdf({ ...modalPdf, visible: false });
+                        if (user?.role === 'profesor') {
+                          generatePdfTutoriaIntegracionIndividual(modalPdf.alumno, bimestresSeleccionados, {});
+                        } else {
+                          setBrandingModal({
+                            visible: true,
+                            title: `Boleta Tutoría e Integración - ${modalPdf.alumno?.nombre}`,
+                            onConfirm: (brandingData) => generatePdfTutoriaIntegracionIndividual(modalPdf.alumno, bimestresSeleccionados, brandingData)
+                          });
+                        }
+                      }}
+                    >
+                      📘 Boleta Tutoría e Integración
+                    </button>
                     <button type="button" className="button-secondary" onClick={() => setModalPdf({ visible: false, alumno: null })}>Cancelar</button>
                   </div>
                 </form>
@@ -1086,6 +1223,29 @@ function Calificaciones({ user }) {
                 title="Generar lista de alumnos con calificaciones <= 6"
               >
                 ⚠️ Reporte Riesgo
+              </button>
+
+              <button
+                className="button"
+                onClick={() => {
+                  if (user?.role === 'profesor') {
+                    generatePdfTutoriaIntegracionGrupal({});
+                  } else {
+                    setBrandingModal({
+                      visible: true,
+                      title: 'Boleta Tutoría e Integración',
+                      onConfirm: (brandingData) => generatePdfTutoriaIntegracionGrupal(brandingData)
+                    });
+                  }
+                }}
+                style={{
+                  backgroundColor: '#6c5ce7',
+                  color: 'white',
+                  boxShadow: '0 4px 10px rgba(108, 92, 231, 0.3)'
+                }}
+                title="Generar boleta específica con las materias de Tutoría e Integración Curricular (en 1°A solo Integración Curricular)"
+              >
+                📘 Boleta Tutoría e Integración
               </button>
 
               {activeTab === 'detalle' && (
