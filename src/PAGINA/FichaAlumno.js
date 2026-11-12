@@ -49,10 +49,6 @@ const FichaAlumno = () => {
     }
 
     const { alumno, calificaciones, asistencias } = data;
-    const isGrupo1A = String(alumno?.grupo || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Z0-9]/g, '') === '1A';
-    const isTutoria = (asig = '') => String(asig).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes('TUTORIA');
-    const calificacionesFiltradas = isGrupo1A ? (calificaciones || []).filter(c => !isTutoria(c.asignatura)) : (calificaciones || []);
-    const asistenciasFiltradas = isGrupo1A ? (asistencias || []).filter(a => !isTutoria(a.asignatura)) : (asistencias || []);
 
     return (
         <div className="ficha-page-container">
@@ -127,7 +123,7 @@ const FichaAlumno = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {calificacionesFiltradas.map((cal, idx) => {
+                                        {calificaciones.map((cal, idx) => {
                                             const activeGrades = Object.values(cal.bimestres).filter(v => v !== null);
                                             const avg = activeGrades.length > 0 ? (activeGrades.reduce((a, b) => a + b, 0) / activeGrades.length).toFixed(1) : '---';
                                             return (
@@ -140,7 +136,7 @@ const FichaAlumno = () => {
                                                 </tr>
                                             );
                                         })}
-                                        {calificacionesFiltradas.length === 0 && (
+                                        {calificaciones.length === 0 && (
                                             <tr><td colSpan="5" className="empty-msg">No hay calificaciones registradas.</td></tr>
                                         )}
                                     </tbody>
@@ -166,7 +162,7 @@ const FichaAlumno = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {asistenciasFiltradas.map((asis, idx) => {
+                                        {asistencias.map((asis, idx) => {
                                             const percentage = asis.totales > 0 ? ((asis.presentes / asis.totales) * 100).toFixed(0) : '---';
                                             return (
                                                 <tr key={idx}>
@@ -182,7 +178,7 @@ const FichaAlumno = () => {
                                                 </tr>
                                             );
                                         })}
-                                        {asistenciasFiltradas.length === 0 && (
+                                        {asistencias.length === 0 && (
                                             <tr><td colSpan="5" className="empty-msg">No hay registros de asistencia.</td></tr>
                                         )}
                                     </tbody>

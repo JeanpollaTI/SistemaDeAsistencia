@@ -47,18 +47,13 @@ function SortableHeader({ id, children, disabled, colSpan }) {
 // --- CAMBIO: URL de la API desde variables de entorno para Vercel ---
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-// --- HELPERS DE NORMALIZACIÓN Y REGLAS POR GRUPO / MATERIA ---
+// --- HELPERS DE NORMALIZACIÓN DE MATERIAS ---
 const normalizeSubjectOrGroup = (str = '') =>
   String(str)
     .toUpperCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .trim();
-
-const esGrupo1A = (nombreGrupo = '') => {
-  const clean = normalizeSubjectOrGroup(nombreGrupo).replace(/[^A-Z0-9]/g, '');
-  return clean === '1A';
-};
 
 const esMateriaTutoria = (materia = '') => {
   const norm = normalizeSubjectOrGroup(materia);
@@ -239,19 +234,14 @@ function Calificaciones({ user }) {
     const alumnosOrdenados = sortAlumnosWithStatus(grupo.alumnos || []);
     setAlumnos(alumnosOrdenados);
 
-    // Combinar asignaturas asignadas y orden guardado
+    // Combinar asignaturas asignadas dinámicamente desde la base de datos y orden guardado
     const materiasSet = new Set((grupo.profesoresAsignados || []).map(asig => asig.asignatura).filter(Boolean));
     if (grupo.ordenMaterias) {
       grupo.ordenMaterias.forEach(m => {
         if (m) materiasSet.add(m);
       });
     }
-    let materiasAsignadas = [...materiasSet];
-
-    // 🌟 REGLA DE NEGOCIO: En el grupo 1°A ('1A'), TUTORÍA no debe aparecer en la sábana ni en el cálculo
-    if (esGrupo1A(grupo.nombre)) {
-      materiasAsignadas = materiasAsignadas.filter(m => !esMateriaTutoria(m));
-    }
+    const materiasAsignadas = [...materiasSet];
 
     // Si hay un orden guardado, ordenar las materias
     if (grupo.ordenMaterias && grupo.ordenMaterias.length > 0) {
@@ -273,13 +263,34 @@ function Calificaciones({ user }) {
     try {
       // --- CAMBIO: Usar API_URL ---
       const res = await axios.get(`${API_URL}/grupos/${grupo._id}/calificaciones-admin`, getAxiosConfig());
-      if (res.data && res.data.calificaciones) {
-        setCalificaciones(res.data.calificaciones || {});
-        setCortes(res.data.cortes || {});
-      } else {
-        setCalificaciones(res.data || {});
-        setCortes({});
+      const calsData = (res.data && res.data.calificaciones) ? (res.data.calificaciones || {}) : (res.data || {});
+      const cortesData = (res.data && res.data.cortes) ? (res.data.cortes || {}) : {};
+
+      setCalificaciones(calsData);
+      setCortes(cortesData);
+
+      // Asegurar que cualquier materia con calificaciones o cortes registrados en BD también esté presente en la lista dinámica
+      Object.values(calsData).forEach(alumnoMap => {
+        Object.keys(alumnoMap || {}).forEach(mat => {
+          if (mat) materiasSet.add(mat);
+        });
+      });
+      Object.keys(cortesData).forEach(mat => {
+        if (mat) materiasSet.add(mat);
+      });
+
+      const materiasCompletas = [...materiasSet];
+      if (grupo.ordenMaterias && grupo.ordenMaterias.length > 0) {
+        materiasCompletas.sort((a, b) => {
+          const indexA = grupo.ordenMaterias.indexOf(a);
+          const indexB = grupo.ordenMaterias.indexOf(b);
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          if (indexA === -1) return 1;
+          if (indexB === -1) return -1;
+          return 0;
+        });
       }
+      setMaterias(materiasCompletas);
     } catch (err) {
       console.error("Error detallado al cargar calificaciones:", err.response || err);
       showAlert("No se pudieron cargar las calificaciones consolidadas de este grupo.", "danger");
@@ -524,12 +535,12 @@ function Calificaciones({ user }) {
     }
   };
 
-  // --- OBTENER MATERIAS DE TUTORÍA E INTEGRACIÓN CURRICULAR SEGÚN EL GRUPO ---
+  // --- OBTENER MATERIAS DE TUTORÍA E INTEGRACIÓN CURRICULAR DINÁMICAMENTE SEGÚN EL GRUPO ---
   const obtenerMateriasTutoriaEIntegracion = () => {
     const califKeys = Object.values(calificaciones || {}).flatMap(c => Object.keys(c || {}));
     const todasLasMateriasSet = new Set([
-      ...materias,
       ...((selectedGrupo?.profesoresAsignados || []).map(a => a.asignatura).filter(Boolean)),
+      ...materias,
       ...Object.keys(cortes || {}),
       ...califKeys
     ]);
@@ -538,12 +549,6 @@ function Calificaciones({ user }) {
     const materiasTutoria = todasLasMaterias.filter(m => esMateriaTutoria(m));
     const materiasIntegracion = todasLasMaterias.filter(m => esMateriaIntegracion(m));
 
-    // En 1°A ('1A'), solo se incluye INTEGRACIÓN CURRICULAR (TUTORÍA no aplica para 1°A)
-    if (esGrupo1A(selectedGrupo?.nombre)) {
-      return materiasIntegracion.length > 0 ? materiasIntegracion : ['INTEGRACIÓN CURRICULAR'];
-    }
-
-    // En el resto de los grupos (1°B, 1°C, 2°, 3°, etc.), incluir TUTORÍA e INTEGRACIÓN CURRICULAR
     const resultado = [
       ...(materiasTutoria.length > 0 ? materiasTutoria : ['TUTORÍA']),
       ...(materiasIntegracion.length > 0 ? materiasIntegracion : ['INTEGRACIÓN CURRICULAR'])
@@ -832,9 +837,7 @@ function Calificaciones({ user }) {
     }
 
     const materiasEspeciales = obtenerMateriasTutoriaEIntegracion();
-    const tituloBoleta = esGrupo1A(selectedGrupo?.nombre)
-      ? 'Boleta de Integración Curricular'
-      : 'Boleta de Tutoría e Integración Curricular';
+    const tituloBoleta = 'Boleta de Tutoría e Integración Curricular';
 
     const doc = new jsPDF();
     let isFirstPage = true;
@@ -860,9 +863,7 @@ function Calificaciones({ user }) {
   // 🌟 NUEVA FUNCIÓN: Generar Boleta Específica de Tutoría e Integración Curricular (Individual)
   const generatePdfTutoriaIntegracionIndividual = async (alumno, bimestresSeleccionados, brandingData = {}) => {
     const materiasEspeciales = obtenerMateriasTutoriaEIntegracion();
-    const tituloBoleta = esGrupo1A(selectedGrupo?.nombre)
-      ? 'Boleta de Integración Curricular'
-      : 'Boleta de Tutoría e Integración Curricular';
+    const tituloBoleta = 'Boleta de Tutoría e Integración Curricular';
 
     const doc = new jsPDF();
     await drawReportCard(doc, alumno, bimestresSeleccionados, brandingData, {
@@ -1285,7 +1286,7 @@ function Calificaciones({ user }) {
                   color: 'white',
                   boxShadow: '0 4px 10px rgba(108, 92, 231, 0.3)'
                 }}
-                title="Generar boleta específica con las materias de Tutoría e Integración Curricular (en 1°A solo Integración Curricular)"
+                title="Generar boleta específica con las materias de Tutoría e Integración Curricular"
               >
                 📘 Boleta Tutoría e Integración
               </button>
